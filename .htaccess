@@ -1,0 +1,25 @@
+# 🔒 AVAZONIA PRODUCTION HARDENING
+Options -Indexes
+RewriteEngine On
+
+# Force HTTPS (DISABLED FOR LOCALHOST COMPATIBILITY)
+# RewriteCond %{HTTPS} off
+# RewriteCond %{HTTP_HOST} !^localhost$ [NC]
+# RewriteCond %{HTTP_HOST} !^127\.0\.0\.1$
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Block sensitive files
+<Files ".env">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "*.sql">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Route everything to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L,QSA]

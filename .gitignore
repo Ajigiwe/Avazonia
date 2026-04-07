@@ -1,0 +1,26 @@
+# Avazonia Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.log
+paystack_debug.log
+paystack_refunds.log
+
+# Temporary / Scratch files
+tmp/
+/tmp/
+.gemini/
+*.tmp
+*.bak
+
+# IDE / System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Database Backups (Sensitive)
+backups/*.sql
+backups/*.zip
+!backups/.htaccess
+!backups/index.php
