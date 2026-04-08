@@ -168,21 +168,24 @@ img { display: block; max-width: 100%; }
 .nav-inner {
   height: 100%; display: flex; align-items: center; justify-content: space-between;
 }
-.nav-logo-img {
-    height: 140px; /* UNLOCKED: Massive branding presence */
-    width: auto; 
-    max-width: 400px; 
-    object-fit: contain;
+.nav-brand-text {
+    font-family: 'Outfit', sans-serif;
+    font-size: 42px;
+    font-weight: 900;
+    color: var(--red);
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    line-height: 1;
+    display: flex;
+    align-items: center;
     transition: transform .3s var(--ease);
+    user-select: none;
 }
-.nav-logo-img:hover {
-    transform: scale(1.05);
+.nav-brand-text:hover {
+    transform: scale(1.02);
 }
 @media (max-width: 1024px) {
-    .nav-logo-img { 
-        height: 80px; /* Bold on mobile */
-        max-width: 280px;
-    }
+    .nav-brand-text { font-size: 32px; }
 }
 .nav-links { display: flex; gap: 36px; align-items: center; }
 .nav-link {
