@@ -478,7 +478,7 @@ function getCatIcon($slug) {
             if (!slider) return;
             const firstCard = slider.querySelector('.card');
             if (!firstCard) return;
-            const scrollAmount = (firstCard.offsetWidth + 24) * direction; // card width + gap
+            const scrollAmount = (firstCard.offsetWidth + 12) * direction; // card width + gap
             slider.scrollBy({ left: scrollAmount, behavior: 'smooth' });
         };
 

@@ -648,37 +648,37 @@ img { display: block; max-width: 100%; }
 .slider-track {
     display: flex !important;
     flex-wrap: nowrap !important;
-    gap: 24px;
+    gap: 12px;
     padding: 10px 0;
 }
 
 .slider-track .card {
-    flex: 0 0 calc(25% - 18px) !important;
+    flex: 0 0 180px !important;
     scroll-snap-align: start !important;
-    min-width: 280px;
+    min-width: 150px;
 }
 
 @media (max-width: 1024px) {
     .slider-track .card {
-        flex: 0 0 calc(50% - 12px) !important;
+        flex: 0 0 160px !important;
     }
     .slider-nav {
-        display: flex !important; /* Force show on mobile/tablet */
+        display: flex !important;
     }
 }
 
 @media (max-width: 768px) {
     .slider-track .card {
-        flex: 0 0 calc(50% - 12px) !important;
+        flex: 0 0 calc(45% - 6px) !important;
     }
     .slider-track {
-        gap: 16px;
+        gap: 10px;
     }
 }
 
 @media (max-width: 600px) {
     .slider-track .card {
-        flex: 0 0 55% !important;
+        flex: 0 0 calc(48% - 5px) !important;
         min-width: unset !important;
     }
 }

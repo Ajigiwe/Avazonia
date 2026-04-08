@@ -60,7 +60,7 @@ require_once __DIR__ . '/../layout/nav.php';
 
         <div class="slider-container" style="position: relative; width: 100%; overflow: hidden;">
             <div class="slider-viewport" id="bestsellers-slider" style="overflow-x: auto !important; scroll-snap-type: x mandatory !important; display: flex !important; -webkit-overflow-scrolling: touch !important; scrollbar-width: none !important;">
-                <div class="slider-track" style="display: flex !important; flex-wrap: nowrap !important; gap: 24px !important; padding: 10px 0 !important; width: max-content !important;">
+                <div class="slider-track" style="display: flex !important; flex-wrap: nowrap !important; gap: 12px !important; padding: 10px 0 !important; width: max-content !important;">
                     <?php 
                     // Using manually selected bestsellers from controller
                     if (empty($bestsellers)) $bestsellers = array_slice($featured, 0, 5); 
