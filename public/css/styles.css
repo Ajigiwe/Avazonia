@@ -448,12 +448,14 @@ img { display: block; max-width: 100%; }
 }
 .nav-search-pill {
     position: relative; width: 100%; display: flex; align-items: center;
+    max-width: 100%; box-sizing: border-box;
 }
 .nav-search-pill input {
     width: 100%; height: 44px; padding: 0 48px 0 20px;
     background: #f4f5f7; border: 1px solid transparent; border-radius: 100px;
     font-family: var(--f-body); font-size: 14px; font-weight: 500;
     color: var(--ink); transition: all .3s var(--ease);
+    box-sizing: border-box; min-width: 0;
 }
 .nav-search-pill input:focus {
     background: #fff; border-color: var(--ink); outline: none;
@@ -523,11 +525,17 @@ img { display: block; max-width: 100%; }
 }
 
 @media (max-width: 1024px) {
-    .nav-top { display: grid; grid-template-columns: 44px 1fr 108px; align-items: center; gap: 24px; }
+    .nav-top { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 12px; }
     .nav-logo-text { font-size: 18px; white-space: nowrap; }
-    .nav-right-icons { gap: 12px; }
+    .nav-right-icons { gap: 8px; }
     .nav-cat-rail { display: none; }
     .desktop-only { display: none !important; }
+}
+@media (max-width: 400px) {
+    .nav-top { gap: 8px; }
+    .nav-brand-text { font-size: 24px; }
+    .nav-icon-btn { width: 34px; height: 34px; border-radius: 10px; }
+    .nav-icon-btn svg { width: 18px; height: 18px; }
 }
 
 @media (min-width: 1025px) {
@@ -780,12 +788,16 @@ h2.hero-heading .outline {
 
 /* ── UNIVERSAL MOBILE OVERRIDES ────────────────────────── */
 @media (max-width: 768px) {
+  /* Prevent horizontal scroll on mobile */
+  html, body { overflow-x: hidden !important; }
+
   /* Reduce Top Spacing for Mobile (Search Header is fixed) */
   .shop-content, .cart-page, .co-page, .auth-section {
     padding-top: 0 !important;
   }
   
   .container { padding: 0 16px !important; }
+  .nav-inner { padding: 0 12px !important; }
 
   /* Product Gallery Thumbnails */
   .product-gallery div[style*="grid-template-columns: repeat(5, 1fr)"] {
