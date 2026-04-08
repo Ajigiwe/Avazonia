@@ -1108,11 +1108,20 @@ h2.hero-heading .outline {
 
 /* ── BESTSELLERS SECTION ────────────────────────────── */
 .sec-head {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  margin-bottom: 48px; gap: 24px;
+  display: flex; align-items: flex-end; gap: 32px;
+  margin-bottom: 48px; border-bottom: 1px solid var(--extra-light-gray);
+  padding-bottom: 16px;
+}
+.sec-head > div:first-child {
+    flex: 1; display: flex; align-items: flex-end; gap: 24px;
+}
+.sec-head > div:first-child::after {
+    content: ''; flex: 1; height: 1px; background: #e0e0e0;
+    margin-bottom: 8px; /* Perfectly aligned with the bottom of the text */
 }
 @media (max-width: 768px) {
-  .sec-head { flex-direction: column; align-items: flex-start; gap: 16px; margin-bottom: 32px; }
+  .sec-head { flex-direction: column; align-items: flex-start; gap: 16px; margin-bottom: 32px; border: none; padding: 0; }
+  .sec-head > div:first-child::after { display: none; }
 }
 .sec-over {
   font-family: var(--f-mono); font-size: 9px; font-weight: 500;
