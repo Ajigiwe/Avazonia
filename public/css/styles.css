@@ -509,7 +509,7 @@ img { display: block; max-width: 100%; }
     /* Dedicated Category Rail (Row 2) */
     .nav-cat-rail {
         grid-column: 1 / 4; grid-row: 2;
-        display: flex; justify-content: center; gap: 40px; 
+        display: flex; justify-content: center; gap: 64px; 
         padding: 16px 0; border-top: 1px solid rgba(0,0,0,0.03); margin-top: 16px;
     }
     .nav-cat-link {
