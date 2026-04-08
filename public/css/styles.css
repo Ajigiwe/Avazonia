@@ -480,7 +480,7 @@ img { display: block; max-width: 100%; }
 
 /* Desktop Dual-Rail Restoration */
 @media (min-width: 1025px) {
-    .nav { padding: 12px 0 0; }
+    .nav { padding: 8px 0 0; }
     .nav-inner { 
         display: grid;
         grid-template-columns: 200px 1fr 200px;
@@ -509,8 +509,8 @@ img { display: block; max-width: 100%; }
     /* Dedicated Category Rail (Row 2) */
     .nav-cat-rail {
         grid-column: 1 / 4; grid-row: 2;
-        display: flex; justify-content: center; gap: 64px; 
-        padding: 16px 0; border-top: 1px solid rgba(0,0,0,0.03); margin-top: 16px;
+        display: flex; justify-content: center; gap: 40px; 
+        padding: 10px 0; border-top: 1px solid rgba(0,0,0,0.03); margin-top: 8px;
     }
     .nav-cat-link {
         font-family: var(--f-semi); font-size: 13px; font-weight: 700;
