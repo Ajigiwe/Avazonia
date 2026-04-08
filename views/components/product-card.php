@@ -67,7 +67,10 @@ if (!filter_var($imgUrl, FILTER_VALIDATE_URL)) {
             </div>
             
             <div class="card-price-area">
-                <div class="card-price">₵<?= number_format($p['price_ghs'], 0) ?><?php if($p['compare_at_price_ghs'] > $p['price_ghs']): ?> - ₵<?= number_format($p['compare_at_price_ghs'], 0) ?><?php endif; ?></div>
+                <div class="card-price">₵<?= number_format($p['price_ghs'], 0) ?></div>
+                <?php if($p['compare_at_price_ghs'] > $p['price_ghs']): ?>
+                    <div class="card-price-old">₵<?= number_format($p['compare_at_price_ghs'], 0) ?></div>
+                <?php endif; ?>
             </div>
         </div>
     </a>
