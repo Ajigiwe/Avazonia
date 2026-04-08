@@ -163,9 +163,9 @@ img { display: block; max-width: 100%; }
   height: 100%; display: flex; align-items: center; justify-content: space-between;
 }
 .nav-logo-img {
-    height: 44px; /* Increased for better legibility of wide wordmarks */
+    height: 60px; /* Significantly increased for a premium, bold look */
     width: auto; 
-    max-width: 180px; /* Ensures wide logos don't overwhelm the mobile nav */
+    max-width: 240px; 
     object-fit: contain;
     transition: transform .3s var(--ease);
 }
@@ -174,8 +174,8 @@ img { display: block; max-width: 100%; }
 }
 @media (max-width: 1024px) {
     .nav-logo-img { 
-        height: 32px; 
-        max-width: 140px;
+        height: 44px; /* Much larger on mobile to be readable */
+        max-width: 180px;
     }
 }
 .nav-links { display: flex; gap: 36px; align-items: center; }
