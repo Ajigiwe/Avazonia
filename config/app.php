@@ -2,12 +2,14 @@
 // config/app.php
 
 // 🟢 LIGHTWEIGHT .ENV LOADER
-// Load .env file from the root directory and set environment variables
 $envPath = __DIR__ . '/../.env';
+$debugMsg = "Env path: $envPath\n";
+
 if (file_exists($envPath)) {
+    $debugMsg .= "File exists. Reading...\n";
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue; // Skip comments
+        if (strpos(trim($line), '#') === 0) continue; 
         $parts = explode('=', $line, 2);
         if (count($parts) === 2) {
             $key = trim($parts[0]);
@@ -17,10 +19,23 @@ if (file_exists($envPath)) {
             $_SERVER[$key] = $val;
         }
     }
+} else {
+    $debugMsg .= "CRITICAL: .env file NOT FOUND at $envPath\n";
 }
 
+// 🔴 EMERGENCY FALLBACK FOR PRODUCTION (Corrects the 'root' error)
+if (empty($_ENV['DB_USER']) || $_ENV['DB_USER'] === 'root') {
+    $debugMsg .= "Using fallback credentials for production.\n";
+    $_ENV['DB_HOST'] = 'localhost';
+    $_ENV['DB_NAME'] = 'avazonia_avazonia';
+    $_ENV['DB_USER'] = 'avazonia_admin';
+    $_ENV['DB_PASS'] = 'Avazonia123@';
+}
+
+// Log status for troubleshooting
+file_put_contents(__DIR__ . '/../env_debug.log', date('Y-m-d H:i:s') . ": " . $debugMsg, FILE_APPEND);
+
 // 🟢 DYNAMIC SETTINGS LOADER
-// Load settings from database to override .env defaults
 require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/../core/Model.php';
 require_once __DIR__ . '/../models/Settings.php';
