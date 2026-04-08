@@ -187,7 +187,7 @@ img { display: block; max-width: 100%; }
 @media (max-width: 1024px) {
     .nav-brand-text { font-size: 32px; }
 }
-.nav-links { display: flex; gap: 36px; align-items: center; }
+.nav-links { display: flex; gap: 64px; align-items: center; }
 .nav-link {
   font-family: var(--f-semi); font-size: 13px; font-weight: 800;
   letter-spacing: .12em; color: var(--mid-gray); text-transform: uppercase;
