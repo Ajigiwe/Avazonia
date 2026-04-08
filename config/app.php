@@ -9,11 +9,18 @@ if (file_exists($envPath)) {
     $debugMsg .= "File exists. Reading...\n";
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue; 
+        $line = trim($line);
+        if ($line === '' || strpos($line, '#') === 0) continue; 
+        
         $parts = explode('=', $line, 2);
         if (count($parts) === 2) {
             $key = trim($parts[0]);
             $val = trim($parts[1]);
+            
+            // Strip quotes and comments from the value
+            $val = preg_replace('/#.*$/', '', $val);
+            $val = trim($val, " \t\n\r\0\x0B\"'");
+            
             putenv("$key=$val");
             $_ENV[$key] = $val;
             $_SERVER[$key] = $val;
