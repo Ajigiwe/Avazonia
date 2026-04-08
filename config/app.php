@@ -23,13 +23,15 @@ if (file_exists($envPath)) {
     $debugMsg .= "CRITICAL: .env file NOT FOUND at $envPath\n";
 }
 
-// 🔴 EMERGENCY FALLBACK FOR PRODUCTION (Corrects the 'root' error)
-if (empty($_ENV['DB_USER']) || $_ENV['DB_USER'] === 'root') {
-    $debugMsg .= "Using fallback credentials for production.\n";
+// 🔴 EMERGENCY FALLBACK FOR PRODUCTION (Corrects the 'root' and 'localhost' paths)
+if (empty($_ENV['DB_USER']) || $_ENV['DB_USER'] === 'root' || strpos(getenv('APP_URL'), 'localhost') !== false) {
+    $debugMsg .= "Using fallback credentials & URL for production.\n";
     $_ENV['DB_HOST'] = 'localhost';
     $_ENV['DB_NAME'] = 'avazonia_avazonia';
     $_ENV['DB_USER'] = 'avazonia_admin';
     $_ENV['DB_PASS'] = 'Avazonia123@';
+    $_ENV['APP_URL'] = 'https://www.avazonia.com';
+    $_SERVER['APP_URL'] = 'https://www.avazonia.com';
 }
 
 // Log status for troubleshooting
