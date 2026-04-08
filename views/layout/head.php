@@ -37,9 +37,7 @@
             --nav-offset: 0px;
         }
         @media (min-width: 1024px) {
-            .products-grid, .product-grid {
-                grid-template-columns: repeat(<?= GRID_DENSITY ?>, 1fr) !important;
-            }
+            .nav-cat-rail { display: flex; }
         }
         .page-fade { transition: opacity 0.4s ease, transform 0.4s ease; }
         .page-fade.is-loading { opacity: 0; transform: translateY(10px); }
