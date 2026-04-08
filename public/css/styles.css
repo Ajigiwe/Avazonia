@@ -1123,8 +1123,8 @@ h2.hero-heading .outline {
 
 .products-grid, .product-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
     margin-bottom: 80px;
 }
 
@@ -1386,13 +1386,7 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
 }
 .p-item-price::before { content: '₵'; }
 
-/* Apply similar raw style to Bestsellers cards */
 /* ── PRODUCT GRID & CARDS ───────────────────────────── */
-.products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 24px 16px;
-}
 
 .card {
     display: flex;
@@ -1412,8 +1406,8 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
 
 .card-img-wrap {
     position: relative;
-    aspect-ratio: 4/5;
-    background: #fff;
+    aspect-ratio: 1/1;
+    background: #f8f8f8;
     overflow: hidden;
 }
 
@@ -1421,15 +1415,14 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
     width: 100%;
     height: 100%;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
-    padding: 6px 12px 18px 12px;
+    padding: 8px;
 }
 .card-img img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    margin-top: -10%;
     transition: transform .6s var(--ease);
 }
 .card:hover .card-img img { transform: scale(1.05); }
