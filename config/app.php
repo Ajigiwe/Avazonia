@@ -60,7 +60,7 @@ if (!defined('WHATSAPP_NUMBER')) define('WHATSAPP_NUMBER', $dbSettings['whatsapp
 if (!defined('SITE_EMAIL')) define('SITE_EMAIL', $dbSettings['support_email'] ?? (getenv('SITE_EMAIL') ?: 'hello@avazonia.com.gh'));
 
 // Design Tokens (Derived from DB)
-if (!defined('PRIMARY_COLOR')) define('PRIMARY_COLOR', $dbSettings['primary_brand_color'] ?? '#E5001A');
+if (!defined('PRIMARY_COLOR')) define('PRIMARY_COLOR', $dbSettings['primary_brand_color'] ?? '#E60000');
 if (!defined('GRID_DENSITY')) define('GRID_DENSITY', (int)($dbSettings['grid_density'] ?? 5));
 if (!defined('ANNOUNCEMENT_BAR')) define('ANNOUNCEMENT_BAR', $dbSettings['announcement_text'] ?? (getenv('ANNOUNCEMENT_TEXT') ?: ''));
 if (!defined('FOOTER_NOTICE')) define('FOOTER_NOTICE', $dbSettings['footer_notice'] ?? ('© ' . date('Y') . ' AVAZONIA GH — CRAFTED IN TAKORADI'));
