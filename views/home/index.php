@@ -11,8 +11,8 @@ require_once __DIR__ . '/../layout/nav.php';
         <div class="sec-head reveal">
             <div>
                 <div class="sec-over" style="color: var(--red); font-size: 10px; font-weight: 800; letter-spacing: 0.15em; margin-bottom: 8px;">EXCLUSIVE OPPORTUNITY HUB</div>
-                <h2 class="hero-heading" style="color: var(--ink); font-size: clamp(28px, 4.5vw, 42px); margin-bottom: 0; line-height: 0.9;">
-                    FLASH<br>DEALS &<br>DROPS
+                <h2 class="hero-heading" style="color: var(--ink); font-size: clamp(24px, 4vw, 38px); margin-bottom: 0; line-height: 1;">
+                    FLASH DEALS & DROPS
                 </h2>
             </div>
             <a href="<?= APP_URL ?>/shop" style="font-family: var(--f-semi); font-size: 12px; text-transform: uppercase; color: var(--mid-gray); font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--light-gray); padding-bottom: 4px;">See all products →</a>
