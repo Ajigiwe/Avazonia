@@ -484,7 +484,7 @@ function initPaystack(evt) {
         const amountGhc = data.amount_ghs;
         
         let handler = PaystackPop.setup({
-            key: '<?= $paystackKey ?>',
+            key: '<?= PAYSTACK_PUBLIC_KEY ?>',
             email: formData.email,
             amount: Math.round(amountGhc * 100),
             currency: 'GHS',
