@@ -2109,23 +2109,23 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
 .support-banner-icon svg { width: 24px; height: 24px; stroke: #fff; stroke-width: 2.2; }
 
 .support-banner-text h3 { font-family: var(--f-display); font-size: 24px; font-weight: 800; margin-bottom: 2px; color: #fff; line-height: 1.1; }
-.support-banner-text p { font-size: 13px; color: rgba(255,255,255,0.85); margin: 0; max-width: 160px; line-height: 1.3; font-family: var(--f-body); }
+.support-banner-text p { font-size: 14px; color: #fff; margin: 0; max-width: 160px; line-height: 1.3; font-family: var(--f-body); opacity: 0.95; }
 
 .support-banner-center { text-align: left; }
 .support-banner-phone { display: flex; align-items: center; gap: 12px; margin-bottom: 2px; }
 .support-banner-phone svg { width: 20px; height: 20px; stroke: #fff; stroke-width: 1.8; opacity: 0.9; }
 .support-banner-phone span { font-family: var(--f-display); font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -0.02em; }
-.support-banner-hours { font-size: 11px; font-family: var(--f-body); color: rgba(255,255,255,0.7); font-weight: 500; padding-left: 32px; }
+.support-banner-hours { font-size: 12px; font-family: var(--f-body); color: #fff; font-weight: 500; padding-left: 32px; opacity: 0.85; }
 
 @media (max-width: 900px) {
     .support-banner-container { padding: 40px 15px; }
     .support-banner-inner { flex-direction: column; gap: 24px; text-align: center; padding: 32px 20px; border-radius: 20px; }
     .support-banner-left { padding: 0; border: none; flex-direction: column; gap: 12px; }
-    .support-banner-text p { max-width: 100%; font-size: 12px; opacity: 0.9; }
+    .support-banner-text p { max-width: 100%; font-size: 13px; opacity: 1; }
     .support-banner-text h3 { font-size: 22px; }
     .support-banner-phone { justify-content: center; gap: 8px; margin-top: 8px; }
     .support-banner-phone span { font-size: 20px; }
-    .support-banner-hours { padding: 0; font-size: 10px; opacity: 0.8; }
+    .support-banner-hours { padding: 0; font-size: 11px; opacity: 0.9; }
     .support-banner-icon { width: 48px; height: 48px; border-radius: 10px; }
     .support-banner-icon svg { width: 22px; height: 22px; }
 }
