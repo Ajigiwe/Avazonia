@@ -188,6 +188,32 @@ img { display: block; max-width: 100%; }
     .nav-brand-text { font-size: 32px; }
 }
 .nav-links { display: flex; gap: 64px; align-items: center; }
+
+/* Category Navigation Rail (Row 2) */
+.nav-cat-rail {
+    display: flex;
+    justify-content: center;
+    gap: 48px; /* High-end breathing room */
+    padding: 12px 0 16px;
+    border-top: 1px solid rgba(0,0,0,0.02);
+}
+.nav-cat-link {
+    font-family: var(--f-semi);
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--mid-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.3s var(--ease);
+    white-space: nowrap;
+}
+.nav-cat-link:hover, .nav-cat-link.active {
+    color: var(--red);
+    transform: translateY(-1px);
+}
+@media (max-width: 1024px) {
+    .nav-cat-rail { display: none; } /* Handled by mobile menu */
+}
 .nav-link {
   font-family: var(--f-semi); font-size: 13px; font-weight: 800;
   letter-spacing: .12em; color: var(--mid-gray); text-transform: uppercase;
