@@ -163,9 +163,9 @@ img { display: block; max-width: 100%; }
   height: 100%; display: flex; align-items: center; justify-content: space-between;
 }
 .nav-logo-img {
-    height: 60px; /* Significantly increased for a premium, bold look */
+    height: 100px; /* Mega-size for ultimate brand visibility */
     width: auto; 
-    max-width: 240px; 
+    max-width: 320px; 
     object-fit: contain;
     transition: transform .3s var(--ease);
 }
@@ -174,8 +174,8 @@ img { display: block; max-width: 100%; }
 }
 @media (max-width: 1024px) {
     .nav-logo-img { 
-        height: 44px; /* Much larger on mobile to be readable */
-        max-width: 180px;
+        height: 64px; /* Big and bold on mobile */
+        max-width: 220px;
     }
 }
 .nav-links { display: flex; gap: 36px; align-items: center; }
