@@ -187,6 +187,17 @@ img { display: block; max-width: 100%; }
 @media (max-width: 1024px) {
     .nav-brand-text { font-size: 32px; }
 }
+.footer-logo-text {
+    font-family: 'Outfit', sans-serif;
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--red);
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    display: inline-block;
+    margin-bottom: 8px;
+    user-select: none;
+}
 .nav-links { display: flex; gap: 64px; align-items: center; }
 
 /* Category Navigation Rail (Row 2) */

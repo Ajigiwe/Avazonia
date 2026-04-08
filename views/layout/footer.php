@@ -10,8 +10,8 @@ global $dbSettings;
         <div class="footer-top">
             <!-- Identity Pillar -->
             <div class="reveal">
-                <a href="<?= APP_URL ?>" class="footer-logo-img">
-                    <img src="<?= APP_URL ?>/public/assets/img/logo.jpg" alt="<?= APP_NAME ?>" style="height: 48px; width: auto; display: block; margin-bottom: 12px; object-fit: contain;">
+                <a href="<?= APP_URL ?>" class="footer-logo-link">
+                    <span class="footer-logo-text">AVAZONIA</span>
                 </a>
                 <p class="footer-newsletter-disclaimer" style="margin-bottom: 2px; font-size: 12px; opacity: 0.8;"><?= htmlspecialchars($dbSettings['footer_address'] ?? 'Q4 Gibbefish Street Beach Road Takoradi, Ghana') ?></p>
                 <a href="https://maps.google.com" target="_blank" class="footer-directions-link" style="margin-bottom: 12px;">Get Directions</a>
