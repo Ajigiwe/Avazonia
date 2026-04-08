@@ -1123,7 +1123,8 @@ h2.hero-heading .outline {
 
 .products-grid, .product-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, 180px);
+    justify-content: center;
     gap: 12px;
     margin-bottom: 80px;
 }
