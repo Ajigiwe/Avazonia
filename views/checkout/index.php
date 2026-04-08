@@ -304,6 +304,12 @@ body { background: #f8f8f8; color: #111; font-family: var(--f-body); }
                     </button>
 
                     <div class="co-sec-note">🔒 SECURED BY PAYSTACK · PCI-DSS</div>
+                    
+                    <?php if (empty(PAYSTACK_PUBLIC_KEY)): ?>
+                        <div style="margin-top: 12px; padding: 12px; border: 1px solid #f44336; border-radius: 4px; color: #f44336; font-family: var(--f-mono); font-size: 10px; text-transform: uppercase;">
+                            ⚠️ PAYSTACK_KEY_MISSING: Check live .env file
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
