@@ -1126,12 +1126,12 @@ h2.hero-heading .outline {
 }
 @media (max-width: 768px) {
   .sec-head { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 24px; border: none; padding: 0; }
-  .sec-head > div:first-child { width: 100%; display: flex; align-items: center; gap: 12px; overflow: visible; }
-  .sec-title-box { white-space: nowrap !important; width: auto; flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  .sec-head > div:first-child::after { display: block; flex: 1; height: 1px; background: #EEE; min-width: 10px; }
+  .sec-head > div:first-child { width: 100%; display: flex; align-items: center; gap: 0; overflow: visible; }
+  .sec-title-box { white-space: nowrap !important; width: 100% !important; flex-shrink: 0; overflow: visible; }
+  .sec-head > div:first-child::after { display: none !important; } /* Hide bridge line to prevent text cutoff on mobile */
   
-  .sec-title-box .hero-heading { font-size: clamp(18px, 6vw, 26px) !important; }
-  .sec-title-box .sec-over { font-size: 8px !important; margin-bottom: 4px; }
+  .sec-title-box .hero-heading { font-size: clamp(18px, 8vw, 28px) !important; }
+  .sec-title-box .sec-over { font-size: 8px !important; margin-bottom: 4px; border-left: 2px solid var(--red); padding-left: 8px; }
 }
 .sec-over {
   font-family: var(--f-mono); font-size: 9px; font-weight: 500;
