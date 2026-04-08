@@ -2,11 +2,24 @@
 // config/app.php
 
 // 🟢 LIGHTWEIGHT .ENV LOADER
-$envPath = __DIR__ . '/../.env';
-$debugMsg = "Env path: $envPath\n";
+$pathsToTry = [
+    __DIR__ . '/../.env',
+    $_SERVER['DOCUMENT_ROOT'] . '/.env',
+    getcwd() . '/.env',
+    __DIR__ . '/.env'
+];
 
-if (file_exists($envPath)) {
-    $debugMsg .= "File exists. Reading...\n";
+$envPath = null;
+foreach ($pathsToTry as $path) {
+    if (file_exists($path) && is_readable($path)) {
+        $envPath = $path;
+        break;
+    }
+}
+
+$debugMsg = "Resolved Env Path: " . ($envPath ?: "NONE FOUND") . "\n";
+
+if ($envPath) {
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
         $line = trim($line);
@@ -17,7 +30,7 @@ if (file_exists($envPath)) {
             $key = trim($parts[0]);
             $val = trim($parts[1]);
             
-            // Strip quotes and comments from the value
+            // Strip quotes and trailing comments
             $val = preg_replace('/#.*$/', '', $val);
             $val = trim($val, " \t\n\r\0\x0B\"'");
             
@@ -27,7 +40,7 @@ if (file_exists($envPath)) {
         }
     }
 } else {
-    $debugMsg .= "CRITICAL: .env file NOT FOUND at $envPath\n";
+    $debugMsg .= "CRITICAL: .env file NOT FOUND in any searched location.\n";
 }
 
 // 🔴 EMERGENCY FALLBACK FOR PRODUCTION (Corrects the 'root' and 'localhost' paths)
