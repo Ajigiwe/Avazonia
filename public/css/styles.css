@@ -462,7 +462,7 @@ img { display: block; max-width: 100%; }
     box-shadow: 0 8px 30px rgba(0,0,0,0.04);
 }
 .nav-search-pill .search-btn {
-    position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
     background: none; border: none; color: var(--mid-gray); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
 }
@@ -533,9 +533,9 @@ img { display: block; max-width: 100%; }
 }
 @media (max-width: 400px) {
     .nav-top { gap: 8px; }
-    .nav-brand-text { font-size: 24px; }
-    .nav-icon-btn { width: 34px; height: 34px; border-radius: 10px; }
-    .nav-icon-btn svg { width: 18px; height: 18px; }
+    .nav-brand-text { font-size: 20px; }
+    .nav-icon-btn { width: 32px; height: 32px; border-radius: 8px; }
+    .nav-icon-btn svg { width: 16px; height: 16px; }
 }
 
 @media (min-width: 1025px) {
@@ -1464,7 +1464,7 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
 
 /* Card Body */
 .card-body {
-    padding: 8px 8px 10px;
+    padding: 8px 10px 10px;
     display: flex;
     flex-direction: column;
     gap: 1px;
