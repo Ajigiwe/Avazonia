@@ -50,8 +50,8 @@ try {
     $dbSettings = [];
 }
 
-if (!defined('APP_NAME')) define('APP_NAME', $dbSettings['store_name'] ?? (getenv('APP_NAME') ?: 'Avazonia'));
-$rawUrl = getenv('APP_URL') ?: 'http://localhost/avazonia';
+if (!defined('APP_NAME')) define('APP_NAME', $dbSettings['store_name'] ?? ($_ENV['APP_NAME'] ?? $_SERVER['APP_NAME'] ?? getenv('APP_NAME') ?: 'Avazonia'));
+$rawUrl = $_ENV['APP_URL'] ?? $_SERVER['APP_URL'] ?? getenv('APP_URL') ?: 'http://localhost/avazonia';
 $finalUrl = (strpos($rawUrl, 'http') === 0) ? $rawUrl : 'https://' . rtrim($rawUrl, '/');
 if (!defined('APP_URL')) define('APP_URL', $finalUrl);
 if (!defined('APP_PATH')) define('APP_PATH', parse_url(APP_URL, PHP_URL_PATH) ?: ''); // Subdirectory path for assets
