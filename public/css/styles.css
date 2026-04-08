@@ -1125,10 +1125,13 @@ h2.hero-heading .outline {
     margin-bottom: 8px; /* Perfectly aligned with the bottom of the text */
 }
 @media (max-width: 768px) {
-  .sec-head { flex-direction: column; align-items: flex-start; gap: 16px; margin-bottom: 32px; border: none; padding: 0; }
-  .sec-head > div:first-child { width: 100%; display: flex; align-items: center; }
-  .sec-title-box { white-space: nowrap !important; width: auto; flex-shrink: 0; }
-  .sec-head > div:first-child::after { display: block; flex: 1; height: 1px; background: #EEE; }
+  .sec-head { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 24px; border: none; padding: 0; }
+  .sec-head > div:first-child { width: 100%; display: flex; align-items: center; gap: 12px; overflow: visible; }
+  .sec-title-box { white-space: nowrap !important; width: auto; flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .sec-head > div:first-child::after { display: block; flex: 1; height: 1px; background: #EEE; min-width: 10px; }
+  
+  .sec-title-box .hero-heading { font-size: clamp(18px, 6vw, 26px) !important; }
+  .sec-title-box .sec-over { font-size: 8px !important; margin-bottom: 4px; }
 }
 .sec-over {
   font-family: var(--f-mono); font-size: 9px; font-weight: 500;
