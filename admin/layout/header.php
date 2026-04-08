@@ -17,7 +17,13 @@
             width: var(--sidebar-w); background: var(--ink); border-right: 1px solid rgba(255,255,255,0.05);
             display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 1000;
             transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            overflow-y: auto; /* Enable scrolling */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.1) transparent;
         }
+        
+        .admin-sidebar::-webkit-scrollbar { width: 4px; }
+        .admin-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         
         @media (max-width: 900px) {
             .admin-sidebar { transform: translateX(-100%); width: 280px; }
