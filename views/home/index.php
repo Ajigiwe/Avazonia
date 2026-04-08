@@ -9,12 +9,12 @@ require_once __DIR__ . '/../layout/nav.php';
 <section class="featured">
     <div class="container">
         <div class="sec-head reveal">
-            <div>
-                <div class="sec-over" style="color: var(--red); font-size: 10px; font-weight: 800; letter-spacing: 0.15em; margin-bottom: 8px;">EXCLUSIVE OPPORTUNITY HUB</div>
-                <h2 class="hero-heading" style="color: var(--ink); font-size: clamp(24px, 4vw, 38px); margin-bottom: 0; line-height: 1;">
-                    FLASH DEALS & DROPS
-                </h2>
-            </div>
+        <div class="sec-title-box">
+            <div class="sec-over" style="color: var(--red); font-size: 10px; font-weight: 800; letter-spacing: 0.15em; margin-bottom: 8px;">EXCLUSIVE OPPORTUNITY HUB</div>
+            <h2 class="hero-heading" style="color: var(--ink); font-size: clamp(24px, 4vw, 38px); margin-bottom: 0; line-height: 1;">
+                FLASH DEALS & DROPS
+            </h2>
+        </div>
             <a href="<?= APP_URL ?>/shop" style="font-family: var(--f-semi); font-size: 12px; text-transform: uppercase; color: var(--mid-gray); font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--light-gray); padding-bottom: 4px;">See all products →</a>
         </div>
 
@@ -41,10 +41,10 @@ require_once __DIR__ . '/../layout/nav.php';
 <section class="products-sec">
     <div class="container">
         <div class="sec-head reveal">
-            <div>
-                <div class="sec-over">Hand-picked</div>
-                <h2 class="hero-heading" style="color: var(--ink); font-size: 64px; margin-bottom: 0; line-height: 0.85;">Bestsellers</h2>
-            </div>
+        <div class="sec-title-box">
+            <div class="sec-over">Hand-picked</div>
+            <h2 class="hero-heading" style="color: var(--ink); font-size: 64px; margin-bottom: 0; line-height: 0.85;">Bestsellers</h2>
+        </div>
             <div style="display: flex; align-items: center; gap: 24px;">
                 <div class="slider-nav">
                     <button class="slider-nav-btn prev" id="slide-prev" aria-label="Previous">

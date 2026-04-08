@@ -1115,18 +1115,20 @@ h2.hero-heading .outline {
 .sec-head > div:first-child {
     flex: 1; display: flex; align-items: flex-end; gap: 24px; min-width: 0;
 }
-.sec-head > div:first-child > div {
-    flex-shrink: 0; white-space: nowrap;
+.sec-title-box {
+    flex-shrink: 0; white-space: nowrap !important;
+    display: flex; flex-direction: column; align-items: flex-start;
 }
+.hero-heading { max-width: none !important; white-space: nowrap !important; }
 .sec-head > div:first-child::after {
     content: ''; flex: 1; height: 1px; background: #e0e0e0;
     margin-bottom: 8px; /* Perfectly aligned with the bottom of the text */
 }
 @media (max-width: 768px) {
   .sec-head { flex-direction: column; align-items: flex-start; gap: 16px; margin-bottom: 32px; border: none; padding: 0; }
-  .sec-head > div:first-child { width: 100%; }
-  .sec-head > div:first-child > div { white-space: normal; flex-shrink: 1; }
-  .sec-head > div:first-child::after { display: none; }
+  .sec-head > div:first-child { width: 100%; display: flex; align-items: center; }
+  .sec-title-box { white-space: nowrap !important; width: auto; flex-shrink: 0; }
+  .sec-head > div:first-child::after { display: block; flex: 1; height: 1px; background: #EEE; }
 }
 .sec-over {
   font-family: var(--f-mono); font-size: 9px; font-weight: 500;
