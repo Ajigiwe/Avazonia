@@ -4,7 +4,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 <aside class="admin-sidebar">
     <div class="sidebar-brand">
-        <img src="<?= APP_URL ?>/public/assets/img/logo.jpg" alt="<?= APP_NAME ?>" style="height: 24px; width: auto; object-fit: contain;">
+        <img src="<?= APP_URL ?>/public/assets/img/logo-dark.jpg" alt="<?= APP_NAME ?>" style="height: 24px; width: auto; object-fit: contain;">
         <span>ADMIN</span>
     </div>
     <nav class="sidebar-nav">
