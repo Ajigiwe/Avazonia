@@ -45,8 +45,8 @@ if ($envPath) {
 
 // 🔴 EMERGENCY FALLBACK FOR PRODUCTION (Non-sensitive defaults only)
 // Actual credentials MUST come from the .env file on the server
-if (empty($_ENV['APP_URL']) || strpos($_ENV['APP_URL'] ?? '', 'localhost') !== false) {
-    $debugMsg .= "Applying production URL fallback.\n";
+if (empty($_ENV['APP_URL'])) {
+    $debugMsg .= "Applying production URL fallback (URL was empty).\n";
     $_ENV['APP_URL'] = 'https://www.avazonia.com';
     $_SERVER['APP_URL'] = 'https://www.avazonia.com';
 }
