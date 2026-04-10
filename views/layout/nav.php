@@ -39,22 +39,22 @@ function getCatIcon($slug) {
             </button>
 
             <a href="<?= APP_URL ?>" class="nav-brand">
-                <svg viewBox="0 0 680 200" class="logo-svg" role="img" xmlns="http://www.w3.org/2000/svg">
+                <svg viewBox="0 0 680 160" class="logo-svg" role="img" xmlns="http://www.w3.org/2000/svg">
                   <defs>
-                    <clipPath id="a-clip-nav">
-                      <text x="40" y="158" font-family="'Outfit', sans-serif" font-weight="900" font-size="112px" letter-spacing="-3px">AVAZONIA</text>
+                    <clipPath id="aclip-nav">
+                      <polygon points="40,10 130,10 130,150 40,150"/>
                     </clipPath>
                   </defs>
-                  <text x="40" y="158"
-                    font-family="'Outfit', sans-serif"
-                    font-weight="900"
-                    font-size="112px"
-                    letter-spacing="-3px"
-                    fill="#8B0000">AVAZONIA</text>
-                  <line x1="90" y1="45" x2="60" y2="165"
-                    stroke="white"
-                    stroke-width="10"
-                    clip-path="url(#a-clip-nav)"/>
+                  <text x="38" y="138"
+                    font-family="'Barlow Condensed', 'Arial Narrow', Arial, sans-serif"
+                    font-weight="800"
+                    font-size="130"
+                    fill="#8B0000"
+                    letter-spacing="2"
+                    font-style="italic">AVAZONIA</text>
+                  <line x1="96" y1="12" x2="68" y2="138"
+                    stroke="white" stroke-width="9"
+                    clip-path="url(#aclip-nav)"/>
                 </svg>
             </a>
 
