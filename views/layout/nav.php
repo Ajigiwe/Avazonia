@@ -30,7 +30,7 @@ function getCatIcon($slug) {
 ?>
 
 <nav class="nav" id="main-nav">
-    <div class="container nav-inner">
+    <div class="container-fluid nav-inner">
         <!-- Row 1: Actions & Brand -->
         <div class="nav-top">
             <!-- Left: Toggle (Mobile Only) / Brand (Desktop) -->

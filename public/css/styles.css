@@ -128,7 +128,8 @@ img { display: block; max-width: 100%; }
 
 /* ── UTILITIES ──────────────────────────────────────────── */
 .container  { max-width: 1400px; margin: 0 auto; padding: 0 40px; }
-@media (max-width: 768px) { .container { padding: 0 16px; } }
+.container-fluid { width: 100%; padding: 0 40px; }
+@media (max-width: 768px) { .container, .container-fluid { padding: 0 16px; } }
 
 /* ── SCROLLBAR ──────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; }
@@ -141,7 +142,7 @@ img { display: block; max-width: 100%; }
   background: #ffffff;
   border-bottom: 1px solid rgba(0,0,0,0.05);
   transition: all .4s cubic-bezier(0.19, 1, 0.22, 1);
-  min-height: 120px; /* Reduced to bring contents together */
+  min-height: 100px; /* Further reduced */
   display: flex;
   align-items: center;
 }
