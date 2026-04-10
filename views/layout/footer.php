@@ -11,23 +11,7 @@ global $dbSettings;
             <!-- Identity Pillar -->
             <div class="reveal">
                 <a href="<?= APP_URL ?>" class="footer-logo-link">
-                    <svg viewBox="0 0 680 160" class="logo-svg" role="img" xmlns="http://www.w3.org/2000/svg">
-                      <defs>
-                        <clipPath id="aclip-footer">
-                          <polygon points="40,10 130,10 130,150 40,150"/>
-                        </clipPath>
-                      </defs>
-                      <text x="38" y="138"
-                        font-family="'Barlow Condensed', 'Arial Narrow', Arial, sans-serif"
-                        font-weight="800"
-                        font-size="130"
-                        fill="#8B0000"
-                        letter-spacing="2"
-                        font-style="italic">AVAZONIA</text>
-                      <line x1="96" y1="12" x2="68" y2="138"
-                        stroke="white" stroke-width="9"
-                        clip-path="url(#aclip-footer)"/>
-                    </svg>
+                    <img src="<?= APP_URL ?>/public/assets/img/logo.png" alt="AVAZONIA" class="logo-img">
                 </a>
                 <p class="footer-newsletter-disclaimer" style="margin-bottom: 2px; font-size: 12px; opacity: 0.8;"><?= htmlspecialchars($dbSettings['footer_address'] ?? 'Q4 Gibbefish Street Beach Road Takoradi, Ghana') ?></p>
                 <a href="https://maps.google.com" target="_blank" class="footer-directions-link" style="margin-bottom: 12px;">Get Directions</a>

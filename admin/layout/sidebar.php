@@ -4,23 +4,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 <aside class="admin-sidebar">
     <div class="sidebar-brand">
-        <svg viewBox="0 0 680 160" class="logo-svg admin" role="img" xmlns="http://www.w3.org/2000/svg" style="height: 32px; width: auto; margin-bottom: 4px;">
-          <defs>
-            <clipPath id="aclip-admin">
-              <polygon points="40,10 130,10 130,150 40,150"/>
-            </clipPath>
-          </defs>
-          <text x="38" y="138"
-            font-family="'Barlow Condensed', 'Arial Narrow', Arial, sans-serif"
-            font-weight="800"
-            font-size="130"
-            fill="#8B0000"
-            letter-spacing="2"
-            font-style="italic">AVAZONIA</text>
-          <line x1="96" y1="12" x2="68" y2="138"
-            stroke="white" stroke-width="9"
-            clip-path="url(#aclip-admin)"/>
-        </svg>
+        <img src="<?= APP_URL ?>/public/assets/img/logo.png" alt="AVAZONIA" class="logo-img admin" style="height: 32px; width: auto; margin-bottom: 4px;">
         <span>ADMIN</span>
     </div>
     <nav class="sidebar-nav">

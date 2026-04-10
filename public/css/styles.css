@@ -168,21 +168,22 @@ img { display: block; max-width: 100%; }
 .nav-inner {
   height: 100%; display: flex; align-items: center; justify-content: space-between;
 }
-.logo-svg {
+.logo-img {
     height: 60px;
     width: auto;
     display: block;
     transition: transform .3s var(--ease);
     user-select: none;
+    object-fit: contain;
 }
-.logo-svg:hover {
+.logo-img:hover {
     transform: scale(1.02);
 }
 @media (max-width: 1024px) {
-    .logo-svg { height: 40px; }
+    .logo-img { height: 40px; }
 }
 @media (max-width: 480px) {
-    .logo-svg { height: 32px; }
+    .logo-img { height: 32px; }
 }
 
 .nav-brand-text {
