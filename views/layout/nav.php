@@ -39,7 +39,23 @@ function getCatIcon($slug) {
             </button>
 
             <a href="<?= APP_URL ?>" class="nav-brand">
-                <span class="nav-brand-text">AVAZONIA</span>
+                <svg viewBox="0 0 680 200" class="logo-svg" role="img" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <clipPath id="a-clip-nav">
+                      <text x="40" y="158" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="112px">A</text>
+                    </clipPath>
+                  </defs>
+                  <text x="40" y="158"
+                    font-family="Arial Black, Impact, sans-serif"
+                    font-weight="900"
+                    font-size="112px"
+                    letter-spacing="-2px"
+                    fill="#8B0000">AVAZONIA</text>
+                  <line x1="81" y1="45" x2="57" y2="158"
+                    stroke="white"
+                    stroke-width="7"
+                    clip-path="url(#a-clip-nav)"/>
+                </svg>
             </a>
 
             <!-- Right: Icons -->

@@ -4,6 +4,23 @@ $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 <aside class="admin-sidebar">
     <div class="sidebar-brand">
+        <svg viewBox="0 0 680 200" class="logo-svg admin" role="img" xmlns="http://www.w3.org/2000/svg" style="height: 32px; width: auto; margin-bottom: 4px;">
+          <defs>
+            <clipPath id="a-clip-admin">
+              <text x="40" y="158" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="112px">A</text>
+            </clipPath>
+          </defs>
+          <text x="40" y="158"
+            font-family="Arial Black, Impact, sans-serif"
+            font-weight="900"
+            font-size="112px"
+            letter-spacing="-2px"
+            fill="#8B0000">AVAZONIA</text>
+          <line x1="81" y1="45" x2="57" y2="158"
+            stroke="white"
+            stroke-width="7"
+            clip-path="url(#a-clip-admin)"/>
+        </svg>
         <span>ADMIN</span>
     </div>
     <nav class="sidebar-nav">

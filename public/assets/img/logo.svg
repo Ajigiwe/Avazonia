@@ -1,0 +1,17 @@
+<svg width="680" height="200" viewBox="0 0 680 200" role="img" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="a-clip">
+      <text x="40" y="158" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="112px">A</text>
+    </clipPath>
+  </defs>
+  <text x="40" y="158"
+    font-family="Arial Black, Impact, sans-serif"
+    font-weight="900"
+    font-size="112px"
+    letter-spacing="-2px"
+    fill="#8B0000">AVAZONIA</text>
+  <line x1="81" y1="45" x2="57" y2="158"
+    stroke="white"
+    stroke-width="7"
+    clip-path="url(#a-clip)"/>
+</svg>

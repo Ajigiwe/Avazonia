@@ -168,35 +168,29 @@ img { display: block; max-width: 100%; }
 .nav-inner {
   height: 100%; display: flex; align-items: center; justify-content: space-between;
 }
-.nav-brand-text {
-    font-family: 'Outfit', sans-serif;
-    font-size: 42px;
-    font-weight: 900;
-    color: var(--red);
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
-    line-height: 1;
-    display: flex;
-    align-items: center;
+.logo-svg {
+    height: 60px;
+    width: auto;
+    display: block;
     transition: transform .3s var(--ease);
     user-select: none;
 }
-.nav-brand-text:hover {
+.logo-svg:hover {
     transform: scale(1.02);
 }
 @media (max-width: 1024px) {
-    .nav-brand-text { font-size: 32px; }
+    .logo-svg { height: 40px; }
 }
+@media (max-width: 480px) {
+    .logo-svg { height: 32px; }
+}
+
+.nav-brand-text {
+    display: none; /* Hide old text if still present anywhere */
+}
+
 .footer-logo-text {
-    font-family: 'Outfit', sans-serif;
-    font-size: 32px;
-    font-weight: 900;
-    color: var(--red);
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
-    display: inline-block;
-    margin-bottom: 8px;
-    user-select: none;
+    display: none;
 }
 .nav-links { display: flex; gap: 64px; align-items: center; }
 
