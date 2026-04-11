@@ -128,7 +128,7 @@ img { display: block; max-width: 100%; }
 
 /* ── UTILITIES ──────────────────────────────────────────── */
 .container  { max-width: 1400px; margin: 0 auto; padding: 0 40px; }
-.container-fluid { width: 100%; padding: 0 40px; }
+.container-fluid { width: 100%; padding: 0 15px; } /* Reduced from 40px */
 @media (max-width: 768px) { .container, .container-fluid { padding: 0 16px; } }
 
 /* ── SCROLLBAR ──────────────────────────────────────────── */
@@ -1602,13 +1602,13 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
     position: relative;
     display: flex;
     flex: 1;
-    max-width: 1000px; /* Stretched out */
-    height: 44px;
+    max-width: none; /* UNLIMITED STRETCH */
+    height: 48px; /* Slightly taller for dominance */
     background: #F2F2F2;
     border-radius: 100px;
     padding: 0 4px 0 20px;
     transition: all 0.3s;
-    margin: 0 24px; /* Reduced margin to allow more stretch */
+    margin: 0 40px; /* Healthy side breathing */
 }
 
 .slider-nav {
