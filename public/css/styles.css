@@ -2315,13 +2315,13 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
 .shipping-promise {
     display: flex; align-items: center; gap: 10px; font-family: var(--f-body); font-size: 15px; color: var(--ink); font-weight: 500;
 }
-.ship-date-highlight { color: #FFB800; font-weight: 700; }
+.ship-date-highlight { color: var(--red); font-weight: 700; }
 
 .social-sharing-circles {
     display: flex; gap: 10px;
 }
 .soc-circle {
-    width: 36px; height: 36px; border-radius: 50%; background: #FFB800; color: #fff;
+    width: 36px; height: 36px; border-radius: 50%; background: var(--red); color: #fff;
     display: flex; align-items: center; justify-content: center; text-decoration: none;
     transition: transform 0.3s var(--ease), background 0.3s;
 }
@@ -2339,11 +2339,11 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
 .help-pill-btn:hover { background: var(--ink); color: #fff; }
 
 .call-pill {
-    background: #fff; border: 1.5px solid #FFB800; padding: 0; overflow: hidden;
+    background: #fff; border: 1.5px solid var(--red); padding: 0; overflow: hidden;
 }
 .call-number { padding: 0 20px; color: var(--ink); font-weight: 700; }
 .call-action { 
-    background: #FFB800; color: #fff; height: 100%; padding: 0 20px; 
+    background: var(--red); color: #fff; height: 100%; padding: 0 20px; 
     display: flex; align-items: center; font-weight: 800; text-transform: uppercase;
 }
 
@@ -2355,7 +2355,7 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
     display: flex; align-items: center; gap: 20px;
 }
 .tbadge-icon {
-    width: 60px; height: 60px; border-radius: 50%; background: #FFF9E6; color: #FFB800;
+    width: 60px; height: 60px; border-radius: 50%; background: rgba(229, 0, 26, 0.08); color: var(--red);
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .tbadge-content h4 {
