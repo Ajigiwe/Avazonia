@@ -227,9 +227,7 @@ if (Session::get('user_id')) {
                 <div class="payment-trust-box">
                     <span class="payment-label">Supported payment types:</span>
                     <div class="payment-icons-row">
-                        <div class="pay-icon-card"><img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa"></div>
-                        <div class="pay-icon-card"><img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal"></div>
-                        <div class="pay-icon-card"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c7/Google_Pay_Logo.svg" alt="Google Pay"></div>
+                        <img src="<?= APP_URL ?>/public/assets/img/paystack.png" alt="Powered by Paystack" class="paystack-banner">
                     </div>
                 </div>
 
