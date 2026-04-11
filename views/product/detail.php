@@ -227,7 +227,7 @@ if (Session::get('user_id')) {
                 <div class="payment-trust-box">
                     <span class="payment-label">Supported payment types:</span>
                     <div class="payment-icons-row">
-                        <img src="<?= APP_URL ?>/public/assets/img/paystack-logo.jpg" alt="Powered by Paystack" class="paystack-banner">
+                        <img src="<?= APP_URL ?>/public/assets/img/paystack1.png" alt="Powered by Paystack" class="paystack-banner">
                     </div>
                 </div>
 
