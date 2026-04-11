@@ -2369,13 +2369,21 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
 
 /* ── FOOTER PARTNERS SECTION ──────────────────────────── */
 .footer-partners {
-    padding: 48px 0; border-top: 1px solid rgba(0,0,0,0.05); display: flex; 
-    justify-content: center; align-items: center; gap: 24px; flex-wrap: wrap; margin-bottom: 20px;
+    padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.05); display: flex; 
+    justify-content: center; align-items: center; gap: 40px; flex-wrap: wrap; margin-bottom: 20px;
 }
+.footer-socials { display: flex; gap: 12px; align-items: center; }
+.fsoc-round {
+    width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center; color: #fff;
+    transition: all 0.3s var(--ease);
+}
+.fsoc-round:hover { background: var(--red); transform: translateY(-3px); }
+
 .partner-box {
     background: #ffffff; /* White background for dark logos */
-    border: 1px solid rgba(0,0,0,0.05);
-    border-radius: 12px; padding: 12px 24px; height: 60px; display: flex; 
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px; padding: 12px 24px; height: 50px; display: flex; 
     align-items: center; justify-content: center; transition: all 0.3s var(--ease);
 }
 .partner-box:hover { transform: translateY(-4px); background: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
