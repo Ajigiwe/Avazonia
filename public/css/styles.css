@@ -398,14 +398,14 @@ img { display: block; max-width: 100%; }
 
 /* Row 1: Actions & Brand */
 .nav-top {
-    display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0;
+    display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 8px 0; gap: 24px;
 }
 
 .nav-brand {
-    justify-self: center; display: flex; align-items: center;
+    display: flex; align-items: center; flex-shrink: 0;
 }
-.nav-logo-img {
-    height: 48px;
+.logo-img {
+    height: 100px; /* Refined for Pizlar look */
     width: auto;
     object-fit: contain;
 }
@@ -446,24 +446,22 @@ img { display: block; max-width: 100%; }
     margin-top: -10px; /* Pull search bar up toward logo */
 }
 .nav-search-pill {
-    position: relative; width: 100%; display: flex; align-items: center;
-    max-width: 100%; box-sizing: border-box;
+    position: relative; flex: 1; display: flex; align-items: center;
+    background: #fff; border: 1px solid #e0e0e0; border-radius: 100px;
+    height: 48px; transition: all 0.3s var(--ease);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+.nav-search-pill:focus-within {
+    border-color: var(--ink); box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 .nav-search-pill input {
-    width: 100%; height: 44px; padding: 0 48px 0 20px;
-    background: #f4f5f7; border: 1px solid transparent; border-radius: 100px;
-    font-family: var(--f-body); font-size: 14px; font-weight: 500;
-    color: var(--ink); transition: all .3s var(--ease);
-    box-sizing: border-box; min-width: 0;
-}
-.nav-search-pill input:focus {
-    background: #fff; border-color: var(--ink); outline: none;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+    width: 100%; height: 100%; padding: 0 48px 0 20px;
+    background: transparent; border: none; border-radius: 100px;
+    font-family: var(--f-body); font-size: 14px; color: var(--ink);
 }
 .nav-search-pill .search-btn {
-    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; color: var(--mid-gray); cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
+    position: absolute; right: 12px; background: transparent; border: none;
+    color: var(--ink); cursor: pointer; display: flex; align-items: center;
 }
 .nav-search-pill .search-btn:hover { color: var(--ink); }
 
@@ -1601,18 +1599,7 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
 .acc-link.logout:hover { background: #FFF5F6; }
 
 /* ── SLIDER NAVIGATION ───────────────────────────── */
-.nav-search-pill {
-    position: relative;
-    display: flex;
-    flex: 1;
-    max-width: none; /* UNLIMITED STRETCH */
-    height: 48px; /* Slightly taller for dominance */
-    background: #F2F2F2;
-    border-radius: 100px;
-    padding: 0 4px 0 20px;
-    transition: all 0.3s;
-    margin: 0 12px; /* Reduced from 40px to push closer to logo */
-}
+/* slider nav removed from here to clean up */
 
 .slider-nav {
     display: flex;

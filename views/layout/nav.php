@@ -42,6 +42,15 @@ function getCatIcon($slug) {
                 <img src="<?= APP_URL ?>/public/assets/img/logo.png" alt="AVAZONIA" class="logo-img">
             </a>
 
+            <!-- Search (Now in Top Row) -->
+            <form action="<?= APP_URL ?>/shop" method="GET" class="nav-search-pill" id="nav-search-form">
+                <input type="text" name="q" id="nav-search-input" placeholder="Search for products..." required autocomplete="off" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
+                <button type="submit" class="search-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </button>
+                <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
+            </form>
+
             <!-- Right: Icons -->
             <div class="nav-right-icons">
                 <!-- Wishlist (Desktop Only) -->
@@ -90,17 +99,6 @@ function getCatIcon($slug) {
                     <span class="cart-badge"><?= array_sum(array_column(Session::get('cart', []), 'qty')) ?></span>
                 </a>
             </div>
-        </div>
-
-        <!-- Row 2 / Search Logic -->
-        <div class="nav-bottom">
-            <form action="<?= APP_URL ?>/shop" method="GET" class="nav-search-pill" id="nav-search-form">
-                <input type="text" name="q" id="nav-search-input" placeholder="Search for products..." required autocomplete="off" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
-                <button type="submit" class="search-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                </button>
-                <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
-            </form>
         </div>
 
         <!-- Row 2: Category Rail (Desktop Only) -->
