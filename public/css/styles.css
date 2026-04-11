@@ -2373,7 +2373,8 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
     justify-content: center; align-items: center; gap: 24px; flex-wrap: wrap; margin-bottom: 20px;
 }
 .partner-box {
-    background: rgba(229, 0, 26, 0.05); /* Semi-transparent theme color */
+    background: #ffffff; /* White background for dark logos */
+    border: 1px solid rgba(0,0,0,0.05);
     border-radius: 12px; padding: 12px 24px; height: 60px; display: flex; 
     align-items: center; justify-content: center; transition: all 0.3s var(--ease);
 }
