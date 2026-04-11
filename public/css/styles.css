@@ -398,7 +398,7 @@ img { display: block; max-width: 100%; }
 
 /* Row 1: Actions & Brand */
 .nav-top {
-    display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 8px 0; gap: 24px;
+    display: flex; justify-content: flex-start; align-items: center; width: 100%; padding: 8px 0; gap: 40px;
 }
 
 .nav-brand {
@@ -428,6 +428,7 @@ img { display: block; max-width: 100%; }
 /* Right Icons Group */
 .nav-right-icons {
     display: flex; gap: 10px; justify-content: flex-end; align-items: center;
+    margin-left: auto; /* Pushes icons to the right while logo/search stay left */
 }
 
 /* Cart Badge Positioning */
