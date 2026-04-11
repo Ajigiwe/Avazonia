@@ -524,17 +524,17 @@ img { display: block; max-width: 100%; }
 
 @media (max-width: 1024px) {
     .nav-top { 
-        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; 
-        padding: 8px 12px; gap: 12px;
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; 
+        padding: 4px 12px 8px; gap: 12px;
     }
-    .nav-brand { order: 2; flex: 1; display: flex; justify-content: center; }
     .hamburger-square { order: 1; flex-shrink: 0; }
-    .nav-right-icons { order: 3; flex-shrink: 0; margin-left: 0; }
+    .nav-brand { order: 2; flex-shrink: 0; margin-left: 4px; }
+    .nav-right-icons { order: 3; margin-left: auto; gap: 8px; flex-shrink: 0; }
     
     .nav-search-pill { 
-        order: 4; width: 100%; flex-basis: 100%; margin-top: 4px; 
+        order: 4; width: 100%; flex-basis: 100%; margin-top: 2px;
     }
-    .logo-img { height: 32px; }
+    .logo-img { height: 36px; } /* Slightly larger for visibility */
     .nav-cat-rail { display: none; }
     .desktop-only { display: none !important; }
 }
