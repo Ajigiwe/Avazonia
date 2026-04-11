@@ -202,8 +202,8 @@ img { display: block; max-width: 100%; }
     display: flex;
     justify-content: center;
     gap: 32px; /* Smoother, tighter gap */
-    padding: 0px 0 6px; /* Reduced top padding */
-    margin-top: -12px; /* Pull rail up toward search bar */
+    padding: 0; 
+    margin-top: -30px; /* Extreme lift toward search bar */
     border-top: 1px solid rgba(0,0,0,0.02);
 }
 .nav-cat-link {
@@ -509,7 +509,7 @@ img { display: block; max-width: 100%; }
     .nav-cat-rail {
         grid-column: 1 / 4; grid-row: 2;
         display: flex; justify-content: center; gap: 40px; 
-        padding: 0; border-top: 1px solid rgba(0,0,0,0.03); margin-top: -8px; /* Pulled up */
+        padding: 0; border-top: 1px solid rgba(0,0,0,0.03); margin-top: -24px; /* Extreme pull up */
     }
     .nav-cat-link {
         font-family: var(--f-semi); font-size: 13px; font-weight: 700;
