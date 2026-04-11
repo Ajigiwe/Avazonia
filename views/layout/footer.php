@@ -20,8 +20,6 @@ global $dbSettings;
                     <li class="footer-contact-item" style="margin-bottom: 2px; font-size: 12px;">Email: <?= SITE_EMAIL ?></li>
                     <li class="footer-contact-item" style="margin-bottom: 0; font-size: 12px;">Phone: +<?= WHATSAPP_NUMBER ?></li>
                 </ul>
-
-            </div>
             </div>
 
             <!-- Company Pillar -->
