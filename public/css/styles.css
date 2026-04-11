@@ -238,7 +238,7 @@ img { display: block; max-width: 100%; }
   width: 1px; height: 16px; background: rgba(0,0,0,0.1); margin: 0 4px;
   align-self: center; opacity: 0.5;
 }
-.nav-actions { display: flex; align-items: center; gap: 48px; flex-wrap: nowrap; height: 100%; transition: gap .3s ease; }
+.nav-actions { display: flex; align-items: center; gap: 64px; flex-wrap: nowrap; height: 100%; transition: gap .3s ease; }
 @media (max-width: 1024px) {
     .nav-actions { gap: 20px; }
 }
@@ -1598,9 +1598,22 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
 .acc-link.logout:hover { background: #FFF5F6; }
 
 /* ── SLIDER NAVIGATION ───────────────────────────── */
+.nav-search-pill {
+    position: relative;
+    display: flex;
+    flex: 1;
+    max-width: 1000px; /* Stretched out */
+    height: 44px;
+    background: #F2F2F2;
+    border-radius: 100px;
+    padding: 0 4px 0 20px;
+    transition: all 0.3s;
+    margin: 0 24px; /* Reduced margin to allow more stretch */
+}
+
 .slider-nav {
     display: flex;
-    gap: 8px;
+    gap: 24px;
 }
 
 .slider-nav-btn {
