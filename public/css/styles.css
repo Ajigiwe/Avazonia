@@ -142,7 +142,8 @@ img { display: block; max-width: 100%; }
   background: #ffffff;
   border-bottom: 1px solid rgba(0,0,0,0.05);
   transition: all .4s cubic-bezier(0.19, 1, 0.22, 1);
-  min-height: 110px; /* Reduced to bring contents together */
+  min-height: auto; /* Allow content to dictate height */
+  padding: 0;
   display: flex;
   align-items: center;
 }
@@ -201,7 +202,7 @@ img { display: block; max-width: 100%; }
     display: flex;
     justify-content: center;
     gap: 32px; /* Smoother, tighter gap */
-    padding: 8px 0 10px;
+    padding: 4px 0 6px;
     border-top: 1px solid rgba(0,0,0,0.02);
 }
 .nav-cat-link {
@@ -388,7 +389,7 @@ img { display: block; max-width: 100%; }
 .nav {
     position: sticky; top: 0; z-index: 1000;
     background: #fff; border-bottom: 1px solid rgba(0,0,0,0.05);
-    padding: 8px 0 12px; transition: all .4s var(--ease);
+    padding: 0; transition: all .4s var(--ease);
 }
 .nav-inner {
     display: flex; flex-direction: column; gap: 0px; /* Removed gap to bring contents together */
@@ -396,7 +397,7 @@ img { display: block; max-width: 100%; }
 
 /* Row 1: Actions & Brand */
 .nav-top {
-    display: grid; grid-template-columns: 44px 1fr 100px; align-items: center; gap: 16px;
+    display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0;
 }
 
 .nav-brand {
