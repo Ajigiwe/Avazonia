@@ -2366,3 +2366,22 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
     .trust-badges-large { grid-template-columns: 1fr; }
     .trust-meta-row { flex-direction: column; align-items: flex-start; }
 }
+
+/* ── FOOTER PARTNERS SECTION ──────────────────────────── */
+.footer-partners {
+    padding: 48px 0; border-top: 1px solid rgba(0,0,0,0.05); display: flex; 
+    justify-content: center; align-items: center; gap: 24px; flex-wrap: wrap; margin-bottom: 20px;
+}
+.partner-box {
+    background: rgba(229, 0, 26, 0.05); /* Semi-transparent theme color */
+    border-radius: 12px; padding: 12px 24px; height: 60px; display: flex; 
+    align-items: center; justify-content: center; transition: all 0.3s var(--ease);
+}
+.partner-box:hover { transform: translateY(-4px); background: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+.partner-box img { max-height: 28px; width: auto; object-fit: contain; }
+
+@media (max-width: 600px) {
+    .footer-partners { gap: 16px; padding: 32px 0; }
+    .partner-box { padding: 10px 16px; height: 50px; }
+    .partner-box img { max-height: 22px; }
+}

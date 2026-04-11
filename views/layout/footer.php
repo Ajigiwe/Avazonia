@@ -97,6 +97,20 @@ global $dbSettings;
             </div>
         </div>
 
+
+        <!-- Partners Section -->
+        <div class="footer-partners">
+            <div class="partner-box">
+                <img src="<?= APP_URL ?>/public/assets/img/ghana post.webp" alt="Ghana Post">
+            </div>
+            <div class="partner-box">
+                <img src="<?= APP_URL ?>/public/assets/img/paystack1.png" alt="Paystack">
+            </div>
+            <div class="partner-box">
+                <img src="<?= APP_URL ?>/public/assets/img/uba logo.webp" alt="UBA Bank">
+            </div>
+        </div>
+
         <div class="footer-bottom">
         <div class="footer-copy">
             <?= FOOTER_NOTICE ?> • built by D.V INSTALLATIONS LTD
