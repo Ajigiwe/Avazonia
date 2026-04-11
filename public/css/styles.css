@@ -399,7 +399,7 @@ img { display: block; max-width: 100%; }
 
 /* Row 1: Actions & Brand */
 .nav-top {
-    display: flex; justify-content: flex-start; align-items: center; width: 100%; padding: 8px 0; gap: 40px;
+    display: flex; justify-content: flex-start; align-items: center; width: 100%; padding: 8px 0; gap: 64px; /* Increased gap to frame logo/search/icons group */
 }
 
 .nav-brand {
@@ -428,8 +428,8 @@ img { display: block; max-width: 100%; }
 
 /* Right Icons Group */
 .nav-right-icons {
-    display: flex; gap: 10px; justify-content: flex-end; align-items: center;
-    margin-left: auto; /* Pushes icons to the right while logo/search stay left */
+    display: flex; gap: 12px; align-items: center;
+    /* Removed margin-left: auto to bring them closer to search */
 }
 
 /* Cart Badge Positioning */
