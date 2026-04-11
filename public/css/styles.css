@@ -2286,3 +2286,83 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
     transition: all 0.3s;
 }
 .lightbox-close:hover { background: var(--red); transform: rotate(90deg); }
+
+/* ── PRODUCT TRUST & HELP SECTION ──────────────────────── */
+.product-trust-group {
+    margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--light-gray);
+}
+
+/* Payment Icons Box */
+.payment-trust-box {
+    background: #F8F9FF; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 32px;
+}
+.payment-label {
+    font-family: var(--f-body); font-size: 14px; color: var(--mid-gray); margin-bottom: 12px; display: block;
+}
+.payment-icons-row {
+    display: flex; justify-content: center; gap: 12px; align-items: center;
+}
+.pay-icon-card {
+    background: #fff; border: 1px solid rgba(0,0,0,0.05); border-radius: 6px; 
+    padding: 6px 12px; height: 32px; display: flex; align-items: center;
+}
+.pay-icon-card img { height: 18px; width: auto; object-fit: contain; }
+
+/* Shipping & Social Row */
+.trust-meta-row {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 20px;
+}
+.shipping-promise {
+    display: flex; align-items: center; gap: 10px; font-family: var(--f-body); font-size: 15px; color: var(--ink); font-weight: 500;
+}
+.ship-date-highlight { color: #FFB800; font-weight: 700; }
+
+.social-sharing-circles {
+    display: flex; gap: 10px;
+}
+.soc-circle {
+    width: 36px; height: 36px; border-radius: 50%; background: #FFB800; color: #fff;
+    display: flex; align-items: center; justify-content: center; text-decoration: none;
+    transition: transform 0.3s var(--ease), background 0.3s;
+}
+.soc-circle:hover { transform: translateY(-3px); background: var(--ink); }
+
+/* Help Pills */
+.help-pills-row {
+    display: flex; gap: 16px; margin-bottom: 48px; flex-wrap: wrap;
+}
+.help-pill-btn {
+    display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px;
+    background: #F0F2FF; border-radius: 24px; text-decoration: none;
+    font-family: var(--f-semi); font-size: 13px; color: var(--ink); transition: all 0.3s;
+}
+.help-pill-btn:hover { background: var(--ink); color: #fff; }
+
+.call-pill {
+    background: #fff; border: 1.5px solid #FFB800; padding: 0; overflow: hidden;
+}
+.call-number { padding: 0 20px; color: var(--ink); font-weight: 700; }
+.call-action { 
+    background: #FFB800; color: #fff; height: 100%; padding: 0 20px; 
+    display: flex; align-items: center; font-weight: 800; text-transform: uppercase;
+}
+
+/* Large Trust Badges */
+.trust-badges-large {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+}
+.tbadge-item {
+    display: flex; align-items: center; gap: 20px;
+}
+.tbadge-icon {
+    width: 60px; height: 60px; border-radius: 50%; background: #FFF9E6; color: #FFB800;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.tbadge-content h4 {
+    font-family: var(--f-display); font-size: 18px; font-weight: 900; color: var(--ink); margin: 0; line-height: 1.2;
+}
+
+@media (max-width: 600px) {
+    .trust-badges-large { grid-template-columns: 1fr; }
+    .trust-meta-row { flex-direction: column; align-items: flex-start; }
+}

@@ -220,23 +220,71 @@ if (Session::get('user_id')) {
                 </style>
             </form>
 
-            <div style="margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--light-gray); display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <span style="font-size: 20px;">🚚</span>
-                    <div>
-                        <div style="font-family: var(--f-semi); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--ink);">
-                            <?= $product['is_dropshipping'] ? 'Global Direct' : '1–3 Days Accra' ?>
-                        </div>
-                        <div style="font-family: var(--f-mono); font-size: 9px; color: var(--mid-gray); text-transform: uppercase; letter-spacing: .05em;">
-                            <?= $product['is_dropshipping'] ? '7-14 Days Delivery' : 'Free on orders ₵200+' ?>
-                        </div>
+
+            <!-- Premium Trust & Help Section -->
+            <div class="product-trust-group">
+                <!-- Payment Support -->
+                <div class="payment-trust-box">
+                    <span class="payment-label">Supported payment types:</span>
+                    <div class="payment-icons-row">
+                        <div class="pay-icon-card"><img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa"></div>
+                        <div class="pay-icon-card"><img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal"></div>
+                        <div class="pay-icon-card"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c7/Google_Pay_Logo.svg" alt="Google Pay"></div>
                     </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <span style="font-size: 20px;">🛡️</span>
-                    <div>
-                        <div style="font-family: var(--f-semi); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--ink);">12 Months Covered</div>
-                        <div style="font-family: var(--f-mono); font-size: 9px; color: var(--mid-gray); text-transform: uppercase; letter-spacing: .05em;">No-Stories Replacement</div>
+
+                <!-- Shipping & Social -->
+                <div class="trust-meta-row">
+                    <div class="shipping-promise">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--mid-gray);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><path d="M9 16l2 2 4-4"></path></svg>
+                        <span>Order now and your order ships by <span class="ship-date-highlight"><?= date('D, M d', strtotime('+3 days')) ?></span></span>
+                    </div>
+
+                    <div class="social-sharing-circles">
+                        <?php if (!empty($dbSettings['facebook_link'])): ?>
+                            <a href="<?= htmlspecialchars($dbSettings['facebook_link']) ?>" class="soc-circle" target="_blank"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
+                        <?php endif; ?>
+                        <?php if (!empty($dbSettings['youtube_link'])): ?>
+                            <a href="<?= htmlspecialchars($dbSettings['youtube_link']) ?>" class="soc-circle" target="_blank"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.42a2.78 2.78 0 0 0-1.94 2C1 8.11 1 12 1 12s0 3.89.46 5.58a2.78 2.78 0 0 0 1.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.42a2.78 2.78 0 0 0 1.94-2C23 15.89 23 12 23 12s0-3.89-.46-5.58zM9.75 15.02V8.98L15 12l-5.25 3.02z"></path></svg></a>
+                        <?php endif; ?>
+                        <?php if (!empty($dbSettings['instagram_link'])): ?>
+                            <a href="<?= htmlspecialchars($dbSettings['instagram_link']) ?>" class="soc-circle" target="_blank"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>
+                        <?php endif; ?>
+                        <?php if (!empty($dbSettings['tiktok_link'])): ?>
+                            <a href="<?= htmlspecialchars($dbSettings['tiktok_link']) ?>" class="soc-circle" target="_blank"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12a4 4 0 1 0 4 4V0h4a8.13 8.13 0 0 1-5 2V8a4 4 0 0 0-3 4z"></path></svg></a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Help Pills -->
+                <div class="help-pills-row">
+                    <a href="<?= APP_URL ?>/contact" class="help-pill-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        Need Help? Chat with an Expert
+                    </a>
+                    <a href="tel:+<?= WHATSAPP_NUMBER ?>" class="help-pill-btn call-pill">
+                        <span class="call-number">+<?= WHATSAPP_NUMBER ?></span>
+                        <span class="call-action">Call Us</span>
+                    </a>
+                </div>
+
+                <!-- Trust Badges -->
+                <div class="trust-badges-large">
+                    <div class="tbadge-item">
+                        <div class="tbadge-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12A10 10 0 1 1 12 2a10 10 0 0 1 10 10z"></path><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
+                        <div class="tbadge-content">
+                            <h4>Online Support 24/7</h4>
+                        </div>
+                    </div>
+                    <div class="tbadge-item">
+                        <div class="tbadge-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        </div>
+                        <div class="tbadge-content">
+                            <h4>Secure Payment</h4>
+                        </div>
                     </div>
                 </div>
             </div>
