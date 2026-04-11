@@ -182,10 +182,10 @@ img { display: block; max-width: 100%; }
     transform: scale(1.02);
 }
 @media (max-width: 1024px) {
-    .logo-img { height: 70px; flex-shrink: 0; }
+    .logo-img { height: 120px; flex-shrink: 0; width: auto; max-width: none; }
 }
 @media (max-width: 480px) {
-    .logo-img { height: 60px; flex-shrink: 0; }
+    .logo-img { height: 100px; flex-shrink: 0; width: auto; max-width: none; }
 }
 
 .nav-brand-text {
@@ -532,9 +532,10 @@ img { display: block; max-width: 100%; }
     .nav-right-icons { order: 3; margin-left: auto; gap: 8px; flex-shrink: 0; }
     
     .nav-search-pill { 
-        order: 4; width: 100%; flex-basis: 100%; margin-top: 2px;
+        order: 4; width: 100%; flex-basis: 100%; margin-top: 0;
     }
-    .logo-img { height: 70px; width: auto; flex-shrink: 0; } /* Forced size for mobile visibility */
+    .logo-img { height: 100px; width: auto; flex-shrink: 0; } /* MEGA SCALE */
+    .nav-brand { padding: 0; margin-left: 0; }
     .nav-cat-rail { display: none; }
     .desktop-only { display: none !important; }
 }
