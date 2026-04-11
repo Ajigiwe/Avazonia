@@ -392,7 +392,8 @@ img { display: block; max-width: 100%; }
     padding: 0; transition: all .4s var(--ease);
 }
 .nav-inner {
-    display: flex; flex-direction: column; gap: 0px; /* Removed gap to bring contents together */
+    display: flex; flex-direction: column; gap: 0px; 
+    max-width: 1400px; margin: 0 auto; /* Added max-width to keep elements clustered in the center */
 }
 
 /* Row 1: Actions & Brand */
@@ -1610,7 +1611,7 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
     border-radius: 100px;
     padding: 0 4px 0 20px;
     transition: all 0.3s;
-    margin: 0 40px; /* Healthy side breathing */
+    margin: 0 12px; /* Reduced from 40px to push closer to logo */
 }
 
 .slider-nav {
