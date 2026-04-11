@@ -182,10 +182,10 @@ img { display: block; max-width: 100%; }
     transform: scale(1.02);
 }
 @media (max-width: 1024px) {
-    .logo-img { height: 60px; }
+    .logo-img { height: 70px; flex-shrink: 0; }
 }
 @media (max-width: 480px) {
-    .logo-img { height: 60px; }
+    .logo-img { height: 60px; flex-shrink: 0; }
 }
 
 .nav-brand-text {
@@ -534,7 +534,7 @@ img { display: block; max-width: 100%; }
     .nav-search-pill { 
         order: 4; width: 100%; flex-basis: 100%; margin-top: 2px;
     }
-    .logo-img { height: 36px; } /* Slightly larger for visibility */
+    .logo-img { height: 70px; width: auto; flex-shrink: 0; } /* Forced size for mobile visibility */
     .nav-cat-rail { display: none; }
     .desktop-only { display: none !important; }
 }
