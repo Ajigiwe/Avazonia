@@ -2334,11 +2334,13 @@ form button[type="submit"]:hover { border-color: var(--red) !important; }
     background: #F0F2FF; border-radius: 24px; text-decoration: none;
     font-family: var(--f-semi); font-size: 13px; color: var(--ink); transition: all 0.3s;
 }
-.help-pill-btn:hover { background: var(--ink); color: #fff; }
+.help-pill-btn:hover { background: #eef1ff; transform: translateY(-2px); }
 
 .call-pill {
     background: #fff; border: 1.5px solid var(--red); padding: 0; overflow: hidden;
+    transition: all 0.3s;
 }
+.call-pill:hover { background: #fff !important; color: var(--ink) !important; border-color: var(--ink); }
 .call-number { padding: 0 20px; color: var(--ink); font-weight: 700; }
 .call-action { 
     background: var(--red); color: #fff; height: 100%; padding: 0 20px; 
