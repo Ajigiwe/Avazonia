@@ -1068,7 +1068,7 @@ img {
         padding: 0 32px 0 12px;
         font-size: 13px;
     }
-    
+
     .nav-search-pill .search-btn {
         right: 8px;
     }
@@ -1105,16 +1105,16 @@ img {
     .logo-img {
         height: 28px;
     }
-    
+
     .nav-top {
         padding: 4px;
         gap: 4px;
     }
-    
+
     .nav-search-pill input {
         font-size: 11px;
     }
-    
+
     /* Hide Wishlist on extra small screens to save space */
     .nav-icon-btn[aria-label="Wishlist"] {
         display: none;
@@ -4092,7 +4092,7 @@ form button[type="submit"]:hover {
 
 /* --- COMPACT NAVIGATION --- */
 #main-nav {
-    padding-top: 0px;
+    padding-top: 12px;
     padding-bottom: 12px;
     transition: all 0.3s ease;
 }
