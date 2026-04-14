@@ -42,7 +42,21 @@ function getCatIcon($slug) {
                 <img src="<?= APP_URL ?>/public/assets/img/logo.png" alt="AVAZONIA" class="logo-img">
             </a>
 
-            <!-- Categories Dropdown (Desktop Only) -->
+            
+
+            <!-- Search (Now in Top Row) -->
+            <form action="<?= APP_URL ?>/shop" method="GET" class="nav-search-pill" id="nav-search-form">
+                <input type="text" name="q" id="nav-search-input" placeholder="Search for products..." required autocomplete="off" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
+                <button type="submit" class="search-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </button>
+                <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
+            </form>
+
+            <!-- Right: Icons -->
+            <div class="nav-right-icons">
+                <!-- Wishlist (Desktop Only) -->
+                 <!-- Categories Dropdown (Desktop Only) -->
             <div class="nav-cat-trigger desktop-only" id="cat-trigger">
                 <div class="hamburger-mini">
                     <span></span><span></span><span></span>
@@ -64,19 +78,6 @@ function getCatIcon($slug) {
                     </a>
                 </div>
             </div>
-
-            <!-- Search (Now in Top Row) -->
-            <form action="<?= APP_URL ?>/shop" method="GET" class="nav-search-pill" id="nav-search-form">
-                <input type="text" name="q" id="nav-search-input" placeholder="Search for products..." required autocomplete="off" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
-                <button type="submit" class="search-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                </button>
-                <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
-            </form>
-
-            <!-- Right: Icons -->
-            <div class="nav-right-icons">
-                <!-- Wishlist (Desktop Only) -->
                 <a href="<?= APP_URL ?>/wishlist" class="nav-icon-btn desktop-only" aria-label="Wishlist">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                 </a>
