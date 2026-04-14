@@ -1033,9 +1033,9 @@ img {
         display: flex;
         flex-wrap: nowrap;
         align-items: center;
-        justify-content: flex-start;
-        padding: 4px 12px;
-        gap: 8px;
+        justify-content: space-between;
+        padding: 4px 8px;
+        gap: 4px;
     }
 
     .hamburger-square {
@@ -1051,7 +1051,7 @@ img {
     }
 
     .logo-img {
-        height: 60px;
+        height: 38px;
         width: auto;
         flex-shrink: 0;
     }
@@ -1059,15 +1059,24 @@ img {
     .nav-search-pill {
         order: 3;
         flex: 1;
-        margin: 0 8px;
-        min-width: 80px;
-        height: 40px;
+        margin: 0;
+        min-width: 40px;
+        height: 36px;
+    }
+
+    .nav-search-pill input {
+        padding: 0 32px 0 12px;
+        font-size: 13px;
+    }
+    
+    .nav-search-pill .search-btn {
+        right: 8px;
     }
 
     .nav-right-icons {
         order: 4;
-        margin-left: auto;
-        gap: 2px; /* Bring icons even closer as requested */
+        margin-left: 4px;
+        gap: 2px;
         flex-shrink: 0;
     }
 
@@ -1089,6 +1098,26 @@ img {
 
     .desktop-only {
         display: none !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo-img {
+        height: 28px;
+    }
+    
+    .nav-top {
+        padding: 4px;
+        gap: 4px;
+    }
+    
+    .nav-search-pill input {
+        font-size: 11px;
+    }
+    
+    /* Hide Wishlist on extra small screens to save space */
+    .nav-icon-btn[aria-label="Wishlist"] {
+        display: none;
     }
 }
 
