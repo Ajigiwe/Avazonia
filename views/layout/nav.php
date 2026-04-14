@@ -42,6 +42,29 @@ function getCatIcon($slug) {
                 <img src="<?= APP_URL ?>/public/assets/img/logo.png" alt="AVAZONIA" class="logo-img">
             </a>
 
+            <!-- Categories Dropdown (Desktop Only) -->
+            <div class="nav-cat-trigger desktop-only" id="cat-trigger">
+                <div class="hamburger-mini">
+                    <span></span><span></span><span></span>
+                </div>
+                <span class="nav-cat-label">Categories</span>
+                
+                <div class="cat-dropdown">
+                    <?php foreach ($navCategories as $cat): ?>
+                        <a href="<?= APP_URL ?>/shop?cat=<?= $cat['slug'] ?>" class="cat-drop-item">
+                            <span class="cat-drop-icon"><?= getCatIcon($cat['slug']) ?></span>
+                            <?= htmlspecialchars($cat['name']) ?>
+                        </a>
+                    <?php endforeach; ?>
+                    <a href="<?= APP_URL ?>/shop" class="cat-drop-item" style="border-top: 1px solid rgba(0,0,0,0.05); margin-top: 8px;">
+                        <span class="cat-drop-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+                        </span>
+                        Browse All
+                    </a>
+                </div>
+            </div>
+
             <!-- Search (Now in Top Row) -->
             <form action="<?= APP_URL ?>/shop" method="GET" class="nav-search-pill" id="nav-search-form">
                 <input type="text" name="q" id="nav-search-input" placeholder="Search for products..." required autocomplete="off" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
@@ -101,16 +124,6 @@ function getCatIcon($slug) {
             </div>
         </div>
 
-        <!-- Row 2: Category Rail (Desktop Only) -->
-        <div class="nav-cat-rail">
-            <?php foreach ($navCategories as $cat): ?>
-                <?php $isSelected = (isset($_GET['cat']) && $_GET['cat'] === $cat['slug']); ?>
-                <a href="<?= APP_URL ?>/shop?cat=<?= $cat['slug'] ?>" class="nav-cat-link <?= $isSelected ? 'active' : '' ?>">
-                    <?= htmlspecialchars($cat['name']) ?>
-                </a>
-            <?php endforeach; ?>
-            <a href="<?= APP_URL ?>/shop" class="nav-cat-link">More</a>
-        </div>
     </div>
 </nav>
 
