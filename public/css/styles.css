@@ -1031,11 +1031,11 @@ img {
 @media (max-width: 1024px) {
     .nav-top {
         display: flex;
-        flex-wrap: nowrap;
+        flex-wrap: wrap; /* Revert to wrap to allow second row */
         align-items: center;
-        justify-content: space-between;
-        padding: 4px 8px;
-        gap: 4px;
+        justify-content: flex-start;
+        padding: 8px 12px;
+        gap: 8px;
     }
 
     .hamburger-square {
@@ -1051,17 +1051,17 @@ img {
     }
 
     .logo-img {
-        height: 38px;
+        height: 48px; /* Slightly larger now that we have room */
         width: auto;
         flex-shrink: 0;
     }
 
     .nav-search-pill {
-        order: 3;
-        flex: 1;
-        margin: 0;
-        min-width: 40px;
-        height: 36px;
+        order: 4; /* Force to bottom row */
+        width: 100%;
+        flex-basis: 100%;
+        margin-top: 4px;
+        height: 44px;
     }
 
     .nav-search-pill input {
@@ -1074,9 +1074,9 @@ img {
     }
 
     .nav-right-icons {
-        order: 4;
-        margin-left: 4px;
-        gap: 2px;
+        order: 3; /* Swap order with search */
+        margin-left: auto;
+        gap: 4px;
         flex-shrink: 0;
     }
 
@@ -1103,21 +1103,20 @@ img {
 
 @media (max-width: 480px) {
     .logo-img {
-        height: 28px;
+        height: 36px;
     }
     
     .nav-top {
-        padding: 4px;
+        padding: 6px 10px;
         gap: 4px;
     }
     
-    .nav-search-pill input {
-        font-size: 11px;
+    .nav-search-pill {
+        height: 40px;
     }
-    
-    /* Hide Wishlist on extra small screens to save space */
-    .nav-icon-btn[aria-label="Wishlist"] {
-        display: none;
+
+    .nav-search-pill input {
+        font-size: 13px;
     }
 }
 
