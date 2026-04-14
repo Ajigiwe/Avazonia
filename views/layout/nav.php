@@ -59,9 +59,14 @@ function getCatIcon($slug) {
                  <!-- Categories Dropdown (Desktop Only) -->
             <div class="nav-cat-trigger desktop-only" id="cat-trigger">
                 <div class="hamburger-mini">
-                    <span></span><span></span><span></span>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
                 </div>
-                <span class="nav-cat-label">Categories</span>
+                <!-- <span class="nav-cat-label">Categories</span> -->
                 
                 <div class="cat-dropdown">
                     <?php foreach ($navCategories as $cat): ?>
