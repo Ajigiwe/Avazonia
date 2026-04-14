@@ -2072,9 +2072,16 @@ h2.hero-heading .outline {
 }
 
 .sec-head .hero-heading {
-    font-size: clamp(32px, 5vw, 64px);
+    font-size: clamp(20px, 5vw, 64px);
     max-width: none !important;
-    white-space: nowrap !important;
+    line-height: 0.9;
+}
+
+@media (max-width: 768px) {
+    .sec-head .hero-heading {
+        font-size: 28px !important;
+        white-space: normal !important;
+    }
 }
 
 .sec-head>div:first-child::after {
