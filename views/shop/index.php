@@ -11,7 +11,7 @@ require_once __DIR__ . '/../layout/nav.php';
         <div class="sec-head reveal">
             <div>
                 <div class="sec-over">THE DROP</div>
-                <h2 class="hero-heading" style="color: var(--ink); font-size: 64px; margin-bottom: 0; line-height: 0.85;">
+                <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.85;">
                     <?= $currentCat ? strtoupper($currentCat) : 'ALL PRODUCTS' ?>
                 </h2>
             </div>

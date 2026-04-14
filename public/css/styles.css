@@ -2071,7 +2071,8 @@ h2.hero-heading .outline {
     align-items: flex-start;
 }
 
-.hero-heading {
+.sec-head .hero-heading {
+    font-size: clamp(32px, 5vw, 64px);
     max-width: none !important;
     white-space: nowrap !important;
 }

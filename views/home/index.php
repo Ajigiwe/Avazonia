@@ -43,7 +43,7 @@ require_once __DIR__ . '/../layout/nav.php';
         <div class="sec-head reveal">
         <div class="sec-title-box">
             <div class="sec-over">Hand-picked</div>
-            <h2 class="hero-heading" style="color: var(--ink); font-size: 64px; margin-bottom: 0; line-height: 0.85;">Bestsellers</h2>
+            <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.85;">Bestsellers</h2>
         </div>
             <div style="display: flex; align-items: center; gap: 24px;">
                 <div class="slider-nav">
