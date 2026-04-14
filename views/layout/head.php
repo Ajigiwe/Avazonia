@@ -43,5 +43,14 @@
         .page-fade.is-loading { opacity: 0; transform: translateY(10px); }
     </style>
     <link rel="icon" type="image/jpeg" href="<?= APP_URL ?>/public/assets/img/logo.jpg">
+
+    <!-- PWA Support -->
+    <link rel="manifest" href="<?= APP_URL ?>/public/manifest.json">
+    <meta name="theme-color" content="<?= PRIMARY_COLOR ?>">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="<?= APP_NAME ?>">
+    <link rel="apple-touch-icon" href="<?= APP_URL ?>/public/assets/img/logo.png">
 </head>
 <body>
