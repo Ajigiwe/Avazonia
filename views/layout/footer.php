@@ -13,12 +13,12 @@ global $dbSettings;
                 <a href="<?= APP_URL ?>" class="footer-logo-link">
                     <img src="<?= APP_URL ?>/public/assets/img/logo.png" alt="AVAZONIA" class="logo-img">
                 </a>
-                <p class="footer-newsletter-disclaimer" style="margin-bottom: 2px; font-size: 12px; opacity: 0.8;"><?= htmlspecialchars($dbSettings['footer_address'] ?? 'Q4 Gibbefish Street Beach Road Takoradi, Ghana') ?></p>
+                <p class="footer-newsletter-disclaimer"><?= htmlspecialchars($dbSettings['footer_address'] ?? 'Q4 Gibbefish Street Beach Road Takoradi, Ghana') ?></p>
                 <a href="https://maps.google.com" target="_blank" class="footer-directions-link" style="margin-bottom: 12px;">Get Directions</a>
                 
-                <ul class="footer-contact-list" style="margin: 0;">
-                    <li class="footer-contact-item" style="margin-bottom: 2px; font-size: 12px;">Email: <?= SITE_EMAIL ?></li>
-                    <li class="footer-contact-item" style="margin-bottom: 0; font-size: 12px;">Phone: +<?= WHATSAPP_NUMBER ?></li>
+                <ul class="footer-contact-list">
+                    <li class="footer-contact-item">Email: <?= SITE_EMAIL ?></li>
+                    <li class="footer-contact-item">Phone: +<?= WHATSAPP_NUMBER ?></li>
                 </ul>
             </div>
 
@@ -44,12 +44,12 @@ global $dbSettings;
             <!-- Direct Support Pillar -->
             <div class="reveal rd3 footer-contact-column">
                 <h4 class="footer-col-label">Direct Support</h4>
-                <p class="footer-newsletter-disclaimer" style="margin-bottom: 16px;">Have any questions or concerns? Link with us directly via email.</p>
+                <p class="footer-newsletter-disclaimer">Have any questions or concerns? Link with us directly via email.</p>
                 <a href="mailto:<?= SITE_EMAIL ?>" class="footer-support-btn">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 10px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                     Email Our Team
                 </a>
-                <p class="footer-newsletter-disclaimer" style="margin-top: 20px; font-size: 10px; opacity: 0.6;">We typically respond within 24 hours.</p>
+                <p class="footer-newsletter-disclaimer" style="margin-top: 20px;">We typically respond within 24 hours.</p>
             </div>
         </div>
 
