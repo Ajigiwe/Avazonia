@@ -422,115 +422,124 @@ if (Session::get('user_id')) {
 
 
 <!-- ── REVIEWS SECTION ────────────────────────────────── -->
-<section id="reviews" class="reviews-sec" style="padding: 100px 0 60px; border-top: 1px solid var(--light-gray);">
+<!-- ── REVIEWS SECTION (COMPACT V2) ────────────────── -->
+<section id="reviews" class="reviews-sec-v2">
     <div class="container">
-        <div style="margin-bottom: 64px;">
-            <div class="sec-eyebrow">
-                <span class="eyebrow-text">Feedback</span>
-                <span class="eyebrow-line"></span>
-            </div>
-            <h2 style="font-family: var(--f-display); font-weight: 900; font-size: 32px; text-transform: uppercase; margin-bottom: 24px; line-height: 1;">Customer Reviews</h2>
-            
-            <div style="display: flex; align-items: center; gap: 20px; margin-top: 24px;">
-                <div style="font-family: var(--f-display); font-size: 40px; font-weight: 900; line-height: 1; color: var(--ink);"><?= number_format($avg_rating, 1) ?></div>
-                <div>
-                    <div class="card-rating" style="font-size: 20px; gap: 6px;">
-                        <?php 
-                        $rating = round($avg_rating ?? 5); 
-                        for ($i = 1; $i <= 5; $i++): 
-                        ?>
-                            <span class="star <?= $i <= $rating ? 'filled' : '' ?>">★</span>
-                        <?php endfor; ?>
-                    </div>
-                    <div style="font-family: var(--f-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--mid-gray); margin-top: 6px;">Based on <?= $review_count ?> reviews</div>
+        <!-- Summary Bar -->
+        <div class="review-summary-bar">
+            <div class="review-summary-left">
+                <div class="review-avg-box">
+                    <div class="review-avg-score"><?= number_format($avg_rating, 1) ?></div>
+                    <div class="review-avg-label">Avg. Rating</div>
                 </div>
+                <div class="review-summary-meta">
+                    <h3>Customer Reviews</h3>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="card-rating" style="font-size: 16px; gap: 4px;">
+                            <?php 
+                            $rating = round($avg_rating ?? 5); 
+                            for ($i = 1; $i <= 5; $i++): 
+                            ?>
+                                <span class="star <?= $i <= $rating ? 'filled' : '' ?>" style="color: <?= $i <= $rating ? 'var(--red)' : 'var(--light-gray)' ?>; font-size: 14px;">★</span>
+                            <?php endfor; ?>
+                        </div>
+                        <div class="review-count-small"><?= $review_count ?> Reviews</div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="write-review-toggle-btn" onclick="toggleReviewForm()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                Write a Review
+            </button>
+        </div>
+
+        <!-- Toggleable Form -->
+        <div id="review-form-wrapper" class="review-form-container">
+            <div class="review-form-inner">
+                <h3 style="font-family: var(--f-display); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .15em; margin-bottom: 32px; text-align: center;">Share Your Experience</h3>
+                <form action="<?= APP_URL ?>/api/review-add" method="POST" style="display: flex; flex-direction: column; gap: 24px;">
+                    <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                    <input type="hidden" name="slug" value="<?= $product['slug'] ?>">
+                    
+                    <div class="form-group">
+                        <label style="display: block; font-family: var(--f-semi); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .2em; color: var(--mid-gray); margin-bottom: 8px;">Full Name</label>
+                        <input type="text" name="name" required value="<?= Session::get('user_name', '') ?>" placeholder="Your Name" style="width: 100%; height: 48px; background: #fff; border: 1px solid var(--light-gray); padding: 0 16px; font-family: var(--f-body); font-size: 14px; outline: none; border-radius: 4px;">
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: block; font-family: var(--f-semi); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .2em; color: var(--mid-gray); margin-bottom: 8px;">Rating</label>
+                        <input type="hidden" name="rating" id="review-rating-val" value="5">
+                        <div class="star-rating-input" style="display: flex; gap: 8px; font-size: 24px; color: var(--light-gray); cursor: pointer;">
+                            <?php for($i=1; $i<=5; $i++): ?>
+                                <span class="star-pick-v2 active" data-value="<?= $i ?>" style="color: var(--red);">★</span>
+                            <?php endfor; ?>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: block; font-family: var(--f-semi); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .2em; color: var(--mid-gray); margin-bottom: 8px;">Review</label>
+                        <textarea name="comment" required placeholder="What do you think of this product?" style="width: 100%; height: 120px; background: #fff; border: 1px solid var(--light-gray); padding: 16px; font-family: var(--f-body); font-size: 14px; outline: none; resize: none; border-radius: 4px;"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-red" style="width: 100%; height: 52px; font-size: 11px;">Post Review →</button>
+                </form>
             </div>
         </div>
 
-        <div class="product-detail-layout" style="align-items: flex-start; gap: 48px; max-width: 900px;">
-            <!-- Left: Form -->
-            <div>
-                <!-- Submit Review Form -->
-                <div style="background: var(--off); padding: 32px; border-radius: 2px;">
-                    <h3 style="font-family: var(--f-display); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .15em; margin-bottom: 32px; color: var(--ink);">Write a review</h3>
-                    <form action="<?= APP_URL ?>/api/review-add" method="POST" style="display: flex; flex-direction: column; gap: 28px;">
-                        <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-                        <input type="hidden" name="slug" value="<?= $product['slug'] ?>">
-                        
-                        <div class="form-group">
-                            <label style="display: block; font-family: var(--f-semi); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .2em; color: var(--mid-gray); margin-bottom: 12px;">Full Name</label>
-                            <input type="text" name="name" required value="<?= Session::get('user_name', '') ?>" placeholder="Your Name" style="width: 100%; height: 52px; background: #fff; border: 1px solid var(--light-gray); padding: 0 20px; font-family: var(--f-body); font-size: 14px; outline: none; transition: border-color .3s;">
-                        </div>
-
-                        <div class="form-group">
-                            <label style="display: block; font-family: var(--f-semi); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .2em; color: var(--mid-gray); margin-bottom: 12px;">Your Rating</label>
-                            <input type="hidden" name="rating" id="review-rating-val" value="5">
-                            <div class="star-rating-input" style="display: flex; gap: 8px; font-size: 28px; line-height: 1; cursor: pointer; color: var(--light-gray);">
+        <!-- Review List -->
+        <div class="compact-review-list">
+            <?php if (empty($reviews)): ?>
+                <div style="padding: 60px 20px; text-align: center; background: var(--off); border: 1px solid var(--light-gray); border-radius: 8px;">
+                    <p style="font-family: var(--f-mono); font-size: 10px; color: var(--mid-gray); text-transform: uppercase; letter-spacing: .1em;">Be the first to review this product.</p>
+                </div>
+            <?php else: ?>
+                <?php foreach ($reviews as $rev): ?>
+                    <div class="compact-review-item">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                            <div>
+                                <div style="font-family: var(--f-display); font-weight: 800; font-size: 15px; text-transform: uppercase; color: var(--ink);"><?= htmlspecialchars($rev['reviewer_name']) ?></div>
+                                <div style="font-family: var(--f-mono); font-size: 9px; color: var(--mid-gray); margin-top: 4px; text-transform: uppercase; letter-spacing: .1em;"><?= date('M d, Y', strtotime($rev['created_at'])) ?></div>
+                            </div>
+                            <div style="color: var(--red); font-size: 10px; display: flex; gap: 2px;">
                                 <?php for($i=1; $i<=5; $i++): ?>
-                                    <span class="star-pick active" data-value="<?= $i ?>">★</span>
+                                    <span style="color: <?= $i <= $rev['rating'] ? 'var(--red)' : 'var(--light-gray)' ?>">★</span>
                                 <?php endfor; ?>
                             </div>
                         </div>
-
-                        <script>
-                            document.querySelectorAll('.star-pick').forEach(star => {
-                                star.addEventListener('click', function() {
-                                    const val = this.getAttribute('data-value');
-                                    document.getElementById('review-rating-val').value = val;
-                                    
-                                    document.querySelectorAll('.star-pick').forEach(s => {
-                                        if (s.getAttribute('data-value') <= val) {
-                                            s.style.color = 'var(--red)';
-                                        } else {
-                                            s.style.color = 'var(--light-gray)';
-                                        }
-                                    });
-                                });
-                            });
-                        </script>
-
-                        <div class="form-group">
-                            <label style="display: block; font-family: var(--f-semi); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .2em; color: var(--mid-gray); margin-bottom: 12px;">Your Experience</label>
-                            <textarea name="comment" required placeholder="What do you think of this product?" style="width: 100%; height: 140px; background: #fff; border: 1px solid var(--light-gray); padding: 20px; font-family: var(--f-body); font-size: 14px; outline: none; resize: none; line-height: 1.6;"></textarea>
-                        </div>
-
-                        <button type="submit" class="btn-red" style="width: 100%; height: 56px; font-size: 12px; margin-top: 8px;">Post Review <span style="margin-left: 12px;">→</span></button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Right: Review List -->
-            <div class="review-list" style="padding-top: 32px;">
-                <?php if (empty($reviews)): ?>
-                    <div style="padding: 64px 32px; text-align: center; background: var(--off); border: 1px solid var(--light-gray); border-radius: 12px;">
-                        <div style="font-size: 24px; margin-bottom: 20px; opacity: 0.3;">★</div>
-                        <p style="font-family: var(--f-mono); font-size: 10px; color: var(--mid-gray); text-transform: uppercase; letter-spacing: .2em; line-height: 1.8;">
-                            The first review is yet to be critiqued.<br>
-                            <span style="color: var(--ink); font-weight: 700;">Share your experience above.</span>
-                        </p>
+                        <p style="font-family: var(--f-body); font-size: 14px; line-height: 1.6; color: var(--ink); opacity: .85;"><?= nl2br(htmlspecialchars($rev['body'])) ?></p>
                     </div>
-                <?php else: ?>
-                    <?php foreach ($reviews as $rev): ?>
-                        <div class="review-item" style="padding: 24px 0; border-bottom: 1px solid var(--light-gray);">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-                                <div>
-                                    <div style="font-family: var(--f-display); font-weight: 800; font-size: 16px; text-transform: uppercase; color: var(--ink); line-height: 1; letter-spacing: .02em;"><?= htmlspecialchars($rev['reviewer_name']) ?></div>
-                                    <div style="font-family: var(--f-mono); font-size: 9px; color: var(--mid-gray); margin-top: 8px; text-transform: uppercase; letter-spacing: .1em;"><?= date('M d, Y', strtotime($rev['created_at'])) ?> — Verified Tech</div>
-                                </div>
-                                <div style="color: var(--red); font-size: 10px; display: flex; gap: 4px;">
-                                    <?php for($i=1; $i<=5; $i++): ?>
-                                        <span style="color: <?= $i <= $rev['rating'] ? 'var(--red)' : 'var(--light-gray)' ?>">★</span>
-                                    <?php endfor; ?>
-                                </div>
-                            </div>
-                            <p style="font-family: var(--f-body); font-size: 14px; line-height: 1.7; color: var(--ink); font-weight: 400; opacity: .8;"><?= nl2br(htmlspecialchars($rev['body'])) ?></p>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
     </div>
 </section>
+
+<script>
+function toggleReviewForm() {
+    const wrapper = document.getElementById('review-form-wrapper');
+    const btn = document.querySelector('.write-review-toggle-btn');
+    wrapper.classList.toggle('active');
+    btn.classList.toggle('is-active');
+    
+    if (wrapper.classList.contains('active')) {
+        btn.innerHTML = 'Cancel Review';
+    } else {
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg> Write a Review';
+    }
+}
+
+document.querySelectorAll('.star-pick-v2').forEach(star => {
+    star.addEventListener('click', function() {
+        const val = this.getAttribute('data-value');
+        document.getElementById('review-rating-val').value = val;
+        document.querySelectorAll('.star-pick-v2').forEach(s => {
+            s.style.color = (s.getAttribute('data-value') <= val) ? 'var(--red)' : 'var(--light-gray)';
+        });
+    });
+});
+</script>
+
 
 <!-- ── RELATED PRODUCTS ──────────────────────────────── -->
 <?php if (!empty($related)): ?>
