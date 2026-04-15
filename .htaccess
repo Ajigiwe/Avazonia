@@ -23,3 +23,9 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [L,QSA]
+
+# PWA Support
+AddType application/manifest+json .json
+<Files "manifest.json">
+    Header set Access-Control-Allow-Origin "*"
+</Files>
