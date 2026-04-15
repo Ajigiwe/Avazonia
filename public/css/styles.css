@@ -1059,8 +1059,7 @@ img {
 
     .logo-img {
 
-        height: 3rem;
-        min-height: 50px;
+        height: 38px;
         width: auto;
         flex-shrink: 0;
     }
