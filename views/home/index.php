@@ -168,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (shouldShow()) {
         setTimeout(() => {
             popup.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
         }, 1500);
     }
 
@@ -180,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         popup.style.opacity = '0';
         popup.style.transition = 'opacity 0.3s ease';
+        document.body.style.overflow = '';
         setTimeout(() => {
             popup.style.display = 'none';
         }, 300);
