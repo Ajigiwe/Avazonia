@@ -94,6 +94,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $meta_description = $_POST['meta_description'] ?? '';
         $meta_keywords = $_POST['meta_keywords'] ?? '';
 
+        // Handle Features (JSON array)
+        $features_raw = $_POST['features'] ?? '';
+        $features_arr = array_filter(array_map('trim', explode("\n", $features_raw)));
+        $features_json = !empty($features_arr) ? json_encode(array_values($features_arr)) : null;
+
+        // Handle Specs (JSON object)
+        $specs_raw = $_POST['specs'] ?? '';
+        $specs_arr = [];
+        foreach (explode("\n", $specs_raw) as $line) {
+            if (strpos($line, ':') !== false) {
+                list($key, $val) = explode(':', $line, 2);
+                $specs_arr[trim($key)] = trim($val);
+            }
+        }
+        $specs_json = !empty($specs_arr) ? json_encode($specs_arr) : null;
+
     // Delete selected images
     if (isset($_POST['delete_images']) && is_array($_POST['delete_images'])) {
         foreach ($_POST['delete_images'] as $imgId) {
@@ -133,8 +149,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$error) {
         try {
-            $stmt = $db->prepare("UPDATE products SET name = ?, category_id = ?, brand_id = ?, price_ghs = ?, compare_at_price_ghs = ?, stock_qty = ?, description = ?, tags = ?, meta_title = ?, meta_description = ?, meta_keywords = ?, is_active = ?, is_bestseller = ?, is_featured = ?, is_preorder = ?, is_dropshipping = ?, lead_time_days = ? WHERE id = ?");
-            $stmt->execute([$name, $category_id, $brand_id, $price, $compare_price, $stock, $description, $tags, $meta_title, $meta_description, $meta_keywords, $is_active, $is_bestseller, $is_featured, $is_preorder, $is_dropshipping, $lead_time, $productId]);
+            $stmt = $db->prepare("UPDATE products SET name = ?, category_id = ?, brand_id = ?, price_ghs = ?, compare_at_price_ghs = ?, stock_qty = ?, description = ?, features = ?, specs = ?, tags = ?, meta_title = ?, meta_description = ?, meta_keywords = ?, is_active = ?, is_bestseller = ?, is_featured = ?, is_preorder = ?, is_dropshipping = ?, lead_time_days = ? WHERE id = ?");
+            $stmt->execute([$name, $category_id, $brand_id, $price, $compare_price, $stock, $description, $features_json, $specs_json, $tags, $meta_title, $meta_description, $meta_keywords, $is_active, $is_bestseller, $is_featured, $is_preorder, $is_dropshipping, $lead_time, $productId]);
             
             foreach ($uploaded_images as $img) {
                 $stmt = $db->prepare("INSERT INTO product_images (product_id, url, is_primary) VALUES (?, ?, 0)");
@@ -344,8 +360,35 @@ include 'layout/header.php';
             </div>
 
             <div>
-                <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Description</label>
+                <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Description (Overview)</label>
                 <textarea name="description" rows="8" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit; resize: vertical;"><?= htmlspecialchars($product['description'] ?? '') ?></textarea>
+            </div>
+
+            <?php
+            // Prepare Features & Specs for textarea
+            $features_text = "";
+            if (!empty($product['features'])) {
+                $f_arr = json_decode($product['features'], true);
+                if (is_array($f_arr)) $features_text = implode("\n", $f_arr);
+            }
+            
+            $specs_text = "";
+            if (!empty($product['specs'])) {
+                $s_arr = json_decode($product['specs'], true);
+                if (is_array($s_arr)) {
+                    foreach ($s_arr as $k => $v) $specs_text .= "$k: $v\n";
+                }
+            }
+            ?>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div>
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Key Features (One per line)</label>
+                    <textarea name="features" rows="6" placeholder="Fast Charging&#10;Waterproof" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit; resize: vertical; font-size: 13px;"><?= htmlspecialchars($features_text) ?></textarea>
+                </div>
+                <div>
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Technical Specs (Key: Value)</label>
+                    <textarea name="specs" rows="6" placeholder="Weight: 200g&#10;Battery: 5000mAh" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit; resize: vertical; font-size: 13px;"><?= htmlspecialchars($specs_text) ?></textarea>
+                </div>
             </div>
 
             <div>

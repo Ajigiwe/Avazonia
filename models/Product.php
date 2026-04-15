@@ -31,9 +31,10 @@ class Product extends Model {
     }
 
     public function findBySlug($slug) {
-        $sql = "SELECT p.*, b.name as brand_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
+        $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
                 FROM products p 
                 LEFT JOIN brands b ON p.brand_id = b.id 
+                LEFT JOIN categories c ON p.category_id = c.id 
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
                 WHERE p.slug = :slug AND p.is_active = 1 " . $this->getStockSql();
         $stmt = $this->db->prepare($sql);

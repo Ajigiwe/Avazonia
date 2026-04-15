@@ -131,9 +131,9 @@ if (Session::get('user_id')) {
                 </div>
             <?php endif; ?>
 
-            <p style="font-family: var(--f-body); font-size: 15px; color: var(--mid-gray); line-height: 1.7; margin-bottom: 40px;">
-                <?= nl2br($product['description'] ?: 'No description available.') ?>
-            </p>
+            <div style="font-family: var(--f-body); font-size: 14px; color: var(--mid-gray); line-height: 1.6; margin-bottom: 32px; max-width: 480px;">
+                <?= !empty($product['description']) ? nl2br(substr(strip_tags($product['description']), 0, 180)) . '...' : 'No description available.' ?>
+            </div>
 
             <?php if (!empty($variants)): ?>
             <div style="margin-bottom: 32px;">
@@ -338,6 +338,88 @@ if (Session::get('user_id')) {
     });
     </script>
 </section>
+
+<!-- ── PRODUCT DEEP DIVE ──────────────────────────────── -->
+<section class="product-deep-dive" style="padding: 60px 0 100px; border-top: 1px solid var(--light-gray);">
+    <div class="container">
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 80px; align-items: flex-start;">
+            
+            <!-- LEFT: OVERVIEW -->
+            <div class="overview-column">
+                <h2 style="font-family: var(--f-display); font-weight: 800; font-size: 24px; text-transform: uppercase; color: var(--ink); margin-bottom: 32px; letter-spacing: -0.01em;">Overview</h2>
+                <div style="font-family: var(--f-body); font-size: 15px; line-height: 1.8; color: var(--ink); opacity: 0.85;">
+                    <?= nl2br($product['description'] ?: 'Detailed information for this product is coming soon.') ?>
+                </div>
+                
+                <?php if (!empty($product['features'])): 
+                    $features = json_decode($product['features'], true);
+                    if (is_array($features) && !empty($features)): 
+                ?>
+                    <div style="margin-top: 48px;">
+                        <ul style="list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <?php foreach ($features as $feat): ?>
+                                <li style="display: flex; align-items: flex-start; gap: 10px; font-family: var(--f-body); font-size: 14px; color: var(--ink);">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    <span><?= htmlspecialchars($feat) ?></span>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; endif; ?>
+            </div>
+
+            <!-- RIGHT: DETAILS / SPECS -->
+            <div class="details-column">
+                <h2 style="font-family: var(--f-display); font-weight: 800; font-size: 24px; text-transform: uppercase; color: var(--ink); margin-bottom: 32px; letter-spacing: -0.01em;">Details</h2>
+                
+                <div style="background: var(--off); padding: 12px 20px; margin-bottom: 24px;">
+                    <span style="font-family: var(--f-mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #FFB800;">Specifications</span>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <!-- Base Specs -->
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--light-gray);">
+                        <span style="font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; color: var(--mid-gray);">Brand</span>
+                        <span style="font-family: var(--f-display); font-size: 13px; font-weight: 700;"><?= htmlspecialchars($product['brand_name'] ?? 'Gadget') ?></span>
+                    </div>
+                    <?php if (!empty($product['category_name'])): ?>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--light-gray);">
+                        <span style="font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; color: var(--mid-gray);">Category</span>
+                        <span style="font-family: var(--f-display); font-size: 13px; font-weight: 700;"><?= htmlspecialchars($product['category_name']) ?></span>
+                    </div>
+                    <?php endif; ?>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--light-gray);">
+                        <span style="font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; color: var(--mid-gray);">Ref#</span>
+                        <span style="font-family: var(--f-display); font-size: 13px; font-weight: 700;">AVZ-<?= $product['id'] ?></span>
+                    </div>
+
+                    <!-- Dynamic Specs -->
+                    <?php if (!empty($product['specs'])): 
+                        $specs = json_decode($product['specs'], true);
+                        if (is_array($specs)):
+                            foreach ($specs as $key => $val):
+                    ?>
+                        <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--light-gray);">
+                            <span style="font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; color: var(--mid-gray);"><?= htmlspecialchars($key) ?></span>
+                            <span style="font-family: var(--f-display); font-size: 13px; font-weight: 700;"><?= htmlspecialchars($val) ?></span>
+                        </div>
+                    <?php endforeach; endif; endif; ?>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<style>
+@media (max-width: 991px) {
+    .product-deep-dive .container > div {
+        grid-template-columns: 1fr !important;
+        gap: 60px !important;
+    }
+}
+</style>
+
 
 <!-- ── REVIEWS SECTION ────────────────────────────────── -->
 <section id="reviews" class="reviews-sec" style="padding: 100px 0 60px; border-top: 1px solid var(--light-gray);">

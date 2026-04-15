@@ -49,6 +49,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $meta_description = $_POST['meta_description'] ?? '';
     $meta_keywords = $_POST['meta_keywords'] ?? '';
 
+    // Handle Features (JSON array)
+    $features_raw = $_POST['features'] ?? '';
+    $features_arr = array_filter(array_map('trim', explode("\n", $features_raw)));
+    $features_json = !empty($features_arr) ? json_encode(array_values($features_arr)) : null;
+
+    // Handle Specs (JSON object)
+    $specs_raw = $_POST['specs'] ?? '';
+    $specs_arr = [];
+    foreach (explode("\n", $specs_raw) as $line) {
+        if (strpos($line, ':') !== false) {
+            list($key, $val) = explode(':', $line, 2);
+            $specs_arr[trim($key)] = trim($val);
+        }
+    }
+    $specs_json = !empty($specs_arr) ? json_encode($specs_arr) : null;
+
     // Multiple file upload handling
     $uploaded_images = [];
     if (isset($_FILES['images']) && is_array($_FILES['images']['name'])) {
@@ -85,8 +101,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$error) {
         try {
-            $stmt = $db->prepare("INSERT INTO products (name, slug, category_id, brand_id, price_ghs, compare_at_price_ghs, stock_qty, description, tags, meta_title, meta_description, meta_keywords, is_preorder, is_bestseller, is_featured, is_dropshipping, lead_time_days) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$name, $slug, $category_id, $brand_id, $price, $compare_price, $stock, $description, $tags, $meta_title, $meta_description, $meta_keywords, $is_preorder, $is_bestseller, $is_featured, $is_dropshipping, $lead_time]);
+            $stmt = $db->prepare("INSERT INTO products (name, slug, category_id, brand_id, price_ghs, compare_at_price_ghs, stock_qty, description, features, specs, tags, meta_title, meta_description, meta_keywords, is_preorder, is_bestseller, is_featured, is_dropshipping, lead_time_days) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$name, $slug, $category_id, $brand_id, $price, $compare_price, $stock, $description, $features_json, $specs_json, $tags, $meta_title, $meta_description, $meta_keywords, $is_preorder, $is_bestseller, $is_featured, $is_dropshipping, $lead_time]);
             
             $productId = $db->lastInsertId();
             
@@ -191,8 +207,19 @@ include 'layout/header.php';
             </div>
 
             <div>
-                <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Description</label>
+                <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Description (Overview)</label>
                 <textarea name="description" rows="5" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit; resize: vertical;"></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div>
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Key Features (One per line)</label>
+                    <textarea name="features" rows="6" placeholder="Fast Charging&#10;Waterproof&#10;2-Year Warranty" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit; resize: vertical; font-size: 13px;"></textarea>
+                </div>
+                <div>
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Technical Specs (Key: Value)</label>
+                    <textarea name="specs" rows="6" placeholder="Weight: 200g&#10;Battery: 5000mAh&#10;Material: Silicone" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit; resize: vertical; font-size: 13px;"></textarea>
+                </div>
             </div>
 
             <div>
