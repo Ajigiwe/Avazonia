@@ -292,8 +292,22 @@ include 'layout/header.php';
                         </select>
                     </div>
                     <div class="field-group">
+                        <label class="field-label">Popup Type</label>
+                        <select id="set-home_popup_type" class="field-input">
+                            <option value="promo" <?= getSet('home_popup_type') == 'promo' ? 'selected' : '' ?>>Promotional Image</option>
+                            <option value="newsletter" <?= getSet('home_popup_type') == 'newsletter' ? 'selected' : '' ?>>Newsletter Subscription</option>
+                            <option value="discount" <?= getSet('home_popup_type') == 'discount' ? 'selected' : '' ?>>Direct Discount Code</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="field-grid">
+                    <div class="field-group">
                         <label class="field-label">Frequency (Visits)</label>
                         <input type="number" id="set-home_popup_frequency" value="<?= getSet('home_popup_frequency', '3') ?>" class="field-input">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Redirect Link (Promo Only)</label>
+                        <input type="text" id="set-home_popup_link" value="<?= getSet('home_popup_link') ?>" class="field-input">
                     </div>
                 </div>
                 <div class="field-group">

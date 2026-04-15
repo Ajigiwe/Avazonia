@@ -1,34 +1,26 @@
 <?php
 // api/subscribe.php
-
-require_once '../config/database.php';
-require_once '../models/Subscriber.php';
-
-use Models\Subscriber;
+require_once __DIR__ . '/../config/app.php';
+require_once __DIR__ . '/../models/Newsletter.php';
 
 header('Content-Type: application/json');
 
-// Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['status' => false, 'message' => 'Method not allowed.']);
+    echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
     exit;
 }
 
-// Get raw JSON body or form data
-$input = json_decode(file_get_contents('php://input'), true);
-$email = $input['email'] ?? $_POST['email'] ?? '';
+$email = filter_var($_POST['email'] ?? '', FILTER_VALIDATE_EMAIL);
 
-// Sanitize email
-$email = filter_var(trim($email), FILTER_SANITIZE_EMAIL);
-
-if (empty($email)) {
-    echo json_encode(['status' => false, 'message' => 'Email is required.']);
+if (!$email) {
+    echo json_encode(['success' => false, 'message' => 'Please enter a valid email address.']);
     exit;
 }
 
-$subscriberModel = new Subscriber();
-$result = $subscriberModel->subscribe($email);
-
-echo json_encode($result);
-exit;
+try {
+    $newsletter = new Newsletter();
+    $result = $newsletter->subscribe($email);
+    echo json_encode($result);
+} catch (Exception $e) {
+    echo json_encode(['success' => false, 'message' => 'System error: ' . $e->getMessage()]);
+}
