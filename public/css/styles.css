@@ -1088,6 +1088,10 @@ img {
         background: transparent;
     }
 
+    .nav-search-pill.is-active .search-btn {
+        display: none !important;
+    }
+
     .mobile-search-close {
         display: flex;
         align-items: center;
