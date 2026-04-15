@@ -169,6 +169,13 @@ body {
     position: relative;
 }
 
+html.is-locked,
+body.is-locked {
+    overflow: hidden !important;
+    height: 100vh !important;
+    touch-action: none;
+}
+
 html {
     font-size: 16px;
     scroll-behavior: smooth;

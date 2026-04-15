@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (shouldShow()) {
         setTimeout(() => {
             popup.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
+            document.documentElement.classList.add('is-locked');
         }, 1500);
     }
 
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         popup.style.opacity = '0';
         popup.style.transition = 'opacity 0.3s ease';
-        document.body.style.overflow = '';
+        document.documentElement.classList.remove('is-locked');
         setTimeout(() => {
             popup.style.display = 'none';
         }, 300);
