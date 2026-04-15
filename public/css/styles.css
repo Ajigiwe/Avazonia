@@ -1081,7 +1081,7 @@ img {
         border-radius: 0;
         border: none;
         align-items: center;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
 
     .nav-search-pill input {
@@ -1148,6 +1148,7 @@ img {
 
 /* Hide toggle icon on desktop */
 @media (min-width: 1025px) {
+
     #mobile-search-toggle,
     .mobile-search-close {
         display: none !important;
@@ -1163,7 +1164,8 @@ img {
         padding: 8px 12px;
         gap: 12px;
         position: relative;
-        overflow: visible; /* Fix: Allow search suggestions to overflow */
+        overflow: visible;
+        /* Fix: Allow search suggestions to overflow */
     }
 
     .nav-search-pill input {
@@ -2635,7 +2637,7 @@ h2.hero-heading .outline {
     }
 
     .product-page {
-        padding: 120px 0 80px !important;
+        padding: 0px 0 80px !important;
     }
 }
 
@@ -3485,7 +3487,7 @@ form button[type="submit"]:hover {
 
 .pill-container:focus-within {
     border-color: var(--red);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
 }
 
 .pill-input {
@@ -3541,7 +3543,7 @@ form button[type="submit"]:hover {
     .popup-mode-newsletter .promo-text-side {
         padding: 40px 24px !important;
     }
-    
+
     .newsletter-title {
         font-size: 24px;
     }
