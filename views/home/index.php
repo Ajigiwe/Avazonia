@@ -98,9 +98,9 @@ require_once __DIR__ . '/../layout/nav.php';
                     ?>
                     <img src="<?= $finalImg ?>" alt="Newsletter">
                 </div>
-                <div class="promo-text-side" style="padding: 48px; text-align: center;">
+                <div class="promo-text-side" style="padding: 32px 40px; text-align: center;">
                     <h2 class="newsletter-title"><?= htmlspecialchars($popup['title']) ?></h2>
-                    <p style="font-size: 14px; color: var(--mid-gray); margin-top: -8px;"><?= htmlspecialchars($popup['desc']) ?></p>
+                    <p style="font-size: 14px; color: var(--mid-gray); margin-top: -4px;"><?= htmlspecialchars($popup['desc']) ?></p>
                     
                     <form id="newsletter-form" class="newsletter-pill-form">
                         <div class="pill-container">

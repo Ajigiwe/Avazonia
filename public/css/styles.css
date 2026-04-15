@@ -3451,7 +3451,7 @@ form button[type="submit"]:hover {
 
 .promo-top-img {
     width: 100%;
-    height: 240px;
+    height: 180px;
     background: #f8f8f8;
     overflow: hidden;
 }
@@ -3467,14 +3467,14 @@ form button[type="submit"]:hover {
     font-size: 32px;
     font-weight: 900;
     line-height: 1;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     color: var(--ink);
     text-transform: uppercase;
     letter-spacing: -0.02em;
 }
 
 .newsletter-pill-form {
-    margin: 32px 0;
+    margin: 24px 0;
 }
 
 .pill-container {
@@ -3525,7 +3525,7 @@ form button[type="submit"]:hover {
 .newsletter-footer {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 }
 
 .newsletter-footer p {
