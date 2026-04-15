@@ -2,7 +2,7 @@ const CACHE_NAME = 'avazonia-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/public/css/styles.css',
-  '/public/assets/img/logo.png',
+  '/public/assets/img/pwa-icon.png',
   '/public/assets/img/logo.jpg'
 ];
 

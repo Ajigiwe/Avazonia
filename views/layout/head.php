@@ -51,6 +51,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="<?= APP_NAME ?>">
-    <link rel="apple-touch-icon" href="<?= APP_URL ?>/public/assets/img/logo.png">
+    <link rel="apple-touch-icon" href="<?= APP_URL ?>/public/assets/img/pwa-icon.png">
 </head>
 <body>
