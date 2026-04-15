@@ -1058,7 +1058,7 @@ img {
     }
 
     .logo-img {
-        height: 38px;
+        /* height: 38px; */
         width: auto;
         flex-shrink: 0;
     }
@@ -1157,7 +1157,7 @@ img {
 
 @media (max-width: 480px) {
     .logo-img {
-        height: 28px;
+        /* height: 28px; */
     }
 
     .nav-top {
