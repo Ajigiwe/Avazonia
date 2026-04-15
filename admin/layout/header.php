@@ -32,7 +32,7 @@
         .admin-sidebar::-webkit-scrollbar { width: 4px; }
         .admin-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         
-        @media (max-width: 900px) {
+        @media (max-width: 1100px) {
             .admin-sidebar { transform: translateX(-100%); width: 280px; }
             .admin-sidebar.active { transform: translateX(0); box-shadow: 20px 0 60px rgba(0,0,0,0.5); }
         }
@@ -99,7 +99,7 @@
         .status-cancelled { background: #fff1f0; color: #f5222d; }
 
         /* --- NUCLEAR MOBILE REFRESH --- */
-        @media (max-width: 900px) {
+        @media (max-width: 1100px) {
             body { display: block !important; overflow-x: hidden; width: 100vw; position: relative; }
             .admin-sidebar { transform: translateX(-102%); width: 280px; visibility: hidden; }
             .admin-sidebar.active { transform: translateX(0); box-shadow: 20px 0 60px rgba(0,0,0,0.5); visibility: visible; }
@@ -108,7 +108,7 @@
                 margin-left: 0 !important; 
                 width: 100% !important; 
                 max-width: 100% !important; 
-                padding: 80px 16px 40px !important; 
+                padding: 100px 24px 40px !important; 
                 display: block !important;
                 box-sizing: border-box !important;
                 position: relative;
