@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Force disable if they subscribed
                     localStorage.setItem(DISABLE_KEY, 'true');
                     nlForm.style.display = 'none';
-                    setTimeout(closePopup, 3000);
+                    setTimeout(closePopup, 1500);
                 } else {
                     btn.innerText = 'Subscribe';
                     btn.disabled = false;

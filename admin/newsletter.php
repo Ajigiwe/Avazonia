@@ -13,6 +13,19 @@ if (Session::get('user_role') !== 'admin') {
 $newsletterModel = new Newsletter();
 $subscribers = $newsletterModel->getAll();
 
+// Handle CSV Export
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename=avazonia_subscribers_' . date('Y-m-d') . '.csv');
+    $output = fopen('php://output', 'w');
+    fputcsv($output, ['ID', 'Email Address', 'Subscription Date']);
+    foreach ($subscribers as $sub) {
+        fputcsv($output, [$sub['id'], $sub['email'], $sub['created_at']]);
+    }
+    fclose($output);
+    exit;
+}
+
 $title = "Newsletter Subscribers — Avazonia";
 include 'layout/header.php';
 ?>
@@ -22,7 +35,8 @@ include 'layout/header.php';
         <h1>Newsletter Subscribers</h1>
         <p><?= count($subscribers) ?> users have joined your mailing list.</p>
     </div>
-    <div class="header-right">
+    <div class="header-right" style="display: flex; gap: 12px;">
+        <a href="?export=csv" class="btn-red" style="height: 48px; padding: 0 24px; text-decoration: none; display: flex; align-items: center; justify-content: center; background: #00A854; border-color: #00A854;">Export to CSV</a>
         <button id="copy-all-emails" class="btn-ink" style="height: 48px; padding: 0 24px;">Copy All Emails</button>
     </div>
 </div>
