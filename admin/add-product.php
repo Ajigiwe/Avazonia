@@ -49,25 +49,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $meta_description = $_POST['meta_description'] ?? '';
     $meta_keywords = $_POST['meta_keywords'] ?? '';
 
-    // File upload handling
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+    // Multiple file upload handling
+    $uploaded_images = [];
+    if (isset($_FILES['images']) && is_array($_FILES['images']['name'])) {
         $uploadDir = '../public/uploads/products/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }
         
-        $fileExt = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
         $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+        $fileCount = count($_FILES['images']['name']);
         
-        if (in_array($fileExt, $allowed)) {
-            $fileName = 'p_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $fileExt;
-            $targetPath = $uploadDir . $fileName;
-            
-            if (move_uploaded_file($_FILES['image']['tmp_name'], $targetPath)) {
-                $image_url = 'public/uploads/products/' . $fileName;
+        for ($i = 0; $i < $fileCount; $i++) {
+            if ($_FILES['images']['error'][$i] === UPLOAD_ERR_OK) {
+                $fileExt = strtolower(pathinfo($_FILES['images']['name'][$i], PATHINFO_EXTENSION));
+                if (in_array($fileExt, $allowed)) {
+                    $fileName = 'p_' . time() . '_' . bin2hex(random_bytes(4)) . '_' . $i . '.' . $fileExt;
+                    $targetPath = $uploadDir . $fileName;
+                    if (move_uploaded_file($_FILES['images']['tmp_name'][$i], $targetPath)) {
+                        $uploaded_images[] = 'public/uploads/products/' . $fileName;
+                    }
+                } else {
+                    $error = "Invalid file type for one or more images. Only JPG, PNG, and WEBP allowed.";
+                }
             }
-        } else {
-            $error = "Invalid file type. Only JPG, PNG, and WEBP allowed.";
         }
     }
 
@@ -85,9 +90,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $productId = $db->lastInsertId();
             
+            foreach ($uploaded_images as $index => $img) {
+                $isPrimary = ($index === 0 && empty($image_url)) ? 1 : 0;
+                $stmt = $db->prepare("INSERT INTO product_images (product_id, url, is_primary) VALUES (?, ?, ?)");
+                $stmt->execute([$productId, $img, $isPrimary]);
+            }
+            
             if (!empty($image_url)) {
-                $stmt = $db->prepare("INSERT INTO product_images (product_id, url, is_primary) VALUES (?, ?, 1)");
-                $stmt->execute([$productId, $image_url]);
+                // If URL is provided, we'll make it primary if no files were uploaded
+                $isPrimary = empty($uploaded_images) ? 1 : 0;
+                $stmt = $db->prepare("INSERT INTO product_images (product_id, url, is_primary) VALUES (?, ?, ?)");
+                $stmt->execute([$productId, $image_url, $isPrimary]);
             }
             
             $success = "Product added successfully!";
@@ -167,8 +180,8 @@ include 'layout/header.php';
                     <input type="number" name="stock" value="0" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;">
                 </div>
                 <div>
-                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Upload Image</label>
-                    <input type="file" name="image" accept="image/*" style="width: 100%; padding: 9px; border: 1px solid var(--light-gray); font-family: inherit; font-size: 11px;">
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Upload Images (Multiple)</label>
+                    <input type="file" name="images[]" multiple accept="image/*" style="width: 100%; padding: 9px; border: 1px solid var(--light-gray); font-family: inherit; font-size: 11px;">
                 </div>
             </div>
 
