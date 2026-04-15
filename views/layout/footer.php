@@ -132,7 +132,7 @@ global $dbSettings;
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('<?= APP_URL ?>/public/sw.js')
+        navigator.serviceWorker.register('<?= APP_URL ?>/sw.js')
             .then(reg => console.log('Service Worker registered', reg))
             .catch(err => console.error('Service Worker registration failed', err));
     });

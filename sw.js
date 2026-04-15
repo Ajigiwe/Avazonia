@@ -1,9 +1,9 @@
 const CACHE_NAME = 'avazonia-v1';
 const ASSETS_TO_CACHE = [
-  '/',
-  './css/styles.css',
-  './assets/img/logo.png',
-  './assets/img/logo.svg'
+  './',
+  './public/css/styles.css',
+  './public/assets/img/logo.png',
+  './public/assets/img/logo.jpg'
 ];
 
 // Install Event - Pre-cache assets
@@ -42,7 +42,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request)
         .catch(() => {
-          return caches.match('/');
+          return caches.match('./');
         })
     );
     return;
