@@ -3430,6 +3430,102 @@ form button[type="submit"]:hover {
     padding: 40px;
 }
 
+/* --- Newsletter Specific --- */
+.popup-mode-newsletter {
+    max-width: 550px;
+}
+
+.promo-top-img {
+    width: 100%;
+    height: 240px;
+    background: #f8f8f8;
+    overflow: hidden;
+}
+
+.promo-top-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.newsletter-title {
+    font-family: var(--f-display);
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 12px;
+    color: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+}
+
+.newsletter-pill-form {
+    margin: 32px 0;
+}
+
+.pill-container {
+    display: flex;
+    background: #fff;
+    border: 2px solid var(--light-gray);
+    border-radius: 100px;
+    padding: 6px;
+    transition: all 0.3s;
+}
+
+.pill-container:focus-within {
+    border-color: var(--red);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.pill-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0 20px;
+    font-family: var(--f-semi);
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+}
+
+.pill-submit {
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 100px;
+    height: 48px;
+    padding: 0 28px;
+    font-family: var(--f-display);
+    font-weight: 900;
+    font-size: 12px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.pill-submit:hover {
+    background: var(--ink);
+    transform: scale(1.02);
+}
+
+.newsletter-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.newsletter-footer p {
+    font-size: 11px;
+    color: var(--mid-gray);
+    line-height: 1.5;
+}
+
+.newsletter-footer a {
+    color: var(--ink);
+    text-decoration: underline;
+    font-weight: 700;
+}
+
 /* --- Contact Map --- */
 .contact-map-wrapper {
     position: relative;
