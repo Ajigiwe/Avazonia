@@ -84,7 +84,7 @@ include 'layout/header.php';
         .sync-bar { left: 40px; }
     }
 
-    @media (max-width: 1024px) {
+    @media (max-width: 900px) {
         .sync-bar { left: 16px; right: 16px; bottom: 16px; border-radius: 12px; flex-direction: column; gap: 16px; text-align: center; }
         .sync-bar button { width: 100%; }
     }

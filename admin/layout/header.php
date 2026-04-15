@@ -32,7 +32,7 @@
         .admin-sidebar::-webkit-scrollbar { width: 4px; }
         .admin-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         
-        @media (max-width: 1024px) {
+        @media (max-width: 900px) {
             .admin-sidebar { transform: translateX(-100%); width: 280px; }
             .admin-sidebar.active { transform: translateX(0); box-shadow: 20px 0 60px rgba(0,0,0,0.5); }
         }
@@ -99,7 +99,7 @@
         .status-cancelled { background: #fff1f0; color: #f5222d; }
 
         /* --- NUCLEAR MOBILE REFRESH --- */
-        @media (max-width: 1024px) {
+        @media (max-width: 900px) {
             body { display: block !important; overflow-x: hidden; width: 100vw; position: relative; }
             .admin-sidebar { transform: translateX(-102%); width: 280px; visibility: hidden; }
             .admin-sidebar.active { transform: translateX(0); box-shadow: 20px 0 60px rgba(0,0,0,0.5); visibility: visible; }
@@ -120,8 +120,6 @@
             
             .stats-grid { grid-template-columns: 1fr !important; gap: 16px; }
             .stat-card { padding: 24px !important; }
-            
-            .panel form { grid-template-columns: 1fr !important; gap: 24px !important; }
             
             #admin-toggle { display: flex !important; }
             #admin-toggle.active { left: 290px; }
