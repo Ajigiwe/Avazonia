@@ -128,14 +128,85 @@ global $dbSettings;
 <a href="https://wa.me/<?= WHATSAPP_NUMBER ?>" class="wa-btn" style="position: fixed; bottom: 30px; right: 30px; background: #25D366; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; z-index: 99; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-13.5 8.38 8.38 0 0 1 3.8.9L21 3z"></path></svg>
 </a>
+
+<!-- PWA Smart Install UI -->
+<div id="pwa-install-banner" class="pwa-banner" style="display: none;">
+    <div class="pwa-banner-content">
+        <div class="pwa-banner-icon">
+            <img src="<?= APP_URL ?>/public/assets/img/pwa-icon.png" alt="App Icon">
+        </div>
+        <div class="pwa-banner-text">
+            <h4>Avazonia App</h4>
+            <p>Fast, reliable & offline support</p>
+        </div>
+        <button id="pwa-install-btn" class="pwa-banner-btn">Install</button>
+        <button id="pwa-close-banner" class="pwa-banner-close">✕</button>
+    </div>
+</div>
+
+<!-- iOS Install Guide -->
+<div id="ios-install-guide" class="ios-guide-modal" style="display: none;">
+    <div class="ios-guide-content">
+        <div class="ios-guide-header">
+            <img src="<?= APP_URL ?>/public/assets/img/pwa-icon.png" alt="Icon">
+            <h3>Install Avazonia</h3>
+            <button onclick="document.getElementById('ios-install-guide').style.display='none'" class="ios-guide-close">✕</button>
+        </div>
+        <div class="ios-guide-body">
+            <p>To install the app on your iPhone:</p>
+            <ol>
+                <li>Tap the <strong>Share</strong> button <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin: 0 4px;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg> at the bottom.</li>
+                <li>Scroll down and tap <strong>Add to Home Screen</strong> <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin: 0 4px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>.</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
 <script>
-// Register Service Worker for PWA
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('<?= APP_URL ?>/sw.js')
-            .then(reg => console.log('Service Worker registered', reg))
-            .catch(err => console.error('Service Worker registration failed', err));
+let deferredPrompt;
+const installBanner = document.getElementById('pwa-install-banner');
+const installBtn = document.getElementById('pwa-install-btn');
+const closeBanner = document.getElementById('pwa-close-banner');
+const iosGuide = document.getElementById('ios-install-guide');
+
+// Detection for iOS
+const isIos = () => {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  return /iphone|ipad|ipod/.test(userAgent);
+};
+const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!localStorage.getItem('pwa_banner_dismissed')) {
+        installBanner.style.display = 'block';
+    }
+});
+
+if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            installBanner.style.display = 'none';
+        } else if (isIos() && !isInStandaloneMode()) {
+            installBanner.style.display = 'none';
+            iosGuide.style.display = 'flex';
+        }
     });
+}
+
+if (closeBanner) {
+    closeBanner.addEventListener('click', () => {
+        installBanner.style.display = 'none';
+        localStorage.setItem('pwa_banner_dismissed', 'true');
+    });
+}
+
+if (isIos() && !isInStandaloneMode() && !localStorage.getItem('pwa_banner_dismissed')) {
+    installBanner.style.display = 'block';
 }
 
 async function toggleWishlist(pid, event) {
