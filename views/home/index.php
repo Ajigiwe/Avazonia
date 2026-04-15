@@ -92,9 +92,13 @@ require_once __DIR__ . '/../layout/nav.php';
             <?php elseif ($popup['type'] === 'newsletter'): ?>
                 <!-- NEWSLETTER MODE (REDESIGNED) -->
                 <div class="promo-top-img">
-                    <img src="<?= $popup['image'] ? APP_URL . '/' . $popup['image'] : 'https://images.unsplash.com/photo-1512428559087-560fa5ceab42?q=80&w=2070&auto=format&fit=crop' ?>" alt="Newsletter">
+                    <?php 
+                    $imgUrl = $popup['image'] ?: 'https://images.unsplash.com/photo-1512428559087-560fa5ceab42?q=80&w=2070&auto=format&fit=crop';
+                    $finalImg = (strpos($imgUrl, 'http') === 0 || strpos($imgUrl, '//') === 0) ? $imgUrl : APP_URL . '/' . $imgUrl;
+                    ?>
+                    <img src="<?= $finalImg ?>" alt="Newsletter">
                 </div>
-                <div class="promo-text-side" style="grid-column: span 2; padding: 48px; text-align: center;">
+                <div class="promo-text-side" style="padding: 48px; text-align: center;">
                     <h2 class="newsletter-title"><?= htmlspecialchars($popup['title']) ?></h2>
                     <p style="font-size: 14px; color: var(--mid-gray); margin-top: -8px;"><?= htmlspecialchars($popup['desc']) ?></p>
                     
