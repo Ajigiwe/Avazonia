@@ -3500,6 +3500,25 @@ form button[type="submit"]:hover {
     font-size: 14px;
     color: var(--ink);
     outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.pill-input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Neutralize Chrome autofill blue highlight */
+.pill-input:-webkit-autofill,
+.pill-input:-webkit-autofill:hover,
+.pill-input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--ink);
+    -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+    box-shadow: 0 0 0 1000px #fff inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+    border: none !important;
+    outline: none !important;
 }
 
 .pill-submit {
