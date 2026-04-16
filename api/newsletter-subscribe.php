@@ -29,6 +29,8 @@ try {
     $stmt->execute([$email]);
 
     // --- SEND EMAIL NOTIFICATIONS ---
+    $mailStatus = 'not_attempted';
+    $mailError = '';
     try {
         require_once __DIR__ . '/../core/Mailer.php';
 
@@ -40,6 +42,7 @@ try {
             'newsletter_welcome',
             ['toEmail' => $email]
         );
+        $mailStatus = 'welcome_sent';
 
         // 2. Notification email to the site owner
         $adminEmail = defined('SITE_EMAIL') ? SITE_EMAIL : '';
@@ -51,14 +54,22 @@ try {
                 'newsletter_admin_notify',
                 ['subscriberEmail' => $email]
             );
+            $mailStatus = 'both_sent';
         }
     } catch (\Exception $mailErr) {
-        // Log but don't break the subscription flow
+        $mailError = $mailErr->getMessage();
+        $mailStatus = 'failed';
         error_log('[Mailer] Newsletter email failed for ' . $email . ': ' . $mailErr->getMessage());
     }
     // ---------------------------------
 
-    echo json_encode(['success' => true, 'message' => 'SUCCESS! WELCOME TO AVAZONIA.']);
+    echo json_encode([
+        'success' => true, 
+        'message' => 'SUCCESS! WELCOME TO AVAZONIA.',
+        'mail_status' => $mailStatus,
+        'mail_error' => $mailError,
+        'mail_password_set' => defined('MAIL_PASSWORD') && MAIL_PASSWORD !== 'YOUR_APP_PASSWORD'
+    ]);
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => 'SERVER ERROR. PLEASE TRY AGAIN.']);
+    echo json_encode(['success' => false, 'message' => 'SERVER ERROR. PLEASE TRY AGAIN.', 'error' => $e->getMessage()]);
 }
