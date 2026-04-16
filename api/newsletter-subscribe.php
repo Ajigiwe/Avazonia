@@ -28,6 +28,36 @@ try {
     $stmt = $db->prepare("INSERT INTO newsletter_subscriptions (email) VALUES (?)");
     $stmt->execute([$email]);
 
+    // --- SEND EMAIL NOTIFICATIONS ---
+    try {
+        require_once __DIR__ . '/../core/Mailer.php';
+
+        // 1. Welcome email to the subscriber
+        Mailer::sendTemplate(
+            $email,
+            'Subscriber',
+            'Welcome to Avazonia! 🎉',
+            'newsletter_welcome',
+            ['toEmail' => $email]
+        );
+
+        // 2. Notification email to the site owner
+        $adminEmail = defined('SITE_EMAIL') ? SITE_EMAIL : '';
+        if (!empty($adminEmail)) {
+            Mailer::sendTemplate(
+                $adminEmail,
+                defined('APP_NAME') ? APP_NAME . ' Admin' : 'Admin',
+                'New Newsletter Subscriber: ' . $email,
+                'newsletter_admin_notify',
+                ['subscriberEmail' => $email]
+            );
+        }
+    } catch (\Exception $mailErr) {
+        // Log but don't break the subscription flow
+        error_log('[Mailer] Newsletter email failed for ' . $email . ': ' . $mailErr->getMessage());
+    }
+    // ---------------------------------
+
     echo json_encode(['success' => true, 'message' => 'SUCCESS! WELCOME TO AVAZONIA.']);
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'SERVER ERROR. PLEASE TRY AGAIN.']);
