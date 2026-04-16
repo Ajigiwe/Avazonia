@@ -26,20 +26,28 @@ class Mailer {
     public static function send(string $toEmail, string $toName, string $subject, string $htmlBody, string $textBody = ''): bool {
         $mail = new PHPMailer(true); // true = throw exceptions
 
-        // Server settings
-        $mail->isSMTP();
-        $mail->Host       = defined('MAIL_HOST')       ? MAIL_HOST       : 'sandbox.smtp.mailtrap.io';
-        $mail->SMTPAuth   = !empty(MAIL_USERNAME); 
-        $mail->Username   = defined('MAIL_USERNAME')   ? MAIL_USERNAME   : '';
-        $mail->Password   = defined('MAIL_PASSWORD')   ? MAIL_PASSWORD   : '';
-        $mail->SMTPSecure = defined('MAIL_ENCRYPTION') ? MAIL_ENCRYPTION : 'tls';
-        $mail->Port       = defined('MAIL_PORT')       ? (int)MAIL_PORT  : 2525;
-        $mail->CharSet    = 'UTF-8';
+        // Dispatcher Settings
+        $mailerType = defined('MAIL_MAILER') ? MAIL_MAILER : 'smtp';
 
-        // Optional debug (set MAIL_DEBUG=2 in .env for verbose output)
+        if ($mailerType === 'mail') {
+            $mail->isMail(); // Use PHP's internal mail() function
+        } else {
+            // Server settings (SMTP)
+            $mail->isSMTP();
+            $mail->Host       = defined('MAIL_HOST')       ? MAIL_HOST       : 'smtp.gmail.com';
+            $mail->SMTPAuth   = !empty(MAIL_USERNAME); 
+            $mail->Username   = defined('MAIL_USERNAME')   ? MAIL_USERNAME   : '';
+            $mail->Password   = defined('MAIL_PASSWORD')   ? MAIL_PASSWORD   : '';
+            $mail->SMTPSecure = defined('MAIL_ENCRYPTION') ? MAIL_ENCRYPTION : 'tls';
+            $mail->Port       = defined('MAIL_PORT')       ? (int)MAIL_PORT  : 587;
+        }
+
+        $mail->CharSet = 'UTF-8';
+
+        // Optional debug
         $debugLevel = defined('MAIL_DEBUG') ? (int)MAIL_DEBUG : 0;
-        $mail->SMTPDebug  = $debugLevel;
-        if ($debugLevel > 0) {
+        $mail->SMTPDebug  = ($mailerType === 'smtp') ? $debugLevel : 0;
+        if ($debugLevel > 0 && $mailerType === 'smtp') {
             $mail->Debugoutput = 'error_log';
         }
 
@@ -60,6 +68,7 @@ class Mailer {
 
         return $mail->send();
     }
+
 
     /**
      * Render an email template and return the HTML string.

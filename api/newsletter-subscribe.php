@@ -24,9 +24,19 @@ if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
 try {
     $db = db();
     
-    // --- SEND EMAIL NOTIFICATIONS (TEST MODE: RUN ALWAYS) ---
-    $mailStatus = 'not_attempted';
-    $mailError = '';
+    // Check if already subscribed
+    $stmt = $db->prepare("SELECT id FROM newsletter_subscriptions WHERE email = ?");
+    $stmt->execute([$email]);
+    if ($stmt->fetch()) {
+        echo json_encode(['success' => true, 'message' => 'YOU ARE ALREADY ON THE LIST!']);
+        exit;
+    }
+
+    // Insert new subscription
+    $stmt = $db->prepare("INSERT INTO newsletter_subscriptions (email) VALUES (?)");
+    $stmt->execute([$email]);
+
+    // --- SEND EMAIL NOTIFICATIONS ---
     try {
         require_once __DIR__ . '/../core/Mailer.php';
 
@@ -38,7 +48,6 @@ try {
             'newsletter_welcome',
             ['toEmail' => $email]
         );
-        $mailStatus = 'welcome_sent';
 
         // 2. Notification email to the site owner
         $adminEmail = defined('SITE_EMAIL') ? SITE_EMAIL : '';
@@ -50,40 +59,15 @@ try {
                 'newsletter_admin_notify',
                 ['subscriberEmail' => $email]
             );
-            $mailStatus = 'both_sent';
         }
     } catch (\Exception $mailErr) {
-        $mailError = $mailErr->getMessage();
-        $mailStatus = 'failed';
+        // Log but don't break the subscription flow
         error_log('[Mailer] Newsletter email failed for ' . $email . ': ' . $mailErr->getMessage());
     }
     // ---------------------------------
 
-    // Check if already subscribed
-    $stmt = $db->prepare("SELECT id FROM newsletter_subscriptions WHERE email = ?");
-    $stmt->execute([$email]);
-    if ($stmt->fetch()) {
-        echo json_encode([
-            'success' => true, 
-            'message' => 'YOU ARE ALREADY ON THE LIST (Sent verification email anyway!)',
-            'mail_status' => $mailStatus,
-            'mail_error' => $mailError
-        ]);
-        exit;
-    }
-
-    // Insert new subscription
-    $stmt = $db->prepare("INSERT INTO newsletter_subscriptions (email) VALUES (?)");
-    $stmt->execute([$email]);
-
-
-    echo json_encode([
-        'success' => true, 
-        'message' => 'SUCCESS! WELCOME TO AVAZONIA.',
-        'mail_status' => $mailStatus,
-        'mail_error' => $mailError,
-        'mail_password_set' => defined('MAIL_PASSWORD') && MAIL_PASSWORD !== 'YOUR_APP_PASSWORD'
-    ]);
+    echo json_encode(['success' => true, 'message' => 'SUCCESS! WELCOME TO AVAZONIA.']);
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => 'SERVER ERROR. PLEASE TRY AGAIN.', 'error' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'SERVER ERROR. PLEASE TRY AGAIN.']);
 }
+
