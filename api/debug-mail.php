@@ -21,33 +21,35 @@ try {
     echo "RENDER FAIL: " . $e->getMessage() . "\n";
 }
 
-echo "\nTesting PHPMailer directly with detailed debug...\n";
+echo "\n--- TEST 1: Port 465 (SSL) ---\n";
+test_send(MAIL_HOST, 465, 'ssl', MAIL_USERNAME, MAIL_PASSWORD);
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
-use PHPMailer\PHPMailer\Exception;
+echo "\n--- TEST 2: Port 587 (TLS) ---\n";
+test_send(MAIL_HOST, 587, 'tls', MAIL_USERNAME, MAIL_PASSWORD);
 
-$mail = new PHPMailer(true);
-try {
-    $mail->isSMTP();
-    $mail->Host       = MAIL_HOST;
-    $mail->SMTPAuth   = true;
-    $mail->Username   = MAIL_USERNAME;
-    $mail->Password   = MAIL_PASSWORD;
-    $mail->SMTPSecure = MAIL_ENCRYPTION;
-    $mail->Port       = MAIL_PORT;
-    $mail->SMTPDebug  = 4; // Max debug output
-    $mail->Debugoutput = function($str, $level) { echo "DEBUG: $str\n"; };
+function test_send($host, $port, $enc, $user, $pass) {
+    $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host       = $host;
+        $mail->SMTPAuth   = true;
+        $mail->Username   = $user;
+        $mail->Password   = $pass;
+        $mail->SMTPSecure = $enc;
+        $mail->Port       = $port;
+        $mail->SMTPDebug  = 2; 
+        $mail->Debugoutput = function($str, $level) { echo "DEBUG: $str\n"; };
 
-    $fromEmail = MAIL_FROM_EMAIL;
-    $mail->setFrom($fromEmail, 'Debug Test');
-    $mail->addAddress(MAIL_USERNAME); // Send to yourself
-    $mail->Subject = 'PROD DEBUG MAIL';
-    $mail->Body    = 'This is a test from the production API folder.';
+        $mail->setFrom($user, 'Debug Test');
+        $mail->addAddress($user); 
+        $mail->Subject = "PROD DEBUG - PORT $port";
+        $mail->Body    = "Testing connection on port $port with $enc";
 
-    echo "Attempting send...\n";
-    $mail->send();
-    echo "\nSEND SUCCESS!\n";
-} catch (Exception $e) {
-    echo "\nSEND FAILED: " . $e->getMessage() . "\n";
+        echo "Attempting send on port $port ($enc)...\n";
+        $mail->send();
+        echo "SUCCESS on port $port!\n";
+    } catch (Exception $e) {
+        echo "FAILED on port $port: " . $e->getMessage() . "\n";
+    }
 }
+
