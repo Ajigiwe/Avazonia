@@ -104,7 +104,7 @@ require_once __DIR__ . '/../layout/nav.php';
                     
                     <form id="newsletter-form" class="newsletter-pill-form">
                         <div class="pill-container">
-                            <input type="email" name="email" placeholder="Email Address..." required class="pill-input" autocomplete="off">
+                            <input type="email" name="email" placeholder="Email Address..." required class="pill-input">
                             <button type="submit" class="pill-submit">Subscribe</button>
                         </div>
                         <div id="newsletter-msg" style="margin-top: 16px; font-family: var(--f-mono); font-size: 11px; font-weight: 800; display: none;"></div>
