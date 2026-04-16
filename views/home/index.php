@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.disabled = true;
 
             try {
-                const response = await fetch('<?= APP_URL ?>/api/newsletter-subscribe.php', {
+                const response = await fetch('<?= APP_PATH ?>/api/newsletter-subscribe.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
