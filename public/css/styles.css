@@ -3920,15 +3920,15 @@ form button[type="submit"]:hover {
     cursor: pointer;
 }
 
-/* Yellow Close Button Update */
+/* Brand-Aware Close Button Update */
 .popup-mode-newsletter .promo-close {
     background: #fff;
-    color: #FFCC00;
-    border: 1px solid #FFCC00;
+    color: var(--red);
+    border: 1px solid var(--red);
 }
 
 .popup-mode-newsletter .promo-close:hover {
-    background: #FFCC00;
+    background: var(--red);
     color: #fff;
 }
 

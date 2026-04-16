@@ -373,7 +373,7 @@ if (Session::get('user_id')) {
                 <h2 style="font-family: var(--f-display); font-weight: 800; font-size: 24px; text-transform: uppercase; color: var(--ink); margin-bottom: 32px; letter-spacing: -0.01em;">Details</h2>
                 
                 <div style="background: var(--off); padding: 12px 20px; margin-bottom: 24px;">
-                    <span style="font-family: var(--f-mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #FFB800;">Specifications</span>
+                    <span style="font-family: var(--f-mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: var(--red);">Specifications</span>
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 16px;">
