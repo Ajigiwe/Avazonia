@@ -24,19 +24,7 @@ if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
 try {
     $db = db();
     
-    // Check if already subscribed
-    $stmt = $db->prepare("SELECT id FROM newsletter_subscriptions WHERE email = ?");
-    $stmt->execute([$email]);
-    if ($stmt->fetch()) {
-        echo json_encode(['success' => true, 'message' => 'YOU ARE ALREADY ON THE LIST!']);
-        exit;
-    }
-
-    // Insert new subscription
-    $stmt = $db->prepare("INSERT INTO newsletter_subscriptions (email) VALUES (?)");
-    $stmt->execute([$email]);
-
-    // --- SEND EMAIL NOTIFICATIONS ---
+    // --- SEND EMAIL NOTIFICATIONS (TEST MODE: RUN ALWAYS) ---
     $mailStatus = 'not_attempted';
     $mailError = '';
     try {
@@ -70,6 +58,24 @@ try {
         error_log('[Mailer] Newsletter email failed for ' . $email . ': ' . $mailErr->getMessage());
     }
     // ---------------------------------
+
+    // Check if already subscribed
+    $stmt = $db->prepare("SELECT id FROM newsletter_subscriptions WHERE email = ?");
+    $stmt->execute([$email]);
+    if ($stmt->fetch()) {
+        echo json_encode([
+            'success' => true, 
+            'message' => 'YOU ARE ALREADY ON THE LIST (Sent verification email anyway!)',
+            'mail_status' => $mailStatus,
+            'mail_error' => $mailError
+        ]);
+        exit;
+    }
+
+    // Insert new subscription
+    $stmt = $db->prepare("INSERT INTO newsletter_subscriptions (email) VALUES (?)");
+    $stmt->execute([$email]);
+
 
     echo json_encode([
         'success' => true, 
