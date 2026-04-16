@@ -24,9 +24,35 @@ foreach ($targets as $host => $ports) {
     }
 }
 
+echo "\n--- TEST 4: Local SMTP Relay (Port 25, No Auth) ---\n";
+require_once __DIR__ . '/../core/Mailer.php';
+test_local_relay(MAIL_USERNAME);
+
+function test_local_relay($to) {
+    echo "Attempting send via localhost:25 (no auth)...\n";
+    $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host = 'localhost';
+        $mail->Port = 25;
+        $mail->SMTPAuth = false;
+        $mail->setFrom('info@avazonia.com', 'Avazonia Local');
+        $mail->addAddress($to);
+        $mail->Subject = "PROD DEBUG - LOCAL RELAY";
+        $mail->Body    = "Testing local relay (localhost:25) with no auth.";
+        
+        if($mail->send()) {
+            echo "SUCCESS via local relay! ✅ (Check your spam folder)\n";
+        }
+    } catch (Exception $e) {
+        echo "FAILED via local relay: " . $e->getMessage() . " ❌\n";
+    }
+}
+
 echo "\nENVIRONMENT CHECK\n";
 echo "-----------------\n";
 require_once __DIR__ . '/../config/app.php';
 echo "MAIL_MAILER: " . (defined('MAIL_MAILER') ? MAIL_MAILER : 'UNDEFINED') . "\n";
 echo "MAIL_HOST: " . (defined('MAIL_HOST') ? MAIL_HOST : 'UNDEFINED') . "\n";
 ?>
+
