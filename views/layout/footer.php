@@ -133,7 +133,7 @@ global $dbSettings;
 <div id="pwa-install-banner" class="pwa-banner" style="display: none;">
     <div class="pwa-banner-content">
         <div class="pwa-banner-icon">
-            <img src="<?= APP_URL ?>/public/assets/img/app-logo.jpeg" alt="App Icon">
+            <img src="<?= APP_URL ?>/public/assets/img/app-logo-rounded.png" alt="App Icon">
         </div>
         <div class="pwa-banner-text">
             <h4>Avazonia App</h4>
@@ -148,7 +148,7 @@ global $dbSettings;
 <div id="ios-install-guide" class="ios-guide-modal" style="display: none;">
     <div class="ios-guide-content">
         <div class="ios-guide-header">
-            <img src="<?= APP_URL ?>/public/assets/img/app-logo.jpeg" alt="Icon">
+            <img src="<?= APP_URL ?>/public/assets/img/app-logo-rounded.png" alt="Icon">
             <h3>Install Avazonia</h3>
             <button onclick="document.getElementById('ios-install-guide').style.display='none'" class="ios-guide-close">✕</button>
         </div>

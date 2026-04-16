@@ -129,7 +129,7 @@
 
         <div class="header">
             <div>
-                <img src="<?= APP_URL ?>/public/assets/img/app-logo.jpeg" alt="<?= APP_NAME ?>" style="height: 60px; border-radius: 50%; margin-bottom: 12px; display: block;">
+                <img src="<?= APP_URL ?>/public/assets/img/app-logo-rounded.png" alt="<?= APP_NAME ?>" style="height: 60px; border-radius: 50%; margin-bottom: 12px; display: block;">
                 <div style="font-size: 11px; color: var(--mid-gray); margin-top: 4px;">Premium Electronics & Lifestyle Hub</div>
                 <div style="font-size: 11px; color: var(--mid-gray);"><?= SITE_EMAIL ?> | Accra, Ghana</div>
             </div>

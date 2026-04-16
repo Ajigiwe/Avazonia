@@ -3,7 +3,7 @@ const ASSETS_TO_PRECACHE = [
   '/',
   '/public/css/styles.css',
   '/public/assets/img/logo.png',
-  '/public/assets/img/app-logo.jpeg'
+  '/public/assets/img/app-logo-rounded.png'
 ];
 
 // Install Event
