@@ -7,7 +7,7 @@ header('Content-Type: application/json');
 
 $rawInput = file_get_contents('php://input');
 $input = json_decode($rawInput, true);
-$email = trim($input['email'] ?? $_POST['email'] ?? $_REQUEST['email'] ?? '');
+$email = trim($input['email'] ?? $_POST['email'] ?? $_GET['email'] ?? $_REQUEST['email'] ?? '');
 
 if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     echo json_encode([
