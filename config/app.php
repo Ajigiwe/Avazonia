@@ -90,16 +90,17 @@ if (!defined('SHIPPING_PICKUP')) define('SHIPPING_PICKUP', $dbSettings['shipping
 if (!defined('SHIPPING_FREE_THRESHOLD')) define('SHIPPING_FREE_THRESHOLD', (float)($dbSettings['shipping_free_threshold'] ?? 200.00));
 
 // Mail Settings (Static .env Configuration) - OVERRIDES DATABASE FOR RELIABILITY
-if (!defined('MAIL_MAILER'))     define('MAIL_MAILER',     getenv('MAIL_MAILER')     ?: 'smtp');
-if (!defined('MAIL_HOST'))       define('MAIL_HOST',       getenv('MAIL_HOST')       ?: 'localhost');
-if (!defined('MAIL_PORT'))       define('MAIL_PORT',       (int)(getenv('MAIL_PORT') ?: 25));
-if (!defined('MAIL_USERNAME'))   define('MAIL_USERNAME',   getenv('MAIL_USERNAME')   ?: '');
-if (!defined('MAIL_PASSWORD'))   define('MAIL_PASSWORD',   getenv('MAIL_PASSWORD')   ?: '');
-if (!defined('MAIL_FROM_EMAIL')) define('MAIL_FROM_EMAIL', getenv('MAIL_FROM_EMAIL') ?: getenv('MAIL_USERNAME') ?: getenv('SITE_EMAIL') ?: SITE_EMAIL);
-if (!defined('MAIL_FROM_NAME'))  define('MAIL_FROM_NAME',  getenv('MAIL_FROM_NAME')  ?: APP_NAME);
-if (!defined('MAIL_ENCRYPTION')) define('MAIL_ENCRYPTION', getenv('MAIL_ENCRYPTION') ?: '');
-if (!defined('MAIL_DEBUG'))      define('MAIL_DEBUG',      (int)(getenv('MAIL_DEBUG') ?: 0));
-if (!defined('BREVO_API_KEY'))   define('BREVO_API_KEY',   getenv('BREVO_API_KEY')   ?: '');
+if (!defined('MAIL_MAILER'))     define('MAIL_MAILER',     trim(getenv('MAIL_MAILER'))     ?: 'smtp');
+if (!defined('MAIL_HOST'))       define('MAIL_HOST',       trim(getenv('MAIL_HOST'))       ?: 'localhost');
+if (!defined('MAIL_PORT'))       define('MAIL_PORT',       (int)trim(getenv('MAIL_PORT')   ?: 25));
+if (!defined('MAIL_USERNAME'))   define('MAIL_USERNAME',   trim(getenv('MAIL_USERNAME'))   ?: '');
+if (!defined('MAIL_PASSWORD'))   define('MAIL_PASSWORD',   trim(getenv('MAIL_PASSWORD'))   ?: '');
+if (!defined('MAIL_FROM_EMAIL')) define('MAIL_FROM_EMAIL', trim(getenv('MAIL_FROM_EMAIL') ?: getenv('MAIL_USERNAME') ?: getenv('SITE_EMAIL') ?: SITE_EMAIL));
+if (!defined('MAIL_FROM_NAME'))  define('MAIL_FROM_NAME',  trim(getenv('MAIL_FROM_NAME'))  ?: APP_NAME);
+if (!defined('MAIL_ENCRYPTION')) define('MAIL_ENCRYPTION', trim(getenv('MAIL_ENCRYPTION')) ?: '');
+if (!defined('MAIL_DEBUG'))      define('MAIL_DEBUG',      (int)trim(getenv('MAIL_DEBUG')  ?: 0));
+if (!defined('BREVO_API_KEY'))   define('BREVO_API_KEY',   trim(getenv('BREVO_API_KEY'))   ?: '');
+
 
 
 
