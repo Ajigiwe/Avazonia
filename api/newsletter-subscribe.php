@@ -27,48 +27,45 @@ try {
     // Check if already subscribed
     $stmt = $db->prepare("SELECT id FROM newsletter_subscriptions WHERE email = ?");
     $stmt->execute([$email]);
-    if ($stmt->fetch()) {
-        echo json_encode(['success' => true, 'message' => 'YOU ARE ALREADY ON THE LIST!']);
-        exit;
+    $isExisting = $stmt->fetch();
+    
+    if (!$isExisting) {
+        // Insert new subscription
+        $stmt = $db->prepare("INSERT INTO newsletter_subscriptions (email) VALUES (?)");
+        $stmt->execute([$email]);
     }
 
-    // Insert new subscription
-    $stmt = $db->prepare("INSERT INTO newsletter_subscriptions (email) VALUES (?)");
-    $stmt->execute([$email]);
-
+    $mailStatus = 'not_attempted';
+    
     // --- SEND EMAIL NOTIFICATIONS ---
     try {
         require_once __DIR__ . '/../core/Mailer.php';
 
         // 1. Welcome email to the subscriber
-        Mailer::sendTemplate(
-            $email,
-            'Subscriber',
-            'Welcome to Avazonia! 🎉',
-            'newsletter_welcome',
-            ['toEmail' => $email]
-        );
+        if (Mailer::sendTemplate($email, 'Subscriber', 'Welcome to Avazonia! 🎉', 'newsletter_welcome', ['toEmail' => $email])) {
+            $mailStatus = 'delivered';
+        } else {
+            $mailStatus = 'failed_internal';
+        }
 
         // 2. Notification email to the site owner
         $adminEmail = defined('SITE_EMAIL') ? SITE_EMAIL : '';
         if (!empty($adminEmail)) {
-            Mailer::sendTemplate(
-                $adminEmail,
-                defined('APP_NAME') ? APP_NAME . ' Admin' : 'Admin',
-                'New Newsletter Subscriber: ' . $email,
-                'newsletter_admin_notify',
-                ['subscriberEmail' => $email]
-            );
+            Mailer::sendTemplate($adminEmail, defined('APP_NAME') ? APP_NAME . ' Admin' : 'Admin', 'New Subscriber: ' . $email, 'newsletter_admin_notify', ['subscriberEmail' => $email]);
         }
     } catch (\Exception $mailErr) {
-        // Detailed logging to server error log
-        error_log('[Newsletter Mail Fail] For: ' . $email . ' | Error: ' . $mailErr->getMessage());
-        error_log('[Newsletter Mail Detail] ' . $mailErr->getTraceAsString());
+        $mailStatus = 'exception: ' . $mailErr->getMessage();
+        error_log('[Newsletter Mail Fail] ' . $mailErr->getMessage());
     }
     // ---------------------------------
 
-    echo json_encode(['success' => true, 'message' => 'SUCCESS! WELCOME TO AVAZONIA.']);
+    echo json_encode([
+        'success' => true, 
+        'message' => $isExisting ? 'WELCOME BACK! (Sent another copy)' : 'SUCCESS! WELCOME TO AVAZONIA.',
+        'mail_status' => $mailStatus
+    ]);
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => 'SERVER ERROR. PLEASE TRY AGAIN.']);
+    echo json_encode(['success' => false, 'message' => 'SERVER ERROR.']);
 }
+
 
