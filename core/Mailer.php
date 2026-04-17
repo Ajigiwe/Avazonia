@@ -30,16 +30,22 @@ class Mailer {
         $mailerType = defined('MAIL_MAILER') ? MAIL_MAILER : 'smtp';
 
         if ($mailerType === 'mail') {
-            $mail->isMail(); // Use PHP's internal mail() function
+            $mail->isMail(); 
         } else {
             // Server settings (SMTP)
             $mail->isSMTP();
-            $mail->Host       = defined('MAIL_HOST')       ? MAIL_HOST       : 'smtp.gmail.com';
-            $mail->SMTPAuth   = !empty(MAIL_USERNAME); 
-            $mail->Username   = defined('MAIL_USERNAME')   ? MAIL_USERNAME   : '';
-            $mail->Password   = defined('MAIL_PASSWORD')   ? MAIL_PASSWORD   : '';
-            $mail->SMTPSecure = defined('MAIL_ENCRYPTION') ? MAIL_ENCRYPTION : 'tls';
-            $mail->Port       = defined('MAIL_PORT')       ? (int)MAIL_PORT  : 587;
+            $mail->Host       = defined('MAIL_HOST') ? MAIL_HOST : 'localhost';
+            $mail->Port       = defined('MAIL_PORT') ? (int)MAIL_PORT : 25;
+            
+            // Auto-disable Auth for localhost Port 25 (Local Relay)
+            if ($mail->Host === 'localhost' && $mail->Port === 25) {
+                $mail->SMTPAuth = false;
+            } else {
+                $mail->SMTPAuth = !empty(MAIL_USERNAME);
+                $mail->Username = defined('MAIL_USERNAME') ? MAIL_USERNAME : '';
+                $mail->Password = defined('MAIL_PASSWORD') ? MAIL_PASSWORD : '';
+                $mail->SMTPSecure = defined('MAIL_ENCRYPTION') ? MAIL_ENCRYPTION : '';
+            }
         }
 
         $mail->CharSet = 'UTF-8';
