@@ -26,7 +26,7 @@ ob_start(); ?>
   <p>If you didn't request a password reset, no action is needed — your account is safe.</p>
 
   <p style="font-size: 13px; color: #999; margin-top: 24px;">Or paste this URL in your browser:<br>
-    <a href="<?= htmlspecialchars($resetUrl) ?>" style="color: #E5001A; word-break: break-all;"><?= htmlspecialchars($resetUrl) ?></a>
+    <a href="<?= htmlspecialchars($resetUrl) ?>" style="color: <?= defined('PRIMARY_COLOR') ? PRIMARY_COLOR : '#E5001A' ?>; word-break: break-all;"><?= htmlspecialchars($resetUrl) ?></a>
   </p>
 </div>
 <?php

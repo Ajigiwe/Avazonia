@@ -24,7 +24,7 @@ ob_start(); ?>
   <hr class="divider">
 
   <p style="font-size: 13px; color: #999;">Or paste this URL in your browser:<br>
-    <a href="<?= htmlspecialchars($verifyUrl) ?>" style="color: #E5001A; word-break: break-all;"><?= htmlspecialchars($verifyUrl) ?></a>
+    <a href="<?= htmlspecialchars($verifyUrl) ?>" style="color: <?= defined('PRIMARY_COLOR') ? PRIMARY_COLOR : '#E5001A' ?>; word-break: break-all;"><?= htmlspecialchars($verifyUrl) ?></a>
   </p>
 </div>
 <?php

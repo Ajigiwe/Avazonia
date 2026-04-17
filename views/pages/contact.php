@@ -51,6 +51,11 @@
                             <p style="color: #fff; opacity: 0.8; font-size: 14px;">Our team will get back to you within 2 business hours.</p>
                         </div>
                     <?php else: ?>
+                        <?php if (!empty($error)): ?>
+                            <div style="padding: 16px 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; margin-bottom: 24px; font-size: 14px;">
+                                <?= htmlspecialchars($error) ?>
+                            </div>
+                        <?php endif; ?>
                         <form action="<?= APP_URL ?>/contact" method="POST" style="display: flex; flex-direction: column; gap: 20px;">
                             <div>
                                 <input type="text" name="name" placeholder="Name *" required class="contact-input-white">
