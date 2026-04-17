@@ -61,8 +61,9 @@ try {
             );
         }
     } catch (\Exception $mailErr) {
-        // Log but don't break the subscription flow
-        error_log('[Mailer] Newsletter email failed for ' . $email . ': ' . $mailErr->getMessage());
+        // Detailed logging to server error log
+        error_log('[Newsletter Mail Fail] For: ' . $email . ' | Error: ' . $mailErr->getMessage());
+        error_log('[Newsletter Mail Detail] ' . $mailErr->getTraceAsString());
     }
     // ---------------------------------
 
