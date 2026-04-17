@@ -28,9 +28,14 @@ class Mailer {
 
         $mailerType = defined('MAIL_MAILER') ? MAIL_MAILER : 'smtp';
 
+        if ($mailerType === 'mailersend') {
+            return self::sendViaMailersend($toEmail, $toName, $subject, $htmlBody);
+        }
+
         if ($mailerType === 'brevo') {
             return self::sendViaBrevo($toEmail, $toName, $subject, $htmlBody);
         }
+
 
         if ($mailerType === 'mail') {
             $mail->isMail(); 
@@ -80,6 +85,50 @@ class Mailer {
 
         return $mail->send();
     }
+
+    /**
+     * Send email via MailerSend's Transactional API (HTTP/HTTPS)
+     * This bypasses the SMTP firewall block.
+     */
+    private static function sendViaMailersend(string $toEmail, string $toName, string $subject, string $htmlBody): bool {
+        $apiKey = defined('MAILERSEND_API_KEY') ? MAILERSEND_API_KEY : '';
+        if (empty($apiKey)) {
+            error_log('[Mailer] MailerSend API Key is missing.');
+            return false;
+        }
+
+        $fromEmail = defined('MAIL_FROM_EMAIL') ? MAIL_FROM_EMAIL : SITE_EMAIL;
+        $fromName  = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : APP_NAME;
+
+        $payload = [
+            'from' => ['email' => $fromEmail, 'name' => $fromName],
+            'to'   => [['email' => $toEmail, 'name' => $toName]],
+            'subject' => $subject,
+            'html' => $htmlBody
+        ];
+
+        $ch = curl_init('https://api.mailersend.com/v1/email');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'X-Requested-With: XMLHttpRequest',
+            'Authorization: Bearer ' . $apiKey
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return true;
+        } else {
+            error_log('[Mailer] MailerSend API Error (Code ' . $httpCode . '): ' . $response);
+            return false;
+        }
+    }
+
 
     /**
      * Send email via Brevo's Transactional API (HTTP/HTTPS)

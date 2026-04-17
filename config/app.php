@@ -100,6 +100,9 @@ if (!defined('MAIL_FROM_NAME'))  define('MAIL_FROM_NAME',  trim(getenv('MAIL_FRO
 if (!defined('MAIL_ENCRYPTION')) define('MAIL_ENCRYPTION', trim(getenv('MAIL_ENCRYPTION')) ?: '');
 if (!defined('MAIL_DEBUG'))      define('MAIL_DEBUG',      (int)trim(getenv('MAIL_DEBUG')  ?: 0));
 if (!defined('BREVO_API_KEY'))   define('BREVO_API_KEY',   trim(getenv('BREVO_API_KEY'))   ?: '');
+if (!defined('MAILERSEND_API_KEY')) define('MAILERSEND_API_KEY', trim(getenv('MAILERSEND_API_KEY')) ?: '');
+
+
 
 
 
