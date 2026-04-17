@@ -62,13 +62,17 @@ class PageController {
                 
                 if (!empty($adminEmail)) {
                     try {
-                        Mailer::sendTemplate($adminEmail, $appName . ' Admin', 'New Contact Request: ' . $subject, 'contact_admin_notify', [
+                        $sent = Mailer::sendTemplate($adminEmail, $appName . ' Admin', 'New Contact Request: ' . $subject, 'contact_admin_notify', [
                             'customerName' => $name,
                             'customerEmail' => $email,
                             'subjectLine' => $subject,
                             'messageBody' => $message
                         ]);
-                        $success = true;
+                        if ($sent) {
+                            $success = true;
+                        } else {
+                            $error = 'Sorry, there was a problem delivering your message. Please try again later.';
+                        }
                     } catch (Exception $e) {
                         error_log('[Contact Form] Mail error: ' . $e->getMessage());
                         $error = 'Sorry, there was a problem sending your message. Please try again later.';

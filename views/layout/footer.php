@@ -29,7 +29,9 @@ global $dbSettings;
                 <a href="<?= APP_URL ?>/shop" class="footer-col-link">Shop</a>
                 <a href="<?= APP_URL ?>/contact" class="footer-col-link">Contact Us</a>
                 <a href="<?= APP_URL ?>/track-order" class="footer-col-link">Track Your Order</a>
+                <?php if (!Session::get('user_id')): ?>
                 <a href="<?= APP_URL ?>/login" class="footer-col-link">Login / Register</a>
+                <?php endif; ?>
             </div>
 
             <!-- Support Pillar -->
