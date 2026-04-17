@@ -26,12 +26,16 @@ class Mailer {
     public static function send(string $toEmail, string $toName, string $subject, string $htmlBody, string $textBody = ''): bool {
         $mail = new PHPMailer(true); // true = throw exceptions
 
-        // Dispatcher Settings
         $mailerType = defined('MAIL_MAILER') ? MAIL_MAILER : 'smtp';
+
+        if ($mailerType === 'brevo') {
+            return self::sendViaBrevo($toEmail, $toName, $subject, $htmlBody);
+        }
 
         if ($mailerType === 'mail') {
             $mail->isMail(); 
         } else {
+
             // Server settings (SMTP)
             $mail->isSMTP();
             $mail->Host       = defined('MAIL_HOST') ? MAIL_HOST : 'localhost';
@@ -80,6 +84,49 @@ class Mailer {
         $mail->AltBody = $textBody ?: strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>', '</tr>'], "\n", $htmlBody));
 
         return $mail->send();
+    }
+
+    /**
+     * Send email via Brevo's Transactional API (HTTP/HTTPS)
+     * This bypasses the SMTP firewall block.
+     */
+    private static function sendViaBrevo(string $toEmail, string $toName, string $subject, string $htmlBody): bool {
+        $apiKey = defined('BREVO_API_KEY') ? BREVO_API_KEY : '';
+        if (empty($apiKey)) {
+            error_log('[Mailer] Brevo API Key is missing.');
+            return false;
+        }
+
+        $fromEmail = defined('MAIL_FROM_EMAIL') ? MAIL_FROM_EMAIL : SITE_EMAIL;
+        $fromName  = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : APP_NAME;
+
+        $payload = [
+            'sender' => ['name' => $fromName, 'email' => $fromEmail],
+            'to'     => [['email' => $toEmail, 'name' => $toName]],
+            'subject' => $subject,
+            'htmlContent' => $htmlBody
+        ];
+
+        $ch = curl_init('https://api.brevo.com/v3/smtp/email');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'accept: application/json',
+            'api-key: ' . $apiKey,
+            'content-type: application/json'
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return true;
+        } else {
+            error_log('[Mailer] Brevo API Error: ' . $response);
+            return false;
+        }
     }
 
 

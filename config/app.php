@@ -99,5 +99,7 @@ if (!defined('MAIL_FROM_EMAIL')) define('MAIL_FROM_EMAIL', getenv('MAIL_FROM_EMA
 if (!defined('MAIL_FROM_NAME'))  define('MAIL_FROM_NAME',  getenv('MAIL_FROM_NAME')  ?: APP_NAME);
 if (!defined('MAIL_ENCRYPTION')) define('MAIL_ENCRYPTION', getenv('MAIL_ENCRYPTION') ?: 'tls');
 if (!defined('MAIL_DEBUG'))      define('MAIL_DEBUG',      (int)(getenv('MAIL_DEBUG') ?: 0));
+if (!defined('BREVO_API_KEY'))   define('BREVO_API_KEY',   getenv('BREVO_API_KEY')   ?: '');
+
 
 ?>
