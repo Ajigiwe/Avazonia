@@ -6,7 +6,7 @@ error_reporting(E_ALL);
 header('Content-Type: text/plain');
 
 $targets = [
-    'smtp.gmail.com' => [465, 587, 25],
+    'smtp.gmail.com' => [465, 587, 25, 2525],
     'localhost' => [25, 465, 587],
     'mail.avazonia.com' => [25, 465, 587]
 ];
