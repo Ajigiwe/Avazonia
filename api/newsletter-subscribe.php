@@ -5,19 +5,16 @@ require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json');
 
-$rawInput = file_get_contents('php://input');
-$input = json_decode($rawInput, true);
-$email = trim($input['email'] ?? $_POST['email'] ?? $_GET['email'] ?? $_REQUEST['email'] ?? '');
+$email = $_POST['email'] ?? $_GET['email'] ?? $_REQUEST['email'] ?? null;
+if (!$email) {
+    // try php://input
+    $json = file_get_contents('php://input');
+    $data = json_decode($json, true);
+    $email = $data['email'] ?? null;
+}
 
 if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode([
-        'success' => false, 
-        'message' => 'PLEASE ENTER A VALID EMAIL.',
-        'debug_raw' => $rawInput,
-        'debug_parsed' => $input,
-        'debug_post' => $_POST,
-        'debug_method' => $_SERVER['REQUEST_METHOD']
-    ]);
+    echo json_encode(['success' => false, 'message' => 'PLEASE ENTER A VALID EMAIL ADDRESS.']);
     exit;
 }
 

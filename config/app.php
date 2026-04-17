@@ -95,7 +95,7 @@ if (!defined('MAIL_HOST'))       define('MAIL_HOST',       getenv('MAIL_HOST')  
 if (!defined('MAIL_PORT'))       define('MAIL_PORT',       (int)(getenv('MAIL_PORT') ?: 25));
 if (!defined('MAIL_USERNAME'))   define('MAIL_USERNAME',   getenv('MAIL_USERNAME')   ?: '');
 if (!defined('MAIL_PASSWORD'))   define('MAIL_PASSWORD',   getenv('MAIL_PASSWORD')   ?: '');
-if (!defined('MAIL_FROM_EMAIL')) define('MAIL_FROM_EMAIL', getenv('MAIL_FROM_EMAIL') ?: getenv('MAIL_USERNAME') ?: SITE_EMAIL);
+if (!defined('MAIL_FROM_EMAIL')) define('MAIL_FROM_EMAIL', getenv('MAIL_FROM_EMAIL') ?: getenv('MAIL_USERNAME') ?: getenv('SITE_EMAIL') ?: SITE_EMAIL);
 if (!defined('MAIL_FROM_NAME'))  define('MAIL_FROM_NAME',  getenv('MAIL_FROM_NAME')  ?: APP_NAME);
 if (!defined('MAIL_ENCRYPTION')) define('MAIL_ENCRYPTION', getenv('MAIL_ENCRYPTION') ?: '');
 if (!defined('MAIL_DEBUG'))      define('MAIL_DEBUG',      (int)(getenv('MAIL_DEBUG') ?: 0));
