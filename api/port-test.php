@@ -11,6 +11,8 @@ $targets = [
     'mail.avazonia.com' => [25, 465, 587]
 ];
 
+require_once __DIR__ . '/../config/app.php';
+
 echo "PORT CONNECTIVITY TEST\n";
 echo "----------------------\n";
 
@@ -54,7 +56,6 @@ function test_local_relay($to) {
 
 echo "\nENVIRONMENT CHECK\n";
 echo "-----------------\n";
-require_once __DIR__ . '/../config/app.php';
 echo "MAIL_MAILER: " . (defined('MAIL_MAILER') ? MAIL_MAILER : 'UNDEFINED') . "\n";
 echo "MAIL_HOST: " . (defined('MAIL_HOST') ? MAIL_HOST : 'UNDEFINED') . "\n";
 ?>
