@@ -63,15 +63,10 @@ class Mailer {
 
         // Sender
         $fromEmail = defined('MAIL_FROM_EMAIL') ? MAIL_FROM_EMAIL : SITE_EMAIL;
-        
-        // Force domain-safe 'From' for local relay (localhost:25) to prevent server rejection
-        if ($mailerType === 'smtp' && $mail->Host === 'localhost' && $mail->Port === 25) {
-            $fromEmail = 'info@avazonia.com';
-        }
-
         $fromName  = defined('MAIL_FROM_NAME')  ? MAIL_FROM_NAME  : APP_NAME;
         $mail->setFrom($fromEmail, $fromName);
         $mail->addReplyTo($fromEmail, $fromName);
+
 
 
         // Recipient
