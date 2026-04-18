@@ -11,7 +11,7 @@ global $dbSettings;
             <!-- Identity Pillar -->
             <div class="reveal">
                 <a href="<?= APP_URL ?>" class="footer-logo-link">
-                    <img src="<?= APP_URL ?>/public/assets/img/logo.png" alt="AVAZONIA" class="logo-img">
+                    <img src="<?= APP_URL ?>/public/assets/img/logo2.jpg" alt="AVAZONIA" class="logo-img" style="border-radius: 50%; object-fit: cover; aspect-ratio: 1/1;">
                 </a>
                 <p class="footer-newsletter-disclaimer"><?= htmlspecialchars($dbSettings['footer_address'] ?? 'Q4 Gibbefish Street Beach Road Takoradi, Ghana') ?></p>
                 <a href="https://maps.google.com" target="_blank" class="footer-directions-link" style="margin-bottom: 12px;">Get Directions</a>
@@ -135,7 +135,7 @@ global $dbSettings;
 <div id="pwa-install-banner" class="pwa-banner" style="display: none;">
     <div class="pwa-banner-content">
         <div class="pwa-banner-icon">
-            <img src="<?= APP_URL ?>/public/assets/img/app-logo-rounded.png" alt="App Icon">
+            <img src="<?= APP_URL ?>/public/assets/img/logo2.jpg" alt="App Icon" style="border-radius: 50%; object-fit: cover; aspect-ratio: 1/1;">
         </div>
         <div class="pwa-banner-text">
             <h4>Avazonia App</h4>
@@ -150,7 +150,7 @@ global $dbSettings;
 <div id="ios-install-guide" class="ios-guide-modal" style="display: none;">
     <div class="ios-guide-content">
         <div class="ios-guide-header">
-            <img src="<?= APP_URL ?>/public/assets/img/app-logo-rounded.png" alt="Icon">
+            <img src="<?= APP_URL ?>/public/assets/img/logo2.jpg" alt="Icon" style="border-radius: 50%; object-fit: cover; aspect-ratio: 1/1;">
             <h3>Install Avazonia</h3>
             <button onclick="document.getElementById('ios-install-guide').style.display='none'" class="ios-guide-close">✕</button>
         </div>

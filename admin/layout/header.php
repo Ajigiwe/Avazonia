@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $title ?? 'Admin' ?> — Avazonia</title>
-    <link rel="icon" type="image/png" href="<?= APP_URL ?>/public/assets/img/app-logo-rounded.png">
+    <link rel="icon" type="image/jpeg" href="<?= APP_URL ?>/public/assets/img/logo2.jpg" style="border-radius: 50%;">
     
     <!-- Google Fonts: Outfit for Branding, Inter for UI -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

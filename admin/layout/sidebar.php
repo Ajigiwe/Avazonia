@@ -4,7 +4,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 <aside class="admin-sidebar">
     <div class="sidebar-brand">
-        <img src="<?= APP_URL ?>/public/assets/img/logo.png" alt="AVAZONIA" class="logo-img admin" style="height: 32px; width: auto; margin-bottom: 4px;">
+        <img src="<?= APP_URL ?>/public/assets/img/logo2.jpg" alt="AVAZONIA" class="logo-img admin" style="height: 32px; width: auto; margin-bottom: 4px; border-radius: 50%; object-fit: cover; aspect-ratio: 1/1;">
         <span>ADMIN</span>
     </div>
     <nav class="sidebar-nav">

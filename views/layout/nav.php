@@ -39,7 +39,7 @@ function getCatIcon($slug) {
             </button>
 
             <a href="<?= APP_URL ?>" class="nav-brand">
-                <img src="<?= APP_URL ?>/public/assets/img/logo.png" alt="AVAZONIA" class="logo-img">
+                <img src="<?= APP_URL ?>/public/assets/img/logo2.jpg" alt="AVAZONIA" class="logo-img" style="border-radius: 50%; object-fit: cover; aspect-ratio: 1/1;">
             </a>
 
             
