@@ -1,9 +1,9 @@
-const CACHE_NAME = 'avazonia-premium-v1';
+const CACHE_NAME = 'avazonia-premium-v2';
 const ASSETS_TO_PRECACHE = [
   '/',
   '/public/css/styles.css',
   '/public/assets/img/logo.png',
-  '/public/assets/img/app-logo-rounded.png'
+  '/public/assets/img/logo2-rounded.png'
 ];
 
 // Install Event
