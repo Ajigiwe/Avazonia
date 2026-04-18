@@ -42,7 +42,7 @@
         .page-fade { transition: opacity 0.4s ease, transform 0.4s ease; }
         .page-fade.is-loading { opacity: 0; transform: translateY(10px); }
     </style>
-    <link rel="icon" type="image/jpeg" href="<?= APP_URL ?>/public/assets/img/logo2.jpg" style="border-radius: 50%;">
+    <link rel="icon" type="image/png" href="<?= APP_URL ?>/public/assets/img/logo2-rounded.png">
 
     <!-- PWA Support -->
     <link rel="manifest" href="<?= APP_URL ?>/manifest.webmanifest">
@@ -51,7 +51,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="<?= APP_NAME ?>">
-    <link rel="apple-touch-icon" href="<?= APP_URL ?>/public/assets/img/logo2.jpg">
+    <link rel="apple-touch-icon" href="<?= APP_URL ?>/public/assets/img/logo2-rounded.png">
     
     <script>
     if ('serviceWorker' in navigator) {

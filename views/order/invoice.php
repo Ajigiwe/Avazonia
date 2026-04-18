@@ -128,8 +128,8 @@
         </div>
 
         <div class="header">
-            <div>
-                <img src="<?= APP_URL ?>/public/assets/img/logo2.jpg" alt="<?= APP_NAME ?>" style="height: 60px; border-radius: 50%; object-fit: cover; aspect-ratio: 1/1; margin-bottom: 12px; display: block;">
+            <div class="text-center" style="margin-top: 40px; padding-top: 20px; border-top: 2px dashed #eee;">
+                <img src="<?= APP_URL ?>/public/assets/img/logo2-rounded.png" alt="<?= APP_NAME ?>" style="height: 60px; border-radius: 50%; margin-bottom: 12px; display: block;">
                 <div style="font-size: 11px; color: var(--mid-gray); margin-top: 4px;">Premium Electronics & Lifestyle Hub</div>
                 <div style="font-size: 11px; color: var(--mid-gray);"><?= SITE_EMAIL ?> | Accra, Ghana</div>
             </div>
