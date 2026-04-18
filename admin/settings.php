@@ -275,9 +275,18 @@ include 'layout/header.php';
                 </div>
             </div>
 
-            <div class="field-group">
-                <label class="field-label">Footer Copyright Notice</label>
-                <input type="text" id="set-footer_notice" value="<?= getSet('footer_notice', '© 2026 AVAZONIA GH') ?>" class="field-input">
+            <div class="field-grid">
+                <div class="field-group">
+                    <label class="field-label">Footer Copyright Notice</label>
+                    <input type="text" id="set-footer_notice" value="<?= getSet('footer_notice', '© 2026 AVAZONIA GH') ?>" class="field-input">
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Product Card Auto Slider</label>
+                    <select id="set-product_card_slider_enabled" class="field-input">
+                        <option value="1" <?= getSet('product_card_slider_enabled', '1') == '1' ? 'selected' : '' ?>>Enabled</option>
+                        <option value="0" <?= getSet('product_card_slider_enabled') == '0' ? 'selected' : '' ?>>Disabled</option>
+                    </select>
+                </div>
             </div>
 
             <!-- POPUP MINI SECTION -->

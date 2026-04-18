@@ -323,10 +323,17 @@ document.addEventListener("DOMContentLoaded", function() {
         if(images.length <= 1) return;
         let currentIndex = 0;
         setInterval(() => {
+            // Animate out current image
             images[currentIndex].style.opacity = '0';
+            images[currentIndex].style.transform = 'scale(1.05) translateY(8px)';
+            
+            // Increment index
             currentIndex = (currentIndex + 1) % images.length;
+            
+            // Animate in new image
             images[currentIndex].style.opacity = '1';
-        }, 2500);
+            images[currentIndex].style.transform = 'scale(1) translateY(0)';
+        }, 3000);
     });
 });
 </script>
