@@ -43,13 +43,21 @@ if (empty($activeSlides)) return;
                 </div>
             </div>
             <div class="hero-right">
-                <img src="<?= APP_URL ?>/<?= $s['image_url'] ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                <?php if (in_array(strtolower(pathinfo($s['image_url'], PATHINFO_EXTENSION)), ['mp4', 'webm'])): ?>
+                    <video src="<?= APP_URL ?>/<?= $s['image_url'] ?>" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <?php else: ?>
+                    <img src="<?= APP_URL ?>/<?= $s['image_url'] ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                <?php endif; ?>
             </div>
 
         <?php elseif ($s['template_type'] === 'full-width'): ?>
             <!-- FULL IMMERSIVE TEMPLATE -->
             <div class="hero-full-bg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;">
-                <img src="<?= APP_URL ?>/<?= $s['image_url'] ?>" style="width: 100%; height: 100%; object-fit: cover; filter: brightness(0.6);">
+                <?php if (in_array(strtolower(pathinfo($s['image_url'], PATHINFO_EXTENSION)), ['mp4', 'webm'])): ?>
+                    <video src="<?= APP_URL ?>/<?= $s['image_url'] ?>" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; filter: brightness(0.6);"></video>
+                <?php else: ?>
+                    <img src="<?= APP_URL ?>/<?= $s['image_url'] ?>" style="width: 100%; height: 100%; object-fit: cover; filter: brightness(0.6);">
+                <?php endif; ?>
             </div>
             <div class="hero-full-content" style="position: relative; z-index: 10; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: #fff; padding: 0 40px;">
                 <div class="sec-eyebrow" style="justify-content: center;">

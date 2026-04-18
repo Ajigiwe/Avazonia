@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         $fileExt = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
-        $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+        $allowed = ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'webm'];
         
         if (in_array($fileExt, $allowed)) {
             $fileName = 'slide_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $fileExt;
@@ -46,12 +46,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $image_url = 'public/uploads/sliders/' . $fileName;
             }
         } else {
-            $error = "Invalid file type. Only JPG, PNG, and WEBP are allowed.";
+            $error = "Invalid file type. Only JPG, PNG, WEBP, MP4, and WEBM are allowed.";
         }
     }
 
     if (!$error && empty($image_url)) {
-        $error = "Please upload a slide image or provide a URL.";
+        $error = "Please upload a slide image/video or provide a URL.";
     }
 
     if (!$error) {
@@ -140,12 +140,12 @@ include 'layout/header.php';
                 </div>
 
                 <div>
-                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Upload Slide Artwork</label>
-                    <input type="file" name="image" accept="image/*" style="width: 100%; padding: 9px; border: 1px solid var(--light-gray); font-family: inherit; font-size: 11px;">
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Upload Slide Artwork/Video</label>
+                    <input type="file" name="image" accept="image/*,video/mp4,video/webm" style="width: 100%; padding: 9px; border: 1px solid var(--light-gray); font-family: inherit; font-size: 11px;">
                 </div>
 
                 <div>
-                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Or Image URL</label>
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Or Media URL</label>
                     <input type="url" name="image_url_manual" placeholder="https://..." style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;">
                 </div>
 

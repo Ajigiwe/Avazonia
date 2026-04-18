@@ -219,10 +219,10 @@ $totalItems = array_sum(array_column($cart, 'qty'));
         <div class="sum-title">Order Summary</div>
 
         <select class="zone-sel" id="cart-zone" onchange="updateCartTotal(this)">
-          <option value="<?= defined('SHIPPING_ACCRA') ? SHIPPING_ACCRA : 15 ?>">📍 Accra & Greater Accra — ₵<?= defined('SHIPPING_ACCRA') ? SHIPPING_ACCRA : 15 ?> (1–2 days)</option>
-          <option value="<?= defined('SHIPPING_KUMASI') ? SHIPPING_KUMASI : 25 ?>">📍 Kumasi / Takoradi — ₵<?= defined('SHIPPING_KUMASI') ? SHIPPING_KUMASI : 25 ?> (2–3 days)</option>
-          <option value="<?= defined('SHIPPING_OTHERS') ? SHIPPING_OTHERS : 60 ?>">📍 All Other Regions — ₵<?= defined('SHIPPING_OTHERS') ? SHIPPING_OTHERS : 60 ?> (3–5 days)</option>
-          <option value="0">🏪 Store Pickup — <?= defined('SHIPPING_PICKUP') ? SHIPPING_PICKUP : 'Free' ?></option>
+          <option value="<?= defined('SHIPPING_ACCRA') ? SHIPPING_ACCRA : 15 ?>" data-id="1">📍 Accra & Greater Accra — ₵<?= defined('SHIPPING_ACCRA') ? SHIPPING_ACCRA : 15 ?> (1–2 days)</option>
+          <option value="<?= defined('SHIPPING_KUMASI') ? SHIPPING_KUMASI : 25 ?>" data-id="2">📍 Kumasi / Takoradi — ₵<?= defined('SHIPPING_KUMASI') ? SHIPPING_KUMASI : 25 ?> (2–3 days)</option>
+          <option value="<?= defined('SHIPPING_OTHERS') ? SHIPPING_OTHERS : 60 ?>" data-id="3">📍 All Other Regions — ₵<?= defined('SHIPPING_OTHERS') ? SHIPPING_OTHERS : 60 ?> (3–5 days)</option>
+          <option value="0" data-id="4">🏪 Store Pickup — <?= defined('SHIPPING_PICKUP') ? SHIPPING_PICKUP : 'Free' ?></option>
         </select>
 
         <div class="sum-line"><span class="sum-l">Subtotal</span><span class="sum-v">₵<?= number_format($total, 2) ?></span></div>
@@ -244,7 +244,7 @@ $totalItems = array_sum(array_column($cart, 'qty'));
             </div>
         <?php endif; ?>
 
-        <a href="<?= APP_URL ?>/checkout" class="checkout-btn">
+        <a href="<?= APP_URL ?>/checkout" class="checkout-btn" id="cart-checkout-btn">
           Proceed to Checkout
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </a>
@@ -274,6 +274,13 @@ function updateCartTotal(el) {
     
     document.getElementById('cart-ship-val').innerText = shipVal > 0 ? '₵' + shipVal.toFixed(2) : 'FREE';
     document.getElementById('cart-est-total').innerText = '₵' + Math.round(estTotal).toLocaleString();
+    
+    // Update the checkout button URL to pass the selected zone
+    const zoneId = el.options[el.selectedIndex].getAttribute('data-id');
+    const checkoutBtn = document.getElementById('cart-checkout-btn');
+    if (checkoutBtn && zoneId) {
+        checkoutBtn.href = '<?= APP_URL ?>/checkout?zone_id=' + zoneId;
+    }
 }
 window.addEventListener('DOMContentLoaded', () => {
     const sel = document.getElementById('cart-zone');

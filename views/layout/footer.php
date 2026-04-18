@@ -315,6 +315,20 @@ async function quickAddToCart(pid, event) {
         }, 2000);
     }
 }
+
+// Auto slider for product cards
+document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll('.card-auto-slider').forEach(slider => {
+        const images = slider.querySelectorAll('img.slide-img');
+        if(images.length <= 1) return;
+        let currentIndex = 0;
+        setInterval(() => {
+            images[currentIndex].style.opacity = '0';
+            currentIndex = (currentIndex + 1) % images.length;
+            images[currentIndex].style.opacity = '1';
+        }, 2500);
+    });
+});
 </script>
 </body>
 </html>

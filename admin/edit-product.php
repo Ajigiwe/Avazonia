@@ -83,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stock = $_POST['stock'] ?? 0;
         $description = $_POST['description'] ?? '';
         $image_url = $_POST['image_url'] ?? '';
+        $video_url_manual = $_POST['video_url_manual'] ?? '';
         $is_active = isset($_POST['is_active']) ? 1 : 0;
         $is_bestseller = isset($_POST['is_bestseller']) ? 1 : 0;
         $is_featured = isset($_POST['is_featured']) ? 1 : 0;
@@ -143,6 +144,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Single video upload handling
+    $uploaded_video = $video_url_manual;
+    $video_updated = false;
+    if (isset($_FILES['product_video']) && $_FILES['product_video']['error'] === UPLOAD_ERR_OK) {
+        $videoDir = '../public/uploads/videos/';
+        if (!is_dir($videoDir)) mkdir($videoDir, 0777, true);
+        
+        $allowedVideos = ['mp4', 'webm'];
+        $fileExt = strtolower(pathinfo($_FILES['product_video']['name'], PATHINFO_EXTENSION));
+        
+        if (in_array($fileExt, $allowedVideos)) {
+            $fileName = 'v_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $fileExt;
+            $targetPath = $videoDir . $fileName;
+            if (move_uploaded_file($_FILES['product_video']['tmp_name'], $targetPath)) {
+                $uploaded_video = 'public/uploads/videos/' . $fileName;
+                $video_updated = true;
+            }
+        } else {
+            $error = "Invalid video type. Only MP4 and WEBM allowed.";
+        }
+    }
+    if (!empty($video_url_manual)) {
+        $video_updated = true;
+    }
+
     if (!$error && (empty($name) || empty($price))) {
         $error = "Product name and price are required.";
     }
@@ -151,6 +177,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $stmt = $db->prepare("UPDATE products SET name = ?, category_id = ?, brand_id = ?, price_ghs = ?, compare_at_price_ghs = ?, stock_qty = ?, description = ?, features = ?, specs = ?, tags = ?, meta_title = ?, meta_description = ?, meta_keywords = ?, is_active = ?, is_bestseller = ?, is_featured = ?, is_preorder = ?, is_dropshipping = ?, lead_time_days = ? WHERE id = ?");
             $stmt->execute([$name, $category_id, $brand_id, $price, $compare_price, $stock, $description, $features_json, $specs_json, $tags, $meta_title, $meta_description, $meta_keywords, $is_active, $is_bestseller, $is_featured, $is_preorder, $is_dropshipping, $lead_time, $productId]);
+            
+            if ($video_updated) {
+                $stmt = $db->prepare("UPDATE products SET video_url = ? WHERE id = ?");
+                $stmt->execute([$uploaded_video, $productId]);
+            }
             
             foreach ($uploaded_images as $img) {
                 $stmt = $db->prepare("INSERT INTO product_images (product_id, url, is_primary) VALUES (?, ?, 0)");
@@ -254,6 +285,25 @@ include 'layout/header.php';
                     <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Upload Images (Multiple)</label>
                     <input type="file" name="images[]" multiple accept="image/*" style="width: 100%; padding: 9px; border: 1px solid var(--light-gray); font-family: inherit; font-size: 11px;">
                 </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div>
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Upload Video (MP4/WEBM)</label>
+                    <input type="file" name="product_video" accept="video/mp4,video/webm" style="width: 100%; padding: 9px; border: 1px solid var(--light-gray); font-family: inherit; font-size: 11px;">
+                    <?php if(!empty($product['video_url'])): ?>
+                        <div style="font-size: 10px; color: var(--red); margin-top: 4px;">Current Video: <?= htmlspecialchars(basename($product['video_url'])) ?></div>
+                    <?php endif; ?>
+                </div>
+                <div>
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Or Video URL</label>
+                    <input type="url" name="video_url_manual" placeholder="https://..." value="<?= filter_var($product['video_url'], FILTER_VALIDATE_URL) ? htmlspecialchars($product['video_url']) : '' ?>" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;">
+                </div>
+            </div>
+
+            <div>
+                <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Or Image URL (Optional)</label>
+                <input type="url" name="image_url" placeholder="https://..." style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;">
             </div>
 
             <?php if (!empty($existing_images)): ?>

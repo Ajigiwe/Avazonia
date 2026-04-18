@@ -45,6 +45,17 @@ class CheckoutController extends Controller {
         Session::set('cart', $cart); // Update session with synced flags
 
         $shipping = (float)SHIPPING_ACCRA; // Default for Accra
+        
+        // Handle pre-selected zone from cart
+        $zone_id = isset($_GET['zone_id']) ? (int)$_GET['zone_id'] : 1;
+        if ($zone_id === 2) {
+            $shipping = (float)(defined('SHIPPING_KUMASI') ? SHIPPING_KUMASI : 25);
+        } elseif ($zone_id === 3) {
+            $shipping = (float)(defined('SHIPPING_OTHERS') ? SHIPPING_OTHERS : 60);
+        } elseif ($zone_id === 4) {
+            $shipping = 0.00; // Store Pickup
+        }
+
         if ($subtotal >= SHIPPING_FREE_THRESHOLD) {
             $shipping = 0.00;
         }
@@ -59,7 +70,8 @@ class CheckoutController extends Controller {
             'pay_now' => $total_to_pay_now,
             'has_preorder' => $has_preorder,
             'deposit_pct' => $deposit_pct,
-            'paystackKey' => PAYSTACK_PUBLIC_KEY
+            'paystackKey' => PAYSTACK_PUBLIC_KEY,
+            'zone_id' => $zone_id
         ]);
     }
 

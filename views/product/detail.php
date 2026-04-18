@@ -54,7 +54,7 @@ if (Session::get('user_id')) {
     <div class="container product-detail-layout">
         <!-- Image Gallery -->
         <div class="product-gallery" style="display: flex; flex-direction: column; gap: 16px;">
-            <div class="zoom-container" id="zoom-container" style="aspect-ratio: 1; background: var(--off); border: 1px solid var(--light-gray); display: flex; align-items: center; justify-content: center;">
+            <div class="zoom-container" id="zoom-container" style="position:relative; aspect-ratio: 1; background: var(--off); border: 1px solid var(--light-gray); display: flex; align-items: center; justify-content: center;">
                 <?php 
                 $primaryImgUrl = $product['primary_image'] ?: 'https://via.placeholder.com/800x800';
                 if (!filter_var($primaryImgUrl, FILTER_VALIDATE_URL)) {
@@ -62,17 +62,30 @@ if (Session::get('user_id')) {
                 }
                 ?>
                 <img id="main-product-image" src="<?= $primaryImgUrl ?>" alt="<?= htmlspecialchars($product['alt_text'] ?? $product['name']) ?>" style="width: 100%; height: 100%; object-fit: contain; padding: 40px; transition: transform 0.1s ease-out, opacity 0.2s ease;">
+                
+                <?php if(!empty($product['video_url'])): 
+                    $vidUrl = filter_var($product['video_url'], FILTER_VALIDATE_URL) ? $product['video_url'] : APP_PATH . '/' . ltrim($product['video_url'], '/');
+                ?>
+                    <video id="main-product-video" src="<?= $vidUrl ?>" controls muted loop playsinline onmouseenter="this.play()" onmouseleave="this.pause()" style="display:none; width: 100%; height: 100%; object-fit: contain; padding: 20px;"></video>
+                <?php endif; ?>
             </div>
             
-            <?php if (!empty($images) && count($images) > 0): ?>
+            <?php if ((!empty($images) && count($images) > 0) || !empty($product['video_url'])): ?>
             <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
+                
+                <?php if(!empty($product['video_url'])): ?>
+                    <div class="thumbnail-item" onclick="document.getElementById('main-product-image').style.display='none'; document.getElementById('main-product-video').style.display='block'; document.getElementById('main-product-video').play(); document.querySelectorAll('.thumbnail-item').forEach(t=>t.style.borderColor='var(--light-gray)'); this.style.borderColor='var(--red)';" style="aspect-ratio: 1; background: var(--off); border: 1.5px solid var(--light-gray); cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 8px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--red)" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    </div>
+                <?php endif; ?>
+
                 <?php foreach ($images as $index => $imgData): 
                     $thumbUrl = $imgData['url'];
                     if (!filter_var($thumbUrl, FILTER_VALIDATE_URL)) {
                         $thumbUrl = APP_PATH . '/' . ltrim($thumbUrl, '/');
                     }
                 ?>
-                    <div class="thumbnail-item" onclick="const mainImg = document.getElementById('main-product-image'); mainImg.style.opacity='0.5'; setTimeout(()=>{mainImg.src='<?= $thumbUrl ?>'; mainImg.style.opacity='1';},100); document.querySelectorAll('.thumbnail-item').forEach(t=>t.style.borderColor='var(--light-gray)'); this.style.borderColor='var(--red)';" style="aspect-ratio: 1; background: var(--off); border: 1.5px solid <?= $index === 0 ? 'var(--red)' : 'var(--light-gray)' ?>; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 8px;">
+                    <div class="thumbnail-item" onclick="const vid = document.getElementById('main-product-video'); if(vid){vid.pause(); vid.style.display='none';} document.getElementById('main-product-image').style.display='block'; const mainImg = document.getElementById('main-product-image'); mainImg.style.opacity='0.5'; setTimeout(()=>{mainImg.src='<?= $thumbUrl ?>'; mainImg.style.opacity='1';},100); document.querySelectorAll('.thumbnail-item').forEach(t=>t.style.borderColor='var(--light-gray)'); this.style.borderColor='var(--red)';" style="aspect-ratio: 1; background: var(--off); border: 1.5px solid <?= ($index === 0 && empty($product['video_url'])) ? 'var(--red)' : 'var(--light-gray)' ?>; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 8px;">
                         <img src="<?= $thumbUrl ?>" alt="<?= htmlspecialchars($imgData['alt_text'] ?? 'Product Thumbnail') ?>" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;">
                     </div>
                 <?php endforeach; ?>
@@ -171,6 +184,10 @@ if (Session::get('user_id')) {
                     
                     const newImage = pill.getAttribute('data-image');
                     if (newImage && mainImg) {
+                        const vid = document.getElementById('main-product-video');
+                        if (vid) { vid.pause(); vid.style.display = 'none'; }
+                        mainImg.style.display = 'block';
+                        
                         mainImg.style.opacity = '0.5';
                         setTimeout(() => {
                             mainImg.src = newImage.startsWith('http') ? newImage : '<?= APP_PATH ?>/' + newImage;

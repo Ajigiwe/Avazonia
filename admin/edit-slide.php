@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         $fileExt = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
-        $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+        $allowed = ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'webm'];
         
         if (in_array($fileExt, $allowed)) {
             $fileName = 'slide_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $fileExt;
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $image_url = 'public/uploads/sliders/' . $fileName;
             }
         } else {
-            $error = "Invalid file type.";
+            $error = "Invalid file type. Only JPG, PNG, WEBP, MP4, and WEBM are allowed.";
         }
     }
 
@@ -136,7 +136,11 @@ include 'layout/header.php';
                 
                 <div style="padding: 20px; border: 1px solid var(--light-gray); border-radius: 4px;">
                     <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 12px;">Current Artwork Preview</label>
-                    <img src="<?= APP_URL ?>/<?= $slide['image_url'] ?>" style="width: 100%; border-radius: 4px; border: 1px solid var(--light-gray);">
+                    <?php if (in_array(strtolower(pathinfo($slide['image_url'], PATHINFO_EXTENSION)), ['mp4', 'webm'])): ?>
+                        <video src="<?= APP_URL ?>/<?= $slide['image_url'] ?>" controls style="width: 100%; border-radius: 4px; border: 1px solid var(--light-gray);"></video>
+                    <?php else: ?>
+                        <img src="<?= APP_URL ?>/<?= $slide['image_url'] ?>" style="width: 100%; border-radius: 4px; border: 1px solid var(--light-gray);">
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -157,11 +161,11 @@ include 'layout/header.php';
 
                 <div>
                     <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Change Artwork (Upload)</label>
-                    <input type="file" name="image" accept="image/*" style="width: 100%; padding: 9px; border: 1px solid var(--light-gray); font-family: inherit; font-size: 11px;">
+                    <input type="file" name="image" accept="image/*,video/mp4,video/webm" style="width: 100%; padding: 9px; border: 1px solid var(--light-gray); font-family: inherit; font-size: 11px;">
                 </div>
 
                 <div>
-                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Or New Image URL</label>
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Or New Media URL</label>
                     <input type="url" name="image_url_manual" placeholder="https://..." style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;">
                 </div>
 

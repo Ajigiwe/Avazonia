@@ -11,6 +11,17 @@ $imgUrl = $p['primary_image'] ?: 'https://via.placeholder.com/400x400';
 if (!filter_var($imgUrl, FILTER_VALIDATE_URL)) {
     $imgUrl = APP_PATH . '/' . ltrim($imgUrl, '/');
 }
+
+$db = db();
+$stmt = $db->prepare("SELECT url FROM product_images WHERE product_id = ? ORDER BY is_primary DESC, sort_order ASC, id ASC LIMIT 5");
+$stmt->execute([$p['id']]);
+$cardImagesRaw = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+$processedCardImages = [];
+foreach ($cardImagesRaw as $url) {
+    $processedCardImages[] = filter_var($url, FILTER_VALIDATE_URL) ? $url : APP_PATH . '/' . ltrim($url, '/');
+}
+if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
 ?>
 
 <div class="card">
@@ -20,15 +31,22 @@ if (!filter_var($imgUrl, FILTER_VALIDATE_URL)) {
     </a>
 
     <a href="<?= APP_URL ?>/product/<?= $p['slug'] ?>" class="card-link-block">
-        <div class="card-img-wrap">
+        <div class="card-img-wrap" onmouseenter="const v = this.querySelector('video'); if(v){v.style.opacity=1; v.play();}" onmouseleave="const v = this.querySelector('video'); if(v){v.style.opacity=0; v.pause();}">
             <?php if ($p['compare_at_price_ghs'] > $p['price_ghs']): ?>
                 <span class="card-tag discount">HOT</span>
             <?php elseif (!empty($p['is_new_arrival'])): ?>
                 <span class="card-tag new">NEW</span>
             <?php endif; ?>
             
-            <div class="card-img">
-                <img src="<?= $imgUrl ?>" alt="<?= htmlspecialchars($p['name']) ?>" loading="lazy">
+            <div class="card-img card-auto-slider" style="position: relative;">
+                <?php foreach ($processedCardImages as $idx => $src): ?>
+                    <img src="<?= $src ?>" alt="<?= htmlspecialchars($p['name']) ?>" loading="lazy" class="slide-img" style="<?= $idx === 0 ? 'transition: opacity 0.8s ease;' : 'position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; transition: opacity 0.8s ease;' ?>">
+                <?php endforeach; ?>
+                <?php if (!empty($p['video_url'])): 
+                    $vidUrl = filter_var($p['video_url'], FILTER_VALIDATE_URL) ? $p['video_url'] : APP_PATH . '/' . ltrim($p['video_url'], '/');
+                ?>
+                    <video src="<?= $vidUrl ?>" muted loop playsinline style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0; transition: opacity 0.3s; z-index: 2; pointer-events:none;"></video>
+                <?php endif; ?>
             </div>
 
             <div class="card-actions">

@@ -179,10 +179,10 @@ body { background: #f8f8f8; color: #111; font-family: var(--f-body); }
                                 <label class="fl">Delivery Zone</label>
                                 <div style="position:relative;">
                                     <select class="fs" id="co-zone" onchange="updateShip(this)">
-                                        <option value="<?= defined('SHIPPING_ACCRA') ? SHIPPING_ACCRA : 15 ?>" data-id="1">📍 Accra & Greater Accra — ₵<?= defined('SHIPPING_ACCRA') ? SHIPPING_ACCRA : 15 ?> (1–2 days)</option>
-                                        <option value="<?= defined('SHIPPING_KUMASI') ? SHIPPING_KUMASI : 25 ?>" data-id="2">📍 Kumasi / Takoradi — ₵<?= defined('SHIPPING_KUMASI') ? SHIPPING_KUMASI : 25 ?> (2–3 days)</option>
-                                        <option value="<?= defined('SHIPPING_OTHERS') ? SHIPPING_OTHERS : 60 ?>" data-id="3">📍 All Other Regions — ₵<?= defined('SHIPPING_OTHERS') ? SHIPPING_OTHERS : 60 ?> (3–5 days)</option>
-                                        <option value="0" data-id="4">🏪 Store Pickup — <?= defined('SHIPPING_PICKUP') ? SHIPPING_PICKUP : 'Free' ?></option>
+                                        <option value="<?= defined('SHIPPING_ACCRA') ? SHIPPING_ACCRA : 15 ?>" data-id="1" <?= (isset($zone_id) && $zone_id == 1) ? 'selected' : '' ?>>📍 Accra & Greater Accra — ₵<?= defined('SHIPPING_ACCRA') ? SHIPPING_ACCRA : 15 ?> (1–2 days)</option>
+                                        <option value="<?= defined('SHIPPING_KUMASI') ? SHIPPING_KUMASI : 25 ?>" data-id="2" <?= (isset($zone_id) && $zone_id == 2) ? 'selected' : '' ?>>📍 Kumasi / Takoradi — ₵<?= defined('SHIPPING_KUMASI') ? SHIPPING_KUMASI : 25 ?> (2–3 days)</option>
+                                        <option value="<?= defined('SHIPPING_OTHERS') ? SHIPPING_OTHERS : 60 ?>" data-id="3" <?= (isset($zone_id) && $zone_id == 3) ? 'selected' : '' ?>>📍 All Other Regions — ₵<?= defined('SHIPPING_OTHERS') ? SHIPPING_OTHERS : 60 ?> (3–5 days)</option>
+                                        <option value="0" data-id="4" <?= (isset($zone_id) && $zone_id == 4) ? 'selected' : '' ?>>🏪 Store Pickup — <?= defined('SHIPPING_PICKUP') ? SHIPPING_PICKUP : 'Free' ?></option>
                                     </select>
                                     <div class="err-icon" style="top:50%; transform:translateY(-50%); right:32px;">!</div>
                                 </div>
