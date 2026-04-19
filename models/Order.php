@@ -55,16 +55,19 @@ class Order extends Model {
     public function create($data, $items) {
         $this->db->beginTransaction();
         try {
+        $clean = function($val) {
+            return (float)str_replace([',', ' '], '', (string)$val);
+        };
             $stmt = $this->db->prepare("INSERT INTO orders (user_id, is_preorder, order_ref, subtotal_ghs, shipping_ghs, total_ghs, deposit_amount_ghs, balance_amount_ghs, customer_name, customer_email, customer_phone, shipping_address, shipping_city, shipping_region, delivery_zone_id, payment_method, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $data['user_id'] ?? null,
                 $data['is_preorder'] ?? 0,
                 $data['order_ref'],
-                $data['subtotal'],
-                $data['shipping'],
-                $data['total'],
-                $data['deposit_amount'] ?? 0,
-                $data['balance_amount'] ?? 0,
+                $clean($data['subtotal']),
+                $clean($data['shipping']),
+                $clean($data['total']),
+                $clean($data['deposit_amount'] ?? 0),
+                $clean($data['balance_amount'] ?? 0),
                 $data['name'],
                 $data['email'],
                 $data['phone'],

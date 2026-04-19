@@ -143,7 +143,9 @@ class CheckoutController extends Controller {
             }
         }
 
-        $shipping = (float)($data['shipping_cost'] ?? SHIPPING_ACCRA); 
+        $rawShipping = $data['shipping_cost'] ?? SHIPPING_ACCRA;
+        // Ensure no commas or spaces in number
+        $shipping = (float)str_replace([',', ' '], '', (string)$rawShipping); 
         if ($subtotal >= SHIPPING_FREE_THRESHOLD) {
             $shipping = 0.00;
         }
