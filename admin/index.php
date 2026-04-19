@@ -48,12 +48,25 @@ $catSales = $db->query("
     LIMIT 5
 ")->fetchAll();
 
-// 6. RECENT ACTIVITY
+// 6. REVENUE TRENDS (LAST 14 DAYS)
+$revenueTrends = $db->query("
+    SELECT DATE_FORMAT(created_at, '%b %d') as date_label, SUM(total_ghs) as total
+    FROM orders 
+    WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 13 DAY)
+    AND status NOT IN ('cancelled', 'failed')
+    GROUP BY DATE(created_at)
+    ORDER BY created_at ASC
+")->fetchAll();
+
+// 7. RECENT ACTIVITY
 $recentOrders = $db->query("SELECT * FROM orders ORDER BY created_at DESC LIMIT 5")->fetchAll();
 
 $title = "Dashboard Insights — Avazonia";
 include 'layout/header.php';
 ?>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
     .analytics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 48px; }
@@ -134,27 +147,28 @@ include 'layout/header.php';
 
 <div class="dashboard-layout">
     
+<div style="margin-bottom: 40px;">
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">Revenue Trends (Last 14 Days)</div>
+        </div>
+        <div style="padding: 32px; height: 350px;">
+            <canvas id="revenueTrendChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-layout">
+    
     <div style="display: flex; flex-direction: column; gap: 40px;">
-        <!-- CATEGORY SALES (CSS CHART) -->
+        <!-- CATEGORY SALES (CHART.JS) -->
         <div class="panel">
             <div class="panel-header">
                 <div class="panel-title">Sales by Category</div>
             </div>
-            <div style="padding: 40px;">
-                <div class="chart-container">
-                    <?php 
-                    $maxRev = !empty($catSales) ? $catSales[0]['revenue'] : 1;
-                    foreach ($catSales as $cs): 
-                        $pct = ($cs['revenue'] / $maxRev) * 100;
-                    ?>
-                    <div class="bar-row">
-                        <div style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em;"><?= $cs['name'] ?></div>
-                        <div class="bar-bg" style="background: #f0f0f0; height: 16px; border-radius: 0;">
-                            <div class="bar-fill" style="width: <?= $pct ?>%; background: var(--ink); border-radius: 0;"></div>
-                        </div>
-                        <div style="font-family: var(--f-mono); font-size: 12px; font-weight: 700; text-align: right;">₵<?= number_format($cs['revenue'], 0) ?></div>
-                    </div>
-                    <?php endforeach; ?>
+            <div style="padding: 40px; display: flex; justify-content: center; align-items: center; min-height: 400px;">
+                <div style="width: 100%; max-width: 350px;">
+                    <canvas id="categorySalesChart"></canvas>
                 </div>
             </div>
         </div>
@@ -188,28 +202,23 @@ include 'layout/header.php';
         </div>
     </div>
 
-    <!-- RIGHT SIDEBAR (LEADERBOARD) -->
+    <!-- RIGHT SIDEBAR (LEADERBOARD CHART) -->
     <div style="display: flex; flex-direction: column; gap: 40px;">
         <div class="panel">
             <div class="panel-header">
                 <div class="panel-title">Product Leaderboard</div>
             </div>
-            <div style="padding: 32px;">
-                <?php foreach ($topProducts as $idx => $tp): ?>
-                <div class="leaderboard-item" style="position: relative; overflow: hidden;">
-                    <div style="display: flex; gap: 20px; align-items: center; position: relative; z-index: 2;">
-                        <span style="font-family: var(--f-display); font-size: 48px; font-weight: 900; color: var(--ink); opacity: 0.05; position: absolute; left: -10px; top: 50%; transform: translateY(-50%); pointer-events: none;">0<?= $idx + 1 ?></span>
-                        <div style="padding-left: 20px;">
-                            <div style="font-size: 13px; font-weight: 900; line-height: 1.2; margin-bottom: 4px; text-transform: uppercase; letter-spacing: -0.01em;"><?= $tp['name'] ?></div>
-                            <div style="font-family: var(--f-mono); font-size: 10px; font-weight: 700; color: var(--mid-gray); text-transform: uppercase;"><?= $tp['total_sold'] ?> Units Sold</div>
+            <div style="padding: 32px; min-height: 400px;">
+                <canvas id="productLeaderboardChart"></canvas>
+                
+                <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;">
+                    <?php foreach ($topProducts as $idx => $tp): ?>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                            <span style="font-weight: 700; color: var(--mid-gray);">#<?= $idx+1 ?> <?= htmlspecialchars($tp['name']) ?></span>
+                            <span style="font-family: var(--f-mono);"><?= $tp['total_sold'] ?> sold</span>
                         </div>
-                    </div>
-                    <div style="text-align: right; position: relative; z-index: 2;">
-                        <div style="font-family: var(--f-display); font-size: 14px; font-weight: 900;">₵<?= number_format($tp['price_ghs'], 0) ?></div>
-                        <div style="font-family: var(--f-mono); font-size: 10px; color: <?= $tp['stock_qty'] < 5 ? 'var(--red)' : '#00a854' ?>; font-weight: 700; text-transform: uppercase;">Stock: <?= $tp['stock_qty'] ?></div>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
-                <?php endforeach; ?>
             </div>
         </div>
 
@@ -221,6 +230,89 @@ include 'layout/header.php';
             </div>
         </div>
     </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Shared Config
+    const fontStack = "'Inter', system-ui, -apple-system, sans-serif";
+    
+    // 1. REVENUE TREND CHART
+    new Chart(document.getElementById('revenueTrendChart'), {
+        type: 'line',
+        data: {
+            labels: <?= json_encode(array_column($revenueTrends, 'date_label')) ?>,
+            datasets: [{
+                label: 'Revenue (₵)',
+                data: <?= json_encode(array_column($revenueTrends, 'total')) ?>,
+                borderColor: '#000',
+                backgroundColor: 'rgba(0,0,0,0.05)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: '#000',
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { family: fontStack, size: 10 } } },
+                x: { grid: { display: false }, ticks: { font: { family: fontStack, size: 10 } } }
+            }
+        }
+    });
+
+    // 2. CATEGORY SALES CHART
+    new Chart(document.getElementById('categorySalesChart'), {
+        type: 'doughnut',
+        data: {
+            labels: <?= json_encode(array_column($catSales, 'name')) ?>,
+            datasets: [{
+                data: <?= json_encode(array_column($catSales, 'revenue')) ?>,
+                backgroundColor: ['#000', '#333', '#666', '#999', '#ccc'],
+                borderWidth: 0,
+                hoverOffset: 20
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { family: fontStack, size: 10, weight: '700' }, boxWidth: 12, padding: 20 } }
+            },
+            cutout: '70%'
+        }
+    });
+
+    // 3. PRODUCT LEADERBOARD CHART
+    new Chart(document.getElementById('productLeaderboardChart'), {
+        type: 'bar',
+        data: {
+            labels: <?= json_encode(array_map(fn($p) => strlen($p['name']) > 15 ? substr($p['name'], 0, 15) . '...' : $p['name'], $topProducts)) ?>,
+            datasets: [{
+                label: 'Units Sold',
+                data: <?= json_encode(array_column($topProducts, 'total_sold')) ?>,
+                backgroundColor: '#000',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { beginAtZero: true, grid: { display: false }, ticks: { font: { family: fontStack, size: 10 } } },
+                y: { grid: { display: false }, ticks: { font: { family: fontStack, size: 10, weight: '700' } } }
+            }
+        }
+    });
+});
+</script>
 
 </div>
 
