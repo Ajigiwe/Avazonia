@@ -20,16 +20,15 @@ require_once __DIR__ . '/../layout/nav.php';
 
         <div class="product-grid">
             <?php 
-            $featured_drops = array_slice($featured, 0, 5); 
-            if (!empty($featured_drops)):
-                foreach ($featured_drops as $p): ?>
+            if (!empty($all_products)):
+                foreach ($all_products as $p): ?>
                 <?php 
                 // Pass current product to the unified component
                 require __DIR__ . '/../components/product-card.php'; 
                 ?>
                 <?php endforeach; ?>
             <?php else: ?>
-                <p>No featured products found.</p>
+                <p>No products found.</p>
             <?php endif; ?>
         </div>
     </div>

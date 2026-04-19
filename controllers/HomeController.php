@@ -14,7 +14,8 @@ class HomeController extends Controller {
         $wishModel = new Wishlist();
         $settingsModel = new Settings();
 
-         $featuredProducts = $productModel->getFeatured();
+        $featuredProducts = $productModel->getFeatured();
+        $allProducts = $productModel->getAll(24); // Fetch 24 latest products
         $bestsellers = $productModel->getBestsellers(8);
         $categories = $categoryModel->getAll();
         $wishlistIds = Session::get('user_id') ? $wishModel->getProductIds(Session::get('user_id')) : [];
@@ -22,6 +23,7 @@ class HomeController extends Controller {
 
         $this->view('home/index', [
             'featured' => $featuredProducts,
+            'all_products' => $allProducts,
             'bestsellers' => $bestsellers,
             'categories' => $categories,
             'wishlistIds' => $wishlistIds,
