@@ -19,7 +19,11 @@ if (!$orderId) {
 }
 
 $orderModel = new Order();
-$orderModel->ensureSchema(); // Auto-patch DB on visit
+try {
+    $orderModel->ensureSchema(); // Auto-patch DB on visit
+} catch (Exception $e) {
+    error_log("Order Schema Patch failed: " . $e->getMessage());
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $newStatus = $_POST['status'];

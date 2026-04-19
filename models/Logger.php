@@ -55,7 +55,7 @@ class Logger extends Model {
             entity_type VARCHAR(50) NULL,
             entity_id   INT UNSIGNED NULL,
             description TEXT,
-            metadata    JSON,
+            metadata    LONGTEXT,
             ip_address  VARCHAR(45),
             created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             INDEX idx_action (action),

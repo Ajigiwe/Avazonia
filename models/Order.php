@@ -17,7 +17,11 @@ class Order extends Model {
         
         // 1. Update ENUM for orders status
         // Note: Using a safe approach that works in most MySQL versions
-        $db->exec("ALTER TABLE orders MODIFY COLUMN status ENUM('pending','paid','processing','shipped','delivered','cancelled','refunded','approved','arrived','paid-full') DEFAULT 'pending'");
+        try {
+            $db->exec("ALTER TABLE orders MODIFY COLUMN status ENUM('pending','paid','processing','shipped','delivered','cancelled','refunded','approved','arrived','paid-full') DEFAULT 'pending'");
+        } catch (Exception $e) {
+            // Might fail if user doesn't have ALTER permissions or syntax differs
+        }
 
         // 2. Add missing columns to orders table
         $columns = [
