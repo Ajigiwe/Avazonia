@@ -50,7 +50,7 @@ if (Session::get('user_id')) {
 }
 </script>
 
-<section class="product-page" style="padding: 170px 0 100px;">
+<section class="product-page" style="padding: 100px 0 100px;">
     <div class="container product-detail-layout">
         <!-- Image Gallery -->
         <div class="product-gallery" style="display: flex; flex-direction: column; gap: 16px;">
