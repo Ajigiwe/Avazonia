@@ -27,6 +27,7 @@ class HomeController extends Controller {
             'bestsellers' => $bestsellers,
             'categories' => $categories,
             'wishlistIds' => $wishlistIds,
+            'settings' => $popupSettings,
             'popup' => [
                 'enabled'   => $popupSettings['home_popup_enabled']   ?? '0',
                 'type'      => $popupSettings['home_popup_type']      ?? 'promo',

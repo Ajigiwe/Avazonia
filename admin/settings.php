@@ -260,6 +260,20 @@ include 'layout/header.php';
                 <input type="text" id="set-announcement_text" value="<?= getSet('announcement_text') ?>" class="field-input" placeholder="FREE SHIPPING ON ALL S25 ORDERS!">
             </div>
 
+            <div style="background: var(--off); padding: 32px; border-radius: 12px; margin-bottom: 24px;">
+                <h3 style="font-size: 13px; text-transform: uppercase; margin-bottom: 24px;">Deals Section Headers</h3>
+                <div class="field-grid">
+                    <div class="field-group">
+                        <label class="field-label">Section Title</label>
+                        <input type="text" id="set-home_deals_title" value="<?= getSet('home_deals_title', 'FLASH DEALS & DROPS') ?>" class="field-input">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Eyebrow Text (Small Caption)</label>
+                        <input type="text" id="set-home_deals_eyebrow" value="<?= getSet('home_deals_eyebrow', 'EXCLUSIVE OPPORTUNITY HUB') ?>" class="field-input">
+                    </div>
+                </div>
+            </div>
+
             <div class="field-grid">
                 <div class="field-group">
                     <label class="field-label">Product Grid Density</label>
