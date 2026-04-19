@@ -200,26 +200,6 @@ include 'layout/header.php';
         </div>
     </div>
 
-    <!-- RIGHT SIDEBAR (LEADERBOARD CHART) -->
-    <div style="display: flex; flex-direction: column; gap: 40px;">
-        <div class="panel">
-            <div class="panel-header">
-                <div class="panel-title">Product Leaderboard</div>
-            </div>
-            <div style="padding: 32px; min-height: 400px;">
-                <canvas id="productLeaderboardChart"></canvas>
-                
-                <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;">
-                    <?php foreach ($topProducts as $idx => $tp): ?>
-                        <div style="display: flex; justify-content: space-between; font-size: 11px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
-                            <span style="font-weight: 700; color: var(--mid-gray);">#<?= $idx+1 ?> <?= htmlspecialchars($tp['name']) ?></span>
-                            <span style="font-family: var(--f-mono);"><?= $tp['total_sold'] ?> sold</span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </div>
-
         <div class="panel">
             <div class="panel-header"><div class="panel-title">Strategic Actions</div></div>
             <div style="padding: 32px; display: flex; flex-direction: column; gap: 16px;">
@@ -286,28 +266,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 3. PRODUCT LEADERBOARD CHART
-    new Chart(document.getElementById('productLeaderboardChart'), {
-        type: 'bar',
-        data: {
-            labels: <?= json_encode(array_map(fn($p) => strlen($p['name']) > 15 ? substr($p['name'], 0, 15) . '...' : $p['name'], $topProducts)) ?>,
-            datasets: [{
-                label: 'Units Sold',
-                data: <?= json_encode(array_column($topProducts, 'total_sold')) ?>,
-                backgroundColor: '#000',
-                borderRadius: 4
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { beginAtZero: true, grid: { display: false }, ticks: { font: { family: fontStack, size: 10 } } },
-                y: { grid: { display: false }, ticks: { font: { family: fontStack, size: 10, weight: '700' } } }
-            }
-        }
     });
 });
 </script>
