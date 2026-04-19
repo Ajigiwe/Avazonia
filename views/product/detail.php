@@ -458,25 +458,33 @@ if (Session::get('user_id')) {
             <!-- LEFT: OVERVIEW -->
             <div class="overview-column">
                 <h2 style="font-family: var(--f-display); font-weight: 800; font-size: 24px; text-transform: uppercase; color: var(--ink); margin-bottom: 32px; letter-spacing: -0.01em;">Overview</h2>
-                <div style="font-family: var(--f-body); font-size: 15px; line-height: 1.8; color: var(--ink); opacity: 0.85;">
-                    <?= nl2br($product['description'] ?: 'Detailed information for this product is coming soon.') ?>
-                </div>
                 
-                <?php if (!empty($product['features'])): 
-                    $features = json_decode($product['features'], true);
-                    if (is_array($features) && !empty($features)): 
-                ?>
-                    <div style="margin-top: 48px;">
-                        <ul style="list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                            <?php foreach ($features as $feat): ?>
-                                <li style="display: flex; align-items: flex-start; gap: 10px; font-family: var(--f-body); font-size: 14px; color: var(--ink);">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                    <span><?= htmlspecialchars($feat) ?></span>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
+                <div id="overview-wrapper" class="expandable-wrapper">
+                    <div class="expandable-content">
+                        <div style="font-family: var(--f-body); font-size: 15px; line-height: 1.8; color: var(--ink); opacity: 0.85;">
+                            <?= nl2br($product['description'] ?: 'Detailed information for this product is coming soon.') ?>
+                        </div>
+                        
+                        <?php if (!empty($product['features'])): 
+                            $features = json_decode($product['features'], true);
+                            if (is_array($features) && !empty($features)): 
+                        ?>
+                            <div style="margin-top: 48px;">
+                                <ul style="list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                    <?php foreach ($features as $feat): ?>
+                                        <li style="display: flex; align-items: flex-start; gap: 10px; font-family: var(--f-body); font-size: 14px; color: var(--ink);">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            <span><?= htmlspecialchars($feat) ?></span>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </div>
+                        <?php endif; endif; ?>
                     </div>
-                <?php endif; endif; ?>
+                    <button type="button" class="expand-btn" onclick="toggleExpand('overview-wrapper')">
+                        View Full Overview <span>↓</span>
+                    </button>
+                </div>
             </div>
 
             <!-- RIGHT: DETAILS / SPECS -->
@@ -487,34 +495,41 @@ if (Session::get('user_id')) {
                     <span style="font-family: var(--f-mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: var(--red);">Specifications</span>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 16px;">
-                    <!-- Base Specs -->
-                    <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--light-gray);">
-                        <span style="font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; color: var(--mid-gray);">Brand</span>
-                        <span style="font-family: var(--f-display); font-size: 13px; font-weight: 700;"><?= htmlspecialchars($product['brand_name'] ?? 'Gadget') ?></span>
-                    </div>
-                    <?php if (!empty($product['category_name'])): ?>
-                    <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--light-gray);">
-                        <span style="font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; color: var(--mid-gray);">Category</span>
-                        <span style="font-family: var(--f-display); font-size: 13px; font-weight: 700;"><?= htmlspecialchars($product['category_name']) ?></span>
-                    </div>
-                    <?php endif; ?>
-                    <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--light-gray);">
-                        <span style="font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; color: var(--mid-gray);">Ref#</span>
-                        <span style="font-family: var(--f-display); font-size: 13px; font-weight: 700;">AVZ-<?= $product['id'] ?></span>
-                    </div>
+                <div id="specs-wrapper" class="expandable-wrapper">
+                    <div class="expandable-content">
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <!-- Base Specs -->
+                            <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--light-gray);">
+                                <span style="font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; color: var(--mid-gray);">Brand</span>
+                                <span style="font-family: var(--f-display); font-size: 13px; font-weight: 700;"><?= htmlspecialchars($product['brand_name'] ?? 'Gadget') ?></span>
+                            </div>
+                            <?php if (!empty($product['category_name'])): ?>
+                            <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--light-gray);">
+                                <span style="font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; color: var(--mid-gray);">Category</span>
+                                <span style="font-family: var(--f-display); font-size: 13px; font-weight: 700;"><?= htmlspecialchars($product['category_name']) ?></span>
+                            </div>
+                            <?php endif; ?>
+                            <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--light-gray);">
+                                <span style="font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; color: var(--mid-gray);">Ref#</span>
+                                <span style="font-family: var(--f-display); font-size: 13px; font-weight: 700;">AVZ-<?= $product['id'] ?></span>
+                            </div>
 
-                    <!-- Dynamic Specs -->
-                    <?php if (!empty($product['specs'])): 
-                        $specs = json_decode($product['specs'], true);
-                        if (is_array($specs)):
-                            foreach ($specs as $key => $val):
-                    ?>
-                        <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--light-gray);">
-                            <span style="font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; color: var(--mid-gray);"><?= htmlspecialchars($key) ?></span>
-                            <span style="font-family: var(--f-display); font-size: 13px; font-weight: 700;"><?= htmlspecialchars($val) ?></span>
+                            <!-- Dynamic Specs -->
+                            <?php if (!empty($product['specs'])): 
+                                $specs = json_decode($product['specs'], true);
+                                if (is_array($specs)):
+                                    foreach ($specs as $key => $val):
+                            ?>
+                                <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--light-gray);">
+                                    <span style="font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; color: var(--mid-gray);"><?= htmlspecialchars($key) ?></span>
+                                    <span style="font-family: var(--f-display); font-size: 13px; font-weight: 700;"><?= htmlspecialchars($val) ?></span>
+                                </div>
+                            <?php endforeach; endif; endif; ?>
                         </div>
-                    <?php endforeach; endif; endif; ?>
+                    </div>
+                    <button type="button" class="expand-btn" onclick="toggleExpand('specs-wrapper')">
+                        View Full Specifications <span>↓</span>
+                    </button>
                 </div>
             </div>
 
@@ -523,6 +538,73 @@ if (Session::get('user_id')) {
 </section>
 
 <style>
+.expandable-wrapper {
+    position: relative;
+    overflow: hidden;
+}
+
+.expandable-content {
+    max-height: 250px; /* Base collapse height */
+    overflow: hidden;
+    transition: max-height 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+    position: relative;
+}
+
+/* Gradient Fade Overlay */
+.expandable-wrapper:not(.expanded) .expandable-content::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    background: linear-gradient(to top, #fff 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.expandable-wrapper.expanded .expandable-content::after {
+    opacity: 0;
+}
+
+.expandable-wrapper.expanded .expandable-content {
+    max-height: 2000px; /* Large enough for full content */
+}
+
+.expand-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+    padding: 12px 24px;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--f-semi);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.3s var(--ease);
+}
+
+.expand-btn:hover {
+    background: var(--red);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(229, 0, 26, 0.2);
+}
+
+.expand-btn span {
+    font-size: 14px;
+    transition: transform 0.4s var(--ease);
+}
+
+.expandable-wrapper.expanded .expand-btn span {
+    transform: rotate(180deg);
+}
+
 @media (max-width: 991px) {
     .product-deep-dive .container > div {
         grid-template-columns: 1fr !important;
@@ -530,6 +612,39 @@ if (Session::get('user_id')) {
     }
 }
 </style>
+
+<script>
+function toggleExpand(wrapperId) {
+    const wrapper = document.getElementById(wrapperId);
+    const btn = wrapper.querySelector('.expand-btn');
+    
+    if (wrapper.classList.contains('expanded')) {
+        wrapper.classList.remove('expanded');
+        btn.innerHTML = wrapperId === 'overview-wrapper' ? 'View Full Overview <span>↓</span>' : 'View Full Specifications <span>↓</span>';
+        
+        // Scroll back to top of section
+        wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        wrapper.classList.add('expanded');
+        btn.innerHTML = wrapperId === 'overview-wrapper' ? 'Show Less <span>↑</span>' : 'Show Less <span>↑</span>';
+    }
+}
+
+// Auto-hide buttons if content is short
+document.addEventListener('DOMContentLoaded', function() {
+    const wrappers = document.querySelectorAll('.expandable-wrapper');
+    wrappers.forEach(wrapper => {
+        const content = wrapper.querySelector('.expandable-content');
+        const btn = wrapper.querySelector('.expand-btn');
+        
+        // Use scrollHeight to check if content is taller than max-height
+        if (content.scrollHeight <= 260) { // 250 + small buffer
+            btn.style.display = 'none';
+            wrapper.classList.add('expanded'); // Remove fade
+        }
+    });
+});
+</script>
 
 
 <!-- ── REVIEWS SECTION ────────────────────────────────── -->
