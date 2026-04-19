@@ -163,6 +163,45 @@ class CheckoutController extends Controller {
             // Clear cart immediately IF it's a Pay on Delivery order
             if ($payment_method === 'pod') {
                 Session::set('cart', []);
+                
+                // SEND EMAILS FOR POD
+                try {
+                    require_once __DIR__ . '/../core/Mailer.php';
+                    $order = $orderModel->findById($orderId);
+                    $items = $orderModel->getItems($orderId);
+                    
+                    if ($order && !empty($order['customer_email'])) {
+                        // 1. To Customer
+                        Mailer::sendTemplate(
+                            $order['customer_email'],
+                            $order['customer_name'],
+                            'Order Received — #' . $order['order_ref'],
+                            'order_placed',
+                            [
+                                'toEmail' => $order['customer_email'],
+                                'toName'  => $order['customer_name'],
+                                'order'   => $order,
+                                'items'   => $items
+                            ]
+                        );
+                        
+                        // 2. To Admin
+                        Mailer::sendTemplate(
+                            SITE_EMAIL,
+                            'Avazonia Admin',
+                            'New Order Recieved (POD) — #' . $order['order_ref'],
+                            'order_placed', // Can use the same template for now
+                            [
+                                'toEmail' => SITE_EMAIL,
+                                'toName'  => 'Admin',
+                                'order'   => $order,
+                                'items'   => $items
+                            ]
+                        );
+                    }
+                } catch (\Exception $mailEx) {
+                    error_log('[Mailer] POD Order confirmation failed: ' . $mailEx->getMessage());
+                }
             }
             
             return $this->json([

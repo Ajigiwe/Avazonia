@@ -60,6 +60,20 @@ if (($verification['data']['status'] ?? '') === 'success') {
                         'items'   => $items
                     ]
                 );
+
+                // 3. To Admin
+                Mailer::sendTemplate(
+                    SITE_EMAIL,
+                    'Avazonia Admin',
+                    'NEW PAID ORDER — #' . $order['order_ref'],
+                    'order_placed',
+                    [
+                        'toEmail' => SITE_EMAIL,
+                        'toName'  => 'Admin',
+                        'order'   => $order,
+                        'items'   => $items
+                    ]
+                );
             }
         }
     } catch (\Exception $e) {
