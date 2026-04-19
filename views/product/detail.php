@@ -198,56 +198,136 @@ if (Session::get('user_id')) {
             </script>
             <?php endif; ?>
 
-            <form class="ajax-cart-form" action="<?= APP_URL ?>/api/cart-add" method="POST" style="display: flex; gap: 16px; align-items: center;">
+            <form class="ajax-cart-form" action="<?= APP_URL ?>/api/cart-add" method="POST">
                 <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
                 <input type="hidden" name="variant_id" id="form-variant-id" value="<?= !empty($variants) ? $variants[0]['id'] : '' ?>">
                 
-                <!-- Compact Quantity Selector -->
-                <div style="display: flex; align-items: center; border: 1px solid var(--light-gray); height: 42px; border-radius: 6px; overflow: hidden; background: #fff;">
-                    <button type="button" onclick="changeQty(-1)" style="width: 36px; height: 100%; border: none; background: none; cursor: pointer; font-size: 16px; color: var(--mid-gray); display: flex; align-items: center; justify-content: center;">-</button>
-                    <input type="number" name="qty" id="product-qty" value="1" min="1" max="<?= $product['stock_qty'] ?: 99 ?>" 
-                           style="width: 40px; height: 100%; border: none; text-align: center; font-family: var(--f-display); font-weight: 700; font-size: 13px; -moz-appearance: textfield; background: #fff;">
-                    <button type="button" onclick="changeQty(1)" style="width: 36px; height: 100%; border: none; background: none; cursor: pointer; font-size: 16px; color: var(--mid-gray); display: flex; align-items: center; justify-content: center;">+</button>
+                <div class="product-actions-grid">
+                    <!-- Compact Quantity Selector -->
+                    <div class="qty-selector-v2">
+                        <button type="button" onclick="changeQty(-1)">-</button>
+                        <input type="number" name="qty" id="product-qty" value="1" min="1" max="<?= $product['stock_qty'] ?: 99 ?>">
+                        <button type="button" onclick="changeQty(1)">+</button>
+                    </div>
+
+                    <button type="submit" class="btn-ink add-to-bag-btn">
+                        <?= $product['is_preorder'] ? 'PRE-ORDER' : 'ADD TO BAG' ?> 
+                        <span style="font-size: 1.1em;">→</span>
+                    </button>
+
+                    <div class="secondary-actions">
+                        <!-- Heart Wishlist Toggle -->
+                        <button type="button" id="wish-toggle-btn" 
+                                onclick="toggleWishlist(<?= $product['id'] ?>)"
+                                class="wish-btn wish-btn-<?= $product['id'] ?> <?= $isInWishlist ? 'active' : '' ?>">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="<?= $isInWishlist ? 'var(--red)' : 'none' ?>" stroke="<?= $isInWishlist ? 'var(--red)' : 'var(--ink)' ?>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </button>
+
+                        <!-- Share Button -->
+                        <button type="button" 
+                                onclick="openShareModal('<?= APP_URL ?>/product/<?= $product['slug'] ?>', '<?= addslashes($product['name']) ?>', event)"
+                                class="share-trigger-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="18" cy="5" r="3"></circle>
+                                <circle cx="6" cy="12" r="3"></circle>
+                                <circle cx="18" cy="19" r="3"></circle>
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <style>
-                    #product-qty::-webkit-outer-spin-button, #product-qty::-webkit-inner-spin-button { 
-                        -webkit-appearance: none; margin: 0; 
+                    .product-actions-grid {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        flex-wrap: wrap;
                     }
-                </style>
-                <button type="submit" class="btn-ink" style="height: 42px; font-size: 11px; padding: 0 22px; border-radius: 6px; display: flex; align-items: center; gap: 8px; width: fit-content;">
-                    <?= $product['is_preorder'] ? 'PRE-ORDER' : 'ADD TO BAG' ?> 
-                    <span style="font-size: 1.1em;">→</span>
-                </button>
-
-                <!-- Heart Wishlist Toggle -->
-                <button type="button" id="wish-toggle-btn" 
-                        onclick="toggleWishlist(<?= $product['id'] ?>)"
-                        class="wish-btn <?= $isInWishlist ? 'active' : '' ?>"
-                        style="height: 42px; width: 42px; padding: 0; border: 1px solid var(--light-gray); background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1); flex-shrink: 0;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="<?= $isInWishlist ? 'var(--red)' : 'none' ?>" stroke="<?= $isInWishlist ? 'var(--red)' : 'var(--ink)' ?>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: all 0.3s; pointer-events: none;">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                </button>
-
-                <!-- Share Button -->
-                <button type="button" 
-                        onclick="openShareModal('<?= APP_URL ?>/product/<?= $product['slug'] ?>', '<?= addslashes($product['name']) ?>', event)"
-                        class="share-trigger-btn"
-                        style="height: 42px; width: 42px; padding: 0; border: 1px solid var(--light-gray); background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1); flex-shrink: 0;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="18" cy="5" r="3"></circle>
-                        <circle cx="6" cy="12" r="3"></circle>
-                        <circle cx="18" cy="19" r="3"></circle>
-                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                    </svg>
-                </button>
-
-                <style>
-                    .wish-btn:hover { border-color: var(--red); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(229,0,26,0.1); }
+                    .qty-selector-v2 {
+                        display: flex;
+                        align-items: center;
+                        border: 1px solid var(--light-gray);
+                        height: 48px;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        background: #fff;
+                    }
+                    .qty-selector-v2 button {
+                        width: 40px;
+                        height: 100%;
+                        border: none;
+                        background: none;
+                        cursor: pointer;
+                        font-size: 18px;
+                        color: var(--mid-gray);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: background 0.2s;
+                    }
+                    .qty-selector-v2 button:hover { background: var(--off); }
+                    .qty-selector-v2 input {
+                        width: 40px;
+                        height: 100%;
+                        border: none;
+                        text-align: center;
+                        font-family: var(--f-display);
+                        font-weight: 700;
+                        font-size: 14px;
+                        background: #fff;
+                        -moz-appearance: textfield;
+                    }
+                    .qty-selector-v2 input::-webkit-outer-spin-button, 
+                    .qty-selector-v2 input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+                    
+                    .add-to-bag-btn {
+                        height: 48px;
+                        border-radius: 8px !important;
+                        flex: 1;
+                        min-width: 160px;
+                        justify-content: center;
+                    }
+                    
+                    .secondary-actions {
+                        display: flex;
+                        gap: 8px;
+                    }
+                    
+                    .wish-btn, .share-trigger-btn {
+                        height: 48px;
+                        width: 48px;
+                        padding: 0;
+                        border: 1px solid var(--light-gray);
+                        background: #fff;
+                        border-radius: 8px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        transition: all 0.3s var(--ease);
+                        flex-shrink: 0;
+                    }
+                    
+                    .wish-btn:hover, .share-trigger-btn:hover {
+                        border-color: var(--red);
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+                    }
                     .wish-btn.active { border-color: var(--red); background: #FFF5F6; }
-                    .wish-btn.pulse-heart svg { transform: scale(1.3); }
+                    .wish-btn.active svg { fill: var(--red); stroke: var(--red); }
+                    
+                    @media (max-width: 480px) {
+                        .product-actions-grid { gap: 8px; }
+                        .qty-selector-v2 { width: 100%; justify-content: space-between; }
+                        .qty-selector-v2 button { flex: 1; }
+                        .add-to-bag-btn { order: 2; width: 100%; flex: none; }
+                        .secondary-actions { order: 3; width: 100%; }
+                        .secondary-actions button { flex: 1; }
+                    }
                 </style>
             </form>
 
