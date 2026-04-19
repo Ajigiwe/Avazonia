@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS orders (
   id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id             INT UNSIGNED NULL REFERENCES users(id) ON DELETE SET NULL,
   order_ref           VARCHAR(20) UNIQUE NOT NULL,
-  status              ENUM('pending','paid','processing','shipped','delivered','cancelled','refunded') DEFAULT 'pending',
+  status              ENUM('pending','paid','processing','shipped','delivered','cancelled','refunded','approved','arrived','paid-full') DEFAULT 'pending',
   subtotal_ghs        DECIMAL(10,2) NOT NULL,
   shipping_ghs        DECIMAL(8,2) NOT NULL DEFAULT 0,
   discount_ghs        DECIMAL(8,2) NOT NULL DEFAULT 0,
@@ -123,6 +123,9 @@ CREATE TABLE IF NOT EXISTS orders (
   shipping_region     VARCHAR(80),
   digital_address     VARCHAR(50),
   notes               TEXT,
+  is_preorder         TINYINT(1) DEFAULT 0,
+  deposit_amount_ghs  DECIMAL(10,2) DEFAULT 0.00,
+  balance_amount_ghs  DECIMAL(10,2) DEFAULT 0.00,
   created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -137,7 +140,9 @@ CREATE TABLE IF NOT EXISTS order_items (
   variant_label  VARCHAR(100),
   sku            VARCHAR(80),
   qty            SMALLINT UNSIGNED NOT NULL,
-  unit_price_ghs DECIMAL(10,2) NOT NULL
+  unit_price_ghs DECIMAL(10,2) NOT NULL,
+  is_preorder    TINYINT(1) DEFAULT 0,
+  deposit_paid_ghs DECIMAL(10,2) DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ── REVIEWS ───────────────────────────────────────────────
@@ -165,6 +170,21 @@ CREATE TABLE IF NOT EXISTS promo_codes (
   current_uses     INT DEFAULT 0,
   expires_at       DATETIME DEFAULT NULL,
   is_active        TINYINT(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ── SYSTEM LOGS ───────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS system_logs (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id     INT UNSIGNED NULL REFERENCES users(id) ON DELETE SET NULL,
+  action      VARCHAR(100) NOT NULL,
+  entity_type VARCHAR(50) NULL,
+  entity_id   INT UNSIGNED NULL,
+  description TEXT,
+  metadata    JSON,
+  ip_address  VARCHAR(45),
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_action (action),
+  INDEX idx_entity (entity_type, entity_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Seed initial data

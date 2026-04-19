@@ -4,6 +4,50 @@ require_once __DIR__ . '/../core/Model.php';
 require_once __DIR__ . '/Logger.php';
 
 class Order extends Model {
+    public function __construct() {
+        parent::__construct();
+        // $this->ensureSchema(); // Can be called here or manually
+    }
+
+    /**
+     * Ensure database schema matches code expectations
+     */
+    public function ensureSchema() {
+        $db = $this->db;
+        
+        // 1. Update ENUM for orders status
+        // Note: Using a safe approach that works in most MySQL versions
+        $db->exec("ALTER TABLE orders MODIFY COLUMN status ENUM('pending','paid','processing','shipped','delivered','cancelled','refunded','approved','arrived','paid-full') DEFAULT 'pending'");
+
+        // 2. Add missing columns to orders table
+        $columns = [
+            'is_preorder' => "TINYINT(1) DEFAULT 0 AFTER notes",
+            'deposit_amount_ghs' => "DECIMAL(10,2) DEFAULT 0.00 AFTER is_preorder",
+            'balance_amount_ghs' => "DECIMAL(10,2) DEFAULT 0.00 AFTER deposit_amount_ghs"
+        ];
+        
+        foreach ($columns as $col => $def) {
+            try {
+                $db->exec("ALTER TABLE orders ADD COLUMN $col $def");
+            } catch (Exception $e) {
+                // Column likely exists
+            }
+        }
+
+        // 3. Add missing columns to order_items table
+        $itemColumns = [
+            'is_preorder' => "TINYINT(1) DEFAULT 0",
+            'deposit_paid_ghs' => "DECIMAL(10,2) DEFAULT 0.00"
+        ];
+        foreach ($itemColumns as $col => $def) {
+            try {
+                $db->exec("ALTER TABLE order_items ADD COLUMN $col $def");
+            } catch (Exception $e) {
+                // Column likely exists
+            }
+        }
+    }
+
     public function create($data, $items) {
         $this->db->beginTransaction();
         try {

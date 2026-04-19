@@ -13,20 +13,55 @@ class Logger extends Model {
      */
     public static function log($action, $description, $metadata = null, $entity_id = null, $entity_type = null) {
         $db = db();
+        
+        // Ensure table exists on first log attempt in a session if needed, 
+        // or just rely on manual migration. For robustness, we'll add the table.
         $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
         $ip_address = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
         $meta_json = $metadata ? json_encode($metadata) : null;
 
-        $stmt = $db->prepare("INSERT INTO system_logs (user_id, action, entity_type, entity_id, description, metadata, ip_address) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        return $stmt->execute([
-            $user_id,
-            strtoupper($action),
-            $entity_type,
-            $entity_id,
-            $description,
-            $meta_json,
-            $ip_address
-        ]);
+        try {
+            $stmt = $db->prepare("INSERT INTO system_logs (user_id, action, entity_type, entity_id, description, metadata, ip_address) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            return $stmt->execute([
+                $user_id,
+                strtoupper($action),
+                $entity_type,
+                $entity_id,
+                $description,
+                $meta_json,
+                $ip_address
+            ]);
+        } catch (Exception $e) {
+            // If table missing, try to create it once
+            if (strpos($e->getMessage(), 'system_logs') !== false) {
+                self::ensureTable();
+                // Retry once
+                $stmt = $db->prepare("INSERT INTO system_logs (user_id, action, entity_type, entity_id, description, metadata, ip_address) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                return $stmt->execute([$user_id, strtoupper($action), $entity_type, $entity_id, $description, $meta_json, $ip_address]);
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * Create the system_logs table if it doesn't exist
+     */
+    public static function ensureTable() {
+        $db = db();
+        $sql = "CREATE TABLE IF NOT EXISTS system_logs (
+            id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            user_id     INT UNSIGNED NULL,
+            action      VARCHAR(100) NOT NULL,
+            entity_type VARCHAR(50) NULL,
+            entity_id   INT UNSIGNED NULL,
+            description TEXT,
+            metadata    JSON,
+            ip_address  VARCHAR(45),
+            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_action (action),
+            INDEX idx_entity (entity_type, entity_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+        $db->exec($sql);
     }
 
     /**

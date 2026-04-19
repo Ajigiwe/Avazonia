@@ -19,6 +19,7 @@ if (!$orderId) {
 }
 
 $orderModel = new Order();
+$orderModel->ensureSchema(); // Auto-patch DB on visit
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $newStatus = $_POST['status'];
