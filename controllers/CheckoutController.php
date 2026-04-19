@@ -117,8 +117,8 @@ class CheckoutController extends Controller {
                 ]);
             }
 
-            $item['price_ghs'] = $realPrice; // Use DB price for final order
-            $item_total = $item['price_ghs'] * $item['qty'];
+            $item['price_ghs'] = $realPrice;
+            $item_total = $realPrice * $item['qty'];
             $subtotal += $item_total;
             
             $is_pre = $item['is_preorder'] ?? null;
@@ -126,19 +126,21 @@ class CheckoutController extends Controller {
                 $is_pre = (int)($dbProduct['is_preorder'] ?? 0);
             }
 
-            $processed_item = $item;
+            $processed_items[] = [
+                'product_id' => $item['product_id'],
+                'product_name' => $dbProduct['name'],
+                'qty' => (int)$item['qty'],
+                'unit_price_ghs' => $realPrice,
+                'is_preorder' => $is_pre,
+                'deposit_paid_ghs' => $is_pre ? ($item_total * ($deposit_pct / 100)) : 0
+            ];
+
             if ($is_pre) {
                 $has_preorder = true;
-                $deposit = $item_total * ($deposit_pct / 100);
-                $total_to_pay_now += $deposit;
-                $processed_item['deposit_paid'] = $deposit;
-                $processed_item['is_preorder'] = 1;
+                $total_to_pay_now += ($item_total * ($deposit_pct / 100));
             } else {
                 $total_to_pay_now += $item_total;
-                $processed_item['deposit_paid'] = 0;
-                $processed_item['is_preorder'] = 0;
             }
-            $processed_items[$key] = $processed_item;
         }
 
         $shipping = (float)($data['shipping_cost'] ?? SHIPPING_ACCRA); 

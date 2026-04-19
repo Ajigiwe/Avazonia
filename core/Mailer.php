@@ -144,9 +144,15 @@ class Mailer {
         $fromEmail = defined('MAIL_FROM_EMAIL') ? MAIL_FROM_EMAIL : SITE_EMAIL;
         $fromName  = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : APP_NAME;
 
+        $toEmails = array_map('trim', explode(',', $toEmail));
+        $toRecipients = [];
+        foreach ($toEmails as $email) {
+            $toRecipients[] = ['email' => $email, 'name' => $toName];
+        }
+
         $payload = [
             'sender' => ['name' => $fromName, 'email' => $fromEmail],
-            'to'     => [['email' => $toEmail, 'name' => $toName]],
+            'to'     => $toRecipients,
             'subject' => $subject,
             'htmlContent' => $htmlBody
         ];

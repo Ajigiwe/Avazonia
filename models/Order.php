@@ -78,11 +78,11 @@ class Order extends Model {
                 $stmtItem->execute([
                     $orderId,
                     $item['product_id'],
-                    $item['name'],
+                    $item['product_name'],
                     $item['qty'],
-                    $item['price_ghs'],
+                    $item['unit_price_ghs'],
                     $item['is_preorder'] ?? 0,
-                    $item['deposit_paid'] ?? 0
+                    $item['deposit_paid_ghs'] ?? 0
                 ]);
             }
 
