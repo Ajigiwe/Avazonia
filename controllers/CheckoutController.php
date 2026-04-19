@@ -94,13 +94,36 @@ class CheckoutController extends Controller {
         $processed_items = [];
         $productModel = new Product();
         foreach ($cart as $key => $item) {
+            // RE-FETCH PRICE FROM DB FOR SECURITY & ACCURACY
+            $dbProduct = $productModel->findById($item['product_id']);
+            if (!$dbProduct) {
+                return $this->json(['success' => false, 'message' => "Product '{$item['name']}' is no longer available."]);
+            }
+            
+            $realPrice = (float)$dbProduct['price_ghs'];
+            if (!empty($item['variant_id'])) {
+                $variant = $productModel->getVariantById($item['variant_id']);
+                if ($variant && (float)$variant['price_override_ghs'] > 0) {
+                    $realPrice = (float)$variant['price_override_ghs'];
+                }
+            }
+
+            // Optional: Log price discrepancies for audit
+            if (abs($realPrice - (float)$item['price_ghs']) > 0.01) {
+                Logger::log('PRICE_DRIFT', "Price change detected for item '{$item['name']}' during checkout.", [
+                    'product_id' => $item['product_id'],
+                    'session_price' => $item['price_ghs'],
+                    'db_price' => $realPrice
+                ]);
+            }
+
+            $item['price_ghs'] = $realPrice; // Use DB price for final order
             $item_total = $item['price_ghs'] * $item['qty'];
             $subtotal += $item_total;
             
             $is_pre = $item['is_preorder'] ?? null;
             if ($is_pre === null) {
-                $p = $productModel->findById($item['product_id']);
-                $is_pre = (int)($p['is_preorder'] ?? 0);
+                $is_pre = (int)($dbProduct['is_preorder'] ?? 0);
             }
 
             $processed_item = $item;
@@ -210,12 +233,20 @@ class CheckoutController extends Controller {
                 'order_ref' => $orderRef,
                 'amount_ghs' => (float)$deposit_amt,
                 'payment_method' => $payment_method,
-                'redirect_to_confirm' => ($payment_method === 'pod'),
+                'redirect_url' => APP_URL . '/checkout/success?ref=' . $orderRef,
                 'message' => 'Order created.'
             ]);
         } catch (Exception $e) {
             return $this->json(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
         }
+    }
+
+    public function success() {
+        $ref = $_GET['ref'] ?? '';
+        if (!$ref) {
+            $this->redirect(APP_URL . '/shop');
+        }
+        $this->view('checkout/success', ['ref' => $ref]);
     }
 
     public function initBalancePayment() {

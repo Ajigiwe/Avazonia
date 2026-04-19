@@ -20,6 +20,7 @@ $router->add('POST', '/api/cart-add', 'CartController@add');
 $router->add('GET', '/api/search-suggestions', 'ShopController@suggestions');
 $router->add('POST', '/api/review-add', 'ReviewController@add');
 $router->add('GET', '/checkout', 'CheckoutController@index');
+$router->add('GET', '/checkout/success', 'CheckoutController@success');
 $router->add('POST', '/checkout/complete', 'CheckoutController@complete');
 $router->add('POST', '/checkout/init-balance', 'CheckoutController@initBalancePayment');
 $router->add('GET', '/order/invoice/([A-Z0-9-]+)', 'InvoiceController@show');

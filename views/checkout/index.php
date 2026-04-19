@@ -316,19 +316,7 @@ body { background: #f8f8f8; color: #111; font-family: var(--f-body); }
     </div>
 </div>
 
-<!-- CONFIRMATION VIEW -->
-<div class="conf-page" id="confView" style="display:none; padding:100px 24px; text-align:center; background:#fff;">
-    <div style="width:80px; height:80px; background:rgba(22,163,74,.1); border:2px solid #16a34a; border-radius:100px; display:flex; align-items:center; justify-content:center; margin:0 auto 32px; font-size:32px; color:#16a34a;">✓</div>
-    <h1 style="font-family:var(--f-display); font-size:64px; font-weight:700; letter-spacing:-.04em; line-height:.9; margin-bottom:12px;">Order<br><span style="color:#16a34a;">Confirmed!</span></h1>
-    <p style="font-family:var(--f-mono); font-size:10px; color:#aaa; letter-spacing:.1em; text-transform:uppercase; margin-bottom:48px;">Your gadgets are being prepared for delivery</p>
-    
-    <div style="background:#f9f9f9; border:1px solid #eee; padding:32px; max-width:400px; margin:0 auto 32px; text-align:center;">
-        <div style="font-family:var(--f-mono); font-size:9px; color:#999; margin-bottom:8px;">ORDER REFERENCE</div>
-        <div style="font-family:var(--f-display); font-size:32px; font-weight:700;" id="conf-ref">#NX-82319</div>
-    </div>
-    
-    <a href="<?= APP_URL ?>/shop" style="display:inline-flex; height:48px; background:#111; color:#fff; padding:0 32px; align-items:center; text-decoration:none; font-family:var(--f-display); font-weight:700; font-size:14px; letter-spacing:.02em;">Continue Shopping →</a>
-</div>
+<!-- END CHECKOUT -->
 
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <script>
@@ -481,8 +469,8 @@ function initPaystack(evt) {
         }
 
         // REDIRECT FOR POD
-        if (data.redirect_to_confirm) {
-            showConfirm(data.order_ref);
+        if (data.redirect_url && data.payment_method === 'pod') {
+            window.location.href = data.redirect_url;
             return;
         }
 
@@ -510,7 +498,7 @@ function initPaystack(evt) {
                 .then(vRes => vRes.json())
                 .then(vData => {
                     if (vData.success) {
-                        showConfirm(data.order_ref);
+                        window.location.href = data.redirect_url;
                     } else {
                         alert('Payment verification failed. Please contact support with Ref: ' + data.order_ref);
                         restoreButtons();
@@ -535,12 +523,7 @@ function initPaystack(evt) {
     });
 }
 
-function showConfirm(ref) {
-    document.getElementById('coView').style.display = 'none';
-    document.getElementById('confView').style.display = 'block';
-    document.getElementById('conf-ref').innerText = '#' + ref;
-    window.scrollTo({top:0, behavior:'smooth'});
-}
+// Deprecated showConfirm removed
 </script>
 
 <?php require_once __DIR__ . '/../layout/footer.php'; ?>
