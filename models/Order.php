@@ -163,9 +163,13 @@ class Order extends Model {
             try {
                 require_once __DIR__ . '/../core/Mailer.php';
                 $emailMap = [
-                    'shipped'  => ['order_shipped', 'Your order #%s has shipped! 🚚'],
-                    'cancelled' => ['order_cancelled', 'Your Avazonia order #%s has been cancelled'],
-                    'refunded'  => ['order_refunded', 'Refund initiated for order #%s 💰'],
+                    'approved'   => ['order_status_update', 'Order Approved — #%s ✅'],
+                    'processing' => ['order_status_update', 'Preparing your order — #%s ⚙️'],
+                    'shipped'    => ['order_shipped', 'Your order #%s has shipped! 🚚'],
+                    'arrived'    => ['order_status_update', 'Pre-order update — #%s 📦'],
+                    'delivered'  => ['order_status_update', 'Order Delivered — #%s 🏁'],
+                    'cancelled'  => ['order_cancelled', 'Your Avazonia order #%s has been cancelled'],
+                    'refunded'   => ['order_refunded', 'Refund initiated for order #%s 💰'],
                 ];
 
                 if (isset($emailMap[$status])) {
