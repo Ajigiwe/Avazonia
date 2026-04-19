@@ -145,8 +145,6 @@ include 'layout/header.php';
     </div>
 </div>
 
-<div class="dashboard-layout">
-    
 <div style="margin-bottom: 40px;">
     <div class="panel">
         <div class="panel-header">
