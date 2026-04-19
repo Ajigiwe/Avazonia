@@ -5,17 +5,10 @@ require_once __DIR__ . '/../core/Model.php';
 class Logger extends Model {
     /**
      * Record a system event
-     * @param string $action The type of action (e.g. 'PURCHASE', 'SETTING_UPDATE')
-     * @param string $description Human readable description
-     * @param array $metadata Optional technical data to store as JSON
-     * @param int|null $entity_id The ID of the affected item (order_id, product_id)
-     * @param string|null $entity_type The type of the affected item ('order', 'product')
      */
     public static function log($action, $description, $metadata = null, $entity_id = null, $entity_type = null) {
         $db = db();
         
-        // Ensure table exists on first log attempt in a session if needed, 
-        // or just rely on manual migration. For robustness, we'll add the table.
         $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
         $ip_address = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
         $meta_json = $metadata ? json_encode($metadata) : null;
@@ -82,7 +75,5 @@ class Logger extends Model {
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
-    }
-
     }
 }
