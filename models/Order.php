@@ -56,7 +56,8 @@ class Order extends Model {
         $this->db->beginTransaction();
         try {
         $clean = function($val) {
-            return (float)str_replace([',', ' '], '', (string)$val);
+            // Strip currency symbol, commas, spaces, and weird invisible characters
+            return (float)str_replace(['₵', ',', ' ', "\n", "\r", "\t"], '', (string)$val);
         };
             $stmt = $this->db->prepare("INSERT INTO orders (user_id, is_preorder, order_ref, subtotal_ghs, shipping_ghs, total_ghs, deposit_amount_ghs, balance_amount_ghs, customer_name, customer_email, customer_phone, shipping_address, shipping_city, shipping_region, delivery_zone_id, payment_method, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
@@ -87,7 +88,7 @@ class Order extends Model {
                     $item['product_id'],
                     $item['product_name'],
                     $item['qty'],
-                    $item['unit_price_ghs'],
+                    $clean($item['unit_price_ghs']),
                     $item['is_preorder'] ?? 0,
                     $item['deposit_paid_ghs'] ?? 0
                 ]);
@@ -96,6 +97,11 @@ class Order extends Model {
             $this->db->commit();
             
             // LOG THE PURCHASE
+            error_log("[OrderTrace] Created Order ID: $orderId | Ref: {$data['order_ref']} | Subtotal: {$data['subtotal']} | Shipping: {$data['shipping']} | Total: {$data['total']}");
+            foreach ($items as $idx => $item) {
+                error_log("[OrderTrace] Item $idx: {$item['product_name']} | Price: {$item['unit_price_ghs']} | Qty: {$item['qty']}");
+            }
+
             Logger::log('PURCHASE', "New order placed: {$data['order_ref']} by {$data['name']}", [
                 'ref' => $data['order_ref'],
                 'total' => $data['total'],
