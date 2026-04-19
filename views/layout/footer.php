@@ -337,5 +337,6 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 </script>
+<?php require_once __DIR__ . '/../components/share-modal.php'; ?>
 </body>
 </html>

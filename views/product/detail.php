@@ -230,6 +230,20 @@ if (Session::get('user_id')) {
                     </svg>
                 </button>
 
+                <!-- Share Button -->
+                <button type="button" 
+                        onclick="openShareModal('<?= APP_URL ?>/product/<?= $product['slug'] ?>', '<?= addslashes($product['name']) ?>', event)"
+                        class="share-trigger-btn"
+                        style="height: 42px; width: 42px; padding: 0; border: 1px solid var(--light-gray); background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1); flex-shrink: 0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="18" cy="5" r="3"></circle>
+                        <circle cx="6" cy="12" r="3"></circle>
+                        <circle cx="18" cy="19" r="3"></circle>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                </button>
+
                 <style>
                     .wish-btn:hover { border-color: var(--red); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(229,0,26,0.1); }
                     .wish-btn.active { border-color: var(--red); background: #FFF5F6; }

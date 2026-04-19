@@ -2803,6 +2803,7 @@ form button[type="submit"]:hover {
 }
 
 .card-wish-btn,
+.card-share-btn,
 .card-cart-btn {
     flex: 1;
     height: 30px;
@@ -2818,12 +2819,14 @@ form button[type="submit"]:hover {
 }
 
 .card-wish-btn svg,
+.card-share-btn svg,
 .card-cart-btn svg {
     width: 15px;
     height: 15px;
 }
 
 .card-wish-btn:hover,
+.card-share-btn:hover,
 .card-cart-btn:hover {
     background: var(--ink);
     color: #fff;
@@ -2863,6 +2866,7 @@ form button[type="submit"]:hover {
     }
 
     .card-wish-btn,
+    .card-share-btn,
     .card-cart-btn {
         height: 28px;
     }
