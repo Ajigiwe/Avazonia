@@ -210,12 +210,12 @@ class CheckoutController extends Controller {
                             ]
                         );
                         
-                        // 2. To Admin
+                        // 2. To Admin Email
                         Mailer::sendTemplate(
                             SITE_EMAIL,
                             'Avazonia Admin',
                             'New Order Recieved (POD) — #' . $order['order_ref'],
-                            'order_placed', // Can use the same template for now
+                            'order_placed',
                             [
                                 'toEmail' => SITE_EMAIL,
                                 'toName'  => 'Admin',
@@ -223,6 +223,14 @@ class CheckoutController extends Controller {
                                 'items'   => $items
                             ]
                         );
+
+                        // 3. To Admin Dashboard Alert
+                        try {
+                            require_once __DIR__ . '/../models/Notification.php';
+                            Notification::create('new_order', "New POD Order received: #{$order['order_ref']}", ['order_id' => $orderId, 'order_ref' => $order['order_ref']]);
+                        } catch (\Exception $e) {
+                            error_log('[Notification] Failed to create order notification: ' . $e->getMessage());
+                        }
                     }
                 } catch (\Exception $mailEx) {
                     error_log('[Mailer] POD Order confirmation failed: ' . $mailEx->getMessage());

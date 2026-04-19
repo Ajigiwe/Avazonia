@@ -139,6 +139,28 @@
             opacity: 0; visibility: hidden; transition: all 0.4s; backdrop-filter: blur(4px);
         }
         .admin-overlay.active { opacity: 1; visibility: visible; }
+
+        /* Notification Toast */
+        #notification-toast-container {
+            position: fixed; top: 24px; right: 24px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .toast-alert {
+            background: var(--ink); color: #fff; padding: 16px 24px;
+            border-radius: 4px; font-family: var(--f-semi); font-size: 13px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            display: flex; align-items: center; gap: 16px;
+            animation: toast-in 0.4s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+            border-left: 4px solid var(--red);
+            min-width: 300px;
+        }
+        @keyframes toast-in {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast-alert .close-toast { cursor: pointer; opacity: 0.5; margin-left: auto; font-size: 18px; }
+        .toast-alert .close-toast:hover { opacity: 1; }
+        .toast-alert .view-link { color: var(--red); font-weight: 800; text-decoration: none; font-size: 11px; text-transform: uppercase; }
     </style>
 </head>
 <body>

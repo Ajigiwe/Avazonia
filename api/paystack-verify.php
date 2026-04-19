@@ -74,6 +74,14 @@ if (($verification['data']['status'] ?? '') === 'success') {
                         'items'   => $items
                     ]
                 );
+
+                // 4. To Admin Dashboard Alert
+                try {
+                    require_once __DIR__ . '/../models/Notification.php';
+                    Notification::create('new_order', "NEW PAID ORDER: #{$order['order_ref']}", ['order_id' => $orderId, 'order_ref' => $order['order_ref']]);
+                } catch (\Exception $e) {
+                    error_log('[Notification] Failed to create order notification: ' . $e->getMessage());
+                }
             }
         }
     } catch (\Exception $e) {
