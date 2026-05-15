@@ -3,6 +3,7 @@
 require_once '../config/app.php';
 require_once '../config/database.php';
 require_once '../core/Session.php';
+require_once '../models/Product.php';
 
 Session::start();
 if (Session::get('user_role') !== 'admin') {
@@ -11,6 +12,21 @@ if (Session::get('user_role') !== 'admin') {
 }
 
 $db = db();
+$error = '';
+$success = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_product') {
+    $productId = (int)($_POST['product_id'] ?? 0);
+    $productModel = new Product();
+    $result = $productModel->deleteById($productId);
+
+    if ($result['success']) {
+        $success = $result['message'];
+    } else {
+        $error = $result['message'];
+    }
+}
+
 $products = $db->query("SELECT p.*, b.name as brand_name, c.name as cat_name FROM products p LEFT JOIN brands b ON p.brand_id = b.id LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.created_at DESC")->fetchAll();
 
 $title = "Manage Products";
@@ -26,6 +42,16 @@ include 'layout/header.php';
     <div class="panel-header">
         <div class="panel-title">Catalogue Inventory</div>
     </div>
+    <?php if ($error): ?>
+        <div style="margin: 0 32px 24px; background: #fff1f0; color: #f5222d; padding: 16px; font-size: 13px; border-left: 4px solid #f5222d;">
+            <?= htmlspecialchars($error) ?>
+        </div>
+    <?php endif; ?>
+    <?php if ($success): ?>
+        <div style="margin: 0 32px 24px; background: #e6f7ec; color: #00a854; padding: 16px; font-size: 13px; border-left: 4px solid #00a854;">
+            <?= htmlspecialchars($success) ?>
+        </div>
+    <?php endif; ?>
     <div class="table-container">
         <table class="admin-table">
             <thead>
@@ -64,7 +90,14 @@ include 'layout/header.php';
                         </div>
                     </td>
                     <td>
-                        <a href="edit-product.php?id=<?= $p['id'] ?>" class="nav-link" style="font-size: 10px; color: var(--ink); text-decoration: none; font-weight: 700; text-transform: uppercase;">Edit</a>
+                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <a href="edit-product.php?id=<?= $p['id'] ?>" class="nav-link" style="font-size: 10px; color: var(--ink); text-decoration: none; font-weight: 700; text-transform: uppercase;">Edit</a>
+                            <form method="POST" onsubmit="return confirm('Delete <?= htmlspecialchars(addslashes($p['name']), ENT_QUOTES, 'UTF-8') ?>? This cannot be undone.');" style="margin: 0;">
+                                <input type="hidden" name="action" value="delete_product">
+                                <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
+                                <button type="submit" style="background: none; border: none; padding: 0; color: var(--red); font-size: 10px; font-family: var(--f-semi); font-weight: 700; text-transform: uppercase; cursor: pointer;">Delete</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 <?php endforeach; ?>

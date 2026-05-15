@@ -222,4 +222,51 @@ class Product extends Model {
         $stmt->execute();
         return $stmt->fetchAll();
     }
+
+    public function deleteById($id) {
+        $product = $this->findById($id);
+        if (!$product) {
+            return ['success' => false, 'message' => 'Product not found.'];
+        }
+
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM order_items WHERE product_id = ?");
+        $stmt->execute([(int)$id]);
+        $ordersUsingProduct = (int)$stmt->fetchColumn();
+
+        if ($ordersUsingProduct > 0) {
+            return [
+                'success' => false,
+                'message' => 'This product is referenced by existing orders and cannot be deleted safely.'
+            ];
+        }
+
+        try {
+            $this->db->beginTransaction();
+
+            $deleteWishlist = $this->db->prepare("DELETE FROM wishlist WHERE product_id = ?");
+            $deleteWishlist->execute([(int)$id]);
+
+            $deleteReviews = $this->db->prepare("DELETE FROM reviews WHERE product_id = ?");
+            $deleteReviews->execute([(int)$id]);
+
+            $deleteImages = $this->db->prepare("DELETE FROM product_images WHERE product_id = ?");
+            $deleteImages->execute([(int)$id]);
+
+            $deleteVariants = $this->db->prepare("DELETE FROM variants WHERE product_id = ?");
+            $deleteVariants->execute([(int)$id]);
+
+            $deleteProduct = $this->db->prepare("DELETE FROM products WHERE id = ?");
+            $deleteProduct->execute([(int)$id]);
+
+            $this->db->commit();
+
+            return ['success' => true, 'message' => 'Product deleted successfully.'];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            return ['success' => false, 'message' => 'Delete failed: ' . $e->getMessage()];
+        }
+    }
 }
