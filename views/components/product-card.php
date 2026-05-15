@@ -105,9 +105,9 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
             </div>
             
             <div class="card-price-area">
-                <div class="card-price">₵<?= number_format($p['price_ghs'], 0) ?></div>
+                <div class="card-price">₵<?= number_format($p['price_ghs'], 2) ?></div>
                 <?php if($p['compare_at_price_ghs'] > $p['price_ghs']): ?>
-                    <div class="card-price-old">₵<?= number_format($p['compare_at_price_ghs'], 0) ?></div>
+                    <div class="card-price-old">₵<?= number_format($p['compare_at_price_ghs'], 2) ?></div>
                 <?php endif; ?>
             </div>
         </div>

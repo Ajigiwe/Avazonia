@@ -277,7 +277,7 @@ body { background: #f8f8f8; color: #111; font-family: var(--f-body); }
                                         <?php endif; ?>
                                     </div>
                                 </div>
-                                <div class="itm-p">₵<?= number_format($item['price_ghs'] * $item['qty'], 0) ?></div>
+                                <div class="itm-p">₵<?= number_format($item['price_ghs'] * $item['qty'], 2) ?></div>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -287,12 +287,12 @@ body { background: #f8f8f8; color: #111; font-family: var(--f-body); }
 
                     <div class="co-total-row">
                         <div class="co-total-l">Order Total</div>
-                        <div class="co-total-v" id="disp-main-total">₵<?= number_format($total, 0) ?></div>
+                        <div class="co-total-v" id="disp-main-total">₵<?= number_format($total, 2) ?></div>
                     </div>
 
                     <div style="margin-top:24px; padding:20px; background:var(--off); border-radius:4px; border:1px solid var(--light-gray);">
                         <div style="font-family:var(--f-mono); font-size:9px; color:var(--mid-gray); text-transform:uppercase; margin-bottom:8px;">Due Now (Deposit + Shipping)</div>
-                        <div style="font-family:var(--f-display); font-size:32px; font-weight:900; color:var(--red);" id="disp-total">₵<?= number_format($pay_now, 0) ?></div>
+                        <div style="font-family:var(--f-display); font-size:32px; font-weight:900; color:var(--red);" id="disp-total">₵<?= number_format($pay_now, 2) ?></div>
                         
                         <?php if($has_preorder): ?>
                             <div style="font-size:11px; color:var(--mid-gray); margin-top:8px;"> Includes <?= (int)$deposit_pct ?>% deposit for pre-order items.</div>
@@ -300,7 +300,7 @@ body { background: #f8f8f8; color: #111; font-family: var(--f-body); }
                     </div>
 
                     <button class="co-pay-btn" onclick="initPaystack(event)">
-                        🛍️ PAY ₵<?= number_format($pay_now, 0) ?> NOW →
+                        🛍️ PAY ₵<?= number_format($pay_now, 2) ?> NOW →
                     </button>
 
                     <div class="co-sec-note">🔒 SECURED BY PAYSTACK · PCI-DSS</div>
@@ -360,9 +360,9 @@ function updateShip(el) {
     const newTotal = totalBase + shipVal;
     
     document.getElementById('disp-ship').innerText = shipVal > 0 ? '₵' + shipVal.toFixed(2) : 'FREE';
-    document.getElementById('disp-total').innerText = '₵' + Math.round(newPayNow).toLocaleString();
+    document.getElementById('disp-total').innerText = '₵' + newPayNow.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if(document.getElementById('disp-main-total')) {
-        document.getElementById('disp-main-total').innerText = '₵' + Math.round(newTotal).toLocaleString();
+        document.getElementById('disp-main-total').innerText = '₵' + newTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
     
     const m = document.getElementById('co-payment-method').value;
@@ -371,7 +371,7 @@ function updateShip(el) {
         if (m === 'pod') {
             b.innerHTML = '📦 PLACE ORDER (PAY ON DELIVERY) →';
         } else {
-            b.innerHTML = '🛍️ PAY ₵' + Math.round(newPayNow).toLocaleString() + ' NOW →';
+            b.innerHTML = '🛍️ PAY ₵' + newPayNow.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' NOW →';
         }
     });
 }

@@ -91,7 +91,7 @@ $user_name = Session::get('user_name') ?: 'Member';
                             <div>
                                 <?php if($o['is_preorder'] && $o['status'] == 'arrived' && $o['balance_amount_ghs'] > 0): ?>
                                     <button onclick="payBalance(<?= $o['id'] ?>, this)" style="padding: 8px 16px; background: var(--red); color: #fff; font-size: 10px; font-weight: 700; border-radius: 6px; border: none; cursor: pointer;">
-                                        PAY BALANCE: ₵<?= number_format($o['balance_amount_ghs'], 0) ?>
+                                        PAY BALANCE: ₵<?= number_format($o['balance_amount_ghs'], 2) ?>
                                     </button>
                                 <?php endif; ?>
                             </div>
