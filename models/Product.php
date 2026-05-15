@@ -234,9 +234,18 @@ class Product extends Model {
         $ordersUsingProduct = (int)$stmt->fetchColumn();
 
         if ($ordersUsingProduct > 0) {
+            $archive = $this->db->prepare("
+                UPDATE products
+                SET is_active = 0,
+                    is_featured = 0,
+                    is_bestseller = 0
+                WHERE id = ?
+            ");
+            $archive->execute([(int)$id]);
+
             return [
-                'success' => false,
-                'message' => 'This product is referenced by existing orders and cannot be deleted safely.'
+                'success' => true,
+                'message' => 'Product has order history, so it was archived and hidden from the shop instead of being deleted.'
             ];
         }
 

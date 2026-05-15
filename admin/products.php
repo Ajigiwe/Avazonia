@@ -27,7 +27,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     }
 }
 
-$products = $db->query("SELECT p.*, b.name as brand_name, c.name as cat_name FROM products p LEFT JOIN brands b ON p.brand_id = b.id LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.created_at DESC")->fetchAll();
+$products = $db->query("
+    SELECT
+        p.*,
+        b.name as brand_name,
+        c.name as cat_name,
+        COUNT(oi.id) as order_count
+    FROM products p
+    LEFT JOIN brands b ON p.brand_id = b.id
+    LEFT JOIN categories c ON p.category_id = c.id
+    LEFT JOIN order_items oi ON oi.product_id = p.id
+    GROUP BY p.id
+    ORDER BY p.created_at DESC
+")->fetchAll();
 
 $title = "Manage Products";
 include 'layout/header.php';
@@ -66,6 +78,13 @@ include 'layout/header.php';
             </thead>
             <tbody>
                 <?php foreach ($products as $p): ?>
+                <?php
+                    $hasOrders = (int)($p['order_count'] ?? 0) > 0;
+                    $actionLabel = $hasOrders ? 'Archive' : 'Delete';
+                    $confirmMessage = $hasOrders
+                        ? "Archive " . $p['name'] . "? It will be hidden from the shop but preserved for past orders."
+                        : "Delete " . $p['name'] . "? This cannot be undone.";
+                ?>
                 <tr>
                     <td style="font-weight: 600;"><?= $p['name'] ?></td>
                     <td>
@@ -92,10 +111,10 @@ include 'layout/header.php';
                     <td>
                         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                             <a href="edit-product.php?id=<?= $p['id'] ?>" class="nav-link" style="font-size: 10px; color: var(--ink); text-decoration: none; font-weight: 700; text-transform: uppercase;">Edit</a>
-                            <form method="POST" onsubmit="return confirm('Delete <?= htmlspecialchars(addslashes($p['name']), ENT_QUOTES, 'UTF-8') ?>? This cannot be undone.');" style="margin: 0;">
+                            <form method="POST" onsubmit="return confirm(<?= json_encode($confirmMessage, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>);" style="margin: 0;">
                                 <input type="hidden" name="action" value="delete_product">
                                 <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
-                                <button type="submit" style="background: none; border: none; padding: 0; color: var(--red); font-size: 10px; font-family: var(--f-semi); font-weight: 700; text-transform: uppercase; cursor: pointer;">Delete</button>
+                                <button type="submit" style="background: none; border: none; padding: 0; color: var(--red); font-size: 10px; font-family: var(--f-semi); font-weight: 700; text-transform: uppercase; cursor: pointer;"><?= $actionLabel ?></button>
                             </form>
                         </div>
                     </td>
