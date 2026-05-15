@@ -109,13 +109,16 @@ include 'layout/header.php';
                         </div>
                     </td>
                     <td>
-                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                            <a href="edit-product.php?id=<?= $p['id'] ?>" class="nav-link" style="font-size: 10px; color: var(--ink); text-decoration: none; font-weight: 700; text-transform: uppercase;">Edit</a>
+                        <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 92px;">
+                            <a href="edit-product.php?id=<?= $p['id'] ?>" class="nav-link" style="font-size: 10px; color: var(--ink); text-decoration: none; font-weight: 700; text-transform: uppercase; line-height: 1;">Edit</a>
                             <form method="POST" onsubmit="return confirm(<?= json_encode($confirmMessage, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>);" style="margin: 0;">
                                 <input type="hidden" name="action" value="delete_product">
                                 <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
-                                <button type="submit" style="background: none; border: none; padding: 0; color: var(--red); font-size: 10px; font-family: var(--f-semi); font-weight: 700; text-transform: uppercase; cursor: pointer;"><?= $actionLabel ?></button>
+                                <button type="submit" style="display: inline-flex; align-items: center; background: none; border: none; padding: 0; color: var(--red); font-size: 10px; font-family: var(--f-semi); font-weight: 700; text-transform: uppercase; cursor: pointer; line-height: 1; white-space: nowrap;"><?= $actionLabel ?></button>
                             </form>
+                            <?php if ($hasOrders): ?>
+                                <span style="font-size: 9px; color: var(--mid-gray); text-transform: uppercase; line-height: 1.2;">Has orders</span>
+                            <?php endif; ?>
                         </div>
                     </td>
                 </tr>
