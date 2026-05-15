@@ -3,6 +3,49 @@
 require_once __DIR__ . '/../core/Model.php';
 
 class Product extends Model {
+    private function createDeletedProductBackup($productId, $product, $ordersUsingProduct) {
+        $backupDir = __DIR__ . '/../backups/deleted-products/';
+        if (!is_dir($backupDir)) {
+            mkdir($backupDir, 0755, true);
+        }
+
+        $imagesStmt = $this->db->prepare("SELECT * FROM product_images WHERE product_id = ? ORDER BY id ASC");
+        $imagesStmt->execute([(int)$productId]);
+
+        $variantsStmt = $this->db->prepare("SELECT * FROM variants WHERE product_id = ? ORDER BY id ASC");
+        $variantsStmt->execute([(int)$productId]);
+
+        $reviewsStmt = $this->db->prepare("SELECT * FROM reviews WHERE product_id = ? ORDER BY id ASC");
+        $reviewsStmt->execute([(int)$productId]);
+
+        $wishlistStmt = $this->db->prepare("SELECT * FROM wishlist WHERE product_id = ? ORDER BY id ASC");
+        $wishlistStmt->execute([(int)$productId]);
+
+        $orderItemsStmt = $this->db->prepare("SELECT * FROM order_items WHERE product_id = ? ORDER BY id ASC");
+        $orderItemsStmt->execute([(int)$productId]);
+
+        $backupPayload = [
+            'backup_type' => 'deleted_product',
+            'created_at' => date('c'),
+            'product_id' => (int)$productId,
+            'orders_using_product' => (int)$ordersUsingProduct,
+            'product' => $product,
+            'product_images' => $imagesStmt->fetchAll(),
+            'variants' => $variantsStmt->fetchAll(),
+            'reviews' => $reviewsStmt->fetchAll(),
+            'wishlist_entries' => $wishlistStmt->fetchAll(),
+            'order_items' => $orderItemsStmt->fetchAll()
+        ];
+
+        $filename = 'product_' . (int)$productId . '_' . date('Y-m-d_His') . '.json';
+        file_put_contents(
+            $backupDir . $filename,
+            json_encode($backupPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+        );
+
+        return $filename;
+    }
+
     private function getMinStock() {
         static $minStock = null;
         if ($minStock === null) {
@@ -233,23 +276,11 @@ class Product extends Model {
         $stmt->execute([(int)$id]);
         $ordersUsingProduct = (int)$stmt->fetchColumn();
 
-        if ($ordersUsingProduct > 0) {
-            $archive = $this->db->prepare("
-                UPDATE products
-                SET is_active = 0,
-                    is_featured = 0,
-                    is_bestseller = 0
-                WHERE id = ?
-            ");
-            $archive->execute([(int)$id]);
-
-            return [
-                'success' => true,
-                'message' => 'Product has order history, so it was archived and hidden from the shop instead of being deleted.'
-            ];
-        }
-
         try {
+            $backupFile = null;
+            if ($ordersUsingProduct > 0) {
+                $backupFile = $this->createDeletedProductBackup($id, $product, $ordersUsingProduct);
+            }
             $this->db->beginTransaction();
 
             $deleteWishlist = $this->db->prepare("DELETE FROM wishlist WHERE product_id = ?");
@@ -269,7 +300,12 @@ class Product extends Model {
 
             $this->db->commit();
 
-            return ['success' => true, 'message' => 'Product deleted successfully.'];
+            $message = 'Product deleted successfully.';
+            if ($ordersUsingProduct > 0) {
+                $message = 'Product deleted successfully. Order-linked data was backed up automatically before deletion (' . $backupFile . ').';
+            }
+
+            return ['success' => true, 'message' => $message];
         } catch (Throwable $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();

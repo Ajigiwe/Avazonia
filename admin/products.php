@@ -80,9 +80,8 @@ include 'layout/header.php';
                 <?php foreach ($products as $p): ?>
                 <?php
                     $hasOrders = (int)($p['order_count'] ?? 0) > 0;
-                    $actionLabel = $hasOrders ? 'Archive' : 'Delete';
                     $confirmMessage = $hasOrders
-                        ? "Archive " . $p['name'] . "? It will be hidden from the shop but preserved for past orders."
+                        ? "Delete " . $p['name'] . "? This product has order history. The delete will still go through, and a backup will be created automatically first."
                         : "Delete " . $p['name'] . "? This cannot be undone.";
                 ?>
                 <tr>
@@ -114,10 +113,10 @@ include 'layout/header.php';
                             <form method="POST" onsubmit="return confirm(<?= json_encode($confirmMessage, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>);" style="margin: 0;">
                                 <input type="hidden" name="action" value="delete_product">
                                 <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
-                                <button type="submit" style="display: inline-flex; align-items: center; background: none; border: none; padding: 0; color: var(--red); font-size: 10px; font-family: var(--f-semi); font-weight: 700; text-transform: uppercase; cursor: pointer; line-height: 1; white-space: nowrap;"><?= $actionLabel ?></button>
+                                <button type="submit" style="display: inline-flex; align-items: center; background: none; border: none; padding: 0; color: var(--red); font-size: 10px; font-family: var(--f-semi); font-weight: 700; text-transform: uppercase; cursor: pointer; line-height: 1; white-space: nowrap;">Delete</button>
                             </form>
                             <?php if ($hasOrders): ?>
-                                <span style="font-size: 9px; color: var(--mid-gray); text-transform: uppercase; line-height: 1.2;">Has orders</span>
+                                <span style="font-size: 9px; color: var(--mid-gray); text-transform: uppercase; line-height: 1.2;">Backup first</span>
                             <?php endif; ?>
                         </div>
                     </td>
