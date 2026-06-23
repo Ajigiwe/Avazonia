@@ -112,6 +112,8 @@ $dbError = null;
 $dbTableCheck = [];
 $dbFallbackTest = null;
 $dbPortOpen = false;
+$dbMaxConn = null;
+$dbActiveConn = null;
 
 $startTime = microtime(true);
 try {
@@ -135,6 +137,19 @@ try {
                 } catch (Exception $ex) {
                     $dbTableCheck[$t] = "Failed: " . $ex->getMessage();
                 }
+            }
+            
+            // Query connection statistics
+            try {
+                $qMax = $db->query("SHOW VARIABLES LIKE 'max_connections'");
+                $maxRow = $qMax->fetch(PDO::FETCH_ASSOC);
+                $dbMaxConn = $maxRow ? $maxRow['Value'] : 'Unknown';
+                
+                $qActive = $db->query("SHOW STATUS LIKE 'Threads_connected'");
+                $activeRow = $qActive->fetch(PDO::FETCH_ASSOC);
+                $dbActiveConn = $activeRow ? $activeRow['Value'] : 'Unknown';
+            } catch (Exception $ex) {
+                // Ignore query failure if permissions restricted
             }
         } else {
             $dbStatus = 'Failed: db() function not found';
@@ -513,6 +528,24 @@ foreach ($logFiles as $name => $path) {
                     </span>
                 </li>
                 <li><span class="label">Response Latency</span><span class="value"><?php echo $dbLatency; ?> ms</span></li>
+                <?php if ($dbStatus === 'Success' && $dbMaxConn && $dbActiveConn): ?>
+                    <li>
+                        <span class="label">Active Connections</span>
+                        <span class="value">
+                            <?php echo htmlspecialchars($dbActiveConn); ?> / <?php echo htmlspecialchars($dbMaxConn); ?>
+                            <?php 
+                            $ratio = (int)$dbMaxConn > 0 ? ((int)$dbActiveConn / (int)$dbMaxConn) : 0;
+                            if ($ratio > 0.85):
+                            ?>
+                                <span class="status-pill danger">Critical Limit</span>
+                            <?php elseif ($ratio > 0.60): ?>
+                                <span class="status-pill warning">High Load</span>
+                            <?php else: ?>
+                                <span class="status-pill success">Healthy</span>
+                            <?php endif; ?>
+                        </span>
+                    </li>
+                <?php endif; ?>
                 <?php if ($dbError): ?>
                     <li style="flex-direction:column; align-items:flex-start; gap:0.5rem;">
                         <span class="label" style="color:var(--accent-danger);">Connection Error:</span>
