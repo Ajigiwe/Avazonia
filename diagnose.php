@@ -90,7 +90,7 @@ foreach ($required_extensions as $ext) {
 // Check Directory Permissions
 $critical_dirs = [
     '.' => 'Root Directory',
-    'uploads' => 'Uploads Directory',
+    'public/uploads' => 'Uploads Directory',
     'backups' => 'Backups Directory',
     'config' => 'Config Directory'
 ];
@@ -110,6 +110,8 @@ $dbStatus = 'Unattempted';
 $dbLatency = 0;
 $dbError = null;
 $dbTableCheck = [];
+$dbFallbackTest = null;
+$dbPortOpen = false;
 
 $startTime = microtime(true);
 try {
@@ -143,6 +145,30 @@ try {
 } catch (Exception $e) {
     $dbStatus = 'Failed';
     $dbError = $e->getMessage();
+    
+    // Diagnostic Fallbacks:
+    // 1. Check if port 3306 is listening on 127.0.0.1
+    $connection = @fsockopen('127.0.0.1', 3306, $errno, $errstr, 2);
+    if (is_resource($connection)) {
+        $dbPortOpen = true;
+        fclose($connection);
+    }
+    
+    // 2. Try connecting using TCP/IP explicitly (127.0.0.1) instead of localhost
+    if (strpos($dbError, '2002') !== false || strpos($dbError, 'socket') !== false) {
+        $host = '127.0.0.1';
+        $db   = $_ENV['DB_NAME'] ?? $_SERVER['DB_NAME'] ?? getenv('DB_NAME') ?: 'avazonia_avazonia';
+        $user = $_ENV['DB_USER'] ?? $_SERVER['DB_USER'] ?? getenv('DB_USER') ?: 'avazonia_admin';
+        $pass = $_ENV['DB_PASS'] ?? $_SERVER['DB_PASS'] ?? getenv('DB_PASS') ?: 'Avazonia123@';
+        $port = $_ENV['DB_PORT'] ?? $_SERVER['DB_PORT'] ?? getenv('DB_PORT') ?: '3306';
+        try {
+            $dsn = "mysql:host=$host;dbname=$db;charset=utf8mb4;port=$port";
+            $test_pdo = new PDO($dsn, $user, $pass, [PDO::ATTR_TIMEOUT => 2, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+            $dbFallbackTest = 'Success using 127.0.0.1 (TCP/IP connection works!)';
+        } catch (Exception $fallback_ex) {
+            $dbFallbackTest = 'Failed: ' . $fallback_ex->getMessage();
+        }
+    }
 }
 
 // Read Log Snippets
@@ -491,6 +517,23 @@ foreach ($logFiles as $name => $path) {
                     <li style="flex-direction:column; align-items:flex-start; gap:0.5rem;">
                         <span class="label" style="color:var(--accent-danger);">Connection Error:</span>
                         <span class="value" style="word-break:break-all; font-size:0.8rem; color:var(--accent-danger);"><?php echo htmlspecialchars($dbError); ?></span>
+                    </li>
+                <?php endif; ?>
+                <?php if (isset($dbPortOpen) && !$dbPortOpen && $dbStatus !== 'Success'): ?>
+                    <li>
+                        <span class="label">Port 3306 (127.0.0.1)</span>
+                        <span class="value status-pill danger">Closed / Offline</span>
+                    </li>
+                <?php elseif (isset($dbPortOpen) && $dbPortOpen && $dbStatus !== 'Success'): ?>
+                    <li>
+                        <span class="label">Port 3306 (127.0.0.1)</span>
+                        <span class="value status-pill success">Open / Listening</span>
+                    </li>
+                <?php endif; ?>
+                <?php if (isset($dbFallbackTest) && $dbFallbackTest && $dbStatus !== 'Success'): ?>
+                    <li style="flex-direction:column; align-items:flex-start; gap:0.5rem;">
+                        <span class="label">TCP Fallback (127.0.0.1):</span>
+                        <span class="value" style="font-size:0.85rem; color: <?php echo (strpos($dbFallbackTest, 'Success') === 0) ? 'var(--accent-success)' : 'var(--accent-danger)'; ?>;"><?php echo htmlspecialchars($dbFallbackTest); ?></span>
                     </li>
                 <?php endif; ?>
                 <?php foreach ($dbTableCheck as $tbl => $chk): ?>
