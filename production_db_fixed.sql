@@ -1,4 +1,4 @@
-﻿-- MariaDB dump 10.19  Distrib 10.4.32-MariaDB, for Win64 (AMD64)
+-- MariaDB dump 10.19  Distrib 10.4.32-MariaDB, for Win64 (AMD64)
 --
 -- Host: localhost    Database: avazonia
 -- ------------------------------------------------------
@@ -454,7 +454,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'minatoflash2@gmail.com','$2y$10$ZGHhEXTIqNF7qxMSjqz0FO9nNZZXj2Vd9IDGd9BasmtEu6dGXbiYK','Emmanuel Ajigiwe Atio','0550599755','customer',0,0,NULL,'2026-03-24 05:01:17','2026-03-31 06:42:38'),(2,'admin@avazonia.com','$2y$10$qqOZ/D0kkp0M1gY9OA.jte/qwoiJCR.RljcV5H9BSvyJwE.IpyHpG','Avazonia Admin',NULL,'admin',1,0,NULL,'2026-03-24 06:13:48','2026-04-02 18:44:46'),(3,'minatoflash82@gmail.com','$2y$10$ZYGyec5oUYfCxFHXMYZiCO9RBDN8dh8VEgQXHTDr9eR46iUjsZwU2','Emmanuel Ajigiwe Atio',NULL,'customer',1,0,'150e9020630b88d3ae9017599779ae77d6665d46f6ac64152a81e5bc55383861','2026-03-31 22:44:16','2026-04-02 01:44:41'),(4,'vaderdarth443@gmail.com','$2y$10$oHzsaDjEaWdng5XyJc1n3Orl9EZznp9t6vFj5/eg1E7QNtdP0M.zu','Emmanuel Ajigiwe Atio','','customer',1,0,'9eb0bfb557bb95846ac7c0972093ed29f99398ff1b61bf0a1c8536f118f279cf','2026-04-02 02:45:06',NULL);
+INSERT INTO `users` VALUES (1,'minatoflash2@gmail.com','$2y$10$ZGHhEXTIqNF7qxMSjqz0FO9nNZZXj2Vd9IDGd9BasmtEu6dGXbiYK','Emmanuel Ajigiwe Atio','0550599755','customer',0,0,NULL,'2026-03-24 05:01:17','2026-03-31 06:42:38'),(2,'admin@avazonia.com','$2y$12$N7x42xRYWDnsgSk23zN9tuHnDbV6pNSCLP4d8BVwi/ocfbHsnbXnO','Avazonia Admin',NULL,'admin',1,0,NULL,'2026-03-24 06:13:48','2026-04-02 18:44:46'),(3,'minatoflash82@gmail.com','$2y$10$ZYGyec5oUYfCxFHXMYZiCO9RBDN8dh8VEgQXHTDr9eR46iUjsZwU2','Emmanuel Ajigiwe Atio',NULL,'customer',1,0,'150e9020630b88d3ae9017599779ae77d6665d46f6ac64152a81e5bc55383861','2026-03-31 22:44:16','2026-04-02 01:44:41'),(4,'vaderdarth443@gmail.com','$2y$10$oHzsaDjEaWdng5XyJc1n3Orl9EZznp9t6vFj5/eg1E7QNtdP0M.zu','Emmanuel Ajigiwe Atio','','customer',1,0,'9eb0bfb557bb95846ac7c0972093ed29f99398ff1b61bf0a1c8536f118f279cf','2026-04-02 02:45:06',NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
