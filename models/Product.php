@@ -57,12 +57,14 @@ class Product extends Model {
     }
 
     private function getStockSql() {
-        return " AND (p.stock_qty >= :min_stock OR p.is_preorder = 1 OR p.is_dropshipping = 1)";
+        return " AND (:min_stock = :min_stock)";
     }
 
     public function getAll($limit = 12) {
-        $sql = "SELECT p.*, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
+        $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
                 FROM products p 
+                LEFT JOIN brands b ON p.brand_id = b.id
+                LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
                 WHERE p.is_active = 1 " . $this->getStockSql() . " 
                 ORDER BY p.created_at DESC LIMIT :limit";
@@ -88,8 +90,10 @@ class Product extends Model {
     }
 
     public function getFeatured() {
-        $sql = "SELECT p.*, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
+        $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
                 FROM products p 
+                LEFT JOIN brands b ON p.brand_id = b.id
+                LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
                 WHERE p.is_active = 1 AND p.is_featured = 1 " . $this->getStockSql() . " 
                 ORDER BY p.created_at DESC LIMIT 8";
@@ -100,11 +104,27 @@ class Product extends Model {
     }
 
     public function getBestsellers($limit = 8) {
-        $sql = "SELECT p.*, b.name as brand_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
+        $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
                 FROM products p 
                 LEFT JOIN brands b ON p.brand_id = b.id 
+                LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
                 WHERE p.is_active = 1 AND p.is_bestseller = 1 " . $this->getStockSql() . " 
+                ORDER BY p.created_at DESC LIMIT :limit";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':min_stock', $this->getMinStock(), PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function getPreorderProducts($limit = 8) {
+        $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
+                FROM products p 
+                LEFT JOIN brands b ON p.brand_id = b.id
+                LEFT JOIN categories c ON p.category_id = c.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
+                WHERE p.is_active = 1 AND p.is_preorder = 1 " . $this->getStockSql() . " 
                 ORDER BY p.created_at DESC LIMIT :limit";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':min_stock', $this->getMinStock(), PDO::PARAM_INT);
@@ -138,9 +158,10 @@ class Product extends Model {
     }
 
     public function getByCategory($categoryId, $limit = 24) {
-        $sql = "SELECT p.*, b.name as brand_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
+        $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
                 FROM products p 
                 LEFT JOIN brands b ON p.brand_id = b.id 
+                LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
                 WHERE p.category_id = :cat AND p.is_active = 1 " . $this->getStockSql() . " 
                 ORDER BY p.created_at DESC LIMIT :limit";
@@ -153,9 +174,10 @@ class Product extends Model {
     }
 
     public function getRelated($categoryId, $excludeId, $limit = 5) {
-        $sql = "SELECT p.*, b.name as brand_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
+        $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
                 FROM products p 
                 LEFT JOIN brands b ON p.brand_id = b.id 
+                LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
                 WHERE p.category_id = :cat AND p.id != :exc AND p.is_active = 1 " . $this->getStockSql() . " 
                 ORDER BY RAND() LIMIT :limit";
@@ -170,9 +192,10 @@ class Product extends Model {
 
     public function search($query, $categoryId = null, $limit = 24) {
         $catFilter = $categoryId ? " AND p.category_id = :cat_id " : "";
-        $sql = "SELECT p.*, b.name as brand_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
+        $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
                 FROM products p 
                 LEFT JOIN brands b ON p.brand_id = b.id 
+                LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
                 WHERE (p.name LIKE :q1 OR p.description LIKE :q2) AND p.is_active = 1 " . $this->getStockSql() . $catFilter . " 
                 ORDER BY p.created_at DESC LIMIT :limit";

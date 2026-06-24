@@ -6,7 +6,7 @@
  */
 
 $avg_rating = round($p['avg_rating'] ?? 0);
-$brand = htmlspecialchars($p['brand_name'] ?? 'Gadget');
+$category = htmlspecialchars($p['category_name'] ?? 'Gadget');
 $imgUrl = $p['primary_image'] ?: 'https://via.placeholder.com/400x400';
 if (!filter_var($imgUrl, FILTER_VALIDATE_URL)) {
     $imgUrl = APP_PATH . '/' . ltrim($imgUrl, '/');
@@ -38,7 +38,13 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
 
     <a href="<?= APP_URL ?>/product/<?= $p['slug'] ?>" class="card-link-block">
         <div class="card-img-wrap" onmouseenter="const v = this.querySelector('video'); if(v){v.style.opacity=1; v.play();}" onmouseleave="const v = this.querySelector('video'); if(v){v.style.opacity=0; v.pause();}">
-            <?php if ($p['compare_at_price_ghs'] > $p['price_ghs']): ?>
+            <?php if ($p['stock_qty'] <= 0 && empty($p['is_preorder']) && empty($p['is_dropshipping'])): ?>
+                <span class="card-tag outofstock">OUT OF STOCK</span>
+            <?php elseif (!empty($p['is_preorder'])): ?>
+                <span class="card-tag preorder">PRE-ORDER</span>
+            <?php elseif ($p['stock_qty'] > 0 && $p['stock_qty'] <= 5 && empty($p['is_preorder']) && empty($p['is_dropshipping'])): ?>
+                <span class="card-tag lowstock">ONLY <?= (int)$p['stock_qty'] ?> LEFT</span>
+            <?php elseif ($p['compare_at_price_ghs'] > $p['price_ghs']): ?>
                 <span class="card-tag discount">HOT</span>
             <?php elseif (!empty($p['is_new_arrival'])): ?>
                 <span class="card-tag new">NEW</span>
@@ -81,21 +87,41 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
                 </button>
 
                 <!-- Quick Add to Bag -->
-                <button type="button" 
-                        class="card-cart-btn"
-                        onclick="quickAddToCart(<?= $p['id'] ?>, event)"
-                        aria-label="Add to Bag">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
-                        <path d="M3 6h18"></path>
-                        <path d="M16 10a4 4 0 0 1-8 0"></path>
-                    </svg>
-                </button>
+                <?php if ($p['stock_qty'] <= 0 && empty($p['is_preorder']) && empty($p['is_dropshipping'])): ?>
+                    <button type="button" 
+                            class="card-cart-btn disabled"
+                            disabled
+                            aria-label="Out of Stock">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                            <path d="M3 6h18"></path>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                    </button>
+                <?php elseif (!empty($p['is_preorder'])): ?>
+                    <button type="button" 
+                            class="card-cart-btn preorder"
+                            onclick="window.location.href='<?= APP_URL ?>/product/<?= $p['slug'] ?>'; event.preventDefault();"
+                            aria-label="Pre-Order">
+                        PRE
+                    </button>
+                <?php else: ?>
+                    <button type="button" 
+                            class="card-cart-btn"
+                            onclick="quickAddToCart(<?= $p['id'] ?>, event)"
+                            aria-label="Add to Bag">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                            <path d="M3 6h18"></path>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                    </button>
+                <?php endif; ?>
             </div>
         </div>
 
         <div class="card-body">
-            <div class="card-cat"><?= $brand ?></div>
+            <div class="card-cat"><?= strtoupper($category) ?></div>
             <div class="card-name"><?= htmlspecialchars($p['name']) ?></div>
 
             <div class="card-rating <?= ($avg_rating <= 0) ? 'faded' : '' ?>">

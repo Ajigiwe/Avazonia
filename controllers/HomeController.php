@@ -17,6 +17,7 @@ class HomeController extends Controller {
         $featuredProducts = $productModel->getFeatured();
         $allProducts = $productModel->getAll(24); // Fetch 24 latest products
         $bestsellers = $productModel->getBestsellers(8);
+        $preorderProducts = $productModel->getPreorderProducts(8);
         $categories = $categoryModel->getAll();
         $wishlistIds = Session::get('user_id') ? $wishModel->getProductIds(Session::get('user_id')) : [];
         $popupSettings = $settingsModel->all();
@@ -25,6 +26,7 @@ class HomeController extends Controller {
             'featured' => $featuredProducts,
             'all_products' => $allProducts,
             'bestsellers' => $bestsellers,
+            'preorders' => $preorderProducts,
             'categories' => $categories,
             'wishlistIds' => $wishlistIds,
             'settings' => $popupSettings,

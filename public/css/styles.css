@@ -2747,6 +2747,21 @@ form button[type="submit"]:hover {
     color: #fff;
 }
 
+.card-tag.preorder {
+    background: #4F46E5;
+    color: #fff;
+}
+
+.card-tag.outofstock {
+    background: #374151;
+    color: #f3f4f6;
+}
+
+.card-tag.lowstock {
+    background: #D97706;
+    color: #fff;
+}
+
 /* Arrow link */
 .card-action-arrow {
     position: absolute;
@@ -2830,6 +2845,30 @@ form button[type="submit"]:hover {
 .card-cart-btn:hover {
     background: var(--ink);
     color: #fff;
+}
+
+.card-cart-btn.preorder {
+    background: #4F46E5;
+    color: #fff;
+    font-family: var(--f-mono);
+    font-size: 8px;
+    font-weight: 800;
+}
+
+.card-cart-btn.preorder:hover {
+    background: #4338CA;
+    color: #fff;
+}
+
+.card-cart-btn.disabled {
+    background: rgba(200, 200, 200, 0.5) !important;
+    color: #9ca3af !important;
+    cursor: not-allowed;
+}
+
+.card-cart-btn.disabled:hover {
+    background: rgba(200, 200, 200, 0.5) !important;
+    color: #9ca3af !important;
 }
 
 .card-wish-btn.active {

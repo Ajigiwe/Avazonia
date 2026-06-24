@@ -36,7 +36,30 @@ require_once __DIR__ . '/../layout/nav.php';
     </div>
 </section>
 
-<!-- REMOVED MID-SECTION FOR MINIMALIST LOOK -->
+<!-- PRE-ORDER SECTION -->
+<?php if (!empty($preorders)): ?>
+<section class="products-sec" style="background-color: var(--light-bg); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 60px 0;">
+    <div class="container">
+        <div class="sec-head reveal">
+            <div class="sec-title-box">
+                <div class="sec-over" style="color: var(--red); font-size: 10px; font-weight: 800; letter-spacing: 0.15em; margin-bottom: 8px;">
+                    SECURE YOURS NOW
+                </div>
+                <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.85;">
+                    Pre-Order Droplist
+                </h2>
+            </div>
+            <a href="<?= APP_URL ?>/shop" style="font-family: var(--f-semi); font-size: 12px; text-transform: uppercase; color: var(--mid-gray); font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--light-gray); padding-bottom: 4px;">See all pre-orders →</a>
+        </div>
+
+        <div class="product-grid">
+            <?php foreach ($preorders as $p): ?>
+                <?php require __DIR__ . '/../components/product-card.php'; ?>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
 
 <!-- BESTSELLERS ROW -->
 <section class="products-sec">
