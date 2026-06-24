@@ -5270,3 +5270,95 @@ form button[type="submit"]:hover {
     }
 }
 
+/* --- Mobile Bottom Navigation --- */
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    z-index: 999;
+    grid-template-columns: repeat(4, 1fr);
+    align-items: center;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.03);
+}
+
+@media (max-width: 768px) {
+    .mobile-bottom-nav {
+        display: grid;
+    }
+    
+    body {
+        padding-bottom: 74px !important;
+    }
+}
+
+.mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    text-decoration: none;
+    font-size: 10px;
+    font-family: var(--f-semi);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    gap: 4px;
+    transition: color 0.2s ease;
+    height: 100%;
+}
+
+.mobile-nav-item svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+    transition: transform 0.2s ease;
+}
+
+.mobile-nav-item:hover,
+.mobile-nav-item:active {
+    color: var(--red);
+}
+
+.mobile-nav-item:active svg {
+    transform: scale(0.9);
+}
+
+/* Cart Badge */
+.mobile-cart-icon-wrapper {
+    position: relative;
+    display: inline-flex;
+}
+
+.mobile-cart-badge {
+    position: absolute;
+    top: -5px;
+    right: -8px;
+    background: var(--red);
+    color: #fff;
+    font-size: 9px;
+    font-family: var(--f-mono);
+    font-weight: 700;
+    min-width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    border: 1.5px solid #fff;
+}
+
+.mobile-cart-badge.visible {
+    display: flex;
+}
+
+

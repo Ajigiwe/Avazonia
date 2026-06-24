@@ -25,7 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'slug' => $_POST['slug'] ?: strtolower(preg_replace('/[^A-Za-z0-9-]+/', '-', $_POST['name'])),
             'description' => $_POST['description'] ?? '',
             'sort_order' => (int)($_POST['sort_order'] ?? 0),
-            'is_active' => isset($_POST['is_active']) ? 1 : 0
+            'is_active' => isset($_POST['is_active']) ? 1 : 0,
+            'parent_id' => !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null
         ];
 
         if ($action === 'create') {
@@ -52,7 +53,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$categories = db()->query("SELECT c.*, (SELECT COUNT(*) FROM products WHERE category_id = c.id) as product_count FROM categories c ORDER BY c.sort_order ASC, c.name ASC")->fetchAll();
+$categories = db()->query("
+    SELECT c.*, p.name as parent_name, 
+           (SELECT COUNT(*) FROM products WHERE category_id = c.id) as product_count 
+    FROM categories c 
+    LEFT JOIN categories p ON c.parent_id = p.id
+    ORDER BY COALESCE(c.parent_id, c.id) ASC, c.parent_id IS NOT NULL ASC, c.sort_order ASC, c.name ASC
+")->fetchAll();
 
 $title = "Manage Categories";
 include 'layout/header.php';
@@ -92,9 +99,15 @@ include 'layout/header.php';
         </thead>
         <tbody>
             <?php foreach ($categories as $c): ?>
-            <tr>
-                <td style="font-weight: 700;"><?= $c['name'] ?></td>
-                <td style="font-family: var(--f-mono); font-size: 11px; opacity: 0.6;"><?= $c['slug'] ?></td>
+            <tr class="<?= $c['parent_id'] ? 'subcategory-row' : 'parent-category-row' ?>">
+                <td style="font-weight: 700; padding-left: <?= $c['parent_id'] ? '32px' : '16px' ?>;">
+                    <?= $c['parent_id'] ? '<span style="opacity:0.4; margin-right:8px; font-weight:normal;">└─</span>' : '' ?>
+                    <?= htmlspecialchars($c['name']) ?>
+                    <?php if ($c['parent_name']): ?>
+                        <span style="font-size: 10px; font-weight: normal; color: var(--mid-gray); margin-left: 8px;">(under <?= htmlspecialchars($c['parent_name']) ?>)</span>
+                    <?php endif; ?>
+                </td>
+                <td style="font-family: var(--f-mono); font-size: 11px; opacity: 0.6;"><?= htmlspecialchars($c['slug']) ?></td>
                 <td><span style="font-family: var(--f-mono); font-weight: 600;"><?= $c['product_count'] ?> units</span></td>
                 <td><?= $c['sort_order'] ?></td>
                 <td><span class="status-badge <?= $c['is_active'] ? 'status-paid' : 'status-cancelled' ?>"><?= $c['is_active'] ? 'Active' : 'Hidden' ?></span></td>
@@ -125,6 +138,18 @@ include 'layout/header.php';
             <div>
                 <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Name</label>
                 <input type="text" name="name" id="form-name" required style="width: 100%; height: 48px; border: 1px solid var(--light-gray); padding: 0 16px; border-radius: 4px; font-family: var(--f-body);">
+            </div>
+
+            <div>
+                <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Parent Category</label>
+                <select name="parent_id" id="form-parent" style="width: 100%; height: 48px; border: 1px solid var(--light-gray); padding: 0 16px; border-radius: 4px; font-family: var(--f-body); background: #fff; color: var(--ink);">
+                    <option value="">None (Main Category)</option>
+                    <?php foreach ($categories as $p_cat): ?>
+                        <?php if (empty($p_cat['parent_id'])): ?>
+                            <option value="<?= $p_cat['id'] ?>"><?= htmlspecialchars($p_cat['name']) ?></option>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                </select>
             </div>
 
             <div>
@@ -164,6 +189,7 @@ function toggleModal(id) {
         document.getElementById('form-action').value = 'create';
         document.getElementById('form-id').value = '';
         document.getElementById('form-name').value = '';
+        document.getElementById('form-parent').value = '';
         document.getElementById('form-slug').value = '';
         document.getElementById('form-desc').value = '';
         document.getElementById('form-order').value = '0';
@@ -177,6 +203,7 @@ function editCategory(c) {
     document.getElementById('form-action').value = 'update';
     document.getElementById('form-id').value = c.id;
     document.getElementById('form-name').value = c.name;
+    document.getElementById('form-parent').value = c.parent_id || '';
     document.getElementById('form-slug').value = c.slug;
     document.getElementById('form-desc').value = c.description || '';
     document.getElementById('form-order').value = c.sort_order;

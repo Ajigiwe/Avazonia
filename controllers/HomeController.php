@@ -19,6 +19,23 @@ class HomeController extends Controller {
         $bestsellers = $productModel->getBestsellers(8);
         $preorderProducts = $productModel->getPreorderProducts(8);
         $categories = $categoryModel->getAll();
+
+        // Fetch products for a few main categories to showcase on homepage
+        $categoryShowcase = [];
+        $showcaseCount = 0;
+        foreach ($categories as $cat) {
+            if (empty($cat['parent_id']) && $showcaseCount < 3) {
+                $catProducts = $productModel->getByCategory($cat['id'], 4);
+                if (!empty($catProducts)) {
+                    $categoryShowcase[] = [
+                        'category' => $cat,
+                        'products' => $catProducts
+                    ];
+                    $showcaseCount++;
+                }
+            }
+        }
+
         $wishlistIds = Session::get('user_id') ? $wishModel->getProductIds(Session::get('user_id')) : [];
         $popupSettings = $settingsModel->all();
 
@@ -28,6 +45,7 @@ class HomeController extends Controller {
             'bestsellers' => $bestsellers,
             'preorders' => $preorderProducts,
             'categories' => $categories,
+            'categoryShowcase' => $categoryShowcase,
             'wishlistIds' => $wishlistIds,
             'settings' => $popupSettings,
             'popup' => [

@@ -163,7 +163,7 @@ class Product extends Model {
                 LEFT JOIN brands b ON p.brand_id = b.id 
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
-                WHERE p.category_id = :cat AND p.is_active = 1 " . $this->getStockSql() . " 
+                WHERE (p.category_id = :cat OR p.category_id IN (SELECT id FROM categories WHERE parent_id = :cat)) AND p.is_active = 1 " . $this->getStockSql() . " 
                 ORDER BY p.created_at DESC LIMIT :limit";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':cat', (int)$categoryId, PDO::PARAM_INT);
@@ -179,7 +179,7 @@ class Product extends Model {
                 LEFT JOIN brands b ON p.brand_id = b.id 
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
-                WHERE p.category_id = :cat AND p.id != :exc AND p.is_active = 1 " . $this->getStockSql() . " 
+                WHERE (p.category_id = :cat OR p.category_id IN (SELECT id FROM categories WHERE parent_id = :cat)) AND p.id != :exc AND p.is_active = 1 " . $this->getStockSql() . " 
                 ORDER BY RAND() LIMIT :limit";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':cat', (int)$categoryId, PDO::PARAM_INT);
@@ -191,7 +191,7 @@ class Product extends Model {
     }
 
     public function search($query, $categoryId = null, $limit = 24) {
-        $catFilter = $categoryId ? " AND p.category_id = :cat_id " : "";
+        $catFilter = $categoryId ? " AND (p.category_id = :cat_id OR p.category_id IN (SELECT id FROM categories WHERE parent_id = :cat_id)) " : "";
         $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
                 FROM products p 
                 LEFT JOIN brands b ON p.brand_id = b.id 
@@ -211,7 +211,7 @@ class Product extends Model {
     }
 
     public function getSuggestions($query, $categoryId = null, $limit = 5) {
-        $catFilter = $categoryId ? " AND p.category_id = :cat_id " : "";
+        $catFilter = $categoryId ? " AND (p.category_id = :cat_id OR p.category_id IN (SELECT id FROM categories WHERE parent_id = :cat_id)) " : "";
         $sql = "SELECT p.name, p.slug, pi.url as primary_image 
                 FROM products p 
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 

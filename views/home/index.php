@@ -95,6 +95,36 @@ require_once __DIR__ . '/../layout/nav.php';
                 </div>
             </div>
         </div>
+    </div>
+</section>
+
+<!-- CATEGORY SHOWCASE SECTIONS -->
+<?php if (!empty($categoryShowcase)): ?>
+    <?php foreach ($categoryShowcase as $showcase): ?>
+        <section class="products-sec" style="border-top: 1px solid var(--border-color); padding: 60px 0;">
+            <div class="container">
+                <div class="sec-head reveal">
+                    <div class="sec-title-box">
+                        <div class="sec-over" style="color: var(--red); font-size: 10px; font-weight: 800; letter-spacing: 0.15em; margin-bottom: 8px;">
+                            EXPLORE CATEGORY
+                        </div>
+                        <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.85;">
+                            <?= htmlspecialchars(strtoupper($showcase['category']['name'])) ?>
+                        </h2>
+                    </div>
+                    <a href="<?= APP_URL ?>/shop?cat=<?= $showcase['category']['slug'] ?>" style="font-family: var(--f-semi); font-size: 12px; text-transform: uppercase; color: var(--mid-gray); font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--light-gray); padding-bottom: 4px;">Shop All <?= htmlspecialchars($showcase['category']['name']) ?> →</a>
+                </div>
+
+                <div class="product-grid">
+                    <?php foreach ($showcase['products'] as $p): ?>
+                        <?php require __DIR__ . '/../components/product-card.php'; ?>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </section>
+    <?php endforeach; ?>
+<?php endif; ?>
+
  <?php if ($popup['enabled'] == '1'): ?>
 <div id="promo-popup" class="promo-overlay" style="display: none;">
     <div class="promo-modal popup-mode-<?= $popup['type'] ?>">

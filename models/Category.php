@@ -21,24 +21,26 @@ class Category extends Model {
     }
 
     public function create($data) {
-        $stmt = $this->db->prepare("INSERT INTO categories (name, slug, description, sort_order, is_active) VALUES (?, ?, ?, ?, ?)");
-        return $stmt->execute([
-            $data['name'],
-            $data['slug'],
-            $data['description'] ?? null,
-            $data['sort_order'] ?? 0,
-            $data['is_active'] ?? 1
-        ]);
-    }
-
-    public function update($id, $data) {
-        $stmt = $this->db->prepare("UPDATE categories SET name = ?, slug = ?, description = ?, sort_order = ?, is_active = ? WHERE id = ?");
+        $stmt = $this->db->prepare("INSERT INTO categories (name, slug, description, sort_order, is_active, parent_id) VALUES (?, ?, ?, ?, ?, ?)");
         return $stmt->execute([
             $data['name'],
             $data['slug'],
             $data['description'] ?? null,
             $data['sort_order'] ?? 0,
             $data['is_active'] ?? 1,
+            !empty($data['parent_id']) ? (int)$data['parent_id'] : null
+        ]);
+    }
+
+    public function update($id, $data) {
+        $stmt = $this->db->prepare("UPDATE categories SET name = ?, slug = ?, description = ?, sort_order = ?, is_active = ?, parent_id = ? WHERE id = ?");
+        return $stmt->execute([
+            $data['name'],
+            $data['slug'],
+            $data['description'] ?? null,
+            $data['sort_order'] ?? 0,
+            $data['is_active'] ?? 1,
+            !empty($data['parent_id']) ? (int)$data['parent_id'] : null,
             $id
         ]);
     }
