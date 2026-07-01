@@ -128,8 +128,8 @@ include 'layout/header.php';
 </div>
 
 <!-- Add/Edit Modal -->
-<div id="add-modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-    <div style="background: #fff; width: 100%; max-width: 500px; padding: 40px; border-radius: 8px; border: 1px solid var(--ink); box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+<div id="add-modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: flex-start; justify-content: center; backdrop-filter: blur(4px); overflow-y: auto; padding: 40px 16px;">
+    <div style="background: #fff; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 40px; border-radius: 8px; border: 1px solid var(--ink); box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
         <h2 id="modal-title" style="font-family: var(--f-display); font-weight: 900; font-size: 28px; text-transform: uppercase; margin-bottom: 32px; letter-spacing: -0.02em;">New Category</h2>
         <form method="POST" style="display: flex; flex-direction: column; gap: 24px;">
             <input type="hidden" name="action" id="form-action" value="create">
