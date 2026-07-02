@@ -90,7 +90,7 @@ include 'layout/header.php';
                         <div style="font-size: 11px; font-weight: 700; color: var(--red); text-transform: uppercase;"><?= $p['brand_name'] ?></div>
                         <div style="font-size: 11px; color: var(--mid-gray);"><?= $p['cat_name'] ?></div>
                     </td>
-                    <td style="font-family: var(--f-mono);">₵<?= number_format($p['price_ghs'], 2) ?></td>
+                    <td style="font-family: var(--f-mono);"><?= format_price($p) ?></td>
                     <td>
                         <span style="<?= $p['stock_qty'] < 5 ? 'color: var(--red); font-weight: 700;' : '' ?>">
                             <?= $p['stock_qty'] ?> units

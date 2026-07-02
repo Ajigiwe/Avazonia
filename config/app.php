@@ -82,6 +82,34 @@ if (!defined('GRID_DENSITY')) define('GRID_DENSITY', (int)($dbSettings['grid_den
 if (!defined('ANNOUNCEMENT_BAR')) define('ANNOUNCEMENT_BAR', $dbSettings['announcement_text'] ?? (getenv('ANNOUNCEMENT_TEXT') ?: ''));
 if (!defined('FOOTER_NOTICE')) define('FOOTER_NOTICE', $dbSettings['footer_notice'] ?? ('© ' . date('Y') . ' AVAZONIA GH — CRAFTED IN TAKORADI'));
 
+// Currency helpers
+function format_price($product) {
+    $currency = $product['currency'] ?? 'GHS';
+    if ($currency === 'USD') {
+        $price = $product['price_usd'] ?? 0;
+        return '$' . number_format((float)$price, 2);
+    }
+    $price = $product['price_ghs'] ?? 0;
+    return '₵' . number_format((float)$price, 2);
+}
+function format_compare_price($product) {
+    $currency = $product['currency'] ?? 'GHS';
+    if ($currency === 'USD') {
+        $price = $product['compare_at_price_usd'] ?? 0;
+        return $price ? '$' . number_format((float)$price, 2) : '';
+    }
+    $price = $product['compare_at_price_ghs'] ?? 0;
+    return $price ? '₵' . number_format((float)$price, 2) : '';
+}
+function get_price_value($product) {
+    $currency = $product['currency'] ?? 'GHS';
+    if ($currency === 'USD') return (float)($product['price_usd'] ?? 0);
+    return (float)($product['price_ghs'] ?? 0);
+}
+function get_currency_symbol($product) {
+    return ($product['currency'] ?? 'GHS') === 'USD' ? '$' : '₵';
+}
+
 // Shipping Tiers
 if (!defined('SHIPPING_ACCRA')) define('SHIPPING_ACCRA', $dbSettings['shipping_accra'] ?? '30.00');
 if (!defined('SHIPPING_KUMASI')) define('SHIPPING_KUMASI', $dbSettings['shipping_kumasi'] ?? '35.00');

@@ -50,7 +50,9 @@ class CartController extends Controller {
         $cart = Session::get('cart', []);
         $key = $productId . '-' . ($variantId ?? '0');
 
+        $currency = $product['currency'] ?? 'GHS';
         $price = (float)$product['price_ghs'];
+        $price_usd = $product['price_usd'] ?? null;
         $name = $product['name'];
         $image = $product['primary_image'] ?? '';
 
@@ -83,6 +85,8 @@ class CartController extends Controller {
                 'variant_id' => $variantId,
                 'name' => $name,
                 'price_ghs' => $price,
+                'price_usd' => $price_usd,
+                'currency' => $currency,
                 'qty' => $qty,
                 'image' => $image,
                 'is_preorder' => (int)($product['is_preorder'] ?? 0)

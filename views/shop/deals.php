@@ -241,7 +241,7 @@
                         
                         <h3 class="deal-title"><?= htmlspecialchars($p['name']) ?></h3>
                         <div class="deal-price-row">
-                            <span class="deal-price"><?= number_format($p['price_ghs'], 2) ?></span>
+                            <span class="deal-price"><?= format_price($p) ?></span>
                         </div>
                     </div>
                 </a>
@@ -251,6 +251,11 @@
         <?php endif; ?>
 
         <?php if (!empty($deals)): ?>
+        <?php
+        $deal_currency = ($p['currency'] ?? 'GHS');
+        $deal_current = $deal_currency === 'USD' ? ($p['price_usd'] ?? 0) : ($p['price_ghs'] ?? 0);
+        $deal_compare = $deal_currency === 'USD' ? ($p['compare_at_price_usd'] ?? 0) : ($p['compare_at_price_ghs'] ?? 0);
+        ?>
         <!-- ── FLASH DEALS ───────────────────────────────────── -->
         <section class="deals-section">
             <div class="deals-sec-header">
@@ -259,11 +264,15 @@
             </div>
             <div class="deals-grid">
                 <?php foreach ($deals as $p): ?>
+                <?php
+                $d_cur = $p['currency'] ?? 'GHS';
+                $d_curr = $d_cur === 'USD' ? ($p['price_usd'] ?? 0) : ($p['price_ghs'] ?? 0);
+                $d_comp = $d_cur === 'USD' ? ($p['compare_at_price_usd'] ?? 0) : ($p['compare_at_price_ghs'] ?? 0);
+                $pct = $d_comp > 0 ? round((($d_comp - $d_curr) / $d_comp) * 100) : 0;
+                $sym = $d_cur === 'USD' ? '$' : '₵';
+                ?>
                 <a href="<?= APP_URL ?>/product/<?= $p['slug'] ?>" class="deal-card">
                     <div class="deal-img-wrap">
-                        <?php 
-                        $pct = round((($p['compare_at_price_ghs'] - $p['price_ghs']) / $p['compare_at_price_ghs']) * 100);
-                        ?>
                         <span class="deal-badge">-<?= $pct ?>%</span>
                         <img src="<?= $p['primary_image'] ?>" alt="<?= htmlspecialchars($p['name']) ?>" class="deal-img">
                         <button class="card-wishlist wish-btn-<?= $p['id'] ?> <?= in_array($p['id'], $wishlistIds ?? []) ? 'active' : '' ?>" 
@@ -290,9 +299,11 @@
                         <?php endif; ?>
                         <h3 class="deal-title"><?= htmlspecialchars($p['name']) ?></h3>
                         <div class="deal-price-row">
-                            <span class="deal-price">₵<?= number_format($p['price_ghs'], 2) ?></span>
-                            <span class="deal-price-old">₵<?= number_format($p['compare_at_price_ghs'], 2) ?></span>
-                            <span class="save-tag">SAVE ₵<?= number_format($p['compare_at_price_ghs'] - $p['price_ghs'], 0) ?></span>
+                            <span class="deal-price"><?= $sym . number_format($d_curr, 2) ?></span>
+                            <?php if ($d_comp > 0): ?>
+                            <span class="deal-price-old"><?= $sym . number_format($d_comp, 2) ?></span>
+                            <span class="save-tag">SAVE <?= $sym . number_format($d_comp - $d_curr, 0) ?></span>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </a>
@@ -338,7 +349,7 @@
                         <?php endif; ?>
                         <h3 class="deal-title"><?= htmlspecialchars($p['name']) ?></h3>
                         <div class="deal-price-row">
-                            <span class="deal-price"><?= number_format($p['price_ghs'], 2) ?></span>
+                            <span class="deal-price"><?= format_price($p) ?></span>
                         </div>
                     </div>
                 </a>

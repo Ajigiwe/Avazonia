@@ -36,6 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $brand_id = $_POST['brand_id'] ?? null;
     $price = $_POST['price'] ?? 0;
     $compare_price = !empty($_POST['compare_price']) ? $_POST['compare_price'] : null;
+    $price_usd = $_POST['price_usd'] ?? null;
+    $compare_price_usd = !empty($_POST['compare_price_usd']) ? $_POST['compare_price_usd'] : null;
+    $currency = $_POST['currency'] ?? 'GHS';
     $stock = $_POST['stock'] ?? 0;
     $description = $_POST['description'] ?? '';
     $image_url = $_POST['image_url'] ?? '';
@@ -118,14 +121,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Simple slug generation
     $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name)));
 
-    if (!$error && (empty($name) || empty($price))) {
-        $error = "Product name and price are required.";
+    if (!$error && empty($name)) {
+        $error = "Product name is required.";
+    }
+    if (!$error && $currency === 'GHS' && empty($price)) {
+        $error = "Price in GHS is required.";
+    }
+    if (!$error && $currency === 'USD' && empty($price_usd)) {
+        $error = "Price in USD is required.";
     }
 
     if (!$error) {
         try {
-            $stmt = $db->prepare("INSERT INTO products (name, slug, category_id, brand_id, price_ghs, compare_at_price_ghs, stock_qty, description, features, specs, tags, meta_title, meta_description, meta_keywords, is_preorder, is_bestseller, is_featured, is_dropshipping, lead_time_days, video_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$name, $slug, $category_id, $brand_id, $price, $compare_price, $stock, $description, $features_json, $specs_json, $tags, $meta_title, $meta_description, $meta_keywords, $is_preorder, $is_bestseller, $is_featured, $is_dropshipping, $lead_time, $uploaded_video]);
+            $stmt = $db->prepare("INSERT INTO products (name, slug, category_id, brand_id, price_ghs, compare_at_price_ghs, price_usd, compare_at_price_usd, currency, stock_qty, description, features, specs, tags, meta_title, meta_description, meta_keywords, is_preorder, is_bestseller, is_featured, is_dropshipping, lead_time_days, video_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$name, $slug, $category_id, $brand_id, $price, $compare_price, $price_usd, $compare_price_usd, $currency, $stock, $description, $features_json, $specs_json, $tags, $meta_title, $meta_description, $meta_keywords, $is_preorder, $is_bestseller, $is_featured, $is_dropshipping, $lead_time, $uploaded_video]);
             
             $productId = $db->lastInsertId();
             
@@ -183,12 +192,37 @@ include 'layout/header.php';
                     <input type="text" name="name" required style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;">
                 </div>
                 <div>
-                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Current Price (GHS)</label>
-                    <input type="number" step="0.01" name="price" required style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;">
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Currency</label>
+                    <select name="currency" id="currency-select" onchange="toggleCurrency()" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit; background: #fff;">
+                        <option value="GHS">GHS (₵) — Ghana Cedis</option>
+                        <option value="USD">USD ($) — US Dollars</option>
+                    </select>
                 </div>
-                <div>
-                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--red); margin-bottom: 8px;">Old Price (Compare at)</label>
-                    <input type="number" step="0.01" name="compare_price" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;" placeholder="e.g. 1500.00">
+            </div>
+
+            <div id="price-ghs-fields">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div>
+                        <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Current Price (GHS ₵)</label>
+                        <input type="number" step="0.01" name="price" required style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--red); margin-bottom: 8px;">Old Price / Compare at (GHS ₵)</label>
+                        <input type="number" step="0.01" name="compare_price" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;" placeholder="e.g. 1500.00">
+                    </div>
+                </div>
+            </div>
+
+            <div id="price-usd-fields" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div>
+                        <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Current Price (USD $)</label>
+                        <input type="number" step="0.01" name="price_usd" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;" placeholder="e.g. 49.99">
+                    </div>
+                    <div>
+                        <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--red); margin-bottom: 8px;">Old Price / Compare at (USD $)</label>
+                        <input type="number" step="0.01" name="compare_price_usd" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;" placeholder="e.g. 79.99">
+                    </div>
                 </div>
             </div>
 
@@ -329,6 +363,13 @@ function addTag(tag) {
         currentTags.push(tag);
         input.value = currentTags.join(', ');
     }
+}
+function toggleCurrency() {
+    const sel = document.getElementById('currency-select').value;
+    document.getElementById('price-ghs-fields').style.display = sel === 'GHS' ? '' : 'none';
+    document.getElementById('price-usd-fields').style.display = sel === 'USD' ? '' : 'none';
+    document.querySelector('#price-ghs-fields input[name="price"]').required = sel === 'GHS';
+    document.querySelector('#price-usd-fields input[name="price_usd"]').required = sel === 'USD';
 }
 </script>
 <?php include 'layout/footer.php'; ?>

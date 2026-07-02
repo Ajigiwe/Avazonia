@@ -38,8 +38,11 @@ CREATE TABLE IF NOT EXISTS products (
   description         TEXT,
   features            JSON,
   specs               JSON,
-  price_ghs           DECIMAL(10,2) NOT NULL,
+  price_ghs           DECIMAL(10,2) NOT NULL DEFAULT 0,
   compare_at_price_ghs DECIMAL(10,2) DEFAULT NULL,
+  price_usd           DECIMAL(10,2) DEFAULT NULL,
+  compare_at_price_usd DECIMAL(10,2) DEFAULT NULL,
+  currency            VARCHAR(3) NOT NULL DEFAULT 'GHS',
   stock_qty           INT DEFAULT 0,
   is_featured         TINYINT(1) DEFAULT 0,
   is_new_arrival      TINYINT(1) DEFAULT 0,
@@ -48,7 +51,9 @@ CREATE TABLE IF NOT EXISTS products (
   created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT chk_compare_price CHECK (
-    compare_at_price_ghs IS NULL OR compare_at_price_ghs > price_ghs
+    (currency = 'GHS' AND (compare_at_price_ghs IS NULL OR compare_at_price_ghs > price_ghs))
+    OR
+    (currency = 'USD' AND (compare_at_price_usd IS NULL OR compare_at_price_usd > price_usd))
   ),
   FULLTEXT KEY ft_product_search (name, description, brand_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

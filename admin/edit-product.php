@@ -80,6 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $brand_id = $_POST['brand_id'] ?? null;
         $price = $_POST['price'] ?? 0;
         $compare_price = !empty($_POST['compare_price']) ? $_POST['compare_price'] : null;
+        $price_usd = $_POST['price_usd'] ?? null;
+        $compare_price_usd = !empty($_POST['compare_price_usd']) ? $_POST['compare_price_usd'] : null;
+        $currency = $_POST['currency'] ?? 'GHS';
         $stock = $_POST['stock'] ?? 0;
         $description = $_POST['description'] ?? '';
         $image_url = $_POST['image_url'] ?? '';
@@ -169,14 +172,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $video_updated = true;
     }
 
-    if (!$error && (empty($name) || empty($price))) {
-        $error = "Product name and price are required.";
+    if (!$error && empty($name)) {
+        $error = "Product name is required.";
+    }
+    if (!$error && $currency === 'GHS' && empty($price)) {
+        $error = "Price in GHS is required.";
+    }
+    if (!$error && $currency === 'USD' && empty($price_usd)) {
+        $error = "Price in USD is required.";
     }
 
     if (!$error) {
         try {
-            $stmt = $db->prepare("UPDATE products SET name = ?, category_id = ?, brand_id = ?, price_ghs = ?, compare_at_price_ghs = ?, stock_qty = ?, description = ?, features = ?, specs = ?, tags = ?, meta_title = ?, meta_description = ?, meta_keywords = ?, is_active = ?, is_bestseller = ?, is_featured = ?, is_preorder = ?, is_dropshipping = ?, lead_time_days = ? WHERE id = ?");
-            $stmt->execute([$name, $category_id, $brand_id, $price, $compare_price, $stock, $description, $features_json, $specs_json, $tags, $meta_title, $meta_description, $meta_keywords, $is_active, $is_bestseller, $is_featured, $is_preorder, $is_dropshipping, $lead_time, $productId]);
+            $stmt = $db->prepare("UPDATE products SET name = ?, category_id = ?, brand_id = ?, price_ghs = ?, compare_at_price_ghs = ?, price_usd = ?, compare_at_price_usd = ?, currency = ?, stock_qty = ?, description = ?, features = ?, specs = ?, tags = ?, meta_title = ?, meta_description = ?, meta_keywords = ?, is_active = ?, is_bestseller = ?, is_featured = ?, is_preorder = ?, is_dropshipping = ?, lead_time_days = ? WHERE id = ?");
+            $stmt->execute([$name, $category_id, $brand_id, $price, $compare_price, $price_usd, $compare_price_usd, $currency, $stock, $description, $features_json, $specs_json, $tags, $meta_title, $meta_description, $meta_keywords, $is_active, $is_bestseller, $is_featured, $is_preorder, $is_dropshipping, $lead_time, $productId]);
             
             if ($video_updated) {
                 $stmt = $db->prepare("UPDATE products SET video_url = ? WHERE id = ?");
@@ -246,12 +255,37 @@ include 'layout/header.php';
                     <input type="text" name="name" value="<?= htmlspecialchars($product['name']) ?>" required style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;">
                 </div>
                 <div>
-                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Current Price (GHS)</label>
-                    <input type="number" step="0.01" name="price" value="<?= $product['price_ghs'] ?>" required style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;">
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Currency</label>
+                    <select name="currency" id="currency-select" onchange="toggleCurrency()" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit; background: #fff;">
+                        <option value="GHS" <?= ($product['currency'] ?? 'GHS') === 'GHS' ? 'selected' : '' ?>>GHS (₵) — Ghana Cedis</option>
+                        <option value="USD" <?= ($product['currency'] ?? '') === 'USD' ? 'selected' : '' ?>>USD ($) — US Dollars</option>
+                    </select>
                 </div>
-                <div>
-                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--red); margin-bottom: 8px;">Old Price (Compare at)</label>
-                    <input type="number" step="0.01" name="compare_price" value="<?= $product['compare_at_price_ghs'] ?>" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;" placeholder="e.g. 1500.00">
+            </div>
+
+            <div id="price-ghs-fields" style="<?= ($product['currency'] ?? 'GHS') === 'USD' ? 'display:none;' : '' ?>">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div>
+                        <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Current Price (GHS ₵)</label>
+                        <input type="number" step="0.01" name="price" value="<?= $product['price_ghs'] ?>" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--red); margin-bottom: 8px;">Old Price / Compare at (GHS ₵)</label>
+                        <input type="number" step="0.01" name="compare_price" value="<?= $product['compare_at_price_ghs'] ?>" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;" placeholder="e.g. 1500.00">
+                    </div>
+                </div>
+            </div>
+
+            <div id="price-usd-fields" style="<?= ($product['currency'] ?? 'GHS') === 'USD' ? '' : 'display:none;' ?>">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div>
+                        <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Current Price (USD $)</label>
+                        <input type="number" step="0.01" name="price_usd" value="<?= $product['price_usd'] ?>" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;" placeholder="e.g. 49.99">
+                    </div>
+                    <div>
+                        <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--red); margin-bottom: 8px;">Old Price / Compare at (USD $)</label>
+                        <input type="number" step="0.01" name="compare_price_usd" value="<?= $product['compare_at_price_usd'] ?>" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;" placeholder="e.g. 79.99">
+                    </div>
                 </div>
             </div>
 
@@ -346,7 +380,7 @@ include 'layout/header.php';
                                         <?= $v['color'] ?: 'No Color' ?> / <?= $v['size'] ?: 'No Size' ?>
                                     </div>
                                     <div style="font-family: var(--f-mono); font-size: 10px; color: var(--mid-gray);">
-                                        SKU: <?= $v['sku'] ?: 'N/A' ?> | Stock: <?= $v['stock_qty'] ?> | Price: <?= $v['price_override_ghs'] ? '₵'.$v['price_override_ghs'] : 'Base' ?>
+                                        SKU: <?= $v['sku'] ?: 'N/A' ?> | Stock: <?= $v['stock_qty'] ?> | Price: <?= $v['price_override_ghs'] ? '₵'.number_format((float)$v['price_override_ghs'], 2) : 'Base' ?>
                                     </div>
                                 </div>
                                 <button type="button" onclick="if(confirm('Delete variant?')){ const f = document.createElement('form'); f.method='POST'; const a = document.createElement('input'); a.type='hidden'; a.name='action'; a.value='del_variant'; const i = document.createElement('input'); i.type='hidden'; i.name='variant_id'; i.value='<?= $v['id'] ?>'; f.appendChild(a); f.appendChild(i); document.body.appendChild(f); f.submit(); }" style="background: none; border: none; color: var(--red); font-size: 11px; font-family: var(--f-semi); cursor: pointer; text-transform: uppercase;">Delete</button>
@@ -506,6 +540,11 @@ function addTag(tag) {
         currentTags.push(tag);
         input.value = currentTags.join(', ');
     }
+}
+function toggleCurrency() {
+    const sel = document.getElementById('currency-select').value;
+    document.getElementById('price-ghs-fields').style.display = sel === 'GHS' ? '' : 'none';
+    document.getElementById('price-usd-fields').style.display = sel === 'USD' ? '' : 'none';
 }
 </script>
 <?php include 'layout/footer.php'; ?>

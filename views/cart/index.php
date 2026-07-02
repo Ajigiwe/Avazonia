@@ -195,7 +195,7 @@ $totalItems = array_sum(array_column($cart, 'qty'));
                             </form>
                         </div>
                     </div>
-                    <div class="ci-price">₵<?= number_format($item['price_ghs'] * $item['qty'], 2) ?></div>
+                    <div class="ci-price"><?= ($item['currency'] ?? 'GHS') === 'USD' ? '$' : '₵' ?><?= number_format(($item['currency'] ?? 'GHS') === 'USD' ? ($item['price_usd'] ?? $item['price_ghs']) * $item['qty'] : $item['price_ghs'] * $item['qty'], 2) ?></div>
                     <form action="<?= APP_URL ?>/cart/remove" method="POST">
                         <input type="hidden" name="key" value="<?= $key ?>">
                         <button type="submit" class="ci-del" title="Remove item">

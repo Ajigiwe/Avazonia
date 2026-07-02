@@ -35,8 +35,8 @@ if (Session::get('user_id')) {
   "offers": {
     "@type": "Offer",
     "url": "<?= APP_URL . $_SERVER['REQUEST_URI'] ?>",
-    "priceCurrency": "GHS",
-    "price": "<?= $product['price_ghs'] ?>",
+    "priceCurrency": "<?= $product['currency'] ?? 'GHS' ?>",
+    "price": "<?= ($product['currency'] ?? 'GHS') === 'USD' ? ($product['price_usd'] ?? 0) : $product['price_ghs'] ?>",
     "availability": "https://schema.org/<?= ($product['stock_qty'] > 0 || $product['is_preorder'] || $product['is_dropshipping']) ? 'InStock' : 'OutOfStock' ?>",
     "itemCondition": "https://schema.org/NewCondition"
   }
@@ -124,11 +124,16 @@ if (Session::get('user_id')) {
             <?php endif; ?>
 
             <div style="font-family: var(--f-display); margin-bottom: 32px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
-                <div id="live-price-display" style="font-weight: 800; font-size: clamp(28px, 5vw, 44px); color: var(--ink); line-height: 1;">₵<?= number_format($product['price_ghs'], 2) ?></div>
-                <?php if ($product['compare_at_price_ghs'] > $product['price_ghs']): ?>
+                <div id="live-price-display" style="font-weight: 800; font-size: clamp(28px, 5vw, 44px); color: var(--ink); line-height: 1;"><?= format_price($product) ?></div>
+                <?php 
+                $has_compare = ($product['currency'] ?? 'GHS') === 'USD' ? (($product['compare_at_price_usd'] ?? 0) > ($product['price_usd'] ?? 0)) : (($product['compare_at_price_ghs'] ?? 0) > ($product['price_ghs'] ?? 0));
+                $current_price = ($product['currency'] ?? 'GHS') === 'USD' ? ($product['price_usd'] ?? 0) : ($product['price_ghs'] ?? 0);
+                $compare_price_val = ($product['currency'] ?? 'GHS') === 'USD' ? ($product['compare_at_price_usd'] ?? 0) : ($product['compare_at_price_ghs'] ?? 0);
+                ?>
+                <?php if ($has_compare): ?>
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <span style="font-family: var(--f-display); font-size: 18px; color: var(--mid-gray); text-decoration: line-through; font-weight: 500; opacity: 0.6;">₵<?= number_format($product['compare_at_price_ghs'], 2) ?></span>
-                        <span style="background: #FFF5E6; color: #FF8C00; font-size: 14px; font-weight: 800; padding: 6px 14px; border-radius: 8px;">-<?= round((($product['compare_at_price_ghs'] - $product['price_ghs']) / $product['compare_at_price_ghs']) * 100) ?>%</span>
+                        <span style="font-family: var(--f-display); font-size: 18px; color: var(--mid-gray); text-decoration: line-through; font-weight: 500; opacity: 0.6;"><?= format_compare_price($product) ?></span>
+                        <span style="background: #FFF5E6; color: #FF8C00; font-size: 14px; font-weight: 800; padding: 6px 14px; border-radius: 8px;">-<?= $compare_price_val > 0 ? round((($compare_price_val - $current_price) / $compare_price_val) * 100) : 0 ?>%</span>
                     </div>
                 <?php endif; ?>
             </div>
@@ -156,6 +161,7 @@ if (Session::get('user_id')) {
                         <div class="variant-pill" 
                              data-id="<?= $v['id'] ?>"
                              data-price="<?= $v['price_override_ghs'] ? number_format($v['price_override_ghs'], 2) : number_format($product['price_ghs'], 2) ?>"
+                             data-currency="<?= $product['currency'] ?? 'GHS' ?>"
                              data-image="<?= $v['image_url'] ?: '' ?>"
                              onclick="selectVariant(this)"
                              style="cursor: pointer; display: flex; align-items: center; gap: 8px; border: 2px solid <?= $idx === 0 ? 'var(--ink)' : 'var(--light-gray)' ?>; border-radius: 20px; padding: 6px 16px; font-size: 12px; font-weight: 700;">
@@ -168,6 +174,8 @@ if (Session::get('user_id')) {
                 </div>
             </div>
             <script>
+                const productCurrency = '<?= $product['currency'] ?? 'GHS' ?>';
+                const currencySym = productCurrency === 'USD' ? '$' : '\u20B5';
                 window.selectVariant = function(pill) {
                     const priceDisplay = document.getElementById('live-price-display');
                     const formVarInput = document.getElementById('form-variant-id');
@@ -179,7 +187,7 @@ if (Session::get('user_id')) {
                     if (formVarInput) formVarInput.value = pill.getAttribute('data-id');
                     
                     if (pill.getAttribute('data-price')) {
-                        priceDisplay.innerText = '₵' + pill.getAttribute('data-price');
+                        priceDisplay.innerText = currencySym + pill.getAttribute('data-price');
                     }
                     
                     const newImage = pill.getAttribute('data-image');

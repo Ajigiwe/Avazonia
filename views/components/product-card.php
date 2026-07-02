@@ -131,9 +131,9 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
             </div>
             
             <div class="card-price-area">
-                <div class="card-price">₵<?= number_format($p['price_ghs'], 2) ?></div>
-                <?php if($p['compare_at_price_ghs'] > $p['price_ghs']): ?>
-                    <div class="card-price-old">₵<?= number_format($p['compare_at_price_ghs'], 2) ?></div>
+                <div class="card-price"><?= format_price($p) ?></div>
+                <?php if (($p['currency'] ?? 'GHS') === 'USD' ? ($p['compare_at_price_usd'] ?? 0) > ($p['price_usd'] ?? 0) : ($p['compare_at_price_ghs'] ?? 0) > ($p['price_ghs'] ?? 0)): ?>
+                    <div class="card-price-old"><?= format_compare_price($p) ?></div>
                 <?php endif; ?>
             </div>
         </div>

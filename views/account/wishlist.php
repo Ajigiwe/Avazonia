@@ -76,9 +76,9 @@ $user_name = Session::get('user_name') ?: 'Member';
                                 <div>
                                     <a href="<?= APP_URL ?>/product/<?= $item['slug'] ?>" style="text-decoration: none; color: var(--ink); font-weight: 800; font-size: 16px; display: block; margin-bottom: 4px;"><?= $item['name'] ?></a>
                                     <div style="display: flex; align-items: baseline; gap: 8px;">
-                                        <span style="font-weight: 900; color: var(--red); font-size: 18px;">₵<?= number_format($item['price_ghs'], 2) ?></span>
-                                        <?php if ($item['compare_at_price_ghs']): ?>
-                                            <span style="text-decoration: line-through; color: var(--mid-gray); font-size: 12px;">₵<?= number_format($item['compare_at_price_ghs'], 2) ?></span>
+                                        <span style="font-weight: 900; color: var(--red); font-size: 18px;"><?= format_price($item) ?></span>
+                                        <?php if (($item['currency'] ?? 'GHS') === 'USD' ? ($item['compare_at_price_usd'] ?? 0) : ($item['compare_at_price_ghs'] ?? 0)): ?>
+                                            <span style="text-decoration: line-through; color: var(--mid-gray); font-size: 12px;"><?= format_compare_price($item) ?></span>
                                         <?php endif; ?>
                                     </div>
                                     <?php if ($item['is_preorder']): ?>
