@@ -272,8 +272,11 @@ CREATE TABLE `products` (
   `meta_keywords` text DEFAULT NULL,
   `features` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`features`)),
   `specs` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`specs`)),
-  `price_ghs` decimal(10,2) NOT NULL,
+  `price_ghs` decimal(10,2) NOT NULL DEFAULT 0,
   `compare_at_price_ghs` decimal(10,2) DEFAULT NULL,
+  `price_usd` decimal(10,2) DEFAULT NULL,
+  `compare_at_price_usd` decimal(10,2) DEFAULT NULL,
+  `currency` varchar(3) NOT NULL DEFAULT 'GHS',
   `stock_qty` int(11) DEFAULT 0,
   `is_featured` tinyint(1) DEFAULT 0,
   `is_new_arrival` tinyint(1) DEFAULT 0,
@@ -289,7 +292,7 @@ CREATE TABLE `products` (
   UNIQUE KEY `slug` (`slug`),
   UNIQUE KEY `sku` (`sku`),
   FULLTEXT KEY `ft_product_search` (`name`,`description`,`brand_name`),
-  CONSTRAINT `chk_compare_price` CHECK (`compare_at_price_ghs` is null or `compare_at_price_ghs` > `price_ghs`)
+  CONSTRAINT `chk_compare_price` CHECK ((`currency` = 'GHS' AND (`compare_at_price_ghs` IS NULL OR `compare_at_price_ghs` > `price_ghs`)) OR (`currency` = 'USD' AND (`compare_at_price_usd` IS NULL OR `compare_at_price_usd` > `price_usd`)))
 ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
