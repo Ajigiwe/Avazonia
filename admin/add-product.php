@@ -34,11 +34,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'] ?? '';
     $category_id = $_POST['category_id'] ?? null;
     $brand_id = $_POST['brand_id'] ?? null;
-    $price = $_POST['price'] ?? 0;
-    $compare_price = !empty($_POST['compare_price']) ? $_POST['compare_price'] : null;
-    $price_usd = $_POST['price_usd'] ?? null;
-    $compare_price_usd = !empty($_POST['compare_price_usd']) ? $_POST['compare_price_usd'] : null;
     $currency = $_POST['currency'] ?? 'GHS';
+    $price = ($currency === 'GHS') ? (float)($_POST['price'] ?? 0) : 0;
+    $compare_price = ($currency === 'GHS' && !empty($_POST['compare_price'])) ? (float)$_POST['compare_price'] : null;
+    $price_usd = ($currency === 'USD') ? (float)($_POST['price_usd'] ?? 0) : null;
+    $compare_price_usd = ($currency === 'USD' && !empty($_POST['compare_price_usd'])) ? (float)$_POST['compare_price_usd'] : null;
     $stock = $_POST['stock'] ?? 0;
     $description = $_POST['description'] ?? '';
     $image_url = $_POST['image_url'] ?? '';
