@@ -5361,4 +5361,69 @@ form button[type="submit"]:hover {
     display: flex;
 }
 
+.category-grid-section {
+    padding: 40px 0;
+}
+
+.category-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.cat-tile {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    text-decoration: none;
+    display: block;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cat-tile:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.cat-hero {
+    grid-column: 1 / -1;
+    aspect-ratio: 2.7 / 1;
+}
+
+.cat-label {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    color: #fff;
+    font-family: var(--f-semi);
+    font-weight: 800;
+    font-size: clamp(18px, 2.5vw, 28px);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    line-height: 1.1;
+    pointer-events: none;
+}
+
+@media (max-width: 600px) {
+    .category-grid {
+        gap: 8px;
+    }
+    .cat-hero {
+        aspect-ratio: 2 / 1;
+    }
+    .cat-tile {
+        border-radius: 8px;
+    }
+    .cat-label {
+        top: 12px;
+        left: 12px;
+        font-size: clamp(14px, 4vw, 18px);
+    }
+    .category-grid-section {
+        padding: 24px 0;
+    }
+}
+
 

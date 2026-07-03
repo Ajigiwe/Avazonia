@@ -20,12 +20,20 @@ class Category extends Model {
         return $stmt->fetch();
     }
 
+    public function getGridCategories($limit = 7) {
+        $stmt = $this->db->prepare("SELECT * FROM categories WHERE is_active = 1 ORDER BY sort_order ASC, name ASC LIMIT ?");
+        $stmt->execute([(int)$limit]);
+        return $stmt->fetchAll();
+    }
+
     public function create($data) {
-        $stmt = $this->db->prepare("INSERT INTO categories (name, slug, description, sort_order, is_active, parent_id) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt = $this->db->prepare("INSERT INTO categories (name, slug, icon, description, image_url, sort_order, is_active, parent_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         return $stmt->execute([
             $data['name'],
             $data['slug'],
+            $data['icon'] ?? '📦',
             $data['description'] ?? null,
+            $data['image_url'] ?? null,
             $data['sort_order'] ?? 0,
             $data['is_active'] ?? 1,
             !empty($data['parent_id']) ? (int)$data['parent_id'] : null
@@ -33,11 +41,13 @@ class Category extends Model {
     }
 
     public function update($id, $data) {
-        $stmt = $this->db->prepare("UPDATE categories SET name = ?, slug = ?, description = ?, sort_order = ?, is_active = ?, parent_id = ? WHERE id = ?");
+        $stmt = $this->db->prepare("UPDATE categories SET name = ?, slug = ?, icon = ?, description = ?, image_url = ?, sort_order = ?, is_active = ?, parent_id = ? WHERE id = ?");
         return $stmt->execute([
             $data['name'],
             $data['slug'],
+            $data['icon'] ?? '📦',
             $data['description'] ?? null,
+            $data['image_url'] ?? null,
             $data['sort_order'] ?? 0,
             $data['is_active'] ?? 1,
             !empty($data['parent_id']) ? (int)$data['parent_id'] : null,

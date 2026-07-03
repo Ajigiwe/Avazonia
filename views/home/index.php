@@ -6,6 +6,31 @@ require_once __DIR__ . '/../layout/nav.php';
 
 <?php require_once __DIR__ . '/../layout/hero.php'; ?>
 
+<!-- CATEGORY GRID SECTION -->
+<?php if (!empty($categoryGrid)): ?>
+<section class="category-grid-section">
+    <div class="container">
+        <div class="category-grid">
+            <?php
+            $first = array_shift($categoryGrid);
+            $img = !empty($first['image_url']) ? $first['image_url'] : '';
+            $fallbackBg = 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)';
+            ?>
+            <a href="<?= APP_URL ?>/shop?cat=<?= $first['slug'] ?>" class="cat-tile cat-hero" style="background-image: <?= $img ? 'url(' . htmlspecialchars($img) . ')' : $fallbackBg ?>;">
+                <span class="cat-label"><?= htmlspecialchars($first['name']) ?></span>
+            </a>
+            <?php foreach ($categoryGrid as $cat):
+                $img2 = !empty($cat['image_url']) ? $cat['image_url'] : '';
+            ?>
+                <a href="<?= APP_URL ?>/shop?cat=<?= $cat['slug'] ?>" class="cat-tile" style="background-image: <?= $img2 ? 'url(' . htmlspecialchars($img2) . ')' : $fallbackBg ?>;">
+                    <span class="cat-label"><?= htmlspecialchars($cat['name']) ?></span>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
 <section class="featured">
     <div class="container">
         <div class="sec-head reveal">

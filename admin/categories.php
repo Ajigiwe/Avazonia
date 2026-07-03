@@ -20,10 +20,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
     if ($action === 'create' || $action === 'update') {
+        // Handle image upload
+        $image_url = $_POST['image_url'] ?? '';
+        if (isset($_FILES['category_image']) && $_FILES['category_image']['error'] === UPLOAD_ERR_OK) {
+            $uploadDir = '../public/uploads/categories/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+            $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+            $fileExt = strtolower(pathinfo($_FILES['category_image']['name'], PATHINFO_EXTENSION));
+            if (in_array($fileExt, $allowed)) {
+                $fileName = 'cat_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $fileExt;
+                $targetPath = $uploadDir . $fileName;
+                if (move_uploaded_file($_FILES['category_image']['tmp_name'], $targetPath)) {
+                    $image_url = 'public/uploads/categories/' . $fileName;
+                }
+            }
+        }
+
         $data = [
             'name' => $_POST['name'] ?? '',
             'slug' => $_POST['slug'] ?: strtolower(preg_replace('/[^A-Za-z0-9-]+/', '-', $_POST['name'])),
+            'icon' => $_POST['icon'] ?? '',
             'description' => $_POST['description'] ?? '',
+            'image_url' => $image_url,
             'sort_order' => (int)($_POST['sort_order'] ?? 0),
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
             'parent_id' => !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null
@@ -89,6 +109,7 @@ include 'layout/header.php';
     <table class="admin-table">
         <thead>
             <tr>
+                <th>Image</th>
                 <th>Category Name</th>
                 <th>Slug</th>
                 <th>Products</th>
@@ -100,6 +121,13 @@ include 'layout/header.php';
         <tbody>
             <?php foreach ($categories as $c): ?>
             <tr class="<?= $c['parent_id'] ? 'subcategory-row' : 'parent-category-row' ?>">
+                <td>
+                    <?php if (!empty($c['image_url'])): ?>
+                        <img src="<?= htmlspecialchars($c['image_url']) ?>" alt="" style="width: 52px; height: 52px; object-fit: cover; border-radius: 6px; display: block;">
+                    <?php else: ?>
+                        <span style="display: block; width: 52px; height: 52px; background: #f0f0f0; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px;"><?= htmlspecialchars($c['icon'] ?? '📦') ?></span>
+                    <?php endif; ?>
+                </td>
                 <td style="font-weight: 700; padding-left: <?= $c['parent_id'] ? '32px' : '16px' ?>;">
                     <?= $c['parent_id'] ? '<span style="opacity:0.4; margin-right:8px; font-weight:normal;">└─</span>' : '' ?>
                     <?= htmlspecialchars($c['name']) ?>
@@ -131,7 +159,7 @@ include 'layout/header.php';
 <div id="add-modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: flex-start; justify-content: center; backdrop-filter: blur(4px); overflow-y: auto; padding: 40px 16px;">
     <div style="background: #fff; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 40px; border-radius: 8px; border: 1px solid var(--ink); box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
         <h2 id="modal-title" style="font-family: var(--f-display); font-weight: 900; font-size: 28px; text-transform: uppercase; margin-bottom: 32px; letter-spacing: -0.02em;">New Category</h2>
-        <form method="POST" style="display: flex; flex-direction: column; gap: 24px;">
+        <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 24px;">
             <input type="hidden" name="action" id="form-action" value="create">
             <input type="hidden" name="id" id="form-id" value="">
             
@@ -160,6 +188,14 @@ include 'layout/header.php';
             <div>
                 <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Description (Optional)</label>
                 <textarea name="description" id="form-desc" style="width: 100%; height: 80px; border: 1px solid var(--light-gray); padding: 12px 16px; border-radius: 4px; font-family: var(--f-body); resize: none;"></textarea>
+            </div>
+
+            <div>
+                <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Image</label>
+                <input type="file" name="category_image" accept="image/jpeg,image/png,image/webp" style="width: 100%; padding: 9px; border: 1px solid var(--light-gray); font-family: inherit; font-size: 11px;">
+                <div style="margin-top: 8px;">
+                    <input type="url" name="image_url" id="form-image" placeholder="Or paste image URL..." style="width: 100%; height: 40px; border: 1px solid var(--light-gray); padding: 0 12px; border-radius: 4px; font-family: var(--f-body); font-size: 12px;">
+                </div>
             </div>
 
             <div>
@@ -192,6 +228,7 @@ function toggleModal(id) {
         document.getElementById('form-parent').value = '';
         document.getElementById('form-slug').value = '';
         document.getElementById('form-desc').value = '';
+        document.getElementById('form-image').value = '';
         document.getElementById('form-order').value = '0';
         document.getElementById('form-active').checked = true;
     }
@@ -206,6 +243,7 @@ function editCategory(c) {
     document.getElementById('form-parent').value = c.parent_id || '';
     document.getElementById('form-slug').value = c.slug;
     document.getElementById('form-desc').value = c.description || '';
+    document.getElementById('form-image').value = c.image_url || '';
     document.getElementById('form-order').value = c.sort_order;
     document.getElementById('form-active').checked = c.is_active == 1;
 }

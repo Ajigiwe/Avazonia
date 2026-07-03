@@ -19,6 +19,7 @@ class HomeController extends Controller {
         $bestsellers = $productModel->getBestsellers(8);
         $preorderProducts = $productModel->getPreorderProducts(8);
         $categories = $categoryModel->getAll();
+        $categoryGrid = $categoryModel->getGridCategories(7);
 
         // Fetch products for a few main categories to showcase on homepage
         $categoryShowcase = [];
@@ -45,6 +46,7 @@ class HomeController extends Controller {
             'bestsellers' => $bestsellers,
             'preorders' => $preorderProducts,
             'categories' => $categories,
+            'categoryGrid' => $categoryGrid,
             'categoryShowcase' => $categoryShowcase,
             'wishlistIds' => $wishlistIds,
             'settings' => $popupSettings,
