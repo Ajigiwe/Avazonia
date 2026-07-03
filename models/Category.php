@@ -21,8 +21,9 @@ class Category extends Model {
     }
 
     public function getGridCategories($limit = 7) {
-        $stmt = $this->db->prepare("SELECT * FROM categories WHERE is_active = 1 ORDER BY sort_order ASC, name ASC LIMIT ?");
-        $stmt->execute([(int)$limit]);
+        $stmt = $this->db->prepare("SELECT * FROM categories WHERE is_active = 1 ORDER BY sort_order ASC, name ASC LIMIT :limit");
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll();
     }
 

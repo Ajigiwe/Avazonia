@@ -14,15 +14,21 @@ require_once __DIR__ . '/../layout/nav.php';
             <?php
             $first = array_shift($categoryGrid);
             $img = !empty($first['image_url']) ? $first['image_url'] : '';
+            if ($img && !filter_var($img, FILTER_VALIDATE_URL)) {
+                $img = APP_PATH . '/' . ltrim($img, '/');
+            }
             $fallbackBg = 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)';
             ?>
-            <a href="<?= APP_URL ?>/shop?cat=<?= $first['slug'] ?>" class="cat-tile cat-hero" style="background-image: <?= $img ? 'url(' . htmlspecialchars($img) . ')' : $fallbackBg ?>;">
+            <a href="<?= APP_URL ?>/shop?cat=<?= $first['slug'] ?>" class="cat-tile cat-hero" style="background-image: <?= $img ? 'url(\'' . $img . '\')' : $fallbackBg ?>;">
                 <span class="cat-label"><?= htmlspecialchars($first['name']) ?></span>
             </a>
             <?php foreach ($categoryGrid as $cat):
                 $img2 = !empty($cat['image_url']) ? $cat['image_url'] : '';
+                if ($img2 && !filter_var($img2, FILTER_VALIDATE_URL)) {
+                    $img2 = APP_PATH . '/' . ltrim($img2, '/');
+                }
             ?>
-                <a href="<?= APP_URL ?>/shop?cat=<?= $cat['slug'] ?>" class="cat-tile" style="background-image: <?= $img2 ? 'url(' . htmlspecialchars($img2) . ')' : $fallbackBg ?>;">
+                <a href="<?= APP_URL ?>/shop?cat=<?= $cat['slug'] ?>" class="cat-tile" style="background-image: <?= $img2 ? 'url(\'' . $img2 . '\')' : $fallbackBg ?>;">
                     <span class="cat-label"><?= htmlspecialchars($cat['name']) ?></span>
                 </a>
             <?php endforeach; ?>
