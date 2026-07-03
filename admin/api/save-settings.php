@@ -38,7 +38,7 @@ try {
         'home_popup_desc', 'home_popup_discount', 'home_popup_link', 'home_popup_btn_text', 'home_popup_frequency',
         'instagram_link', 'facebook_link', 'twitter_link', 'youtube_link', 'tiktok_link', 'telegram_link', 'whatsapp_link',
         'meta_description', 'meta_keywords', 'store_map_address',
-        'paystack_public_key', 'paystack_secret_key', 'currency_symbol',
+        'paystack_public_key', 'paystack_secret_key', 'currency_symbol', 'usd_to_ghs_rate',
         'support_title', 'support_subtitle', 'support_phone', 'support_hours',
         'footer_address'
     ];

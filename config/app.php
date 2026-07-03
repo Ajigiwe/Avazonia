@@ -117,6 +117,18 @@ if (!defined('SHIPPING_OTHERS')) define('SHIPPING_OTHERS', $dbSettings['shipping
 if (!defined('SHIPPING_PICKUP')) define('SHIPPING_PICKUP', $dbSettings['shipping_pickup'] ?? 'FREE');
 if (!defined('SHIPPING_FREE_THRESHOLD')) define('SHIPPING_FREE_THRESHOLD', (float)($dbSettings['shipping_free_threshold'] ?? 200.00));
 
+// USD → GHS exchange rate for multi-currency support
+$rawRate = $dbSettings['usd_to_ghs_rate'] ?? (getenv('USD_TO_GHS_RATE') ?: '15.50');
+if (!defined('USD_TO_GHS_RATE')) define('USD_TO_GHS_RATE', (float)$rawRate);
+
+/**
+ * Convert a USD product price to GHS using the configured exchange rate.
+ */
+function convert_usd_to_ghs(?float $priceUsd): float {
+    if (!$priceUsd) return 0;
+    return round($priceUsd * USD_TO_GHS_RATE, 2);
+}
+
 // Mail Settings (Static .env Configuration) - OVERRIDES DATABASE FOR RELIABILITY
 if (!defined('MAIL_MAILER'))     define('MAIL_MAILER',     trim(getenv('MAIL_MAILER'))     ?: 'smtp');
 if (!defined('MAIL_HOST'))       define('MAIL_HOST',       trim(getenv('MAIL_HOST'))       ?: 'localhost');

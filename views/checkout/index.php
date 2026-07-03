@@ -277,7 +277,7 @@ body { background: #f8f8f8; color: #111; font-family: var(--f-body); }
                                         <?php endif; ?>
                                     </div>
                                 </div>
-                                <div class="itm-p">₵<?= number_format($item['price_ghs'] * $item['qty'], 2) ?></div>
+                                <div class="itm-p"><?= ($item['currency'] ?? 'GHS') === 'USD' ? '$' : '₵' ?><?= number_format(($item['currency'] ?? 'GHS') === 'USD' ? (($item['price_usd'] ?? 0) * $item['qty']) : $item['price_ghs'] * $item['qty'], 2) ?></div>
                             </div>
                         <?php endforeach; ?>
                     </div>

@@ -100,7 +100,12 @@ class CheckoutController extends Controller {
                 return $this->json(['success' => false, 'message' => "Product '{$item['name']}' is no longer available."]);
             }
             
-            $realPrice = (float)$dbProduct['price_ghs'];
+            $productCurrency = $dbProduct['currency'] ?? 'GHS';
+            if ($productCurrency === 'USD' && ($dbProduct['price_usd'] ?? 0) > 0) {
+                $realPrice = convert_usd_to_ghs((float)$dbProduct['price_usd']);
+            } else {
+                $realPrice = (float)$dbProduct['price_ghs'];
+            }
             if (!empty($item['variant_id'])) {
                 $variant = $productModel->getVariantById($item['variant_id']);
                 if ($variant && (float)$variant['price_override_ghs'] > 0) {

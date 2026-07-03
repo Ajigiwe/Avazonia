@@ -51,14 +51,20 @@ class CartController extends Controller {
         $key = $productId . '-' . ($variantId ?? '0');
 
         $currency = $product['currency'] ?? 'GHS';
-        $price = (float)$product['price_ghs'];
         $price_usd = $product['price_usd'] ?? null;
         $name = $product['name'];
         $image = $product['primary_image'] ?? '';
 
+        // Convert USD price to GHS for checkout processing
+        if ($currency === 'USD' && $price_usd) {
+            $price = convert_usd_to_ghs((float)$price_usd);
+        } else {
+            $price = (float)$product['price_ghs'];
+        }
+
         if ($variantId) {
             $variant = $productModel->getVariantById($variantId);
-            if ($variant && $variant['product_id'] == $productId) { // ensure it matches the product
+            if ($variant && $variant['product_id'] == $productId) {
                 if ($variant['price_override_ghs']) {
                     $price = (float)$variant['price_override_ghs'];
                 }
@@ -72,7 +78,7 @@ class CartController extends Controller {
                     $image = $variant['image_url'];
                 }
             } else {
-                $variantId = null; // invalid variant
+                $variantId = null;
                 $key = $productId . '-0';
             }
         }
