@@ -118,7 +118,7 @@ if (!defined('SHIPPING_PICKUP')) define('SHIPPING_PICKUP', $dbSettings['shipping
 if (!defined('SHIPPING_FREE_THRESHOLD')) define('SHIPPING_FREE_THRESHOLD', (float)($dbSettings['shipping_free_threshold'] ?? 200.00));
 
 // USD → GHS exchange rate for multi-currency support
-$rawRate = $dbSettings['usd_to_ghs_rate'] ?? (getenv('USD_TO_GHS_RATE') ?: '15.50');
+$rawRate = $dbSettings['usd_to_ghs_rate'] ?? (getenv('USD_TO_GHS_RATE') ?: '11.35');
 if (!defined('USD_TO_GHS_RATE')) define('USD_TO_GHS_RATE', (float)$rawRate);
 
 /**

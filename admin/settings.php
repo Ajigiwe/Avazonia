@@ -451,7 +451,7 @@ include 'layout/header.php';
 
             <div class="field-group" style="margin-top: 24px; border-top: 1px solid var(--light-gray); padding-top: 24px;">
                 <label class="field-label">USD → GHS Exchange Rate</label>
-                <input type="number" step="0.01" id="set-usd_to_ghs_rate" value="<?= getSet('usd_to_ghs_rate', '15.50') ?>" class="field-input">
+                <input type="number" step="0.01" id="set-usd_to_ghs_rate" value="<?= getSet('usd_to_ghs_rate', '11.35') ?>" class="field-input">
                 <span class="field-sub">Used to convert USD product prices to GHS for checkout. Update when the exchange rate changes.</span>
             </div>
         </section>
