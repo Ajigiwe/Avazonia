@@ -122,8 +122,10 @@ include 'layout/header.php';
             <?php foreach ($categories as $c): ?>
             <tr class="<?= $c['parent_id'] ? 'subcategory-row' : 'parent-category-row' ?>">
                 <td>
-                    <?php if (!empty($c['image_url'])): ?>
-                        <img src="<?= htmlspecialchars($c['image_url']) ?>" alt="" style="width: 52px; height: 52px; object-fit: cover; border-radius: 6px; display: block;">
+                    <?php if (!empty($c['image_url'])): 
+                        $imgSrc = filter_var($c['image_url'], FILTER_VALIDATE_URL) ? $c['image_url'] : APP_PATH . '/' . ltrim($c['image_url'], '/');
+                    ?>
+                        <img src="<?= htmlspecialchars($imgSrc) ?>" alt="" style="width: 52px; height: 52px; object-fit: cover; border-radius: 6px; display: block;">
                     <?php else: ?>
                         <span style="display: block; width: 52px; height: 52px; background: #f0f0f0; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px;"><?= htmlspecialchars($c['icon'] ?? '📦') ?></span>
                     <?php endif; ?>
