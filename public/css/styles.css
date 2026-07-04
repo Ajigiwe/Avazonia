@@ -263,6 +263,23 @@ img {
 
 .nav.nav-home {
     background: transparent !important;
+    border-bottom-color: transparent !important;
+}
+.nav.nav-home .nav-link {
+    color: #fff;
+}
+.nav.nav-home .nav-link:hover {
+    color: rgba(255,255,255,.7);
+}
+.nav.nav-home .nav-cart {
+    color: #fff;
+}
+.nav.nav-home .nav-icon-btn,
+.nav.nav-home .mobile-search-toggle {
+    color: #fff;
+}
+.nav.nav-home .nav-cat-trigger .hamburger-mini svg {
+    stroke: #fff;
 }
 
 .nav.nav-scrolled {
