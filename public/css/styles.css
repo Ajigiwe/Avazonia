@@ -245,8 +245,8 @@ img {
     left: 0;
     right: 0;
     z-index: 2000;
-    background: #ffffff;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    background: transparent;
+    border-bottom: 1px solid transparent;
     transition: all .4s cubic-bezier(0.19, 1, 0.22, 1);
     min-height: auto;
     padding: 8px 0;
@@ -262,7 +262,7 @@ img {
 }
 
 .nav.nav-home {
-    background: #ffffff !important;
+    background: transparent !important;
 }
 
 .nav.nav-scrolled {
