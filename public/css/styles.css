@@ -283,8 +283,10 @@ img {
 }
 
 .nav.nav-scrolled {
-    background: rgba(255, 255, 255, .7);
-    border-bottom: 1px solid rgba(0, 0, 0, .05);
+    background: transparent;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, .15);
 }
 
 .nav.nav-scrolled .nav-logo {
