@@ -264,26 +264,38 @@ img {
 }
 
 .nav.nav-home {
-    background: rgba(255, 255, 255, 0.72) !important;
+    position: absolute;
+    background: rgba(0, 0, 0, 0.15) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
     -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-    border-bottom-color: rgba(255, 255, 255, 0.4) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: none !important;
 }
 .nav.nav-home .nav-link {
-    color: var(--mid-gray);
+    color: #fff;
 }
 .nav.nav-home .nav-link:hover {
-    color: var(--ink);
+    color: rgba(255, 255, 255, 0.7);
 }
 .nav.nav-home .nav-cart {
-    color: var(--ink);
+    color: #fff;
 }
 .nav.nav-home .nav-icon-btn,
 .nav.nav-home .mobile-search-toggle {
-    color: var(--ink);
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+.nav.nav-home .nav-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 .nav.nav-home .nav-cat-trigger .hamburger-mini svg {
-    stroke: var(--ink);
+    stroke: #fff;
+}
+.nav.nav-home .nav-cat-link {
+    color: rgba(255, 255, 255, 0.8);
+}
+.nav.nav-home .nav-cat-link:hover {
+    color: #fff;
 }
 
 .nav.nav-scrolled {
