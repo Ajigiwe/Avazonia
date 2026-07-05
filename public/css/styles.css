@@ -239,18 +239,23 @@ img {
 }
 
 /* ── NAV ────────────────────────────────────────────────── */
+@supports not (backdrop-filter: blur(1px)) {
+    .nav { background: rgba(255, 255, 255, 0.92); }
+}
+
 .nav {
     position: sticky;
     top: 0;
     left: 0;
     right: 0;
     z-index: 2000;
-    background: transparent;
-    border-bottom: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     transition: all .4s cubic-bezier(0.19, 1, 0.22, 1);
     min-height: auto;
     padding: 8px 0;
-    /* Tiny bit of padding for 'long' logo breathing room */
     display: flex;
     align-items: center;
 }
@@ -262,8 +267,10 @@ img {
 }
 
 .nav.nav-home {
-    background: transparent !important;
-    border-bottom-color: transparent !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.12) !important;
 }
 .nav.nav-home .nav-link {
     color: #fff;
@@ -282,11 +289,15 @@ img {
     stroke: #fff;
 }
 
+@supports not (backdrop-filter: blur(1px)) {
+    .nav.nav-scrolled { background: rgba(255, 255, 255, 0.95); }
+}
+
 .nav.nav-scrolled {
-    background: transparent;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255, 255, 255, .15);
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .nav.nav-scrolled .nav-logo {
