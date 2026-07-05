@@ -1730,12 +1730,12 @@ h2.hero-heading .outline {
     }
 
     .hero-left {
-        padding: 80px 24px 60px !important;
+        padding: 100px 24px 60px !important;
         flex: 1 !important;
         width: 100% !important;
         align-items: center !important;
         text-align: center !important;
-        justify-content: flex-start !important;
+        justify-content: center !important;
         background: linear-gradient(to top, rgba(13, 13, 13, 0.95), rgba(13, 13, 13, 0.4)) !important;
         z-index: 5 !important;
     }
