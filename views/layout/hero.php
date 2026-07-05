@@ -35,7 +35,7 @@ if (empty($activeSlides)) return;
                     <span class="eyebrow-line"></span>
                 </div>
                 <h1 class="hero-heading"><?= $s['heading'] ?></h1>
-                <p style="font-size: 22px; color: rgba(255,255,255,0.7); max-width: 520px; margin-bottom: 48px; line-height: 1.5; font-weight: 600;">
+                <p style="font-size: 22px; color: #fff; max-width: 520px; margin-bottom: 48px; line-height: 1.5; font-weight: 700;">
                     <?= $s['subheading'] ?>
                 </p>
                 <div style="display: flex; gap: 20px;">
@@ -64,7 +64,7 @@ if (empty($activeSlides)) return;
                     <span class="eyebrow-text" style="color: var(--red);">Premium Highlight</span>
                 </div>
                 <h1 class="hero-heading" style="font-size: clamp(42px, 10vw, 120px);"><?= $s['heading'] ?></h1>
-                <p style="font-size: 24px; color: rgba(255,255,255,0.9); max-width: 740px; margin-bottom: 48px; line-height: 1.5; font-weight: 600;">
+                <p style="font-size: 24px; color: #fff; max-width: 740px; margin-bottom: 48px; line-height: 1.5; font-weight: 700;">
                     <?= $s['subheading'] ?>
                 </p>
                 <a href="<?= APP_URL . $s['cta_link'] ?>" class="btn-red" style="padding: 0 48px; height: 56px;"><?= $s['cta_text'] ?></a>
