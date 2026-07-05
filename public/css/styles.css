@@ -1493,13 +1493,10 @@ img {
     z-index: 10;
     min-height: 100%;
     padding: 120px 80px 100px;
-    /* Added bottom padding */
     display: flex;
     flex-direction: column;
     justify-content: center;
-    /* Center vertically for better balance */
     align-items: flex-start;
-    background: linear-gradient(to right, rgba(13, 13, 13, 0.95) 0%, rgba(13, 13, 13, 0.4) 60%, transparent 100%);
 }
 
 .hero-slide .hero-right {
