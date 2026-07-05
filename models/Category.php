@@ -27,6 +27,26 @@ class Category extends Model {
         return $stmt->fetchAll();
     }
 
+    public function findByIds(array $ids) {
+        if (empty($ids)) return [];
+        $ids = array_map('intval', $ids);
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $this->db->prepare("SELECT * FROM categories WHERE id IN ($placeholders) AND is_active = 1");
+        $stmt->execute(array_values($ids));
+        $rows = $stmt->fetchAll();
+        $byId = [];
+        foreach ($rows as $row) {
+            $byId[(int)$row['id']] = $row;
+        }
+        $ordered = [];
+        foreach ($ids as $id) {
+            if (isset($byId[$id])) {
+                $ordered[] = $byId[$id];
+            }
+        }
+        return $ordered;
+    }
+
     public function create($data) {
         $stmt = $this->db->prepare("INSERT INTO categories (name, slug, icon, description, image_url, sort_order, is_active, parent_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         return $stmt->execute([

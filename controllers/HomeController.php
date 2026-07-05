@@ -19,7 +19,14 @@ class HomeController extends Controller {
         $bestsellers = $productModel->getBestsellers(8);
         $preorderProducts = $productModel->getPreorderProducts(8);
         $categories = $categoryModel->getAll();
-        $categoryGrid = $categoryModel->getGridCategories(7);
+        
+        $settings = $settingsModel->all();
+        $gridIds = !empty($settings['home_mobile_category_grid'])
+            ? array_filter(array_map('intval', explode(',', $settings['home_mobile_category_grid'])))
+            : [];
+        $categoryGrid = !empty($gridIds)
+            ? $categoryModel->findByIds($gridIds)
+            : $categoryModel->getGridCategories(7);
 
         // Fetch products for a few main categories to showcase on homepage
         $categoryShowcase = [];
@@ -38,7 +45,6 @@ class HomeController extends Controller {
         }
 
         $wishlistIds = Session::get('user_id') ? $wishModel->getProductIds(Session::get('user_id')) : [];
-        $popupSettings = $settingsModel->all();
 
         $this->view('home/index', [
             'featured' => $featuredProducts,
@@ -49,17 +55,17 @@ class HomeController extends Controller {
             'categoryGrid' => $categoryGrid,
             'categoryShowcase' => $categoryShowcase,
             'wishlistIds' => $wishlistIds,
-            'settings' => $popupSettings,
+            'settings' => $settings,
             'popup' => [
-                'enabled'   => $popupSettings['home_popup_enabled']   ?? '0',
-                'type'      => $popupSettings['home_popup_type']      ?? 'promo',
-                'title'     => $popupSettings['home_popup_title']     ?? 'SAMSUNG EXPERIENCE',
-                'desc'      => $popupSettings['home_popup_desc']      ?? 'Experience the next generation of gadgets.',
-                'image'     => $popupSettings['home_popup_image']     ?? 'public/assets/img/s25_promo.png',
-                'discount'  => $popupSettings['home_popup_discount']  ?? 'AVAZONIA10',
-                'link'      => $popupSettings['home_popup_link']      ?? '/shop',
-                'btn_text'  => $popupSettings['home_popup_btn_text']  ?? 'Shop Now',
-                'frequency' => (int)($popupSettings['home_popup_frequency'] ?? 3)
+                'enabled'   => $settings['home_popup_enabled']   ?? '0',
+                'type'      => $settings['home_popup_type']      ?? 'promo',
+                'title'     => $settings['home_popup_title']     ?? 'SAMSUNG EXPERIENCE',
+                'desc'      => $settings['home_popup_desc']      ?? 'Experience the next generation of gadgets.',
+                'image'     => $settings['home_popup_image']     ?? 'public/assets/img/s25_promo.png',
+                'discount'  => $settings['home_popup_discount']  ?? 'AVAZONIA10',
+                'link'      => $settings['home_popup_link']      ?? '/shop',
+                'btn_text'  => $settings['home_popup_btn_text']  ?? 'Shop Now',
+                'frequency' => (int)($settings['home_popup_frequency'] ?? 3)
             ]
         ]);
     }

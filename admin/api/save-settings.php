@@ -40,7 +40,8 @@ try {
         'meta_description', 'meta_keywords', 'store_map_address',
         'paystack_public_key', 'paystack_secret_key', 'currency_symbol', 'usd_to_ghs_rate',
         'support_title', 'support_subtitle', 'support_phone', 'support_hours',
-        'footer_address'
+        'footer_address', 'home_deals_title', 'home_deals_eyebrow', 'home_mobile_category_grid',
+        'product_card_slider_enabled'
     ];
 
     foreach ($input as $key => $value) {

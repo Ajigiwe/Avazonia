@@ -3,6 +3,7 @@
 require_once '../config/app.php';
 require_once '../core/Session.php';
 require_once '../models/Settings.php';
+require_once '../models/Category.php';
 
 Session::start();
 if (Session::get('user_role') !== 'admin') {
@@ -303,6 +304,28 @@ include 'layout/header.php';
                 </div>
             </div>
 
+            <!-- CATEGORY GRID SELECTOR (MOBILE) -->
+            <div style="background: var(--off); padding: 32px; border-radius: 12px; margin-top: 24px;">
+                <h3 style="font-size: 13px; text-transform: uppercase; margin-bottom: 8px;">Mobile Category Grid</h3>
+                <p style="font-size: 11px; color: var(--mid-gray); margin-bottom: 20px;">Select which categories appear in the homepage tile grid on mobile devices. The first selected becomes the hero tile.</p>
+                <input type="hidden" id="set-home_mobile_category_grid" value="<?= getSet('home_mobile_category_grid') ?>">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="category-grid-checkboxes">
+                    <?php
+                    $catModel = new Category();
+                    $allCats = $catModel->getAll();
+                    $selectedIds = array_filter(array_map('intval', explode(',', getSet('home_mobile_category_grid'))));
+                    foreach ($allCats as $cat):
+                        $isChecked = in_array((int)$cat['id'], $selectedIds);
+                    ?>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #fff; border-radius: 8px; cursor: pointer; font-size: 12px;">
+                        <input type="checkbox" value="<?= $cat['id'] ?>" <?= $isChecked ? 'checked' : '' ?> 
+                            onchange="updateCategoryGrid()" style="accent-color: var(--red);">
+                        <?= htmlspecialchars($cat['name']) ?>
+                    </label>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
             <!-- POPUP MINI SECTION -->
             <div style="background: var(--off); padding: 32px; border-radius: 12px; margin-top: 24px;">
                 <h3 style="font-size: 13px; text-transform: uppercase; margin-bottom: 24px;">Marketing Popup</h3>
@@ -482,6 +505,12 @@ include 'layout/header.php';
         
         document.getElementById('tab-' + tabId).classList.add('active');
         event.currentTarget.classList.add('active');
+    }
+
+    function updateCategoryGrid() {
+        const checked = document.querySelectorAll('#category-grid-checkboxes input[type="checkbox"]:checked');
+        const ids = Array.from(checked).map(cb => cb.value);
+        document.getElementById('set-home_mobile_category_grid').value = ids.join(',');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
