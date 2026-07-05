@@ -240,7 +240,7 @@ img {
 
 /* ── NAV ────────────────────────────────────────────────── */
 .nav {
-    position: sticky;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
@@ -264,7 +264,7 @@ img {
 }
 
 .nav.nav-home {
-    position: absolute;
+    position: fixed;
     background: rgba(0, 0, 0, 0.15) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
     -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
