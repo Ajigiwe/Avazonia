@@ -16,14 +16,45 @@ require_once __DIR__ . '/../layout/nav.php';
                 </h2>
             </div>
             <div style="font-family: var(--f-semi); font-size: 11px; text-transform: uppercase; color: var(--mid-gray); font-weight: 700; letter-spacing: 0.1em;">
-                Showing <?= count($products) ?> items
+                Showing <?= $pagination['total'] ?> items
             </div>
         </div>
 
         <!-- Product Grid -->
-        <div id="product-grid" class="products-grid">
-            <?php require 'grid.php'; ?>
+        <div class="products-grid">
+            <?php require __DIR__ . '/grid.php'; ?>
         </div>
+
+        <?php if ($pagination['totalPages'] > 1): ?>
+        <div class="shop-pagination">
+            <?php
+            $queryParams = $_GET;
+            unset($queryParams['page']);
+            $baseQuery = http_build_query($queryParams);
+            $baseUrl = APP_URL . '/shop' . ($baseQuery ? '?' . $baseQuery : '');
+            $sep = $baseQuery ? '&' : '?';
+            ?>
+            <?php if ($pagination['hasPrev']): ?>
+                <a href="<?= $baseUrl . $sep . 'page=' . ($pagination['page'] - 1) ?>" class="page-btn">&laquo; Prev</a>
+            <?php endif; ?>
+            
+            <?php
+            $start = max(1, $pagination['page'] - 2);
+            $end = min($pagination['totalPages'], $pagination['page'] + 2);
+            if ($start > 1) echo '<span class="page-dots">...</span>';
+            for ($i = $start; $i <= $end; $i++):
+                $isActive = $i === $pagination['page'];
+            ?>
+                <a href="<?= $baseUrl . $sep . 'page=' . $i ?>" class="page-btn <?= $isActive ? 'active' : '' ?>"><?= $i ?></a>
+            <?php endfor; 
+            if ($end < $pagination['totalPages']) echo '<span class="page-dots">...</span>';
+            ?>
+
+            <?php if ($pagination['hasNext']): ?>
+                <a href="<?= $baseUrl . $sep . 'page=' . ($pagination['page'] + 1) ?>" class="page-btn">Next &raquo;</a>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
     </div>
 </section>
 
