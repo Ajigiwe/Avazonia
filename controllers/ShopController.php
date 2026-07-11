@@ -16,24 +16,24 @@ class ShopController extends Controller {
         $wishlistIds = Session::get('user_id') ? $wishModel->getProductIds(Session::get('user_id')) : [];
 
         if ($catSlug === 'deals-offers') {
-            $products = $productModel->getDiscounted();
+            $products = $productModel->getDiscounted(500);
             $title = "Best Deals & Offers — Avazonia";
         } elseif ($catSlug === 'new-arrivals') {
-            $products = $productModel->getNewArrivals();
+            $products = $productModel->getNewArrivals(500);
             $title = "New Arrivals — Avazonia";
         } elseif ($catSlug === 'top-selling') {
-            $products = $productModel->getTopSelling();
+            $products = $productModel->getTopSelling(500);
             $title = "Top Selling Gadgets — Avazonia";
         } elseif ($catSlug) {
             $category = $categoryModel->findBySlug($catSlug);
-            $products = $productModel->getByCategory($category['id'] ?? 0);
+            $products = $productModel->getByCategory($category['id'] ?? 0, 500);
             $title = ($category['name'] ?? 'Shop') . " — Avazonia";
         } elseif ($search) {
             $catId = $_GET['cat_id'] ?? null;
-            $products = $productModel->search($search, $catId);
+            $products = $productModel->search($search, $catId, 500);
             $title = "Search results for '$search' — Avazonia";
         } else {
-            $products = $productModel->getAll(24);
+            $products = $productModel->getAll(500);
             $title = "All Products — Avazonia";
         }
 
