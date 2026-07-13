@@ -15,7 +15,22 @@ class HomeController extends Controller {
         $settingsModel = new Settings();
 
         $featuredProducts = $productModel->getFeatured();
-        $allProducts = $productModel->getAll(24); // Fetch 24 latest products
+        
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $perPage = 24;
+        $offset = ($page - 1) * $perPage;
+        $allProducts = $productModel->getAll($perPage, $offset);
+        $totalProducts = $productModel->countAll();
+        $totalPages = (int)ceil($totalProducts / $perPage);
+        $pagination = [
+            'page'      => $page,
+            'perPage'   => $perPage,
+            'total'     => $totalProducts,
+            'totalPages' => $totalPages,
+            'hasPrev'   => $page > 1,
+            'hasNext'   => $page < $totalPages,
+        ];
+        
         $bestsellers = $productModel->getBestsellers(8);
         $preorderProducts = $productModel->getPreorderProducts(8);
         $categories = $categoryModel->getAll();
@@ -54,6 +69,7 @@ class HomeController extends Controller {
             'categories' => $categories,
             'categoryGrid' => $categoryGrid,
             'categoryShowcase' => $categoryShowcase,
+            'pagination' => $pagination,
             'wishlistIds' => $wishlistIds,
             'settings' => $settings,
             'popup' => [

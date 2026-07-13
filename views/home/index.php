@@ -64,6 +64,28 @@ require_once __DIR__ . '/../layout/nav.php';
                 <p>No products found.</p>
             <?php endif; ?>
         </div>
+
+        <?php if ($pagination['totalPages'] > 1): ?>
+        <div class="shop-pagination" style="margin-top: 32px;">
+            <?php if ($pagination['hasPrev']): ?>
+                <a href="<?= APP_URL ?>/?page=<?= $pagination['page'] - 1 ?>" class="page-btn">&laquo; Prev</a>
+            <?php endif; ?>
+            <?php
+            $start = max(1, $pagination['page'] - 2);
+            $end = min($pagination['totalPages'], $pagination['page'] + 2);
+            if ($start > 1) echo '<span class="page-dots">...</span>';
+            for ($i = $start; $i <= $end; $i++):
+                $isActive = $i === $pagination['page'];
+            ?>
+                <a href="<?= APP_URL ?>/?page=<?= $i ?>" class="page-btn <?= $isActive ? 'active' : '' ?>"><?= $i ?></a>
+            <?php endfor; 
+            if ($end < $pagination['totalPages']) echo '<span class="page-dots">...</span>';
+            ?>
+            <?php if ($pagination['hasNext']): ?>
+                <a href="<?= APP_URL ?>/?page=<?= $pagination['page'] + 1 ?>" class="page-btn">Next &raquo;</a>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
     </div>
 </section>
 
