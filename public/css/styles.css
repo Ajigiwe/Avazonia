@@ -5496,4 +5496,89 @@ form button[type="submit"]:hover {
     font-family: var(--f-mono);
 }
 
+/* === VIEW TOGGLE (Grid/List) === */
+.view-toggle {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--light-gray);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+}
+.view-btn {
+    width: 36px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    background: #fff;
+    border: none;
+    color: var(--mid-gray);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.view-btn:hover { background: var(--off); color: var(--ink); }
+.view-btn.active { background: var(--ink); color: #fff; }
+.view-btn svg { width: 16px; height: 16px; }
+
+/* List view overrides */
+.products-grid.list-view,
+.product-grid.list-view {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+}
+.list-view .card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    overflow: hidden;
+}
+.list-view .card-img-wrap {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    flex-shrink: 0 !important;
+    aspect-ratio: auto !important;
+}
+.list-view .card-img {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 2px !important;
+    height: 160px !important;
+    min-height: 160px !important;
+    background: #f8f8f8 !important;
+}
+.list-view .slide-img {
+    position: relative !important;
+    opacity: 1 !important;
+    transform: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 160px !important;
+    flex: none !important;
+    min-width: 0 !important;
+    object-fit: cover !important;
+}
+.list-view .slide-img:nth-child(n+4) {
+    display: none !important;
+}
+.list-view .slide-img:only-child {
+    grid-column: 1 / -1 !important;
+}
+.list-view video {
+    display: none !important;
+}
+.list-view .card-body {
+    justify-content: center !important;
+    padding: 10px 14px !important;
+    flex: 1 !important;
+}
+.list-view .card-name {
+    height: auto !important;
+    -webkit-line-clamp: 2 !important;
+}
+@media (max-width: 768px) {
+    .list-view .card-img { height: 140px !important; min-height: 140px !important; }
+    .list-view .slide-img { min-height: 140px !important; }
+    .view-toggle { margin-left: auto; }
+}
+
 

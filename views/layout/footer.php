@@ -316,6 +316,40 @@ async function quickAddToCart(pid, event) {
     }
 }
 
+// Product view toggle (grid/list) — HOME + SHOP
+window.setProductView = function(mode) {
+    document.querySelectorAll('.products-grid, .product-grid').forEach(function(el){
+        el.classList.toggle('list-view', mode === 'list');
+    });
+    document.querySelectorAll('.view-btn').forEach(function(btn){
+        var isActive = btn.id === 'view-' + mode;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+    try { localStorage.setItem('avazonia_product_view', mode); } catch(e) {}
+    try {
+        var url = new URL(window.location.href);
+        url.searchParams.set('view', mode);
+        history.replaceState(null, '', url);
+    } catch(e) {}
+};
+window.initProductView = function() {
+    var urlMode = null;
+    try { urlMode = new URLSearchParams(window.location.search).get('view'); } catch(e) {}
+    var stored = null;
+    try { stored = localStorage.getItem('avazonia_product_view'); } catch(e) {}
+    var mode = (urlMode === 'list' || urlMode === 'grid') ? urlMode : (stored === 'list' ? 'list' : 'grid');
+    window.setProductView(mode);
+};
+document.addEventListener('DOMContentLoaded', window.initProductView);
+// Hook SPA reinit
+(function(){
+    if(window.reinitScripts){
+        var _prev = window.reinitScripts;
+        window.reinitScripts = function(){ try{_prev();}catch(e){} if(window.initProductView) window.initProductView(); };
+    }
+})();
+
 // Auto slider for product cards
 document.addEventListener("DOMContentLoaded", function() {
     document.querySelectorAll('.card-auto-slider').forEach(slider => {
