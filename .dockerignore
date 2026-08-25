@@ -1,0 +1,15 @@
+.git
+.gitignore
+.env
+.env.production.backup
+.env.local
+*.log
+env_debug.log
+paystack_*.log
+backups/
+storage/logs/
+tmp/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

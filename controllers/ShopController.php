@@ -33,6 +33,26 @@ class ShopController extends Controller {
         } elseif ($catSlug) {
             $category = $categoryModel->findBySlug($catSlug);
             $catId = $category['id'] ?? 0;
+
+            // If this category has subcategories, show the subcategory list (Jiji-style)
+            // instead of product grid. Pass ?view=all to force product listing.
+            $forceProducts = isset($_GET['view']) && $_GET['view'] === 'all';
+            if ($category && !$forceProducts) {
+                $children = $categoryModel->getChildrenWithCounts((int)$category['id']);
+                if (!empty($children)) {
+                    $breadcrumbs = $categoryModel->getBreadcrumbs((int)$category['id']);
+                    $totalInSubtree = $categoryModel->countProductsInSubtree((int)$category['id']);
+                    $this->view('shop/category', [
+                        'category' => $category,
+                        'children' => $children,
+                        'breadcrumbs' => $breadcrumbs,
+                        'totalInSubtree' => $totalInSubtree,
+                        'categories' => $categoryModel->getAll(),
+                    ]);
+                    return;
+                }
+            }
+
             $products = $productModel->getByCategory($catId, $perPage, $offset);
             $total = $productModel->countByCategory($catId);
             $title = ($category['name'] ?? 'Shop') . " — Avazonia";

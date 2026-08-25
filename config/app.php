@@ -51,8 +51,8 @@ if (empty($_ENV['APP_URL'])) {
     $_SERVER['APP_URL'] = 'https://www.avazonia.com';
 }
 
-// Log status for troubleshooting
-file_put_contents(__DIR__ . '/../env_debug.log', date('Y-m-d H:i:s') . ": " . $debugMsg, FILE_APPEND);
+// Log status for troubleshooting (suppressed on read-only mounts)
+@file_put_contents(__DIR__ . '/../env_debug.log', date('Y-m-d H:i:s') . ": " . $debugMsg, FILE_APPEND);
 
 // 🟢 DYNAMIC SETTINGS LOADER
 require_once __DIR__ . '/database.php';

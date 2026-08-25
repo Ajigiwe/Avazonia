@@ -195,13 +195,14 @@ class Product extends Model {
     }
 
     public function getRelated($categoryId, $excludeId, $limit = 5) {
+        $randFn = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite' ? 'RANDOM()' : 'RAND()';
         $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
                 FROM products p 
                 LEFT JOIN brands b ON p.brand_id = b.id 
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
                 WHERE (p.category_id = :cat OR p.category_id IN (SELECT id FROM categories WHERE parent_id = :cat)) AND p.id != :exc AND p.is_active = 1 " . $this->getStockSql() . " 
-                ORDER BY RAND() LIMIT :limit";
+                ORDER BY $randFn LIMIT :limit";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':cat', (int)$categoryId, PDO::PARAM_INT);
         $stmt->bindValue(':exc', (int)$excludeId, PDO::PARAM_INT);

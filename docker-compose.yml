@@ -1,0 +1,64 @@
+services:
+  db:
+    image: mariadb:10.4
+    container_name: avazonia-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: avazonia
+      MYSQL_USER: avazonia
+      MYSQL_PASSWORD: avazonia
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized || mysqladmin ping -h 127.0.0.1 -u root -proot --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: avazonia-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      # Keep vendor-ish paths out of sync if you add composer later
+      # - /var/www/html/vendor  (uncomment if you use composer)
+    env_file:
+      - .env
+    environment:
+      # Override DB_HOST for Docker networking (env_file value is overridden here)
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: avazonia
+      DB_USER: avazonia
+      DB_PASS: avazonia
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5.2
+    container_name: avazonia-pma
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+
+volumes:
+  db_data:
+    name: avazonia_db_data

@@ -25,6 +25,11 @@ class Settings extends Model {
      * Set a setting value
      */
     public function set($key, $value) {
+        $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'sqlite') {
+            $stmt = $this->db->prepare("INSERT INTO settings (`key`, `value`) VALUES (?, ?) ON CONFLICT(`key`) DO UPDATE SET `value` = excluded.`value`");
+            return $stmt->execute([$key, $value]);
+        }
         $stmt = $this->db->prepare("INSERT INTO settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = ?");
         return $stmt->execute([$key, $value, $value]);
     }
@@ -33,11 +38,20 @@ class Settings extends Model {
      * Ensure the settings table exists
      */
     public function ensureTable() {
-        $sql = "CREATE TABLE IF NOT EXISTS settings (
-            `key`   VARCHAR(100) PRIMARY KEY,
-            `value` TEXT,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+        $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'sqlite') {
+            $sql = "CREATE TABLE IF NOT EXISTS settings (
+                `key` TEXT PRIMARY KEY,
+                `value` TEXT,
+                updated_at TEXT DEFAULT (datetime('now'))
+            )";
+        } else {
+            $sql = "CREATE TABLE IF NOT EXISTS settings (
+                `key`   VARCHAR(100) PRIMARY KEY,
+                `value` TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+        }
         $this->db->exec($sql);
     }
 }

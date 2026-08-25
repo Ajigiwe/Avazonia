@@ -61,6 +61,9 @@ $router->add('POST', '/forgot-password',       'AccountController@forgotPassword
 $router->add('GET', '/reset-password',         'AccountController@resetPassword');
 $router->add('POST', '/reset-password',        'AccountController@resetPassword');
 
+// Health check (no auth, for Docker & local)
+$router->add('GET', '/health', 'HealthController@index');
+
 $uri = $_SERVER['REQUEST_URI'];
 $method = $_SERVER['REQUEST_METHOD'];
 

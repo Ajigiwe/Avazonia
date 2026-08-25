@@ -2,9 +2,12 @@
 .env
 .env.local
 .env.*.local
+.env.production.backup
 *.log
 paystack_debug.log
 paystack_refunds.log
+storage/logs/*
+!storage/logs/.gitignore
 
 # Temporary / Scratch files
 tmp/

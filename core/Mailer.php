@@ -24,9 +24,17 @@ class Mailer {
      * @throws Exception    on failure (check MAIL_DEBUG in .env)
      */
     public static function send(string $toEmail, string $toName, string $subject, string $htmlBody, string $textBody = ''): bool {
-        $mail = new PHPMailer(true); // true = throw exceptions
-
         $mailerType = defined('MAIL_MAILER') ? MAIL_MAILER : 'smtp';
+
+        // Local dev: "log" mailer — never hits network, just writes to log
+        if ($mailerType === 'log' || $mailerType === 'array' || $mailerType === 'null') {
+            $logLine = sprintf("[%s] MAIL to=%s name=%s subject=%s\n", date('Y-m-d H:i:s'), $toEmail, $toName, $subject);
+            @file_put_contents(__DIR__ . '/../storage/logs/mail.log', $logLine, FILE_APPEND);
+            error_log("[Mailer:log] to=$toEmail subject=$subject");
+            return true;
+        }
+
+        $mail = new PHPMailer(true); // true = throw exceptions
 
         if ($mailerType === 'mailersend') {
             return self::sendViaMailersend($toEmail, $toName, $subject, $htmlBody);

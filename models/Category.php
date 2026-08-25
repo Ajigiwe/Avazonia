@@ -80,4 +80,58 @@ class Category extends Model {
         $stmt = $this->db->prepare("DELETE FROM categories WHERE id = ?");
         return $stmt->execute([$id]);
     }
+
+    public function getChildren(int $parentId): array {
+        $stmt = $this->db->prepare("SELECT * FROM categories WHERE parent_id = ? AND is_active = 1 ORDER BY sort_order ASC, name ASC");
+        $stmt->execute([$parentId]);
+        return $stmt->fetchAll();
+    }
+
+    public function hasChildren(int $parentId): bool {
+        $stmt = $this->db->prepare("SELECT 1 FROM categories WHERE parent_id = ? AND is_active = 1 LIMIT 1");
+        $stmt->execute([$parentId]);
+        return (bool)$stmt->fetch();
+    }
+
+    public function getChildrenWithCounts(int $parentId): array {
+        $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        // Aggregated count: products directly in child OR in its own children (grandchildren)
+        // Works for both MySQL and SQLite (no MySQL-only functions)
+        $sql = "SELECT c.*, 
+                       (SELECT COUNT(*) FROM products p 
+                        WHERE p.is_active = 1 
+                          AND (p.category_id = c.id 
+                               OR p.category_id IN (SELECT id FROM categories WHERE parent_id = c.id))
+                       ) AS product_count
+                FROM categories c
+                WHERE c.parent_id = :pid AND c.is_active = 1
+                ORDER BY c.sort_order ASC, c.name ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':pid', $parentId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function getBreadcrumbs(int $categoryId): array {
+        $crumbs = [];
+        $current = $this->findById($categoryId);
+        while ($current) {
+            array_unshift($crumbs, $current);
+            if (empty($current['parent_id'])) break;
+            $current = $this->findById((int)$current['parent_id']);
+        }
+        return $crumbs;
+    }
+
+    public function countProductsInSubtree(int $categoryId): int {
+        $sql = "SELECT COUNT(*) FROM products p 
+                WHERE p.is_active = 1 
+                  AND (p.category_id = :cat 
+                       OR p.category_id IN (SELECT id FROM categories WHERE parent_id = :cat)
+                       OR p.category_id IN (SELECT id FROM categories WHERE parent_id IN (SELECT id FROM categories WHERE parent_id = :cat)))";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':cat', $categoryId, PDO::PARAM_INT);
+        $stmt->execute();
+        return (int)$stmt->fetchColumn();
+    }
 }
