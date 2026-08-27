@@ -76,7 +76,7 @@
             <a href="<?= APP_URL ?>/seller/orders/<?= (int)$o['id'] ?>" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--light-gray);text-decoration:none;color:var(--ink);">
                 <div style="flex:1;min-width:0;">
                     <div style="font-weight:700;font-size:12px;"><?= htmlspecialchars($o['order_ref']) ?></div>
-                    <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);"><?= htmlspecialchars($o['customer_name']) ?> &middot; <?= count(explode(',',$o['seller_item_count']>$o['seller_item_count']?$o['seller_item_count']:'1')) ?> items</div>
+                    <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);"><?= htmlspecialchars($o['customer_name']) ?> &middot; <?= (int)($o['seller_item_count']??1) ?> items</div>
                 </div>
                 <div style="text-align:right;">
                     <div style="font-weight:800;font-size:12px;">&#8373;<?= number_format($o['seller_subtotal'],2) ?></div>

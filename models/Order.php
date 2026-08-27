@@ -6,7 +6,7 @@ require_once __DIR__ . '/Logger.php';
 class Order extends Model {
     public function __construct() {
         parent::__construct();
-        // $this->ensureSchema(); // Can be called here or manually
+        $this->ensureSchema();
     }
 
     /**
@@ -263,14 +263,13 @@ class Order extends Model {
     }
 
     public function getSellerOrders(int $sellerId, int $limit=50, int $offset=0): array {
-        $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
-        $dateExpr = $driver==='sqlite' ? "o.created_at" : "DATE_FORMAT(o.created_at, '%d %b %Y %H:%i')";
-        $sql = "SELECT DISTINCT o.*, 
-                SUM(oi.qty) as seller_item_count,
-                SUM(oi.unit_price_ghs * oi.qty) as seller_subtotal
+        $sql = "SELECT o.id,o.order_ref,o.customer_name,o.customer_email,o.status,o.created_at,
+                o.total_ghs,o.payment_method,
+                COUNT(oi.id) as seller_item_count,
+                COALESCE(SUM(oi.unit_price_ghs * oi.qty),0) as seller_subtotal
                 FROM orders o
                 JOIN order_items oi ON oi.order_id=o.id AND oi.seller_id=?
-                GROUP BY o.id
+                GROUP BY o.id,o.order_ref,o.customer_name,o.customer_email,o.status,o.created_at,o.total_ghs,o.payment_method
                 ORDER BY o.created_at DESC
                 LIMIT ? OFFSET ?";
         $stmt=$this->db->prepare($sql);
@@ -299,8 +298,13 @@ class Order extends Model {
     }
 
     public function getSellerEarnings(int $sellerId): array {
-        $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
-        if ($driver==='sqlite') {
+        $hasSellerStatus = false;
+        try {
+            $this->db->query("SELECT seller_order_status FROM order_items LIMIT 0");
+            $hasSellerStatus = true;
+        } catch (Exception $e) {}
+
+        if ($hasSellerStatus) {
             $sql = "SELECT 
                     COALESCE(SUM(oi.unit_price_ghs * oi.qty), 0) as gross_sales,
                     COALESCE(SUM(CASE WHEN oi.seller_order_status IN ('delivered') THEN oi.unit_price_ghs * oi.qty ELSE 0 END), 0) as earned,
@@ -311,8 +315,8 @@ class Order extends Model {
         } else {
             $sql = "SELECT 
                     COALESCE(SUM(oi.unit_price_ghs * oi.qty), 0) as gross_sales,
-                    COALESCE(SUM(CASE WHEN oi.seller_order_status IN ('delivered') THEN oi.unit_price_ghs * oi.qty ELSE 0 END), 0) as earned,
-                    COALESCE(SUM(CASE WHEN oi.seller_order_status IN ('pending','processing','shipped') THEN oi.unit_price_ghs * oi.qty ELSE 0 END), 0) as pending_payout
+                    0 as earned,
+                    COALESCE(SUM(oi.unit_price_ghs * oi.qty), 0) as pending_payout
                     FROM order_items oi
                     JOIN orders o ON oi.order_id=o.id
                     WHERE oi.seller_id=? AND o.status NOT IN ('cancelled','refunded','failed')";
@@ -328,8 +332,15 @@ class Order extends Model {
     }
 
     public function getSellerEarningsHistory(int $sellerId, int $limit=50): array {
+        $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $hasSellerStatus = false;
+        try {
+            $this->db->query("SELECT seller_order_status FROM order_items LIMIT 0");
+            $hasSellerStatus = true;
+        } catch (Exception $e) {}
+        $sosExpr = $hasSellerStatus ? 'oi.seller_order_status' : "'pending' as seller_order_status";
         $sql = "SELECT o.id as order_id, o.order_ref, o.created_at as order_date, o.status as order_status,
-                oi.product_name, oi.qty, oi.unit_price_ghs, oi.seller_order_status,
+                oi.product_name, oi.qty, oi.unit_price_ghs, $sosExpr,
                 (oi.unit_price_ghs * oi.qty) as line_total
                 FROM order_items oi
                 JOIN orders o ON oi.order_id=o.id
