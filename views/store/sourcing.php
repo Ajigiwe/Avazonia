@@ -10,7 +10,7 @@ require_once __DIR__ . '/../layout/nav.php';
     <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
       <a href="<?= APP_URL ?>/shop?listing_type=wholesale" style="background:var(--red);color:#fff;padding:12px 18px;font-weight:800;text-transform:uppercase;text-decoration:none;">Browse Wholesale</a>
       <a href="<?= APP_URL ?>/shop?listing_type=export" style="background:#fff;color:var(--ink);padding:12px 18px;font-weight:800;text-transform:uppercase;text-decoration:none;">Export Vehicles</a>
-      <a href="<?= APP_URL ?>/seller/apply" style="border:2px solid #fff;color:#fff;padding:10px 18px;font-weight:800;text-transform:uppercase;text-decoration:none;">Become a Supplier</a>
+      <a href="<?= $is_seller ? APP_URL.'/seller/dashboard' : APP_URL.'/seller/apply' ?>" style="border:2px solid #fff;color:#fff;padding:10px 18px;font-weight:800;text-transform:uppercase;text-decoration:none;"><?= $is_seller ? 'Your Dashboard' : 'Become a Supplier' ?></a>
     </div>
   </div>
 

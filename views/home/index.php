@@ -15,7 +15,7 @@ require_once __DIR__ . '/../layout/nav.php';
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <a href="<?= APP_URL ?>/shop" style="background:var(--red);color:#fff;padding:10px 16px;font-family:var(--f-semi);font-weight:800;font-size:11px;text-transform:uppercase;text-decoration:none;">🛒 Buy</a>
-      <a href="<?= APP_URL ?>/seller/apply" style="background:#fff;color:var(--ink);padding:10px 16px;font-family:var(--f-semi);font-weight:800;font-size:11px;text-transform:uppercase;text-decoration:none;">🏪 Sell</a>
+      <a href="<?= $is_seller ? APP_URL.'/seller/dashboard' : APP_URL.'/seller/apply' ?>" style="background:#fff;color:var(--ink);padding:10px 16px;font-family:var(--f-semi);font-weight:800;font-size:11px;text-transform:uppercase;text-decoration:none;">🏪 <?= $is_seller ? 'Dashboard' : 'Sell' ?></a>
       <a href="<?= APP_URL ?>/sourcing" style="border:2px solid #fff;color:#fff;padding:8px 14px;font-family:var(--f-semi);font-weight:800;font-size:11px;text-transform:uppercase;text-decoration:none;">🌍 Source</a>
     </div>
   </div>

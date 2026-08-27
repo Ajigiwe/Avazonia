@@ -28,7 +28,15 @@ class AccountController extends Controller {
                 if ($user['role'] === 'admin') {
                     $this->redirect(APP_URL . '/admin');
                 } else {
-                    $this->redirect(APP_URL);
+                    // Check if user is a seller → redirect to seller dashboard
+                    require_once __DIR__ . '/../models/Seller.php';
+                    $sellerCheck = new Seller();
+                    $sellerProfile = $sellerCheck->findByUserId((int)$user['id']);
+                    if ($sellerProfile) {
+                        $this->redirect(APP_URL . '/seller/dashboard');
+                    } else {
+                        $this->redirect(APP_URL);
+                    }
                 }
             } else {
                 $error = "Invalid email or password.";
