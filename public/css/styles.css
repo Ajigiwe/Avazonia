@@ -5540,31 +5540,37 @@ form button[type="submit"]:hover {
         width: 100% !important;
     }
     .list-view .card-img-wrap {
-        flex: 0 0 280px !important;
-        width: 280px !important;
-        min-width: 280px !important;
-        max-width: 280px !important;
-        aspect-ratio: 1 / 1 !important;
+        flex: 0 0 420px !important;
+        width: 420px !important;
+        min-width: 420px !important;
+        max-width: 420px !important;
+        aspect-ratio: auto !important;
         align-self: stretch !important;
+        display: flex !important;
     }
     .list-view .card-img {
-        display: block !important;
-        height: 100% !important;
-        min-height: 100% !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr 1fr !important;
+        gap: 2px !important;
+        width: 100% !important;
+        height: 220px !important;
+        min-height: 220px !important;
+        background: #f8f8f8 !important;
+        align-self: stretch !important;
     }
     .list-view .slide-img {
-        position: absolute !important;
-        inset: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: cover !important;
-    }
-    .list-view .slide-img:first-child {
         position: relative !important;
         opacity: 1 !important;
         transform: none !important;
+        inset: auto !important;
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 220px !important;
+        object-fit: cover !important;
+        display: block !important;
     }
-    .list-view .slide-img:not(:first-child) { display: none !important; }
+    .list-view .slide-img:nth-child(n+4) { display: none !important; }
+    .list-view .slide-img:only-child { grid-column: 1 / -1 !important; }
     .list-view video { display: none !important; }
     .list-view .card-body {
         flex: 1 !important;
