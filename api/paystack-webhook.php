@@ -7,9 +7,9 @@
  * and automatically updates the order status in the database.
  */
 
-require_once '../config/app.php';
-require_once '../config/paystack.php';
-require_once '../models/Order.php';
+require_once __DIR__ . '/../config/app.php';
+require_once __DIR__ . '/../config/paystack.php';
+require_once __DIR__ . '/../models/Order.php';
 
 // 1. SECURITY: Verify X-Paystack-Signature
 $input = file_get_contents('php://input');

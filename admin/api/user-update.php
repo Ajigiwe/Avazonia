@@ -1,8 +1,8 @@
 <?php
 // admin/api/user-update.php
-require_once '../../config/app.php';
-require_once '../../config/database.php';
-require_once '../../core/Session.php';
+require_once __DIR__ . '/../../config/app.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../core/Session.php';
 
 Session::start();
 
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$user['email'], $token, $expiresAt]);
 
                 // Send Email
-                require_once '../../core/Mailer.php';
+                require_once __DIR__ . '/../../core/Mailer.php';
                 $resetUrl = APP_URL . '/reset-password?token=' . $token;
                 Mailer::sendTemplate(
                     $user['email'], $user['full_name'],

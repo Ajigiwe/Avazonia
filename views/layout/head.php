@@ -43,8 +43,11 @@
         :root {
             --red: <?= PRIMARY_COLOR ?>;
             --red-deep: <?= PRIMARY_COLOR ?>; /* Simple fallback for deep red */
-            --nav-offset: 0px;
+            --nav-offset: 72px;
         }
+        /* Global nav offset — prevents fixed nav from covering page content on every page */
+        #page-wrapper { padding-top: var(--nav-offset); }
+        @media (max-width: 768px) { :root { --nav-offset: 64px; } }
         @media (min-width: 1024px) {
             .nav-cat-rail { display: flex; }
         }

@@ -6,6 +6,7 @@ require_once __DIR__ . '/../models/Category.php';
 
 require_once __DIR__ . '/../models/Wishlist.php';
 require_once __DIR__ . '/../models/Settings.php';
+require_once __DIR__ . '/../models/Store.php';
 
 class HomeController extends Controller {
     public function index() {
@@ -60,6 +61,12 @@ class HomeController extends Controller {
         }
 
         $wishlistIds = Session::get('user_id') ? $wishModel->getProductIds(Session::get('user_id')) : [];
+        // Marketplace blocks
+        $storeModel=new Store();
+        $wholesaleDeals=$productModel->getWholesaleDeals(8);
+        $exportCars=$productModel->getExportListings(4);
+        $featuredBusinesses=$storeModel->getByType('business_retailer',4);
+        $intlSuppliers=$storeModel->getByType('international_supplier',4);
 
         $this->view('home/index', [
             'featured' => $featuredProducts,
@@ -71,6 +78,10 @@ class HomeController extends Controller {
             'categoryShowcase' => $categoryShowcase,
             'pagination' => $pagination,
             'wishlistIds' => $wishlistIds,
+            'wholesaleDeals' => $wholesaleDeals,
+            'exportCars' => $exportCars,
+            'featuredBusinesses' => $featuredBusinesses,
+            'intlSuppliers' => $intlSuppliers,
             'settings' => $settings,
             'popup' => [
                 'enabled'   => $settings['home_popup_enabled']   ?? '0',

@@ -133,6 +133,8 @@ class CheckoutController extends Controller {
 
             $processed_items[] = [
                 'product_id' => $item['product_id'],
+                'seller_id' => $dbProduct['seller_id'] ?? null,
+                'store_id' => $dbProduct['store_id'] ?? null,
                 'product_name' => $dbProduct['name'],
                 'qty' => (int)$item['qty'],
                 'unit_price_ghs' => $realPrice,

@@ -1,8 +1,8 @@
 <?php
 // admin/newsletter.php
-require_once '../config/app.php';
-require_once '../core/Session.php';
-require_once '../models/Newsletter.php';
+require_once __DIR__ . '/../config/app.php';
+require_once __DIR__ . '/../core/Session.php';
+require_once __DIR__ . '/../models/Newsletter.php';
 
 Session::start();
 if (Session::get('user_role') !== 'admin') {

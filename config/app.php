@@ -128,6 +128,30 @@ function convert_usd_to_ghs(?float $priceUsd): float {
     if (!$priceUsd) return 0;
     return round($priceUsd * USD_TO_GHS_RATE, 2);
 }
+function verification_badge(?array $sellerOrProduct): string {
+    if (!$sellerOrProduct) return '';
+    $level=$sellerOrProduct['verification_level'] ?? 'unverified';
+    $map=[
+        'unverified'=>['Phone Verified','background:#f3f4f6;color:#6b7280'],
+        'phone_verified'=>['Phone Verified','background:#e0f2fe;color:#0284c7'],
+        'business_verified'=>['✓ Verified Business','background:#dbeafe;color:#1d4ed8'],
+        'company_verified'=>['✓ Verified Supplier','background:#fef3c7;color:#92400e'],
+        'avazonia_verified'=>['★ Avazonia Verified','background:#dcfce7;color:#166534'],
+    ];
+    $info=$map[$level] ?? $map['unverified'];
+    return '<span style="font-family:var(--f-mono);font-size:9px;letter-spacing:.06em;padding:4px 8px;border-radius:999px;'.$info[1].'">'.$info[0].'</span>';
+}
+function listing_type_badge(array $product): string {
+    $type=$product['listing_type'] ?? 'retail';
+    $map=['retail'=>'Retail','wholesale'=>'Wholesale','rfq'=>'RFQ','export'=>'Export'];
+    $colors=['retail'=>'#f3f4f6','wholesale'=>'#fef3c7','rfq'=>'#ede9fe','export'=>'#dbeafe'];
+    $label=$map[$type] ?? 'Retail';
+    $bg=$colors[$type] ?? '#f3f4f6';
+    $extra='';
+    if ($type==='wholesale' && !empty($product['moq'])) $extra=' · MOQ '.$product['moq'];
+    if ($type==='export' && !empty($product['incoterms'])) $extra=' · '.$product['incoterms'];
+    return '<span style="font-family:var(--f-mono);font-size:9px;background:'.$bg.';padding:4px 8px;border-radius:999px;">'.$label.$extra.'</span>';
+}
 
 // Mail Settings (Static .env Configuration) - OVERRIDES DATABASE FOR RELIABILITY
 if (!defined('MAIL_MAILER'))     define('MAIL_MAILER',     trim(getenv('MAIL_MAILER'))     ?: 'smtp');

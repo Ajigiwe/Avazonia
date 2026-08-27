@@ -6,6 +6,21 @@ require_once __DIR__ . '/../layout/nav.php';
 
 <?php require_once __DIR__ . '/../layout/hero.php'; ?>
 
+<!-- AVAZONIA MARKETPLACE HERO BAND -->
+<section style="background:var(--ink);color:#fff;padding:18px 0;">
+  <div class="container" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;opacity:.7;">AVAZONIA — AFRICA'S MULTI-VENDOR MARKETPLACE</div>
+      <div style="font-family:var(--f-display);font-weight:900;font-size:18px;letter-spacing:-.02em;">Buy. Sell. Source. Trade.</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <a href="<?= APP_URL ?>/shop" style="background:var(--red);color:#fff;padding:10px 16px;font-family:var(--f-semi);font-weight:800;font-size:11px;text-transform:uppercase;text-decoration:none;">🛒 Buy</a>
+      <a href="<?= APP_URL ?>/seller/apply" style="background:#fff;color:var(--ink);padding:10px 16px;font-family:var(--f-semi);font-weight:800;font-size:11px;text-transform:uppercase;text-decoration:none;">🏪 Sell</a>
+      <a href="<?= APP_URL ?>/sourcing" style="border:2px solid #fff;color:#fff;padding:8px 14px;font-family:var(--f-semi);font-weight:800;font-size:11px;text-transform:uppercase;text-decoration:none;">🌍 Source</a>
+    </div>
+  </div>
+</section>
+
 <!-- CATEGORY GRID SECTION -->
 <?php if (!empty($categoryGrid)): ?>
 <section class="category-grid-section">
@@ -161,7 +176,77 @@ require_once __DIR__ . '/../layout/nav.php';
     </div>
 </section>
 
-<!-- CATEGORY SHOWCASE SECTIONS -->
+ <!-- MARKETPLACE: Wholesale + Intl Suppliers + Featured Businesses -->
+<?php if (!empty($wholesaleDeals)): ?>
+<section class="products-sec" style="background:var(--off);border-top:2px solid var(--ink);border-bottom:1px solid var(--light-gray);padding:40px 0;">
+  <div class="container">
+    <div class="sec-head reveal">
+      <div class="sec-title-box"><div class="sec-over" style="color:var(--red);font-size:10px;font-weight:800;letter-spacing:.15em;margin-bottom:8px;">B2B · WHOLESALE</div><h2 class="hero-heading" style="color:var(--ink);margin-bottom:0;line-height:.9;">Wholesale Deals</h2></div>
+      <a href="<?= APP_URL ?>/sourcing" style="font-family:var(--f-semi);font-size:12px;text-transform:uppercase;color:var(--mid-gray);font-weight:700;text-decoration:none;border-bottom:1px solid var(--light-gray);padding-bottom:4px;">Go to Sourcing →</a>
+    </div>
+    <div class="product-grid">
+      <?php foreach($wholesaleDeals as $p): ?><?php require __DIR__ . '/../components/product-card.php'; ?><?php endforeach; ?>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
+<?php if (!empty($featuredBusinesses) || !empty($intlSuppliers)): ?>
+<section style="padding:28px 0 32px;border-top:1px solid var(--light-gray);background:#fff;">
+  <div class="container">
+    <?php if (!empty($featuredBusinesses)): ?>
+    <div style="margin-bottom:28px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="width:20px;height:2px;background:var(--red);display:inline-block;"></span><span style="font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;color:var(--red);font-weight:800;text-transform:uppercase;">Featured Businesses</span></div>
+      <div style="position:relative;">
+        <div id="featured-biz-slider" style="overflow-x:auto;scroll-snap-type:x mandatory;display:flex;gap:12px;padding-bottom:4px;scrollbar-width:none;-ms-overflow-style:none;scroll-behavior:smooth;">
+          <style>#featured-biz-slider::-webkit-scrollbar{display:none;}</style>
+          <?php foreach($featuredBusinesses as $st): ?>
+            <a href="<?= APP_URL ?>/store/<?= htmlspecialchars($st['slug']) ?>" style="flex:0 0 300px;scroll-snap-align:start;display:flex;align-items:center;gap:10px;padding:12px 14px;text-decoration:none;color:var(--ink);background:var(--paper);border:1.5px solid var(--ink);border-radius:8px;white-space:nowrap;">
+              <span style="width:32px;height:32px;flex-shrink:0;background:var(--off);border:1px solid var(--light-gray);display:flex;align-items:center;justify-content:center;font-size:16px;border-radius:6px;">🏪</span>
+              <span style="min-width:0;flex:1;">
+                <span style="font-family:var(--f-semi);font-size:12px;font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= htmlspecialchars(mb_strimwidth($st['name'],0,18,'…')) ?></span>
+                <span style="font-family:var(--f-mono);font-size:8px;letter-spacing:.06em;color:var(--mid-gray);text-transform:uppercase;">GH · Business</span>
+              </span>
+              <span style="display:flex;align-items:center;gap:6px;flex-shrink:0;"><span style="transform:scale(0.85);transform-origin:center;"><?= verification_badge($st) ?></span><span style="color:var(--mid-gray);">→</span></span>
+            </a>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    </div>
+    <?php endif; ?>
+    <?php if (!empty($intlSuppliers)): ?>
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="width:20px;height:2px;background:var(--red);display:inline-block;"></span><span style="font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;color:var(--red);font-weight:800;text-transform:uppercase;">International Suppliers</span></div>
+      <div style="position:relative;">
+        <div id="intl-supplier-slider" style="overflow-x:auto;scroll-snap-type:x mandatory;display:flex;gap:12px;padding-bottom:4px;scrollbar-width:none;-ms-overflow-style:none;scroll-behavior:smooth;">
+          <style>#intl-supplier-slider::-webkit-scrollbar{display:none;}</style>
+          <?php foreach($intlSuppliers as $st): ?>
+            <a href="<?= APP_URL ?>/store/<?= htmlspecialchars($st['slug']) ?>" style="flex:0 0 300px;scroll-snap-align:start;display:flex;align-items:center;gap:10px;padding:12px 14px;text-decoration:none;color:var(--ink);background:var(--paper);border:1.5px solid var(--ink);border-radius:8px;white-space:nowrap;">
+              <span style="width:32px;height:32px;flex-shrink:0;background:var(--off);border:1px solid var(--light-gray);display:flex;align-items:center;justify-content:center;font-size:16px;border-radius:6px;">🌍</span>
+              <span style="min-width:0;flex:1;">
+                <span style="font-family:var(--f-semi);font-size:12px;font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= htmlspecialchars(mb_strimwidth($st['name'],0,18,'…')) ?></span>
+                <span style="font-family:var(--f-mono);font-size:8px;letter-spacing:.06em;color:var(--mid-gray);text-transform:uppercase;">CN · Export</span>
+              </span>
+              <span style="display:flex;align-items:center;gap:6px;flex-shrink:0;"><span style="transform:scale(0.85);transform-origin:center;"><?= verification_badge($st) ?></span><span style="color:var(--mid-gray);">→</span></span>
+            </a>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    </div>
+    <?php endif; ?>
+    <?php if (!empty($exportCars)): ?>
+    <div style="margin-top:18px;">
+      <div style="font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;color:var(--mid-gray);">INTERNATIONAL VEHICLE SOURCING — FOB / CIF</div>
+      <div class="product-grid" style="margin-top:10px;">
+        <?php foreach($exportCars as $p): ?><?php require __DIR__ . '/../components/product-card.php'; ?><?php endforeach; ?>
+      </div>
+    </div>
+    <?php endif; ?>
+  </div>
+</section>
+<?php endif; ?>
+
+ <!-- CATEGORY SHOWCASE SECTIONS -->
 <?php if (!empty($categoryShowcase)): ?>
     <?php foreach ($categoryShowcase as $showcase): ?>
         <section class="products-sec" style="border-top: 1px solid var(--border-color); padding: 60px 0;">

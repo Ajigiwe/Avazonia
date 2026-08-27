@@ -1,9 +1,9 @@
 <?php
 // admin/products.php
-require_once '../config/app.php';
-require_once '../config/database.php';
-require_once '../core/Session.php';
-require_once '../models/Product.php';
+require_once __DIR__ . '/../config/app.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../core/Session.php';
+require_once __DIR__ . '/../models/Product.php';
 
 Session::start();
 if (Session::get('user_role') !== 'admin') {
@@ -26,19 +26,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
         $error = $result['message'];
     }
 }
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'moderate_product') {
+    $pid=(int)($_POST['product_id']??0); $act=$_POST['moderate']??'';
+    if ($pid && in_array($act,['active','rejected','draft'])) {
+        $db->prepare("UPDATE products SET status_market=? WHERE id=?")->execute([$act,$pid]);
+        $success="Product #$pid → ".strtoupper($act);
+    }
+}
 
 $products = $db->query("
     SELECT
         p.*,
         b.name as brand_name,
         c.name as cat_name,
+        s.business_name as seller_name,
+        st.name as store_name,
         COUNT(oi.id) as order_count
     FROM products p
     LEFT JOIN brands b ON p.brand_id = b.id
     LEFT JOIN categories c ON p.category_id = c.id
+    LEFT JOIN sellers s ON p.seller_id=s.id
+    LEFT JOIN stores st ON p.store_id=st.id
     LEFT JOIN order_items oi ON oi.product_id = p.id
     GROUP BY p.id
-    ORDER BY p.created_at DESC
+    ORDER BY p.status_market='pending_review' DESC, p.created_at DESC
 ")->fetchAll();
 
 $title = "Manage Products";
@@ -69,10 +80,11 @@ include 'layout/header.php';
             <thead>
                 <tr>
                     <th>Product</th>
-                    <th>Brand & Category</th>
+                    <th>Brand & Category · Seller</th>
                     <th>Price</th>
                     <th>Stock</th>
                     <th>Status</th>
+                    <th>Moderation</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -89,6 +101,7 @@ include 'layout/header.php';
                     <td>
                         <div style="font-size: 11px; font-weight: 700; color: var(--red); text-transform: uppercase;"><?= $p['brand_name'] ?></div>
                         <div style="font-size: 11px; color: var(--mid-gray);"><?= $p['cat_name'] ?></div>
+                        <div style="font-size: 10px; color: var(--mid-gray); font-family: var(--f-mono);"><?= htmlspecialchars($p['seller_name'] ?? 'Avazonia Official') ?> · <?= htmlspecialchars($p['store_name'] ?? '-') ?> · <span style="text-transform:uppercase;"><?= htmlspecialchars($p['listing_type'] ?? 'retail') ?><?= !empty($p['moq'])?' MOQ '.$p['moq']:'' ?></span></div>
                     </td>
                     <td style="font-family: var(--f-mono);"><?= format_price($p) ?></td>
                     <td>
@@ -99,6 +112,7 @@ include 'layout/header.php';
                     <td>
                         <div style="display: flex; flex-direction: column; gap: 4px;">
                             <span class="status-badge <?= $p['is_active'] ? 'status-paid' : 'status-cancelled' ?>"><?= $p['is_active'] ? 'Active' : 'Hidden' ?></span>
+                            <span class="status-badge <?= ($p['status_market']??'active')==='pending_review'?'status-processing':(($p['status_market']??'active')==='rejected'?'status-cancelled':'status-paid') ?>" style="font-size:9px;"><?= strtoupper($p['status_market']??'active') ?></span>
                             <?php if ($p['is_preorder']): ?>
                                 <span style="font-size: 9px; background: #000; color: #fff; padding: 2px 6px; border-radius: 2px; text-transform: uppercase;">Pre-Order</span>
                             <?php endif; ?>
@@ -106,6 +120,20 @@ include 'layout/header.php';
                                 <span style="font-size: 9px; background: var(--red); color: #fff; padding: 2px 6px; border-radius: 2px; text-transform: uppercase;">Global</span>
                             <?php endif; ?>
                         </div>
+                    </td>
+                    <td>
+                        <?php if (($p['status_market']??'active')==='pending_review'): ?>
+                        <form method="POST" style="display:flex;gap:6px;">
+                            <input type="hidden" name="action" value="moderate_product"><input type="hidden" name="product_id" value="<?= $p['id'] ?>">
+                            <button name="moderate" value="active" style="background:#16a34a;color:#fff;border:none;padding:6px 10px;font-size:9px;font-weight:700;cursor:pointer;">APPROVE</button>
+                            <button name="moderate" value="rejected" style="background:var(--red);color:#fff;border:none;padding:6px 10px;font-size:9px;font-weight:700;cursor:pointer;">REJECT</button>
+                        </form>
+                        <?php else: ?>
+                        <form method="POST" style="display:flex;gap:6px;">
+                            <input type="hidden" name="action" value="moderate_product"><input type="hidden" name="product_id" value="<?= $p['id'] ?>">
+                            <button name="moderate" value="pending_review" style="background:var(--ink);color:#fff;border:none;padding:6px 10px;font-size:9px;cursor:pointer;">→ Review</button>
+                        </form>
+                        <?php endif; ?>
                     </td>
                     <td>
                         <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 92px;">
@@ -123,7 +151,7 @@ include 'layout/header.php';
                 </tr>
                 <?php endforeach; ?>
                 <?php if (empty($products)): ?>
-                <tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--mid-gray);">No products found. Start by adding one!</td></tr>
+                <tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--mid-gray);">No products found. Start by adding one!</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>

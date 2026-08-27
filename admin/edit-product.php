@@ -1,8 +1,8 @@
 <?php
 // admin/edit-product.php
-require_once '../config/app.php';
-require_once '../config/database.php';
-require_once '../core/Session.php';
+require_once __DIR__ . '/../config/app.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../core/Session.php';
 
 Session::start();
 if (Session::get('user_role') !== 'admin') {
@@ -35,6 +35,7 @@ $existing_variants = $variantsStmt->fetchAll();
 // Fetch categories, brands, and existing tags for the form
 $categories = $db->query("SELECT id, name FROM categories ORDER BY name ASC")->fetchAll();
 $brands = $db->query("SELECT id, name FROM brands ORDER BY name ASC")->fetchAll();
+$sellers=[]; try{ $sellers=$db->query("SELECT s.id, s.business_name, s.seller_type, s.verification_level, u.email FROM sellers s LEFT JOIN users u ON s.user_id=u.id ORDER BY s.business_name ASC")->fetchAll(); }catch(Throwable $e){}
 
 // Get unique tags from existing products
 $tagsResult = $db->query("SELECT tags FROM products WHERE tags IS NOT NULL AND tags != ''")->fetchAll();
@@ -93,6 +94,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $is_preorder = isset($_POST['is_preorder']) ? 1 : 0;
         $is_dropshipping = isset($_POST['is_dropshipping']) ? 1 : 0;
         $lead_time = !empty($_POST['lead_time']) ? (int)$_POST['lead_time'] : null;
+        $seller_id = !empty($_POST['seller_id']) ? (int)$_POST['seller_id'] : null;
+        $store_id=null; if($seller_id){ $r=$db->prepare("SELECT id FROM stores WHERE seller_id=? LIMIT 1"); $r->execute([$seller_id]); $store_id=$r->fetchColumn()?:null; }
+        $listing_type=$_POST['listing_type']??'retail'; if(!in_array($listing_type,['retail','wholesale','rfq','export'])) $listing_type='retail';
+        $visibility=$_POST['visibility']??'public'; if(!in_array($visibility,['public','b2b_only','retail_only'])) $visibility='public';
+        $condition_type=$_POST['condition_type']??'new';
+        $moq=!empty($_POST['moq'])?(int)$_POST['moq']:null;
+        $wholesale_price=!empty($_POST['wholesale_price_ghs'])?(float)$_POST['wholesale_price_ghs']:null;
+        $fob_price=!empty($_POST['fob_price_usd'])?(float)$_POST['fob_price_usd']:null;
+        $incoterms=$_POST['incoterms']??null; if($incoterms && !in_array($incoterms,['EXW','FOB','CIF'])) $incoterms=null;
+        $production_capacity=$_POST['production_capacity']??null;
+        $oem_odm=isset($_POST['oem_odm'])?1:0;
+        $location_country=$_POST['location_country']??'GH';
+        $vehicle_origin=$_POST['vehicle_origin']??null; if($vehicle_origin && !in_array($vehicle_origin,['local','international_export'])) $vehicle_origin=null;
         $tags = $_POST['tags'] ?? '';
         $meta_title = $_POST['meta_title'] ?? '';
         $meta_description = $_POST['meta_description'] ?? '';
@@ -184,8 +198,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$error) {
         try {
-            $stmt = $db->prepare("UPDATE products SET name = ?, category_id = ?, brand_id = ?, price_ghs = ?, compare_at_price_ghs = ?, price_usd = ?, compare_at_price_usd = ?, currency = ?, stock_qty = ?, description = ?, features = ?, specs = ?, tags = ?, meta_title = ?, meta_description = ?, meta_keywords = ?, is_active = ?, is_bestseller = ?, is_featured = ?, is_preorder = ?, is_dropshipping = ?, lead_time_days = ? WHERE id = ?");
-            $stmt->execute([$name, $category_id, $brand_id, $price, $compare_price, $price_usd, $compare_price_usd, $currency, $stock, $description, $features_json, $specs_json, $tags, $meta_title, $meta_description, $meta_keywords, $is_active, $is_bestseller, $is_featured, $is_preorder, $is_dropshipping, $lead_time, $productId]);
+            $stmt = $db->prepare("UPDATE products SET name = ?, category_id = ?, brand_id = ?, seller_id=?, store_id=?, listing_type=?, visibility=?, condition_type=?, moq=?, wholesale_price_ghs=?, fob_price_usd=?, incoterms=?, production_capacity=?, oem_odm=?, location_country=?, vehicle_origin=?, price_ghs = ?, compare_at_price_ghs = ?, price_usd = ?, compare_at_price_usd = ?, currency = ?, stock_qty = ?, description = ?, features = ?, specs = ?, tags = ?, meta_title = ?, meta_description = ?, meta_keywords = ?, is_active = ?, is_bestseller = ?, is_featured = ?, is_preorder = ?, is_dropshipping = ?, lead_time_days = ? WHERE id = ?");
+            $stmt->execute([$name, $category_id, $brand_id, $seller_id, $store_id, $listing_type, $visibility, $condition_type, $moq, $wholesale_price, $fob_price, $incoterms, $production_capacity, $oem_odm, $location_country, $vehicle_origin, $price, $compare_price, $price_usd, $compare_price_usd, $currency, $stock, $description, $features_json, $specs_json, $tags, $meta_title, $meta_description, $meta_keywords, $is_active, $is_bestseller, $is_featured, $is_preorder, $is_dropshipping, $lead_time, $productId]);
             
             if ($video_updated) {
                 $stmt = $db->prepare("UPDATE products SET video_url = ? WHERE id = ?");
@@ -505,6 +519,40 @@ include 'layout/header.php';
                         <input type="text" name="meta_keywords" value="<?= htmlspecialchars($product['meta_keywords'] ?? '') ?>" placeholder="gadgets, tech, avazonia" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;">
                     </div>
                 </div>
+            </div>
+
+            <div style="background:#fffbeb;padding:20px;border:2px solid #f59e0b;border-radius:4px;">
+                <label style="display:block;font-family:var(--f-semi);font-size:11px;text-transform:uppercase;color:var(--ink);margin-bottom:14px;font-weight:800;">🏪 Marketplace — Seller & Listing</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Seller / Store</label>
+                    <select name="seller_id" style="width:100%;padding:10px;border:1px solid var(--light-gray);">
+                        <option value="">Avazonia Official</option>
+                        <?php foreach($sellers as $s): ?><option value="<?= (int)$s['id'] ?>" <?= ($product['seller_id']??null)==$s['id']?'selected':'' ?>><?= htmlspecialchars(($s['business_name']?:$s['email']).' — '.$s['seller_type']) ?></option><?php endforeach; ?>
+                    </select></div>
+                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Listing Type</label>
+                    <select name="listing_type" id="listing_type_edit" onchange="toggleMarketplaceEdit()" style="width:100%;padding:10px;border:1px solid var(--light-gray);">
+                        <option value="retail" <?= ($product['listing_type']??'retail')==='retail'?'selected':'' ?>>Retail</option><option value="wholesale" <?= ($product['listing_type']??'')==='wholesale'?'selected':'' ?>>Wholesale</option><option value="rfq" <?= ($product['listing_type']??'')==='rfq'?'selected':'' ?>>RFQ</option><option value="export" <?= ($product['listing_type']??'')==='export'?'selected':'' ?>>Export</option>
+                    </select></div>
+                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Visibility</label>
+                    <select name="visibility" style="width:100%;padding:10px;border:1px solid var(--light-gray);"><option value="public" <?= ($product['visibility']??'public')==='public'?'selected':'' ?>>Public</option><option value="b2b_only" <?= ($product['visibility']??'')==='b2b_only'?'selected':'' ?>>B2B Only</option><option value="retail_only" <?= ($product['visibility']??'')==='retail_only'?'selected':'' ?>>Retail Only</option></select></div>
+                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Condition</label>
+                    <select name="condition_type" style="width:100%;padding:10px;border:1px solid var(--light-gray);"><option value="new" <?= ($product['condition_type']??'new')==='new'?'selected':'' ?>>New</option><option value="used" <?= ($product['condition_type']??'')==='used'?'selected':'' ?>>Used</option></select></div>
+                </div>
+                <div id="wholesale-fields-edit" style="display:none;margin-top:14px;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">MOQ</label><input type="number" name="moq" value="<?= htmlspecialchars($product['moq']??'') ?>" style="width:100%;padding:10px;border:1px solid var(--light-gray);"></div>
+                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Wholesale Price GHS</label><input type="number" step="0.01" name="wholesale_price_ghs" value="<?= htmlspecialchars($product['wholesale_price_ghs']??'') ?>" style="width:100%;padding:10px;border:1px solid var(--light-gray);"></div>
+                </div>
+                <div id="export-fields-edit" style="display:none;margin-top:14px;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">FOB USD</label><input type="number" step="0.01" name="fob_price_usd" value="<?= htmlspecialchars($product['fob_price_usd']??'') ?>" style="width:100%;padding:10px;border:1px solid var(--light-gray);"></div>
+                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Incoterms</label><select name="incoterms" style="width:100%;padding:10px;border:1px solid var(--light-gray);"><option value="">—</option><option value="EXW" <?= ($product['incoterms']??'')==='EXW'?'selected':'' ?>>EXW</option><option value="FOB" <?= ($product['incoterms']??'')==='FOB'?'selected':'' ?>>FOB</option><option value="CIF" <?= ($product['incoterms']??'')==='CIF'?'selected':'' ?>>CIF</option></select></div>
+                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Capacity</label><input type="text" name="production_capacity" value="<?= htmlspecialchars($product['production_capacity']??'') ?>" style="width:100%;padding:10px;border:1px solid var(--light-gray);"></div>
+                </div>
+                <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                    <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="oem_odm" value="1" <?= !empty($product['oem_odm'])?'checked':'' ?>> OEM/ODM</label>
+                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Country</label><select name="location_country" style="width:100%;padding:10px;border:1px solid var(--light-gray);"><option value="GH" <?= ($product['location_country']??'GH')==='GH'?'selected':'' ?>>GH</option><option value="CN" <?= ($product['location_country']??'')==='CN'?'selected':'' ?>>CN</option><option value="OTHER">Other</option></select></div>
+                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Vehicle Origin</label><select name="vehicle_origin" style="width:100%;padding:10px;border:1px solid var(--light-gray);"><option value="">—</option><option value="local" <?= ($product['vehicle_origin']??'')==='local'?'selected':'' ?>>Local</option><option value="international_export" <?= ($product['vehicle_origin']??'')==='international_export'?'selected':'' ?>>Export</option></select></div>
+                </div>
+                <script>function toggleMarketplaceEdit(){var v=document.getElementById('listing_type_edit').value;document.getElementById('wholesale-fields-edit').style.display=(v==='wholesale'||v==='export')?'grid':'none';document.getElementById('export-fields-edit').style.display=(v==='export')?'grid':'none';} toggleMarketplaceEdit();</script>
             </div>
 
             <div style="background: var(--off); padding: 24px; border-radius: 4px; border: 1px solid var(--light-gray);">

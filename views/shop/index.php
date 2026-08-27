@@ -30,6 +30,21 @@ require_once __DIR__ . '/../layout/nav.php';
             </div>
         </div>
 
+        <!-- Marketplace Filters -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+            <?php $qs=$_GET; $base=APP_URL.'/shop'; $mk=function($k,$v) use($qs,$base){ $n=$qs; if($v===null) unset($n[$k]); else $n[$k]=$v; unset($n['page']); $q=http_build_query($n); return $base.($q?"?$q":""); };
+                  $curLt=$_GET['listing_type']??''; $curCond=$_GET['condition']??''; $curOrig=$_GET['origin']??'';
+            ?>
+            <a href="<?= $mk('listing_type',null) ?>" style="padding:6px 12px;border:1px solid var(--ink);background:<?= $curLt==''?'var(--ink)':'#fff' ?>;color:<?= $curLt==''?'#fff':'var(--ink)' ?>;font-family:var(--f-mono);font-size:10px;text-decoration:none;">All</a>
+            <a href="<?= $mk('listing_type','retail') ?>" style="padding:6px 12px;border:1px solid var(--ink);background:<?= $curLt==='retail'?'var(--ink)':'#fff' ?>;color:<?= $curLt==='retail'?'#fff':'var(--ink)' ?>;font-family:var(--f-mono);font-size:10px;text-decoration:none;">Retail</a>
+            <a href="<?= $mk('listing_type','wholesale') ?>" style="padding:6px 12px;border:1px solid var(--ink);background:<?= $curLt==='wholesale'?'var(--ink)':'#fff' ?>;color:<?= $curLt==='wholesale'?'#fff':'var(--ink)' ?>;font-family:var(--f-mono);font-size:10px;text-decoration:none;">Wholesale · MOQ</a>
+            <a href="<?= $mk('listing_type','export') ?>" style="padding:6px 12px;border:1px solid var(--ink);background:<?= $curLt==='export'?'var(--ink)':'#fff' ?>;color:<?= $curLt==='export'?'#fff':'var(--ink)' ?>;font-family:var(--f-mono);font-size:10px;text-decoration:none;">Export · FOB</a>
+            <a href="<?= $mk('condition','used') ?>" style="padding:6px 12px;border:1px solid var(--ink);background:<?= $curCond==='used'?'var(--ink)':'#fff' ?>;color:<?= $curCond==='used'?'#fff':'var(--ink)' ?>;font-family:var(--f-mono);font-size:10px;text-decoration:none;">Used — C2C</a>
+            <a href="<?= $mk('origin','local') ?>" style="padding:6px 12px;border:1px solid var(--ink);background:<?= $curOrig==='local'?'var(--ink)':'#fff' ?>;color:<?= $curOrig==='local'?'#fff':'var(--ink)' ?>;font-family:var(--f-mono);font-size:10px;text-decoration:none;">Local Ghana</a>
+            <a href="<?= $mk('origin','international_export') ?>" style="padding:6px 12px;border:1px solid var(--ink);background:<?= $curOrig==='international_export'?'var(--ink)':'#fff' ?>;color:<?= $curOrig==='international_export'?'#fff':'var(--ink)' ?>;font-family:var(--f-mono);font-size:10px;text-decoration:none;">Export China</a>
+            <a href="<?= APP_URL ?>/sourcing" style="padding:6px 12px;background:var(--red);color:#fff;font-family:var(--f-mono);font-size:10px;text-decoration:none;">🌍 B2B Sourcing →</a>
+        </div>
+
         <!-- Product Grid -->
         <div class="products-grid">
             <?php require __DIR__ . '/grid.php'; ?>

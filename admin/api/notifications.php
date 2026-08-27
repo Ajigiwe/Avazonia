@@ -1,9 +1,9 @@
 <?php
 // admin/api/notifications.php
-require_once '../../config/app.php';
-require_once '../../config/database.php';
-require_once '../../core/Session.php';
-require_once '../../models/Notification.php';
+require_once __DIR__ . '/../../config/app.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../core/Session.php';
+require_once __DIR__ . '/../../models/Notification.php';
 
 Session::start();
 

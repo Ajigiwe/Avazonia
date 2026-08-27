@@ -5520,64 +5520,76 @@ form button[type="submit"]:hover {
 .view-btn.active { background: var(--ink); color: #fff; }
 .view-btn svg { width: 16px; height: 16px; }
 
-/* List view overrides */
+/* List view — desktop: image left / details right, mobile: stacked */
 .products-grid.list-view,
 .product-grid.list-view {
     grid-template-columns: 1fr !important;
-    gap: 12px !important;
+    gap: 14px !important;
 }
 .list-view .card {
-    flex-direction: column !important;
+    display: flex !important;
+    flex-direction: row !important;
     align-items: stretch !important;
     overflow: hidden;
 }
-.list-view .card-img-wrap {
+.list-view .card .card-link-block {
+    display: flex !important;
+    flex-direction: row !important;
+    flex: 1 !important;
     width: 100% !important;
-    min-width: 100% !important;
-    max-width: 100% !important;
-    flex-shrink: 0 !important;
-    aspect-ratio: auto !important;
+}
+.list-view .card-img-wrap {
+    flex: 0 0 280px !important;
+    width: 280px !important;
+    min-width: 280px !important;
+    max-width: 280px !important;
+    aspect-ratio: 1 / 1 !important;
+    align-self: stretch !important;
 }
 .list-view .card-img {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr 1fr !important;
-    gap: 2px !important;
-    height: 160px !important;
-    min-height: 160px !important;
-    background: #f8f8f8 !important;
+    display: block !important;
+    height: 100% !important;
+    min-height: 100% !important;
 }
 .list-view .slide-img {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+.list-view .slide-img:first-child {
     position: relative !important;
     opacity: 1 !important;
     transform: none !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: 160px !important;
-    flex: none !important;
-    min-width: 0 !important;
-    object-fit: cover !important;
 }
-.list-view .slide-img:nth-child(n+4) {
-    display: none !important;
-}
-.list-view .slide-img:only-child {
-    grid-column: 1 / -1 !important;
-}
-.list-view video {
-    display: none !important;
-}
+.list-view .slide-img:not(:first-child) { display: none !important; }
+.list-view video { display: none !important; }
 .list-view .card-body {
-    justify-content: center !important;
-    padding: 10px 14px !important;
     flex: 1 !important;
+    justify-content: center !important;
+    padding: 16px 18px !important;
+    min-width: 0 !important;
 }
-.list-view .card-name {
-    height: auto !important;
-    -webkit-line-clamp: 2 !important;
+.list-view .card-actions {
+    position: static !important;
+    transform: none !important;
+    opacity: 1 !important;
+    background: transparent !important;
+    padding-top: 8px !important;
 }
 @media (max-width: 768px) {
-    .list-view .card-img { height: 140px !important; min-height: 140px !important; }
-    .list-view .slide-img { min-height: 140px !important; }
+    .list-view .card,
+    .list-view .card .card-link-block {
+        flex-direction: column !important;
+    }
+    .list-view .card-img-wrap {
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        aspect-ratio: 1 / 1 !important;
+    }
     .view-toggle { margin-left: auto; }
 }
 

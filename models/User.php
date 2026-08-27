@@ -28,15 +28,24 @@ class User extends Model {
      * Standard create (auto-login flow — no verification token)
      */
     public function create(array $data): bool {
+        $driver=$this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $now = $driver==='sqlite' ? date('Y-m-d H:i:s') : null;
+        // Support marketplace fields
         $stmt = $this->db->prepare(
-            "INSERT INTO users (email, password_hash, full_name, phone, role, email_verified) VALUES (?, ?, ?, ?, ?, 0)"
+            "INSERT INTO users (email, password_hash, full_name, phone, role, seller_type, buyer_type, verification_level, country_code, company_name, is_business, email_verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
         );
         return $stmt->execute([
             $data['email'],
             password_hash($data['password'], PASSWORD_DEFAULT),
             $data['full_name'],
             $data['phone'] ?? null,
-            'customer',
+            $data['role'] ?? 'customer',
+            $data['seller_type'] ?? null,
+            $data['buyer_type'] ?? 'individual',
+            $data['verification_level'] ?? 'unverified',
+            $data['country_code'] ?? 'GH',
+            $data['company_name'] ?? null,
+            !empty($data['is_business']) ? 1 : 0,
         ]);
     }
 
@@ -45,13 +54,20 @@ class User extends Model {
      */
     public function createWithVerification(array $data, string $token): bool {
         $stmt = $this->db->prepare(
-            "INSERT INTO users (email, password_hash, full_name, phone, role, email_verified, verification_token) VALUES (?, ?, ?, ?, 'customer', 0, ?)"
+            "INSERT INTO users (email, password_hash, full_name, phone, role, seller_type, buyer_type, verification_level, country_code, company_name, is_business, email_verified, verification_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)"
         );
         return $stmt->execute([
             $data['email'],
             password_hash($data['password'], PASSWORD_DEFAULT),
             $data['full_name'],
             $data['phone'] ?? null,
+            $data['role'] ?? 'customer',
+            $data['seller_type'] ?? null,
+            $data['buyer_type'] ?? 'individual',
+            $data['verification_level'] ?? 'unverified',
+            $data['country_code'] ?? 'GH',
+            $data['company_name'] ?? null,
+            !empty($data['is_business']) ? 1 : 0,
             $token,
         ]);
     }
@@ -90,8 +106,14 @@ class User extends Model {
     }
 
     public function updateLastLogin(int $userId): void {
+        $driver=$this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver==='sqlite') { $stmt=$this->db->prepare("UPDATE users SET last_login = datetime('now') WHERE id = ?"); $stmt->execute([$userId]); return; }
         $stmt = $this->db->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
         $stmt->execute([$userId]);
+    }
+    public function updateProfile(int $userId, array $data): bool {
+        $stmt=$this->db->prepare("UPDATE users SET full_name=?, phone=?, buyer_type=?, company_name=?, is_business=? WHERE id=?");
+        return $stmt->execute([$data['full_name'],$data['phone'],$data['buyer_type']??'individual',$data['company_name']??null, !empty($data['is_business'])?1:0, $userId]);
     }
 }
 

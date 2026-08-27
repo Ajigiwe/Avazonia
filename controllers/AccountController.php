@@ -21,6 +21,8 @@ class AccountController extends Controller {
                 Session::set('user_id',        $user['id']);
                 Session::set('user_name',      $user['full_name']);
                 Session::set('user_role',      $user['role']);
+                Session::set('seller_type',    $user['seller_type'] ?? null);
+                Session::set('buyer_type',     $user['buyer_type'] ?? 'individual');
                 Session::set('email_verified', (bool)$user['email_verified']);
                 $userModel->updateLastLogin($user['id']);
                 if ($user['role'] === 'admin') {
@@ -39,12 +41,21 @@ class AccountController extends Controller {
         $this->view('account/login', ['error' => $error, 'success' => $success]);
     }
 
-    // REGISTER
+    // REGISTER — marketplace: seller_type + buyer_type
     public function register() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $email    = trim($_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';
             $fullName = trim($_POST['full_name'] ?? '');
+            $phone    = trim($_POST['phone'] ?? '');
+            $sellerType = $_POST['seller_type'] ?? null; // individual, business_retailer, wholesaler, manufacturer, international_supplier or null (buyer only)
+            $buyerType = $_POST['buyer_type'] ?? 'individual';
+            $companyName = trim($_POST['company_name'] ?? '');
+            $isBusiness = ($buyerType === 'business' || !empty($sellerType)) ? 1 : 0;
+            // Validate seller_type
+            $allowedSeller = ['individual','business_retailer','wholesaler','manufacturer','international_supplier'];
+            if ($sellerType && !in_array($sellerType, $allowedSeller)) $sellerType = null;
+            if (!in_array($buyerType, ['individual','business'])) $buyerType='individual';
             if (strlen($password) < 6) {
                 $this->view('account/register', ['error' => 'Password must be at least 6 characters.']);
                 return;
@@ -56,7 +67,7 @@ class AccountController extends Controller {
             }
             $token = bin2hex(random_bytes(32));
             if ($userModel->createWithVerification(
-                ['email' => $email, 'password' => $password, 'full_name' => $fullName],
+                ['email' => $email, 'password' => $password, 'full_name' => $fullName, 'phone'=>$phone, 'seller_type'=>$sellerType, 'buyer_type'=>$buyerType, 'company_name'=>$companyName, 'is_business'=>$isBusiness, 'verification_level'=>'phone_verified', 'country_code'=>'GH'],
                 $token
             )) {
                 try {
@@ -71,9 +82,19 @@ class AccountController extends Controller {
                     error_log('[Mailer] Verification email failed for ' . $email . ': ' . $e->getMessage());
                 }
                 $user = $userModel->findByEmail($email);
+                // Auto-create seller/store if seller_type selected
+                if (!empty($sellerType)) {
+                    require_once __DIR__ . '/../models/Seller.php';
+                    require_once __DIR__ . '/../models/Store.php';
+                    $sellerModel=new Seller(); $storeModel=new Store();
+                    $sid=$sellerModel->create((int)$user['id'], ['seller_type'=>$sellerType,'business_name'=> $companyName ?: $fullName,'full_name'=>$fullName,'country_code'=>'GH','verification_level'=>'phone_verified']);
+                    if ($sid) $storeModel->create($sid, ['name'=> $companyName ?: $fullName, 'slug'=> null, 'country_code'=>'GH']);
+                }
                 Session::set('user_id',        $user['id']);
                 Session::set('user_name',      $user['full_name']);
                 Session::set('user_role',      $user['role']);
+                Session::set('seller_type',    $user['seller_type']);
+                Session::set('buyer_type',     $user['buyer_type']);
                 Session::set('email_verified', false);
                 $this->redirect(APP_URL . '/verify-pending');
             } else {

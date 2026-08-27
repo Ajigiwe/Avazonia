@@ -1,8 +1,8 @@
 <?php
 // admin/index.php
-require_once '../config/app.php';
-require_once '../config/database.php';
-require_once '../core/Session.php';
+require_once __DIR__ . '/../config/app.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../core/Session.php';
 
 Session::start();
 if (Session::get('user_role') !== 'admin') {
@@ -11,21 +11,38 @@ if (Session::get('user_role') !== 'admin') {
 }
 
 $db = db();
+$driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+$isSqlite = ($driver === 'sqlite');
 
-// 1. REVENUE & GROWTH (DYNAMIC)
-$curMonthRev = $db->query("SELECT SUM(total_ghs) FROM orders WHERE created_at >= DATE_FORMAT(NOW(), '%Y-%m-01') AND status NOT IN ('cancelled', 'failed')")->fetchColumn() ?: 0;
-$lastMonthRev = $db->query("SELECT SUM(total_ghs) FROM orders WHERE created_at >= DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 1 MONTH), '%Y-%m-01') AND created_at < DATE_FORMAT(NOW(), '%Y-%m-01') AND status NOT IN ('cancelled', 'failed')")->fetchColumn() ?: 1; // Prevent div by 0
+// 1. REVENUE & GROWTH (DYNAMIC) — driver-aware
+try {
+  if ($isSqlite) {
+    $curMonthRev = $db->query("SELECT SUM(total_ghs) FROM orders WHERE created_at >= date('now','start of month') AND status NOT IN ('cancelled','failed')")->fetchColumn() ?: 0;
+    $lastMonthRev = $db->query("SELECT SUM(total_ghs) FROM orders WHERE created_at >= date('now','start of month','-1 month') AND created_at < date('now','start of month') AND status NOT IN ('cancelled','failed')")->fetchColumn() ?: 1;
+  } else {
+    $curMonthRev = $db->query("SELECT SUM(total_ghs) FROM orders WHERE created_at >= DATE_FORMAT(NOW(), '%Y-%m-01') AND status NOT IN ('cancelled', 'failed')")->fetchColumn() ?: 0;
+    $lastMonthRev = $db->query("SELECT SUM(total_ghs) FROM orders WHERE created_at >= DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 1 MONTH), '%Y-%m-01') AND created_at < DATE_FORMAT(NOW(), '%Y-%m-01') AND status NOT IN ('cancelled', 'failed')")->fetchColumn() ?: 1;
+  }
+} catch(Throwable $e) { $curMonthRev=0; $lastMonthRev=1; }
 
 $revGrowth = (($curMonthRev - $lastMonthRev) / $lastMonthRev) * 100;
 
 // 2. ORDER TRENDS
-$totalOrders = $db->query("SELECT COUNT(*) FROM orders")->fetchColumn();
-$curMonthOrders = $db->query("SELECT COUNT(*) FROM orders WHERE created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')")->fetchColumn();
-$lastMonthOrders = $db->query("SELECT COUNT(*) FROM orders WHERE created_at >= DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 1 MONTH), '%Y-%m-01') AND created_at < DATE_FORMAT(NOW(), '%Y-%m-01')")->fetchColumn() ?: 1;
+try {
+  if ($isSqlite) {
+    $totalOrders = $db->query("SELECT COUNT(*) FROM orders")->fetchColumn();
+    $curMonthOrders = $db->query("SELECT COUNT(*) FROM orders WHERE created_at >= date('now','start of month')")->fetchColumn();
+    $lastMonthOrders = $db->query("SELECT COUNT(*) FROM orders WHERE created_at >= date('now','start of month','-1 month') AND created_at < date('now','start of month')")->fetchColumn() ?: 1;
+  } else {
+    $totalOrders = $db->query("SELECT COUNT(*) FROM orders")->fetchColumn();
+    $curMonthOrders = $db->query("SELECT COUNT(*) FROM orders WHERE created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')")->fetchColumn();
+    $lastMonthOrders = $db->query("SELECT COUNT(*) FROM orders WHERE created_at >= DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 1 MONTH), '%Y-%m-01') AND created_at < DATE_FORMAT(NOW(), '%Y-%m-01')")->fetchColumn() ?: 1;
+  }
+} catch(Throwable $e) { $totalOrders = $db->query("SELECT COUNT(*) FROM orders")->fetchColumn(); $curMonthOrders=0; $lastMonthOrders=1; }
 $orderGrowth = (($curMonthOrders - $lastMonthOrders) / $lastMonthOrders) * 100;
 
 // 3. AOV (AVERAGE ORDER VALUE)
-$aov = $totalOrders > 0 ? ($db->query("SELECT SUM(total_ghs) FROM orders WHERE status NOT IN ('cancelled', 'failed')")->fetchColumn() / $totalOrders) : 0;
+$aov = $totalOrders > 0 ? (($db->query("SELECT SUM(total_ghs) FROM orders WHERE status NOT IN ('cancelled', 'failed')")->fetchColumn() ?: 0) / $totalOrders) : 0;
 
 // 4. TOP SELLING PRODUCTS
 $topProducts = $db->query("
@@ -49,18 +66,41 @@ $catSales = $db->query("
 ")->fetchAll();
 
 // 6. REVENUE TRENDS (LAST 14 DAYS)
-$revenueTrends = $db->query("
-    SELECT DATE_FORMAT(created_at, '%b %d') as date_label, SUM(total_ghs) as total
-    FROM orders 
-    WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 13 DAY)
-    AND status NOT IN ('cancelled', 'failed')
-    GROUP BY DATE(created_at)
-    ORDER BY created_at ASC
-")->fetchAll();
+try {
+  if ($isSqlite) {
+    $revenueTrends = $db->query("
+        SELECT strftime('%m-%d', created_at) as date_label, SUM(total_ghs) as total
+        FROM orders 
+        WHERE created_at >= date('now','-13 days')
+        AND status NOT IN ('cancelled','failed')
+        GROUP BY date(created_at)
+        ORDER BY created_at ASC
+    ")->fetchAll();
+  } else {
+    $revenueTrends = $db->query("
+        SELECT DATE_FORMAT(created_at, '%b %d') as date_label, SUM(total_ghs) as total
+        FROM orders 
+        WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 13 DAY)
+        AND status NOT IN ('cancelled', 'failed')
+        GROUP BY DATE(created_at)
+        ORDER BY created_at ASC
+    ")->fetchAll();
+  }
+} catch(Throwable $e) { $revenueTrends=[]; }
 
 // 7. RECENT ACTIVITY
 $recentOrders = $db->query("SELECT * FROM orders ORDER BY created_at DESC LIMIT 5")->fetchAll();
 
+$marketStats=[];
+try {
+  $marketStats['sellers']=$db->query("SELECT COUNT(*) FROM sellers")->fetchColumn();
+  $marketStats['stores']=$db->query("SELECT COUNT(*) FROM stores")->fetchColumn();
+  $marketStats['pending_products']=$db->query("SELECT COUNT(*) FROM products WHERE status_market='pending_review'")->fetchColumn();
+  $marketStats['rfqs']=$db->query("SELECT COUNT(*) FROM rfqs")->fetchColumn();
+  $marketStats['wholesale']=$db->query("SELECT COUNT(*) FROM products WHERE listing_type='wholesale'")->fetchColumn();
+  $marketStats['export']=$db->query("SELECT COUNT(*) FROM products WHERE listing_type='export' OR vehicle_origin='international_export'")->fetchColumn();
+  $marketStats['pending_sellers']=$db->query("SELECT COUNT(*) FROM sellers WHERE verification_level='phone_verified' AND is_verified=0")->fetchColumn();
+} catch(Throwable $e) {}
 $title = "Dashboard Insights — Avazonia";
 include 'layout/header.php';
 ?>
@@ -143,6 +183,14 @@ include 'layout/header.php';
             <div style="width: 84%; height: 100%; background: #00a854;"></div>
         </div>
     </div>
+</div>
+
+<!-- MARKETPLACE STATS -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:32px;">
+  <div style="border:2px solid var(--ink);padding:16px;"><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);">SELLERS</div><div style="font-weight:900;font-size:24px;"><?= (int)($marketStats['sellers']??0) ?></div><a href="sellers.php" style="font-size:10px;color:var(--red);">Manage →</a></div>
+  <div style="border:2px solid var(--ink);padding:16px;"><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);">PENDING PRODUCTS</div><div style="font-weight:900;font-size:24px;"><?= (int)($marketStats['pending_products']??0) ?></div><a href="products.php" style="font-size:10px;color:var(--red);">Moderate →</a></div>
+  <div style="border:2px solid var(--ink);padding:16px;"><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);">RFQs</div><div style="font-weight:900;font-size:24px;"><?= (int)($marketStats['rfqs']??0) ?></div><a href="rfqs.php" style="font-size:10px;color:var(--red);">View →</a></div>
+  <div style="border:2px solid var(--ink);padding:16px;"><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);">WHOLESALE / EXPORT</div><div style="font-weight:900;font-size:24px;"><?= (int)($marketStats['wholesale']??0) ?> / <?= (int)($marketStats['export']??0) ?></div><a href="sellers.php" style="font-size:10px;color:var(--red);">Sellers →</a></div>
 </div>
 
 <div style="margin-bottom: 40px;">

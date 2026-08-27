@@ -1,9 +1,9 @@
 <?php
 // admin/add-slide.php
-require_once '../config/app.php';
-require_once '../config/database.php';
-require_once '../core/Session.php';
-require_once '../models/Slider.php';
+require_once __DIR__ . '/../config/app.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../core/Session.php';
+require_once __DIR__ . '/../models/Slider.php';
 
 Session::start();
 if (Session::get('user_role') !== 'admin') {

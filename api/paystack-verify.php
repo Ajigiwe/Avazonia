@@ -1,10 +1,10 @@
 <?php
 // api/paystack-verify.php
-require_once '../config/app.php';
-require_once '../config/paystack.php';
-require_once '../models/Order.php';
-require_once '../core/Session.php';
-require_once '../core/Mailer.php';
+require_once __DIR__ . '/../config/app.php';
+require_once __DIR__ . '/../config/paystack.php';
+require_once __DIR__ . '/../models/Order.php';
+require_once __DIR__ . '/../core/Session.php';
+require_once __DIR__ . '/../core/Mailer.php';
 
 Session::start();
 

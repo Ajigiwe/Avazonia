@@ -1,8 +1,8 @@
 <?php
 // admin/users.php
-require_once '../config/app.php';
-require_once '../config/database.php';
-require_once '../core/Session.php';
+require_once __DIR__ . '/../config/app.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../core/Session.php';
 
 Session::start();
 if (Session::get('user_role') !== 'admin') {

@@ -61,6 +61,17 @@ $router->add('POST', '/forgot-password',       'AccountController@forgotPassword
 $router->add('GET', '/reset-password',         'AccountController@resetPassword');
 $router->add('POST', '/reset-password',        'AccountController@resetPassword');
 
+// Marketplace routes
+$router->add('GET', '/store/([a-z0-9-]+)', 'StoreController@storefront');
+$router->add('GET', '/supplier/([a-z0-9-]+)', 'StoreController@supplier');
+$router->add('GET', '/sourcing', 'StoreController@sourcing');
+$router->add('POST', '/api/rfq', 'StoreController@createRfq');
+$router->add('GET', '/seller/dashboard', 'SellerController@dashboard');
+$router->add('GET', '/seller/apply', 'SellerController@apply');
+$router->add('POST', '/seller/apply', 'SellerController@apply');
+$router->add('GET', '/seller/new-product', 'SellerController@newProduct');
+$router->add('POST', '/seller/new-product', 'SellerController@newProduct');
+
 // Health check (no auth, for Docker & local)
 $router->add('GET', '/health', 'HealthController@index');
 

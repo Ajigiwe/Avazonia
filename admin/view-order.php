@@ -1,9 +1,9 @@
 <?php
 // admin/view-order.php
-require_once '../config/app.php';
-require_once '../config/database.php';
-require_once '../core/Session.php';
-require_once '../models/Order.php';
+require_once __DIR__ . '/../config/app.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../core/Session.php';
+require_once __DIR__ . '/../models/Order.php';
 
 Session::start();
 if (Session::get('user_role') !== 'admin') {
@@ -88,7 +88,9 @@ include 'layout/header.php';
                                     <span style="color: var(--red); font-size: 10px; margin-left: 8px;">[ PRE-ORDER ]</span>
                                 <?php endif; ?>
                             </div>
-                            <div style="font-size: 10px; color: var(--mid-gray); margin-top: 4px; font-family: var(--f-mono);">PRO-ID-<?= $item['product_id'] ?></div>
+                            <div style="font-size: 10px; color: var(--mid-gray); margin-top: 4px; font-family: var(--f-mono);">PRO-ID-<?= $item['product_id'] ?><?php if(!empty($item['seller_id'])): ?> · Sold by:
+                                <?php $si=$db->prepare("SELECT s.business_name,st.slug FROM sellers s LEFT JOIN stores st ON st.seller_id=s.id WHERE s.id=? LIMIT 1"); $si->execute([$item['seller_id']]); $sd=$si->fetch(); echo $sd?'<a href="'.APP_URL.'/store/'.htmlspecialchars($sd['slug']).'">'.htmlspecialchars($sd['business_name']).'</a>':'Seller #'.$item['seller_id']; ?>
+                            <?php endif; ?></div>
                         </td>
                         <td style="text-align: center; font-family: var(--f-mono); font-weight: 700;">×<?= $item['qty'] ?></td>
                         <td style="text-align: right; font-family: var(--f-mono);">₵<?= number_format($item['unit_price_ghs'], 2) ?></td>

@@ -41,7 +41,9 @@ class Order extends Model {
         // 3. Add missing columns to order_items table
         $itemColumns = [
             'is_preorder' => "TINYINT(1) DEFAULT 0",
-            'deposit_paid_ghs' => "DECIMAL(10,2) DEFAULT 0.00"
+            'deposit_paid_ghs' => "DECIMAL(10,2) DEFAULT 0.00",
+            'seller_id' => "INT UNSIGNED NULL",
+            'store_id' => "INT UNSIGNED NULL"
         ];
         foreach ($itemColumns as $col => $def) {
             try {
@@ -81,11 +83,13 @@ class Order extends Model {
             ]);
             $orderId = $this->db->lastInsertId();
 
-            $stmtItem = $this->db->prepare("INSERT INTO order_items (order_id, product_id, product_name, qty, unit_price_ghs, is_preorder, deposit_paid_ghs) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmtItem = $this->db->prepare("INSERT INTO order_items (order_id, product_id, seller_id, store_id, product_name, qty, unit_price_ghs, is_preorder, deposit_paid_ghs) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
             foreach ($items as $item) {
                 $stmtItem->execute([
                     $orderId,
                     $item['product_id'],
+                    $item['seller_id'] ?? null,
+                    $item['store_id'] ?? null,
                     $item['product_name'],
                     $item['qty'],
                     $clean($item['unit_price_ghs']),

@@ -8,6 +8,14 @@ $og_image = $product['primary_image'] ? (filter_var($product['primary_image'], F
 
 require_once __DIR__ . '/../layout/head.php';
 require_once __DIR__ . '/../layout/nav.php';
+?>
+<style>
+/* Quick fix: desktop = images left, details right; mobile = stacked */
+.product-detail-layout{display:grid !important;grid-template-columns:minmax(0,1.15fr) minmax(0,0.95fr) !important;gap:48px !important;align-items:start !important;}
+.product-gallery{order:1;}.product-info{order:2;}
+@media (max-width: 900px){.product-detail-layout{grid-template-columns:1fr !important;gap:32px !important;}.product-gallery{order:1;}.product-info{order:2;}}
+</style>
+<?php
 
 // Wishlist Status Check
 require_once __DIR__ . '/../../models/Wishlist.php';
@@ -107,6 +115,9 @@ if (Session::get('user_id')) {
                 <div style="display: inline-block; background: #FF8800; color: #fff; font-family: var(--f-display); font-size: 10px; font-weight: 800; padding: 6px 16px; border-radius: 100px; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 20px;">Global Direct</div>
             <?php endif; ?>
 
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"><?= listing_type_badge($product) ?><?php if(!empty($product['vehicle_origin'])): ?><span style="font-family:var(--f-mono);font-size:9px;background:<?= $product['vehicle_origin']==='international_export'?'var(--ink)':'var(--off)' ?>;color:<?= $product['vehicle_origin']==='international_export'?'#fff':'var(--ink)' ?>;padding:4px 8px;border-radius:999px;"><?= $product['vehicle_origin']==='international_export'?'International Export':'Local — Ghana' ?></span><?php endif; ?><?php if(!empty($product['store_slug'])): ?><a href="<?= APP_URL ?>/store/<?= htmlspecialchars($product['store_slug']) ?>" style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-decoration:none;border-bottom:1px dotted;">Sold by: <?= htmlspecialchars($product['store_name'] ?: $product['seller_name']) ?> →</a><?php endif; ?> <?= verification_badge($product) ?></div>
+            <?php if(!empty($product['moq'])): ?><div style="font-family:var(--f-mono);font-size:11px;color:var(--ink);margin-bottom:8px;">MOQ: <strong><?= (int)$product['moq'] ?> units</strong><?php if(!empty($product['wholesale_price_ghs'])): ?> · Wholesale <?= '₵'.number_format($product['wholesale_price_ghs'],2) ?><?php endif; ?><?php if(!empty($product['incoterms'])): ?> · <?= htmlspecialchars($product['incoterms']) ?><?php endif; ?></div><?php endif; ?>
+            <?php if(!empty($product['seller_type']) && $product['seller_type']==='international_supplier'): ?><div style="font-family:var(--f-mono);font-size:10px;background:#fef3c7;color:#92400e;padding:6px 10px;border-radius:6px;margin-bottom:10px;">B2B / Wholesale / Export — for Business Buyers</div><?php endif; ?>
             <h1 style="font-family: var(--f-display); font-weight: 700; font-size: clamp(24px, 4vw, 38px); text-transform: uppercase; margin-bottom: 16px; line-height: 1.1; letter-spacing: -0.02em;"><?= $product['name'] ?></h1>
             
             <?php if ($review_count > 0): ?>
@@ -338,6 +349,16 @@ if (Session::get('user_id')) {
                     }
                 </style>
             </form>
+            <?php if(in_array($product['listing_type'] ?? 'retail',['wholesale','rfq','export']) || ($product['seller_type'] ?? '')==='international_supplier'): ?>
+            <button onclick="document.getElementById('detail-rfq').style.display='block'" style="width:100%;margin-top:10px;height:44px;background:#fff;border:2px solid var(--ink);font-weight:800;text-transform:uppercase;cursor:pointer;">Request Quote / Contact Supplier</button>
+            <div id="detail-rfq" style="display:none;margin-top:12px;border:2px solid var(--ink);padding:14px;">
+              <form id="detail-rfq-form" style="display:flex;flex-direction:column;gap:8px;">
+                <input type="hidden" name="product_id" value="<?= (int)$product['id'] ?>"><input type="hidden" name="seller_id" value="<?= (int)($product['seller_id'] ?? 0) ?>">
+                <input type="number" name="qty" placeholder="Qty" value="<?= (int)($product['moq'] ?? 10) ?>" style="height:40px;border:1px solid var(--light-gray);padding:0 10px;"><input type="text" name="destination" placeholder="Destination (e.g. Tema)" style="height:40px;border:1px solid var(--light-gray);padding:0 10px;"><textarea name="message" placeholder="Message to supplier" rows="2" style="border:1px solid var(--light-gray);padding:8px;"></textarea><button type="submit" style="height:40px;background:var(--ink);color:#fff;font-weight:800;text-transform:uppercase;border:none;cursor:pointer;">Send Enquiry</button><div id="detail-rfq-msg" style="font-family:var(--f-mono);font-size:11px;"></div>
+              </form>
+              <script>document.getElementById('detail-rfq-form')?.addEventListener('submit',async(e)=>{e.preventDefault();const fd=new FormData(e.target);const r=await fetch('<?= APP_URL ?>/api/rfq',{method:'POST',body:fd});const j=await r.json();document.getElementById('detail-rfq-msg').textContent=j.message;document.getElementById('detail-rfq-msg').style.color=j.success?'#16a34a':'var(--red)';if(j.success)e.target.reset();});</script>
+            </div>
+            <?php endif; ?>
 
 
             <!-- Premium Trust & Help Section -->

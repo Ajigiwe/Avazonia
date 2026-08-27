@@ -13,12 +13,23 @@ class ShopController extends Controller {
 
         $catSlug = $_GET['cat'] ?? null;
         $search = $_GET['q'] ?? null;
+        $listingType = $_GET['listing_type'] ?? null; // retail/wholesale/rfq/export
         $page = max(1, (int)($_GET['page'] ?? 1));
         $perPage = 24;
         $offset = ($page - 1) * $perPage;
         $wishlistIds = Session::get('user_id') ? $wishModel->getProductIds(Session::get('user_id')) : [];
 
-        if ($catSlug === 'deals-offers') {
+        // Marketplace wholesale/export quick filter
+        if ($listingType === 'wholesale') {
+            $products = $productModel->getWholesaleDeals($perPage);
+            // offset not used in wholesale but for pagination count we do full search
+            $total = count($products);
+            $title = "Wholesale Deals — Avazonia B2B";
+        } elseif ($listingType === 'export') {
+            $products = $productModel->getExportListings($perPage);
+            $total = count($products);
+            $title = "Export & International Sourcing — Avazonia";
+        } elseif ($catSlug === 'deals-offers') {
             $products = $productModel->getDiscounted($perPage, $offset);
             $total = $productModel->countDiscounted();
             $title = "Best Deals & Offers — Avazonia";
@@ -58,13 +69,24 @@ class ShopController extends Controller {
             $title = ($category['name'] ?? 'Shop') . " — Avazonia";
         } elseif ($search) {
             $catId = $_GET['cat_id'] ?? null;
-            $products = $productModel->search($search, $catId, $perPage, $offset);
-            $total = $productModel->countSearch($search, $catId);
+            $mpFilters=array_filter(['listing_type'=>$_GET['listing_type']??null,'condition_type'=>$_GET['condition']??null,'vehicle_origin'=>$_GET['origin']??null,'location_country'=>$_GET['country']??null]);
+            $products = $productModel->search($search, $catId, $perPage, $offset, $mpFilters);
+            $total = $productModel->countSearch($search, $catId, $mpFilters);
             $title = "Search results for '$search' — Avazonia";
         } else {
-            $products = $productModel->getAll($perPage, $offset);
-            $total = $productModel->countAll();
-            $title = "All Products — Avazonia";
+            // Support marketplace filters on plain shop (no search/cat) via filtered search
+            $mpFilters=array_filter(['listing_type'=>$_GET['listing_type']??null,'condition_type'=>$_GET['condition']??null,'vehicle_origin'=>$_GET['origin']??null,'location_country'=>$_GET['country']??null]);
+            if (!empty($mpFilters)) {
+                // Use wildcard search to apply filters
+                $products = $productModel->search('', null, $perPage, $offset, $mpFilters);
+                // search with empty q uses LIKE %% -> matches all; count similarly
+                $total = $productModel->countSearch('', null, $mpFilters);
+                $title = "Filtered Products — Avazonia";
+            } else {
+                $products = $productModel->getAll($perPage, $offset);
+                $total = $productModel->countAll();
+                $title = "All Products — Avazonia";
+            }
         }
 
         $totalPages = (int)ceil($total / $perPage);

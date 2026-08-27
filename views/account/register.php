@@ -30,6 +30,33 @@ require_once __DIR__ . '/../layout/nav.php';
                 </div>
                 
                 <div class="form-group">
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">Phone (WhatsApp)</label>
+                    <input type="tel" name="phone" placeholder="+233 24 000 0000" style="width: 100%; height: 48px; background: #fff; border: 1px solid var(--light-gray); border-radius: 12px; padding: 0 16px; font-family: var(--f-mono); font-size: 12px; color: var(--ink); outline: none;">
+                </div>
+
+                <div class="form-group">
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">I want to</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                        <label style="border:1px solid var(--light-gray);border-radius:10px;padding:12px;cursor:pointer;display:flex;align-items:center;gap:8px;"><input type="radio" name="buyer_type" value="individual" checked onchange="document.getElementById('company-row').style.display='none'"> <span style="font-family:var(--f-mono);font-size:11px;">Buy for myself</span></label>
+                        <label style="border:1px solid var(--light-gray);border-radius:10px;padding:12px;cursor:pointer;display:flex;align-items:center;gap:8px;"><input type="radio" name="buyer_type" value="business" onchange="document.getElementById('company-row').style.display='block'"> <span style="font-family:var(--f-mono);font-size:11px;">Buy for business (bulk)</span></label>
+                    </div>
+                    <div id="company-row" style="display:none;"><input type="text" name="company_name" placeholder="Company / Business Name (optional)" style="width:100%;height:42px;background:#fff;border:1px solid var(--light-gray);border-radius:10px;padding:0 14px;font-family:var(--f-mono);font-size:11px;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">Also sell on Avazonia? (optional)</label>
+                    <select name="seller_type" style="width:100%;height:48px;background:#fff;border:1px solid var(--light-gray);border-radius:12px;padding:0 14px;font-family:var(--f-mono);font-size:11px;color:var(--ink);outline:none;">
+                        <option value="">No, I just want to buy</option>
+                        <option value="individual">Individual Seller (C2C - used items)</option>
+                        <option value="business_retailer">Business / Retailer (B2C)</option>
+                        <option value="wholesaler">Wholesaler / Distributor (B2B)</option>
+                        <option value="manufacturer">Manufacturer (B2B)</option>
+                        <option value="international_supplier">International Supplier (B2B Export)</option>
+                    </select>
+                    <p style="font-family:var(--f-mono);font-size:9px;color:var(--mid-gray);margin-top:6px;">Free to list. You can also apply later from your account. Sellers are verified with badges.</p>
+                </div>
+
+                <div class="form-group">
                     <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">Password</label>
                     <div class="password-wrapper" style="position: relative;">
                         <input type="password" name="password" id="password-input" placeholder="••••••••" required style="width: 100%; height: 48px; background: #fff; border: 1px solid var(--light-gray); border-radius: 12px; padding: 0 48px 0 16px; font-family: var(--f-mono); font-size: 12px; color: var(--ink); outline: none;">
