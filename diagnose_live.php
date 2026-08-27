@@ -1,171 +1,167 @@
 <?php
 /**
- * DIAGNOSTIC v2 — Tests the exact seller dashboard code path.
- * Upload, visit, screenshot the output, then DELETE.
+ * DIAGNOSTIC v3 — Must be visited WHILE LOGGED IN.
+ * Captures the exact error in the seller dashboard flow.
+ * DELETE AFTER USE.
  */
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
 
-echo "<h2>Avazonia Seller Dashboard Diagnostic</h2>";
+// Capture fatal errors
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        echo "<h3 style='color:red'>FATAL ERROR</h3>";
+        echo "<pre>" . $error['message'] . "\nFile: {$error['file']}\nLine: {$error['line']}</pre>";
+    }
+});
 
-// 1. PHP version
-echo "<h3>PHP " . phpversion() . "</h3>";
+// Start session the same way index.php does
+require_once __DIR__ . '/config/app.php';
+require_once __DIR__ . '/core/Router.php';
+require_once __DIR__ . '/core/Session.php';
+Session::start();
 
-// 2. Session + Auth
-session_start();
-$userId = $_SESSION['user_id'] ?? null;
+echo "<h2>Seller Dashboard Diagnostic v3</h2>";
+
+// Session info
+$userId = Session::get('user_id');
 echo "<h3>Session</h3>";
-echo "user_id: " . ($userId ?? 'NOT SET (not logged in)') . "<br>";
-echo "user_role: " . ($_SESSION['user_role'] ?? 'NOT SET') . "<br>";
+echo "user_id: " . ($userId ?? 'NOT SET') . "<br>";
+echo "user_role: " . (Session::get('user_role') ?? 'NOT SET') . "<br>";
 
-// 3. Load app config
-try {
-    require_once __DIR__ . '/config/app.php';
-    echo "✅ config/app.php loaded<br>";
-    echo "APP_URL: " . (defined('APP_URL') ? APP_URL : 'NOT DEFINED') . "<br>";
-} catch (Throwable $e) {
-    echo "❌ config/app.php: " . $e->getMessage() . "<br>";
-}
-
-// 4. DB
-try {
-    require_once __DIR__ . '/config/database.php';
-    $db = db();
-    echo "<h3>Database</h3>";
-    echo "Driver: " . $db->getAttribute(PDO::ATTR_DRIVER_NAME) . "<br>";
-
-    // Check sellers table
-    $sellers = $db->query("SELECT id, user_id, business_name, verification_level, is_verified, is_active FROM sellers")->fetchAll();
-    echo "Sellers count: " . count($sellers) . "<br>";
-    foreach ($sellers as $s) {
-        $active = $s['is_active'] ?? 'N/A';
-        echo "  ID={$s['id']} user={$s['user_id']} name={$s['business_name']} level={$s['verification_level']} verified={$s['is_verified']} active={$active}<br>";
-    }
-
-    // Check order_items columns
-    $cols = $db->query("PRAGMA table_info(order_items)")->fetchAll(PDO::FETCH_COLUMN, 1);
-    echo "order_items columns: " . implode(', ', $cols) . "<br>";
-    echo "seller_id in order_items: " . (in_array('seller_id', $cols) ? '✅' : '❌ MISSING') . "<br>";
-    echo "store_id in order_items: " . (in_array('store_id', $cols) ? '✅' : '❌ MISSING') . "<br>";
-    echo "seller_order_status in order_items: " . (in_array('seller_order_status', $cols) ? '✅' : '❌ MISSING') . "<br>";
-
-} catch (Throwable $e) {
-    echo "❌ DB: " . $e->getMessage() . "<br>";
-}
-
-// 5. Test require chain
-echo "<h3>Require Chain</h3>";
-$requires = [
-    'core/Controller.php',
-    'core/Csrf.php',
-    'core/Session.php',
-    'models/Seller.php',
-    'models/Store.php',
-    'models/Product.php',
-    'models/Order.php',
-    'models/Rfq.php',
-    'models/Settings.php',
-    'models/Category.php',
-];
-foreach ($requires as $f) {
-    try {
-        require_once __DIR__ . '/' . $f;
-        echo "✅ $f<br>";
-    } catch (Throwable $e) {
-        echo "❌ $f: " . $e->getMessage() . "<br>";
-    }
-}
-
-// 6. Test SellerController load
-echo "<h3>SellerController</h3>";
-try {
-    require_once __DIR__ . '/controllers/SellerController.php';
-    echo "✅ SellerController loaded<br>";
-} catch (Throwable $e) {
-    echo "❌ " . $e->getMessage() . "<br>";
-}
-
-// 7. Simulate requireSeller()
-echo "<h3>requireSeller() Simulation</h3>";
 if (!$userId) {
-    echo "⚠️ NOT LOGGED IN — can't test seller lookup<br>";
-} else {
-    try {
-        $s = new Seller();
-        $seller = $s->findByUserId((int)$userId);
-        if (!$seller) {
-            echo "❌ No seller record for user_id=$userId<br>";
-        } else {
-            echo "✅ Seller found: {$seller['business_name']}<br>";
-            echo "is_active: " . ($seller['is_active'] ?? 'N/A') . "<br>";
-            echo "is_verified: {$seller['is_verified']}<br>";
-            echo "verification_level: {$seller['verification_level']}<br>";
-        }
-    } catch (Throwable $e) {
-        echo "❌ " . $e->getMessage() . "<br>";
-    }
+    echo "<h3 style='color:red'>NOT LOGGED IN — <a href='" . APP_URL . "/login'>Login first</a>, then visit this page again.</h3>";
+    exit;
 }
 
-// 8. Simulate dashboard data loading
-echo "<h3>Dashboard Data Loading</h3>";
-if ($userId) {
-    try {
-        $s = new Seller();
-        $seller = $s->findByUserId((int)$userId);
-        if ($seller) {
-            $sid = (int)$seller['id'];
-
-            echo "Testing Store::findBySellerId...<br>";
-            try {
-                $store = (new Store())->findBySellerId($sid);
-                echo "  ✅ Store: " . ($store ? $store['name'] : 'none') . "<br>";
-            } catch (Throwable $e) {
-                echo "  ❌ " . $e->getMessage() . "<br>";
-            }
-
-            echo "Testing Product::getBySeller...<br>";
-            try {
-                $products = (new Product())->getBySeller($sid, 8, 0);
-                echo "  ✅ Products: " . count($products) . "<br>";
-            } catch (Throwable $e) {
-                echo "  ❌ " . $e->getMessage() . "<br>";
-            }
-
-            echo "Testing Rfq::getBySeller...<br>";
-            try {
-                $rfqs = (new Rfq())->getBySeller($sid, 5);
-                echo "  ✅ RFQs: " . count($rfqs) . "<br>";
-            } catch (Throwable $e) {
-                echo "  ❌ " . $e->getMessage() . "<br>";
-            }
-
-            echo "Testing Order::getSellerOrders...<br>";
-            try {
-                $orders = (new Order())->getSellerOrders($sid, 5);
-                echo "  ✅ Orders: " . count($orders) . "<br>";
-            } catch (Throwable $e) {
-                echo "  ❌ " . $e->getMessage() . "<br>";
-            }
-
-            echo "Testing Order::countSellerOrders...<br>";
-            try {
-                $count = (new Order())->countSellerOrders($sid);
-                echo "  ✅ Count: $count<br>";
-            } catch (Throwable $e) {
-                echo "  ❌ " . $e->getMessage() . "<br>";
-            }
-
-            echo "Testing Order::getSellerEarnings...<br>";
-            try {
-                $earnings = (new Order())->getSellerEarnings($sid);
-                echo "  ✅ Earnings: gross={$earnings['gross_sales']} pending={$earnings['pending_payout']}<br>";
-            } catch (Throwable $e) {
-                echo "  ❌ " . $e->getMessage() . "<br>";
-            }
-        }
-    } catch (Throwable $e) {
-        echo "❌ " . $e->getMessage() . "<br>";
+// Test 1: Seller lookup
+echo "<h3>1. Seller Lookup</h3>";
+try {
+    require_once __DIR__ . '/models/Seller.php';
+    $s = new Seller();
+    $seller = $s->findByUserId((int)$userId);
+    if (!$seller) {
+        echo "❌ No seller record for user_id=$userId<br>";
+    } else {
+        echo "✅ Seller: ID={$seller['id']} name={$seller['business_name']} active={$seller['is_active']} verified={$seller['is_verified']}<br>";
     }
+} catch (Throwable $e) {
+    echo "❌ " . $e->getMessage() . " in {$e->getFile()}:{$e->getLine()}<br>";
+}
+
+// Test 2: Store lookup
+echo "<h3>2. Store Lookup</h3>";
+try {
+    require_once __DIR__ . '/models/Store.php';
+    $store = (new Store())->findBySellerId((int)$seller['id']);
+    echo "✅ Store: " . ($store ? $store['name'] : 'none (null)') . "<br>";
+} catch (Throwable $e) {
+    echo "❌ " . $e->getMessage() . " in {$e->getFile()}:{$e->getLine()}<br>";
+}
+
+// Test 3: Products
+echo "<h3>3. Products</h3>";
+try {
+    require_once __DIR__ . '/models/Product.php';
+    $products = (new Product())->getBySeller((int)$seller['id'], 8, 0);
+    echo "✅ Products: " . count($products) . "<br>";
+} catch (Throwable $e) {
+    echo "❌ " . $e->getMessage() . " in {$e->getFile()}:{$e->getLine()}<br>";
+}
+
+// Test 4: RFQs
+echo "<h3>4. RFQs</h3>";
+try {
+    require_once __DIR__ . '/models/Rfq.php';
+    $rfqs = (new Rfq())->getBySeller((int)$seller['id'], 5);
+    echo "✅ RFQs: " . count($rfqs) . "<br>";
+} catch (Throwable $e) {
+    echo "❌ " . $e->getMessage() . " in {$e->getFile()}:{$e->getLine()}<br>";
+}
+
+// Test 5: Orders
+echo "<h3>5. Orders</h3>";
+try {
+    require_once __DIR__ . '/models/Order.php';
+    $orders = (new Order())->getSellerOrders((int)$seller['id'], 5);
+    echo "✅ Orders: " . count($orders) . "<br>";
+} catch (Throwable $e) {
+    echo "❌ " . $e->getMessage() . " in {$e->getFile()}:{$e->getLine()}<br>";
+}
+
+// Test 6: Seller Earnings
+echo "<h3>6. Seller Earnings</h3>";
+try {
+    $earnings = (new Order())->getSellerEarnings((int)$seller['id']);
+    echo "✅ Gross: " . $earnings['gross_sales'] . " Pending: " . $earnings['pending_payout'] . "<br>";
+} catch (Throwable $e) {
+    echo "❌ " . $e->getMessage() . " in {$e->getFile()}:{$e->getLine()}<br>";
+}
+
+// Test 7: Seller Orders count
+echo "<h3>7. Seller Orders Count</h3>";
+try {
+    $count = (new Order())->countSellerOrders((int)$seller['id']);
+    echo "✅ Count: $count<br>";
+} catch (Throwable $e) {
+    echo "❌ " . $e->getMessage() . " in {$e->getFile()}:{$e->getLine()}<br>";
+}
+
+// Test 8: Product counts
+echo "<h3>8. Product Counts</h3>";
+try {
+    $pm = new Product();
+    echo "total: " . $pm->countBySeller((int)$seller['id']) . "<br>";
+    echo "active: " . $pm->countActiveBySeller((int)$seller['id']) . "<br>";
+    echo "pending: " . $pm->countPendingBySeller((int)$seller['id']) . "<br>";
+    echo "✅ All product counts OK<br>";
+} catch (Throwable $e) {
+    echo "❌ " . $e->getMessage() . " in {$e->getFile()}:{$e->getLine()}<br>";
+}
+
+// Test 9: Settings + commission
+echo "<h3>9. Settings</h3>";
+try {
+    require_once __DIR__ . '/models/Settings.php';
+    $settings = new Settings();
+    $commissionPct = (float)$settings->get('commission_pct', 5);
+    echo "✅ commission_pct: $commissionPct<br>";
+} catch (Throwable $e) {
+    echo "❌ " . $e->getMessage() . " in {$e->getFile()}:{$e->getLine()}<br>";
+}
+
+// Test 10: Csrf
+echo "<h3>10. CSRF</h3>";
+try {
+    $token = \Csrf::ensure();
+    echo "✅ Token: " . substr($token, 0, 10) . "...<br>";
+} catch (Throwable $e) {
+    echo "❌ " . $e->getMessage() . " in {$e->getFile()}:{$e->getLine()}<br>";
+}
+
+// Test 11: Try rendering the view
+echo "<h3>11. View Render Test</h3>";
+try {
+    // Simulate the view data
+    $stats = [
+        'total_products' => 0, 'active_products' => 0, 'pending_products' => 0,
+        'total_orders' => 0, 'gross_sales' => 0, 'commission' => 0,
+        'net_earnings' => 0, 'pending_payout' => 0, 'commission_pct' => 5,
+    ];
+    $products = [];
+    $rfqs = [];
+    $orders = [];
+    $page = 'overview';
+    ob_start();
+    extract(compact('seller', 'store', 'products', 'rfqs', 'orders', 'stats', 'page'));
+    require_once __DIR__ . '/views/layout/head.php';
+    echo "✅ head.php rendered OK<br>";
+    ob_end_clean();
+} catch (Throwable $e) {
+    ob_end_clean();
+    echo "❌ " . $e->getMessage() . " in {$e->getFile()}:{$e->getLine()}<br>";
 }
 
 echo "<hr><p>⚠️ DELETE THIS FILE AFTER USE.</p>";
