@@ -78,6 +78,19 @@ require_once __DIR__ . '/../layout/nav.php';
                 });
                 </script>
 
+                <!-- Honeypot (bots fill this) -->
+                <div style="position:absolute;left:-5000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+                    <label>Leave this blank</label>
+                    <input type="text" name="website" value="" tabindex="-1" autocomplete="off">
+                </div>
+                <input type="hidden" name="form_time" value="<?= Session::get('register_form_time', time()) ?>">
+                <!-- Math Captcha -->
+                <div class="form-group" style="background:var(--off);border:1px solid var(--light-gray);border-radius:12px;padding:14px 16px;">
+                    <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">Human check: What is <?= (int)($captcha_a ?? Session::get('register_captcha_a',3)) ?> + <?= (int)($captcha_b ?? Session::get('register_captcha_b',4)) ?> ? <span style="color:var(--red);">*</span></label>
+                    <input type="number" name="captcha_answer" placeholder="Answer" required style="width:100%;height:42px;background:#fff;border:1px solid var(--light-gray);border-radius:8px;padding:0 14px;font-family:var(--f-mono);font-size:13px;color:var(--ink);outline:none;">
+                    <div style="font-family:var(--f-mono);font-size:9px;color:var(--mid-gray);margin-top:6px;">Prevents bots. Takes 2 seconds.</div>
+                </div>
+
                 <button type="submit" class="btn-red" style="width: 100%; height: 48px; font-size: 11px; margin-top: 16px;">Create Account →</button>
                 
                 <div style="margin-top: 32px; text-align: center;">

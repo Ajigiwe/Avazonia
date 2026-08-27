@@ -41,9 +41,52 @@ class AccountController extends Controller {
         $this->view('account/login', ['error' => $error, 'success' => $success]);
     }
 
-    // REGISTER — marketplace: seller_type + buyer_type
+    // REGISTER — marketplace: seller_type + buyer_type — hardened (honeypot, time trap, math captcha, IP rate limit)
     public function register() {
+        Session::start();
+        // Generate captcha on GET
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $a=random_int(2,9); $b=random_int(2,9);
+            Session::set('register_captcha_a', $a); Session::set('register_captcha_b', $b); Session::set('register_captcha_answer', $a+$b);
+            Session::set('register_form_time', time());
+            $this->view('account/register', ['captcha_a'=>$a,'captcha_b'=>$b]);
+            return;
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Honeypot
+            if (!empty($_POST['website'] ?? '')) {
+                $this->view('account/register', ['error' => 'Bot detected.','captcha_a'=>Session::get('register_captcha_a',3),'captcha_b'=>Session::get('register_captcha_b',4)]);
+                return;
+            }
+            // Time trap: form must take >2s
+            $formTime = (int)($_POST['form_time'] ?? 0);
+            if ($formTime && (time() - $formTime < 2)) {
+                $this->view('account/register', ['error' => 'Please take a moment to fill the form.','captcha_a'=>Session::get('register_captcha_a',3),'captcha_b'=>Session::get('register_captcha_b',4)]);
+                return;
+            }
+            // Math captcha
+            $expected = Session::get('register_captcha_answer');
+            $given = (int)($_POST['captcha_answer'] ?? -1);
+            if ($expected === null || $given !== (int)$expected) {
+                $a=random_int(2,9); $b=random_int(2,9); Session::set('register_captcha_a',$a); Session::set('register_captcha_b',$b); Session::set('register_captcha_answer',$a+$b);
+                $this->view('account/register', ['error' => 'Captcha incorrect. Try again.','captcha_a'=>$a,'captcha_b'=>$b]);
+                return;
+            }
+            // IP rate limit: 5/hour
+            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+            $ip = trim(explode(',', $ip)[0]);
+            try {
+                require_once __DIR__ . '/../config/database.php';
+                $db=db(); $driver=$db->getAttribute(PDO::ATTR_DRIVER_NAME);
+                $sql = $driver==='sqlite' ? "SELECT COUNT(*) FROM system_logs WHERE action='register_attempt' AND ip_address=? AND created_at >= datetime('now','-1 hour')" : "SELECT COUNT(*) FROM system_logs WHERE action='register_attempt' AND ip_address=? AND created_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)";
+                $stmt=$db->prepare($sql); $stmt->execute([$ip]);
+                if ((int)$stmt->fetchColumn() >= 5) {
+                    $this->view('account/register', ['error' => 'Too many attempts from this IP. Try again later.','captcha_a'=>Session::get('register_captcha_a',3),'captcha_b'=>Session::get('register_captcha_b',4)]);
+                    return;
+                }
+                // Log attempt
+                $db->prepare("INSERT INTO system_logs (user_id, action, description, ip_address) VALUES (NULL, 'register_attempt', ?, ?)")->execute([trim($_POST['email'] ?? ''), $ip]);
+            } catch(Throwable $e) {}
             $email    = trim($_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';
             $fullName = trim($_POST['full_name'] ?? '');
@@ -57,12 +100,14 @@ class AccountController extends Controller {
             if ($sellerType && !in_array($sellerType, $allowedSeller)) $sellerType = null;
             if (!in_array($buyerType, ['individual','business'])) $buyerType='individual';
             if (strlen($password) < 6) {
-                $this->view('account/register', ['error' => 'Password must be at least 6 characters.']);
+                $a=Session::get('register_captcha_a',3); $b=Session::get('register_captcha_b',4);
+                $this->view('account/register', ['error' => 'Password must be at least 6 characters.','captcha_a'=>$a,'captcha_b'=>$b]);
                 return;
             }
             $userModel = new User();
             if ($userModel->findByEmail($email)) {
-                $this->view('account/register', ['error' => 'Email already registered.']);
+                $a=Session::get('register_captcha_a',3); $b=Session::get('register_captcha_b',4);
+                $this->view('account/register', ['error' => 'Email already registered.','captcha_a'=>$a,'captcha_b'=>$b]);
                 return;
             }
             $token = bin2hex(random_bytes(32));
@@ -96,12 +141,16 @@ class AccountController extends Controller {
                 Session::set('seller_type',    $user['seller_type']);
                 Session::set('buyer_type',     $user['buyer_type']);
                 Session::set('email_verified', false);
+                Session::set('register_captcha_answer', null); // clear captcha
                 $this->redirect(APP_URL . '/verify-pending');
             } else {
-                $this->view('account/register', ['error' => 'Registration failed. Please try again.']);
+                $a=Session::get('register_captcha_a',3); $b=Session::get('register_captcha_b',4);
+                $this->view('account/register', ['error' => 'Registration failed. Please try again.','captcha_a'=>$a,'captcha_b'=>$b]);
             }
         } else {
-            $this->view('account/register');
+            // GET already handled at top, but keep fallback
+            $a=Session::get('register_captcha_a',3); $b=Session::get('register_captcha_b',4);
+            $this->view('account/register', ['captcha_a'=>$a,'captcha_b'=>$b]);
         }
     }
 
