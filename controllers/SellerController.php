@@ -11,10 +11,15 @@ require_once __DIR__ . '/../models/Category.php';
 require_once __DIR__ . '/../core/Session.php';
 
 class SellerController extends Controller {
+
+    private function logError($msg) {
+        $log = __DIR__ . '/../storage/seller_error.log';
+        file_put_contents($log, date('[Y-m-d H:i:s] ') . $msg . "\n", FILE_APPEND);
+    }
+
     private function requireSeller(): array|false {
         if (!Session::get('user_id')) { $this->redirect(APP_URL.'/login'); return false; }
-        $s=new Seller();
-        $seller=$s->findByUserId((int)Session::get('user_id'));
+        $s=new Seller(); $seller=$s->findByUserId((int)Session::get('user_id'));
         if (!$seller) { $this->view('seller/apply'); return false; }
         // Check if seller is suspended
         if (isset($seller['is_active']) && !$seller['is_active']) {
@@ -49,13 +54,19 @@ class SellerController extends Controller {
     }
 
     public function dashboard() {
-        $seller=$this->requireSeller(); if (!$seller) return;
-        $store=(new Store())->findBySellerId((int)$seller['id']);
-        $products=(new Product())->getBySeller((int)$seller['id'],8,0);
-        $rfqs=(new Rfq())->getBySeller((int)$seller['id'],5);
-        $orders=(new Order())->getSellerOrders((int)$seller['id'],5);
-        $stats=$this->getSellerStats((int)$seller['id']);
-        $this->view('seller/dashboard', ['seller'=>$seller,'store'=>$store,'products'=>$products,'rfqs'=>$rfqs,'orders'=>$orders,'stats'=>$stats,'page'=>'overview']);
+        try {
+            $seller=$this->requireSeller(); if (!$seller) return;
+            $store=(new Store())->findBySellerId((int)$seller['id']);
+            $products=(new Product())->getBySeller((int)$seller['id'],8,0);
+            $rfqs=(new Rfq())->getBySeller((int)$seller['id'],5);
+            $orders=(new Order())->getSellerOrders((int)$seller['id'],5);
+            $stats=$this->getSellerStats((int)$seller['id']);
+            $this->view('seller/dashboard', ['seller'=>$seller,'store'=>$store,'products'=>$products,'rfqs'=>$rfqs,'orders'=>$orders,'stats'=>$stats,'page'=>'overview']);
+        } catch (\Throwable $e) {
+            $this->logError("dashboard() FAILED: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine() . "\n" . $e->getTraceAsString());
+            http_response_code(500);
+            echo "<h1>500 Error</h1><p>Seller dashboard failed. Check storage/seller_error.log for details.</p><p>" . htmlspecialchars($e->getMessage()) . "</p>";
+        }
     }
 
     public function products() {
@@ -171,7 +182,6 @@ class SellerController extends Controller {
             $db=db();
             $fields=['name=?','tagline=?','description=?','city=?'];
             $params=[$name,$tagline,$description,$city];
-            // Logo upload
             if (!empty($_FILES['logo']['name']) && $_FILES['logo']['error']===UPLOAD_ERR_OK) {
                 $ext=strtolower(pathinfo($_FILES['logo']['name'],PATHINFO_EXTENSION));
                 if (in_array($ext,['jpg','jpeg','png','webp'])) {
@@ -182,7 +192,6 @@ class SellerController extends Controller {
                     }
                 }
             }
-            // Banner upload
             if (!empty($_FILES['banner']['name']) && $_FILES['banner']['error']===UPLOAD_ERR_OK) {
                 $ext=strtolower(pathinfo($_FILES['banner']['name'],PATHINFO_EXTENSION));
                 if (in_array($ext,['jpg','jpeg','png','webp'])) {
@@ -201,7 +210,6 @@ class SellerController extends Controller {
                 $st=new Store();
                 $sid=$st->create((int)$seller['id'],['name'=>$name,'tagline'=>$tagline,'city'=>$city,'country_code'=>'GH']);
             }
-            // Update seller description
             $stmt=$db->prepare("UPDATE sellers SET description=? WHERE id=?");
             $stmt->execute([$description,(int)$seller['id']]);
             $this->redirect(APP_URL.'/seller/settings?success=1');
@@ -256,12 +264,11 @@ class SellerController extends Controller {
                 if (count($parts)===2) {
                     $bin=base64_decode($parts[1]);
                     if ($bin && strlen($bin) > 1000 && strlen($bin) < 5*1024*1024) {
-                        // Validate actual image via magic bytes
                         $validImage=false;
                         $header=substr($bin, 0, 8);
                         if (str_starts_with($header, "\xFF\xD8\xFF")) { $validImage=true; $ext='jpg'; }
                         elseif (str_starts_with($header, "\x89PNG")) { $validImage=true; $ext='png'; }
-                        elseif (str_starts_with($header, 'GIF8')) { $validImage=true; $ext='gif'; }
+                        elseif (str_starts_with($header, 'GIF8')) { $visibleImage=true; $ext='gif'; }
                         elseif (str_starts_with($header, 'RIFF') && substr($bin, 8, 4)==='WEBP') { $validImage=true; $ext='webp'; }
                         if ($validImage) {
                             $fn='face_'.time().'_'.bin2hex(random_bytes(3)).'.'.$ext;
