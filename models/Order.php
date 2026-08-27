@@ -271,9 +271,9 @@ class Order extends Model {
                 JOIN order_items oi ON oi.order_id=o.id AND oi.seller_id=?
                 GROUP BY o.id,o.order_ref,o.customer_name,o.customer_email,o.status,o.created_at,o.total_ghs,o.payment_method
                 ORDER BY o.created_at DESC
-                LIMIT ? OFFSET ?";
+                LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
         $stmt=$this->db->prepare($sql);
-        $stmt->execute([$sellerId, (int)$limit, (int)$offset]);
+        $stmt->execute([$sellerId]);
         return $stmt->fetchAll();
     }
 
@@ -345,9 +345,9 @@ class Order extends Model {
                 FROM order_items oi
                 JOIN orders o ON oi.order_id=o.id
                 WHERE oi.seller_id=? AND o.status NOT IN ('cancelled','refunded','failed')
-                ORDER BY o.created_at DESC LIMIT ?";
+                ORDER BY o.created_at DESC LIMIT " . (int)$limit;
         $stmt=$this->db->prepare($sql);
-        $stmt->execute([$sellerId, (int)$limit]);
+        $stmt->execute([$sellerId]);
         return $stmt->fetchAll();
     }
 }
