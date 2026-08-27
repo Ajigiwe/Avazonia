@@ -5,6 +5,8 @@ global $dbSettings;
 
 </div> <!-- End #page-wrapper -->
 
+<?php $isSellerDash = (strpos($_SERVER['REQUEST_URI'] ?? '', '/seller/') !== false); ?>
+<?php if (!$isSellerDash): ?>
 <footer class="footer">
     <div class="footer-inner-container">
         <div class="footer-top">
@@ -126,11 +128,12 @@ global $dbSettings;
 </div>
 </footer>
 
-
 <a href="https://wa.me/<?= WHATSAPP_NUMBER ?>" class="wa-btn" style="position: fixed; bottom: 30px; right: 30px; background: #25D366; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; z-index: 99; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
     <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 2c-5.508 0-9.987 4.479-9.987 9.987 0 1.763.461 3.42 1.262 4.853L2 22l5.335-1.4c1.401.762 2.993 1.194 4.696 1.194 5.508 0 9.987-4.479 9.987-9.987s-4.479-9.987-9.987-9.987zm0 18.281c-1.524 0-2.946-.406-4.175-1.112l-.299-.173-3.102.814.828-3.023-.191-.303c-.776-1.236-1.185-2.668-1.185-4.153 0-4.401 3.581-7.982 7.982-7.982 4.401 0 7.982 3.581 7.982 7.982s-3.581 7.982-7.982 7.982zm4.385-6.081c-.241-.121-1.423-.701-1.645-.781-.221-.081-.382-.121-.543.121-.161.241-.623.781-.764.942-.141.161-.281.181-.523.061-.241-.121-1.018-.375-1.938-1.196-.716-.639-1.199-1.428-1.34-1.669-.141-.241-.015-.371.106-.491.11-.108.241-.281.362-.421.121-.141.161-.241.241-.402.081-.161.041-.301-.02-.421-.06-.121-.543-1.305-.744-1.787-.195-.47-.394-.406-.543-.414-.141-.007-.301-.008-.462-.008-.161 0-.422.06-.643.301-.221.241-.844.824-.844 2.008 0 1.185.864 2.329.985 2.489.121.161 1.7 2.595 4.118 3.639.575.249 1.025.397 1.375.508.578.184 1.104.158 1.519.096.463-.069 1.423-.582 1.624-1.145.201-.563.201-1.044.141-1.145-.06-.101-.221-.161-.462-.281z"/></svg>
 </a>
+<?php endif; // end !isSellerDash ?>
 
+<?php if (!$isSellerDash): ?>
 <!-- PWA Smart Install UI -->
 <div id="pwa-install-banner" class="pwa-banner" style="display: none;">
     <div class="pwa-banner-content">
@@ -146,6 +149,7 @@ global $dbSettings;
     </div>
 </div>
 
+<?php endif; ?>
 <!-- iOS Install Guide -->
 <div id="ios-install-guide" class="ios-guide-modal" style="display: none;">
     <div class="ios-guide-content">
@@ -452,6 +456,7 @@ window.initTrioSliders = function() {
 document.addEventListener('DOMContentLoaded', window.initTrioSliders);
 document.addEventListener('visibilitychange', function() { if(!document.hidden) window.initTrioSliders(); });
 </script>
+<?php if (!$isSellerDash): ?>
 <!-- Mobile Bottom Navigation Bar -->
 <?php $cart_count = array_sum(array_column(Session::get('cart', []), 'qty')) ?: 0; ?>
 <div class="mobile-bottom-nav">
@@ -487,6 +492,7 @@ document.addEventListener('visibilitychange', function() { if(!document.hidden) 
         <span>My account</span>
     </a>
 </div>
+<?php endif; // end !isSellerDash ?>
 
 <?php require_once __DIR__ . '/../components/share-modal.php'; ?>
 </body>
