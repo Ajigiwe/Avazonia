@@ -7,6 +7,7 @@ $basePath = APP_URL . '/seller';
 <style>
 /* ── Override nav offset since site nav is hidden ── */
 #page-wrapper { padding-top: 0 !important; }
+.wa-btn { z-index: 9999 !important; }
 
 /* ── Seller Layout ── */
 .seller-layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
