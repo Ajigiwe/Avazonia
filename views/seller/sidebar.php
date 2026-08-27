@@ -5,17 +5,6 @@ $page = $page ?? 'overview';
 $basePath = APP_URL . '/seller';
 ?>
 <style>
-/* ── Hide main site nav on seller pages ── */
-body.seller-dash #main-nav,
-body.seller-dash .nav-search-pill,
-body.seller-dash .mobile-menu,
-body.seller-dash .menu-overlay,
-body.seller-dash .nav-cat-trigger,
-body.seller-dash .nav-account-trigger,
-body.seller-dash .nav-cart,
-body.seller-dash .nav-right-icons .desktop-only,
-body.seller-dash #page-wrapper { padding-top: 0 !important; }
-
 /* ── Seller Layout ── */
 .seller-layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
 .seller-sidebar {
@@ -40,7 +29,7 @@ body.seller-dash #page-wrapper { padding-top: 0 !important; }
 .seller-nav a .badge { margin-left: auto; background: rgba(255,255,255,0.15); padding: 2px 8px; border-radius: 99px; font-size: 9px; font-family: var(--f-mono); }
 .seller-nav a.active .badge { background: rgba(255,255,255,0.25); }
 .seller-sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.08); }
-.seller-sidebar-footer a { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.4); font-size: 10px; text-decoration: none; font-family: var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; transition: color 0.2s; }
+.seller-sidebar-footer a { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.4); font-size: 10px; text-decoration: none; font-family: var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; transition: color 0.2s; padding: 4px 0; }
 .seller-sidebar-footer a:hover { color: #fff; }
 .seller-content { padding: 32px 40px; background: #fff; min-height: 100vh; overflow-x: hidden; }
 .seller-stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 32px; }
@@ -92,9 +81,7 @@ body.seller-dash #page-wrapper { padding-top: 0 !important; }
 .mobile-seller-nav { display: none; }
 </style>
 
-<script>document.body.classList.add('seller-dash');</script>
-
-<!-- Mobile nav -->
+<!-- Mobile top bar: brand + back -->
 <div class="mobile-seller-nav">
     <a href="<?= $basePath ?>/dashboard" class="<?= $page==='overview'?'active':'' ?>">&#9632; Overview</a>
     <a href="<?= $basePath ?>/products" class="<?= $page==='products'?'active':'' ?>">&#9733; Products</a>
@@ -107,7 +94,9 @@ body.seller-dash #page-wrapper { padding-top: 0 !important; }
 <div class="seller-layout">
 <aside class="seller-sidebar">
     <div class="seller-sidebar-brand">
-        <div class="store-name"><?= htmlspecialchars($seller['business_name']) ?></div>
+        <a href="<?= APP_URL ?>/" style="text-decoration:none;color:#fff;">
+            <div class="store-name"><?= htmlspecialchars($seller['business_name']) ?></div>
+        </a>
         <div class="seller-type"><?= htmlspecialchars($seller['seller_type']) ?> · <?= htmlspecialchars($seller['country_code']) ?></div>
         <div style="margin-top:8px;"><?= verification_badge($seller) ?></div>
     </div>
@@ -134,10 +123,10 @@ body.seller-dash #page-wrapper { padding-top: 0 !important; }
         </a>
     </nav>
     <div class="seller-sidebar-footer">
-        <a href="<?= APP_URL ?>/" style="color:rgba(255,255,255,0.6);">&larr; Back to Store</a>
+        <a href="<?= APP_URL ?>/">&larr; Back to Store</a>
         <a href="<?= APP_URL ?>/store/<?= htmlspecialchars($store['slug'] ?? '') ?>">View Public Store &rarr;</a>
-        <a href="<?= APP_URL ?>/account" style="margin-top:4px;">My Account</a>
-        <a href="<?= APP_URL ?>/logout" style="margin-top:4px;color:var(--red);">Logout</a>
+        <a href="<?= APP_URL ?>/account">My Account</a>
+        <a href="<?= APP_URL ?>/logout" style="color:var(--red);">Logout</a>
     </div>
 </aside>
 <main class="seller-content">

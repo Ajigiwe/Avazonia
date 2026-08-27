@@ -8,6 +8,13 @@ if ($basePath && strpos($uri, $basePath) === 0) {
 }
 $is_home = ($relativePath === '/' || $relativePath === '' || $relativePath === '/index.php');
 $is_auth = (strpos($uri, '/login') !== false || strpos($uri, '/register') !== false);
+$is_seller_page = (strpos($uri, '/seller/') !== false);
+
+// Seller pages: skip site nav, just open the page wrapper
+if ($is_seller_page) {
+    echo '<div id="page-wrapper" class="page-fade">';
+    return;
+}
 
 // Check if current user is a seller
 $is_seller = false;
