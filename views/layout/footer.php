@@ -346,30 +346,39 @@ document.addEventListener('DOMContentLoaded', window.initProductView);
 (function(){
     if(window.reinitScripts){
         var _prev = window.reinitScripts;
-        window.reinitScripts = function(){ try{_prev();}catch(e){} if(window.initProductView) window.initProductView(); };
+        window.reinitScripts = function(){ try{_prev();}catch(e){} if(window.initProductView) window.initProductView(); if(window.initCardSliders) window.initCardSliders(); };
+    } else {
+        var _base = function(){};
+        window.reinitScripts = function(){ if(window.initProductView) window.initProductView(); if(window.initCardSliders) window.initCardSliders(); };
     }
 })();
 
-// Auto slider for product cards
-document.addEventListener("DOMContentLoaded", function() {
+// Auto slider for product cards — 3s precise, no stuck
+window._cardSliderIntervals = window._cardSliderIntervals || [];
+window.initCardSliders = function() {
+    // Clear previous intervals (SPA navigation may re-init)
+    window._cardSliderIntervals.forEach(id => clearInterval(id));
+    window._cardSliderIntervals = [];
     document.querySelectorAll('.card-auto-slider').forEach(slider => {
         const images = slider.querySelectorAll('img.slide-img');
         if(images.length <= 1) return;
-        let currentIndex = 0;
-        setInterval(() => {
-            // Animate out current image
-            images[currentIndex].style.opacity = '0';
-            images[currentIndex].style.transform = 'scale(1.05) translateY(8px)';
-            
-            // Increment index
-            currentIndex = (currentIndex + 1) % images.length;
-            
-            // Animate in new image
-            images[currentIndex].style.opacity = '1';
-            images[currentIndex].style.transform = 'scale(1) translateY(0)';
+        let idx = 0;
+        // Ensure first visible, rest hidden
+        images.forEach((img,i)=>{ img.style.opacity = i===0?'1':'0'; img.style.transform = i===0?'scale(1) translateY(0)':'scale(1.05) translateY(8px)'; });
+        const id = setInterval(() => {
+            if(document.hidden) return; // don't advance when tab hidden — prevents stuck/jump
+            images[idx].style.opacity = '0';
+            images[idx].style.transform = 'scale(1.05) translateY(8px)';
+            idx = (idx + 1) % images.length;
+            images[idx].style.opacity = '1';
+            images[idx].style.transform = 'scale(1) translateY(0)';
         }, 3000);
+        window._cardSliderIntervals.push(id);
+        slider.dataset.sliderId = id;
     });
-});
+};
+document.addEventListener("DOMContentLoaded", window.initCardSliders);
+document.addEventListener("visibilitychange", () => { if(!document.hidden) window.initCardSliders(); }); // re-sync after tab hidden
 </script>
 <!-- Mobile Bottom Navigation Bar -->
 <?php $cart_count = array_sum(array_column(Session::get('cart', []), 'qty')) ?: 0; ?>
