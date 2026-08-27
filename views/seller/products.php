@@ -20,8 +20,9 @@
     <div class="seller-stat-card"><div class="stat-label">Pending Review</div><div class="stat-value" style="color:#fa8c16;"><?= (int)($stats['pending_products']??0) ?></div></div>
 </div>
 
-<div style="border:2px solid var(--ink);overflow-x:auto;">
-    <table style="width:100%;border-collapse:collapse;min-width:700px;">
+<!-- Desktop Table -->
+<div class="seller-table-wrap">
+    <table>
         <thead>
             <tr style="background:var(--off);">
                 <th style="padding:14px 20px;text-align:left;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);letter-spacing:0.1em;">Product</th>
@@ -65,6 +66,30 @@
             <?php endif; ?>
         </tbody>
     </table>
+</div>
+
+<!-- Mobile Cards -->
+<div class="seller-mobile-cards">
+    <?php foreach($products as $p): ?>
+    <?php $sm=$p['status_market']??'active'; ?>
+    <div class="seller-mobile-card">
+        <img src="<?= APP_URL ?>/<?= htmlspecialchars($p['primary_image'] ?? 'public/images/no-image.png') ?>" alt="">
+        <div class="card-info">
+            <div class="card-name"><?= htmlspecialchars($p['name']) ?></div>
+            <div class="card-meta">
+                <span style="font-weight:800;">&#8373;<?= number_format($p['price_ghs'],2) ?></span>
+                <span>Stock: <?= (int)($p['stock_qty']??0) ?></span>
+                <span style="font-family:var(--f-mono);padding:1px 6px;border-radius:99px;background:<?= $sm==='active'?'#e6f7ec;color:#00a854':($sm==='pending_review'?'#fff7e6;color:#fa8c16':'#fff1f0;color:#f5222d') ?>;font-size:9px;"><?= $sm ?></span>
+            </div>
+        </div>
+        <div class="card-actions">
+            <a href="<?= APP_URL ?>/seller/products/edit/<?= (int)$p['id'] ?>" class="btn-edit">Edit</a>
+        </div>
+    </div>
+    <?php endforeach; ?>
+    <?php if(empty($products)): ?>
+    <div style="text-align:center;padding:40px;color:var(--mid-gray);font-size:12px;">No products yet. <a href="<?= APP_URL ?>/seller/new-product" style="color:var(--red);">List your first product</a></div>
+    <?php endif; ?>
 </div>
 
 <?php include __DIR__ . '/sidebar_footer.php'; ?>

@@ -41,7 +41,7 @@
     </div>
 </div>
 
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+<div class="seller-dash-grid">
     <!-- Recent Products -->
     <div style="border:2px solid var(--ink);padding:0;">
         <div style="padding:16px 20px;border-bottom:1px solid var(--light-gray);display:flex;justify-content:space-between;align-items:center;">

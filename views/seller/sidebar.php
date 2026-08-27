@@ -26,26 +26,49 @@ $basePath = APP_URL . '/seller';
 .seller-stat-card .stat-label { font-family: var(--f-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--mid-gray); margin-bottom: 6px; }
 .seller-stat-card .stat-value { font-family: var(--f-display); font-weight: 900; font-size: 28px; color: var(--ink); line-height: 1; }
 .seller-stat-card .stat-sub { font-family: var(--f-mono); font-size: 9px; color: var(--mid-gray); margin-top: 6px; }
+/* Dashboard grid */
+.seller-dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+/* Mobile card layout for tables */
+.seller-mobile-cards { display: none; }
+.seller-table-wrap { border: 2px solid var(--ink); overflow-x: auto; }
+.seller-table-wrap table { width: 100%; border-collapse: collapse; min-width: 700px; }
 @media (max-width: 900px) {
     .seller-layout { grid-template-columns: 1fr; }
     .seller-sidebar { display: none; }
     .seller-content { padding: 16px; }
-    .seller-stats-bar { grid-template-columns: repeat(2, 1fr); }
-    .mobile-seller-nav { display: flex !important; overflow-x: auto; gap: 8px; padding: 12px 16px; background: var(--ink); -webkit-overflow-scrolling: touch; }
-    .mobile-seller-nav a { white-space: nowrap; padding: 8px 14px; color: rgba(255,255,255,0.6); font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; text-decoration: none; border-radius: 99px; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+    .seller-stats-bar { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 20px; }
+    .seller-stat-card { padding: 14px; }
+    .seller-stat-card .stat-value { font-size: 22px; }
+    .mobile-seller-nav { display: flex !important; overflow-x: auto; gap: 8px; padding: 12px 16px; background: var(--ink); -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .mobile-seller-nav::-webkit-scrollbar { display: none; }
+    .mobile-seller-nav a { white-space: nowrap; padding: 8px 14px; color: rgba(255,255,255,0.6); font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; text-decoration: none; border-radius: 99px; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
     .mobile-seller-nav a.active { background: var(--red); color: #fff; border-color: var(--red); }
+    /* Hide table, show cards */
+    .seller-table-wrap { display: none; }
+    .seller-mobile-cards { display: flex; flex-direction: column; gap: 12px; }
+    .seller-mobile-card { border: 2px solid var(--ink); padding: 16px; display: flex; gap: 14px; align-items: center; }
+    .seller-mobile-card img { width: 56px; height: 56px; object-fit: cover; border: 1px solid var(--light-gray); flex-shrink: 0; }
+    .seller-mobile-card .card-info { flex: 1; min-width: 0; }
+    .seller-mobile-card .card-name { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .seller-mobile-card .card-meta { font-family: var(--f-mono); font-size: 10px; color: var(--mid-gray); margin-top: 2px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .seller-mobile-card .card-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .seller-mobile-card .card-actions a { font-family: var(--f-mono); font-size: 10px; text-decoration: none; padding: 6px 12px; border-radius: 4px; }
+    .seller-mobile-card .card-actions .btn-edit { background: var(--ink); color: #fff; }
+    .seller-mobile-card .card-actions .btn-view { border: 1px solid var(--light-gray); color: var(--mid-gray); }
+    .seller-mobile-card .card-actions .btn-remove { color: #f5222d; border: 1px solid #f5222d; }
+    .seller-dash-grid { grid-template-columns: 1fr; gap: 16px; }
 }
 .mobile-seller-nav { display: none; }
 </style>
 
 <!-- Mobile nav -->
 <div class="mobile-seller-nav">
-    <a href="<?= $basePath ?>/dashboard" class="<?= $page==='overview'?'active':'' ?>">Overview</a>
-    <a href="<?= $basePath ?>/products" class="<?= $page==='products'?'active':'' ?>">Products</a>
-    <a href="<?= $basePath ?>/orders" class="<?= $page==='orders'?'active':'' ?>">Orders</a>
-    <a href="<?= $basePath ?>/rfqs" class="<?= $page==='rfqs'?'active':'' ?>">RFQs</a>
-    <a href="<?= $basePath ?>/finances" class="<?= $page==='finances'?'active':'' ?>">Finances</a>
-    <a href="<?= $basePath ?>/settings" class="<?= $page==='settings'?'active':'' ?>">Settings</a>
+    <a href="<?= $basePath ?>/dashboard" class="<?= $page==='overview'?'active':'' ?>">&#9632; Overview</a>
+    <a href="<?= $basePath ?>/products" class="<?= $page==='products'?'active':'' ?>">&#9733; Products</a>
+    <a href="<?= $basePath ?>/orders" class="<?= $page==='orders'?'active':'' ?>">&#9776; Orders</a>
+    <a href="<?= $basePath ?>/rfqs" class="<?= $page==='rfqs'?'active':'' ?>">&#9993; RFQs</a>
+    <a href="<?= $basePath ?>/finances" class="<?= $page==='finances'?'active':'' ?>">&#9830; Finances</a>
+    <a href="<?= $basePath ?>/settings" class="<?= $page==='settings'?'active':'' ?>">&#9881; Settings</a>
 </div>
 
 <div class="seller-layout">
