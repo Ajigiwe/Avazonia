@@ -381,10 +381,10 @@ document.addEventListener('DOMContentLoaded', window.initProductView);
 (function(){
     if(window.reinitScripts){
         var _prev = window.reinitScripts;
-        window.reinitScripts = function(){ try{_prev();}catch(e){} if(window.initProductView) window.initProductView(); if(window.initCardSliders) window.initCardSliders(); };
+        window.reinitScripts = function(){ try{_prev();}catch(e){} if(window.initProductView) window.initProductView(); if(window.initCardSliders) window.initCardSliders(); if(window.initTrioSliders) window.initTrioSliders(); };
     } else {
         var _base = function(){};
-        window.reinitScripts = function(){ if(window.initProductView) window.initProductView(); if(window.initCardSliders) window.initCardSliders(); };
+        window.reinitScripts = function(){ if(window.initProductView) window.initProductView(); if(window.initCardSliders) window.initCardSliders(); if(window.initTrioSliders) window.initTrioSliders(); };
     }
 })();
 
@@ -414,6 +414,43 @@ window.initCardSliders = function() {
 };
 document.addEventListener("DOMContentLoaded", window.initCardSliders);
 document.addEventListener("visibilitychange", () => { if(!document.hidden) window.initCardSliders(); }); // re-sync after tab hidden
+
+// Trio image cycling for mobile list view (3 images side-by-side)
+window._trioSliderIntervals = window._trioSliderIntervals || [];
+window.initTrioSliders = function() {
+    // Clear previous intervals
+    window._trioSliderIntervals.forEach(id => clearInterval(id));
+    window._trioSliderIntervals = [];
+    
+    document.querySelectorAll('.card-trio').forEach(trio => {
+        var allImages;
+        try { allImages = JSON.parse(trio.dataset.images || '[]'); } catch(e) { return; }
+        if (allImages.length <= 3) return; // no cycling needed
+        
+        var slots = trio.querySelectorAll('.trio-slot');
+        if (slots.length < 3) return;
+        var offset = 0;
+        
+        var id = setInterval(function() {
+            if (document.hidden) return;
+            offset = (offset + 1) % allImages.length;
+            slots.forEach(function(slot, i) {
+                var imgIdx = (offset + i) % allImages.length;
+                var img = slot.querySelector('img');
+                if (img && img.src !== allImages[imgIdx]) {
+                    img.style.opacity = '0';
+                    setTimeout(function() {
+                        img.src = allImages[imgIdx];
+                        img.style.opacity = '1';
+                    }, 250);
+                }
+            });
+        }, 3000);
+        window._trioSliderIntervals.push(id);
+    });
+};
+document.addEventListener('DOMContentLoaded', window.initTrioSliders);
+document.addEventListener('visibilitychange', function() { if(!document.hidden) window.initTrioSliders(); });
 </script>
 <!-- Mobile Bottom Navigation Bar -->
 <?php $cart_count = array_sum(array_column(Session::get('cart', []), 'qty')) ?: 0; ?>

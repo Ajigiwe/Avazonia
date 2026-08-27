@@ -120,6 +120,17 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
             </div>
         </div>
 
+        <!-- Trio images for mobile list view (3 side-by-side) -->
+        <?php $trioImages = array_slice($processedCardImages, 0, 3); ?>
+        <div class="card-trio trio-count-<?= count($trioImages) ?>" data-images='<?= htmlspecialchars(json_encode($processedCardImages), ENT_QUOTES) ?>'>
+            <?php foreach ($trioImages as $trioIdx => $src): ?>
+            <div class="trio-slot">
+                <img src="<?= $src ?>" alt="<?= htmlspecialchars($p['name']) ?>" loading="lazy">
+            </div>
+            <?php endforeach; ?>
+            <div class="trio-price-overlay"><?= format_price($p) ?></div>
+        </div>
+
         <div class="card-body">
             <div class="card-cat"><?= strtoupper($category) ?></div>
             <div class="card-name"><?= htmlspecialchars($p['name']) ?></div>
