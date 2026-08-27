@@ -11,6 +11,9 @@ if (Session::get('user_role') !== 'admin') {
     exit;
 }
 
+// CSRF Check for POST requests
+require_once __DIR__ . '/_csrf_check.php';
+
 $sliderModel = new Slider();
 $error = '';
 $success = '';
@@ -92,6 +95,7 @@ include 'layout/header.php';
         <?php endif; ?>
 
         <form method="POST" enctype="multipart/form-data" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+            <?= Csrf::field() ?>
             <!-- Left Side: Content -->
             <div style="display: flex; flex-direction: column; gap: 24px;">
                 <div>

@@ -32,6 +32,7 @@ require_once __DIR__ . '/../layout/nav.php';
         <?php endif; ?>
 
         <form action="<?= APP_URL ?>/forgot-password" method="POST" style="display:flex;flex-direction:column;gap:24px;">
+          <?= Csrf::field() ?>
           <div class="form-group">
             <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">Email Address</label>
             <input type="email" name="email" placeholder="USER@DOMAIN.COM" required

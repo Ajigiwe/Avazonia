@@ -69,7 +69,7 @@ class Product extends Model {
         $extra = " AND (p.status_market IS NULL OR p.status_market='active') ";
         // Gate: until sellers are verified, their products are not sellable → hide unverified sellers' products
         // Use EXISTS subquery so queries without seller JOIN still work (fixes s.is_verified no such column)
-        $extra .= " AND (p.seller_id IS NULL OR EXISTS (SELECT 1 FROM sellers _vs WHERE _vs.id=p.seller_id AND _vs.is_verified=1)) ";
+        $extra .= " AND (p.seller_id IS NULL OR EXISTS (SELECT 1 FROM sellers _vs WHERE _vs.id=p.seller_id AND _vs.is_verified=1 AND _vs.is_active=1)) ";
         try {
             if (session_status()===PHP_SESSION_ACTIVE && class_exists('Session')) {
                 $bt = \Session::get('buyer_type');

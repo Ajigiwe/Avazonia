@@ -2,8 +2,14 @@
 // api/track.php
 require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../models/Order.php';
+require_once __DIR__ . '/../core/Csrf.php';
+require_once __DIR__ . '/../core/Session.php';
 
+Session::start();
 header('Content-Type: application/json');
+
+// CSRF validation
+Csrf::validateRequestOrDie();
 
 $data = json_decode(file_get_contents('php://input'), true);
 $orderRef = $data['order_ref'] ?? '';

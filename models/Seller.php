@@ -13,6 +13,19 @@ class Seller extends Model {
         $stmt->execute([$id]);
         return $stmt->fetch();
     }
+    public function findActiveByUserId(int $userId): array|false {
+        $stmt = $this->db->prepare("SELECT * FROM sellers WHERE user_id = ? AND is_active = 1 LIMIT 1");
+        $stmt->execute([$userId]);
+        return $stmt->fetch();
+    }
+    public function suspend(int $id): bool {
+        $stmt = $this->db->prepare("UPDATE sellers SET is_active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        return $stmt->execute([$id]);
+    }
+    public function reactivate(int $id): bool {
+        $stmt = $this->db->prepare("UPDATE sellers SET is_active = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        return $stmt->execute([$id]);
+    }
     public function findBySlug(string $slug): array|false {
         $stmt = $this->db->prepare("SELECT s.*, u.email, u.full_name FROM sellers s LEFT JOIN users u ON s.user_id=u.id WHERE s.slug = ? LIMIT 1");
         $stmt->execute([$slug]);

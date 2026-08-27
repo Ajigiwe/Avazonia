@@ -1,5 +1,6 @@
 <?php
 // views/layout/head.php
+if (!class_exists('Csrf')) require_once __DIR__ . '/../../core/Csrf.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -15,6 +16,7 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?= htmlspecialchars(Csrf::ensure(), ENT_QUOTES, 'UTF-8') ?>">
     <title><?= $meta_title ?? ($title ?? APP_NAME) ?></title>
     <meta name="description" content="<?= htmlspecialchars($meta_description ?? 'Avazonia - Premium Tech & Gadgets in Ghana. Discover the latest electronics with nationwide delivery.') ?>">
     <?php if (!empty($meta_keywords)): ?>

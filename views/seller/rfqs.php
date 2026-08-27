@@ -27,14 +27,17 @@
             <div style="display:flex;gap:8px;">
                 <?php if($r['status']==='pending'): ?>
                 <form method="POST" action="<?= APP_URL ?>/seller/rfqs/respond/<?= (int)$r['id'] ?>" style="display:inline;">
+                    <?= Csrf::field() ?>
                     <input type="hidden" name="rfq_action" value="quote">
                     <button type="submit" style="background:var(--ink);color:#fff;padding:8px 16px;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;border:none;cursor:pointer;">Reply</button>
                 </form>
                 <form method="POST" action="<?= APP_URL ?>/seller/rfqs/respond/<?= (int)$r['id'] ?>" style="display:inline;">
+                    <?= Csrf::field() ?>
                     <input type="hidden" name="rfq_action" value="accept">
                     <button type="submit" style="background:#00a854;color:#fff;padding:8px 16px;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;border:none;cursor:pointer;">Accept</button>
                 </form>
                 <form method="POST" action="<?= APP_URL ?>/seller/rfqs/respond/<?= (int)$r['id'] ?>" style="display:inline;">
+                    <?= Csrf::field() ?>
                     <input type="hidden" name="rfq_action" value="reject">
                     <button type="submit" style="background:#fff;color:#f5222d;border:1px solid #f5222d;padding:8px 16px;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;cursor:pointer;" onclick="return confirm('Reject this enquiry?')">Reject</button>
                 </form>

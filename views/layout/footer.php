@@ -165,6 +165,41 @@ global $dbSettings;
 </div>
 
 <script>
+// ── CSRF Token Interceptor ──────────────────────────────────────────
+// Automatically attaches the CSRF token to all fetch() POST/PUT/PATCH/DELETE requests.
+(function() {
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = csrfMeta ? csrfMeta.content : '';
+    if (!csrfToken) return;
+
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options) {
+        options = options || {};
+        const method = (options.method || 'GET').toUpperCase();
+        if (method !== 'GET' && method !== 'HEAD') {
+            // Set header
+            if (!options.headers) {
+                options.headers = {};
+            }
+            // Handle Headers object or plain object
+            if (options.headers instanceof Headers) {
+                if (!options.headers.has('X-CSRF-Token')) {
+                    options.headers.set('X-CSRF-Token', csrfToken);
+                }
+            } else {
+                if (!options.headers['X-CSRF-Token']) {
+                    options.headers['X-CSRF-Token'] = csrfToken;
+                }
+            }
+            // Also append to FormData body if applicable
+            if (options.body instanceof FormData && !options.body.has('_csrf_token')) {
+                options.body.append('_csrf_token', csrfToken);
+            }
+        }
+        return originalFetch.call(this, url, options);
+    };
+})();
+// ── End CSRF Interceptor ──────────────────────────────────────────
 let deferredPrompt;
 const installBanner = document.getElementById('pwa-install-banner');
 const installBtn = document.getElementById('pwa-install-btn');

@@ -10,6 +10,9 @@ if (Session::get('user_role') !== 'admin') {
     exit;
 }
 
+// CSRF Check for POST requests
+require_once __DIR__ . '/_csrf_check.php';
+
 $db = db();
 $error = '';
 $success = '';
@@ -263,6 +266,7 @@ include 'layout/header.php';
         <?php endif; ?>
 
         <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 24px;">
+            <?= Csrf::field() ?>
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
                 <div>
                     <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Product Name</label>
@@ -397,7 +401,7 @@ include 'layout/header.php';
                                         SKU: <?= $v['sku'] ?: 'N/A' ?> | Stock: <?= $v['stock_qty'] ?> | Price: <?= $v['price_override_ghs'] ? '₵'.number_format((float)$v['price_override_ghs'], 2) : 'Base' ?>
                                     </div>
                                 </div>
-                                <button type="button" onclick="if(confirm('Delete variant?')){ const f = document.createElement('form'); f.method='POST'; const a = document.createElement('input'); a.type='hidden'; a.name='action'; a.value='del_variant'; const i = document.createElement('input'); i.type='hidden'; i.name='variant_id'; i.value='<?= $v['id'] ?>'; f.appendChild(a); f.appendChild(i); document.body.appendChild(f); f.submit(); }" style="background: none; border: none; color: var(--red); font-size: 11px; font-family: var(--f-semi); cursor: pointer; text-transform: uppercase;">Delete</button>
+                                <button type="button" onclick="if(confirm('Delete variant?')){ const f = document.createElement('form'); f.method='POST'; const a = document.createElement('input'); a.type='hidden'; a.name='action'; a.value='del_variant'; const i = document.createElement('input'); i.type='hidden'; i.name='variant_id'; i.value='<?= $v['id'] ?>'; const c = document.createElement('input'); c.type='hidden'; c.name='_csrf_token'; c.value='<?= htmlspecialchars($_SESSION['_csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') ?>'; f.appendChild(a); f.appendChild(i); f.appendChild(c); document.body.appendChild(f); f.submit(); }" style="background: none; border: none; color: var(--red); font-size: 11px; font-family: var(--f-semi); cursor: pointer; text-transform: uppercase;">Delete</button>
                             </div>
                         <?php endforeach; ?>
                     </div>

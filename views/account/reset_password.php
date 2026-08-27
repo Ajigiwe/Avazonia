@@ -24,6 +24,7 @@ require_once __DIR__ . '/../layout/nav.php';
       <?php else: ?>
 
         <form action="<?= APP_URL ?>/reset-password?token=<?= urlencode($token) ?>" method="POST" style="display:flex;flex-direction:column;gap:24px;" id="resetForm">
+          <?= Csrf::field() ?>
           <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
 
           <div class="form-group">

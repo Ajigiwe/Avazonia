@@ -14,6 +14,9 @@ if (Session::get('user_role') !== 'admin') {
     exit;
 }
 
+// CSRF Check (for POST mark_read action)
+require_once __DIR__ . '/../_csrf_check.php';
+
 header('Content-Type: application/json');
 
 $action = $_GET['action'] ?? 'list';

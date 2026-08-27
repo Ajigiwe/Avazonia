@@ -188,6 +188,7 @@ $totalItems = array_sum(array_column($cart, 'qty'));
                     <div>
                         <div class="qty-inline">
                             <form action="<?= APP_URL ?>/cart/update" method="POST" style="display:flex; height:100%;">
+                                <?= Csrf::field() ?>
                                 <input type="hidden" name="key" value="<?= $key ?>">
                                 <button name="qty" value="<?= $item['qty'] - 1 ?>" class="qib">−</button>
                                 <span class="qin"><?= $item['qty'] ?></span>
@@ -197,6 +198,7 @@ $totalItems = array_sum(array_column($cart, 'qty'));
                     </div>
                     <div class="ci-price"><?= ($item['currency'] ?? 'GHS') === 'USD' ? '$' : '₵' ?><?= number_format(($item['currency'] ?? 'GHS') === 'USD' ? ($item['price_usd'] ?? $item['price_ghs']) * $item['qty'] : $item['price_ghs'] * $item['qty'], 2) ?></div>
                     <form action="<?= APP_URL ?>/cart/remove" method="POST">
+                        <?= Csrf::field() ?>
                         <input type="hidden" name="key" value="<?= $key ?>">
                         <button type="submit" class="ci-del" title="Remove item">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 15px; height: 15px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>

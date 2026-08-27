@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../core/Controller.php';
+if (!class_exists('Csrf')) require_once __DIR__ . '/../core/Csrf.php';
 require_once __DIR__ . '/../models/Seller.php';
 require_once __DIR__ . '/../models/Store.php';
 require_once __DIR__ . '/../models/Product.php';
@@ -12,8 +13,14 @@ require_once __DIR__ . '/../core/Session.php';
 class SellerController extends Controller {
     private function requireSeller(): array|false {
         if (!Session::get('user_id')) { $this->redirect(APP_URL.'/login'); return false; }
-        $s=new Seller(); $seller=$s->findByUserId((int)Session::get('user_id'));
+        $s=new Seller();
+        $seller=$s->findByUserId((int)Session::get('user_id'));
         if (!$seller) { $this->view('seller/apply'); return false; }
+        // Check if seller is suspended
+        if (isset($seller['is_active']) && !$seller['is_active']) {
+            $this->view('seller/apply', ['error'=>'Your seller account has been suspended. Please contact support.']);
+            return false;
+        }
         return $seller;
     }
     private function requireVerified(): array|false {
@@ -249,8 +256,17 @@ class SellerController extends Controller {
                 if (count($parts)===2) {
                     $bin=base64_decode($parts[1]);
                     if ($bin && strlen($bin) > 1000 && strlen($bin) < 5*1024*1024) {
-                        $fn='face_'.time().'_'.bin2hex(random_bytes(3)).'.jpg';
-                        if (file_put_contents($dir.$fn,$bin)) $docsArr['face_id']=$dir.$fn;
+                        // Validate actual image via magic bytes
+                        $validImage=false;
+                        $header=substr($bin, 0, 8);
+                        if (str_starts_with($header, "\xFF\xD8\xFF")) { $validImage=true; $ext='jpg'; }
+                        elseif (str_starts_with($header, "\x89PNG")) { $validImage=true; $ext='png'; }
+                        elseif (str_starts_with($header, 'GIF8')) { $validImage=true; $ext='gif'; }
+                        elseif (str_starts_with($header, 'RIFF') && substr($bin, 8, 4)==='WEBP') { $validImage=true; $ext='webp'; }
+                        if ($validImage) {
+                            $fn='face_'.time().'_'.bin2hex(random_bytes(3)).'.'.$ext;
+                            if (file_put_contents($dir.$fn,$bin)) $docsArr['face_id']=$dir.$fn;
+                        }
                     }
                 }
             }

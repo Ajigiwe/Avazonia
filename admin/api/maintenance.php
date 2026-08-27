@@ -14,6 +14,9 @@ if (Session::get('user_role') !== 'admin') {
     exit;
 }
 
+// CSRF Check
+require_once __DIR__ . '/../_csrf_check.php';
+
 header('Content-Type: application/json');
 
 $input = json_decode(file_get_contents('php://input'), true);

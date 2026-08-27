@@ -19,6 +19,7 @@ require_once __DIR__ . '/../layout/nav.php';
             <?php endif; ?>
 
             <form action="<?= APP_URL ?>/register" method="POST" style="display: flex; flex-direction: column; gap: 24px;">
+                <?= Csrf::field() ?>
                 <div class="form-group">
                     <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">Full Name</label>
                     <input type="text" name="full_name" placeholder="VADER WEST" required style="width: 100%; height: 48px; background: #fff; border: 1px solid var(--light-gray); border-radius: 12px; padding: 0 16px; font-family: var(--f-mono); font-size: 12px; color: var(--ink); outline: none;">

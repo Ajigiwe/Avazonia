@@ -3,6 +3,7 @@
   <h1 style="font-family:var(--f-display);font-weight:900;">Become a Seller on Avazonia</h1>
   <p style="color:var(--mid-gray);">Choose your seller type. Free listing at launch. Verification gives you a badge.</p>
   <form method="POST" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:14px;margin-top:18px;">
+    <?= Csrf::field() ?>
     <label style="font-family:var(--f-mono);font-size:11px;">Seller Type
       <select name="seller_type" style="width:100%;height:44px;border:1px solid var(--light-gray);padding:0 12px;margin-top:6px;">
         <option value="individual">Individual Seller (C2C)</option>

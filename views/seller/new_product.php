@@ -4,6 +4,7 @@
   <p style="color:var(--mid-gray);">Free listing · <?= htmlspecialchars($seller['seller_type']) ?> · <?= htmlspecialchars($seller['verification_level']) ?></p>
   <?php if(!empty($error)): ?><div style="background:#fee;padding:10px;border:1px solid #f99;"><?= htmlspecialchars($error) ?></div><?php endif; ?>
   <form method="POST" style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
+    <?= Csrf::field() ?>
     <input type="text" name="name" placeholder="Product name" required style="height:44px;border:1px solid var(--light-gray);padding:0 12px;">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <input type="number" step="0.01" name="price_ghs" placeholder="Price GHS" required style="height:44px;border:1px solid var(--light-gray);padding:0 12px;">

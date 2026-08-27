@@ -57,6 +57,7 @@
                             </div>
                         <?php endif; ?>
                         <form action="<?= APP_URL ?>/contact" method="POST" style="display: flex; flex-direction: column; gap: 20px;">
+                            <?= Csrf::field() ?>
                             <div>
                                 <input type="text" name="name" placeholder="Name *" required class="contact-input-white">
                             </div>

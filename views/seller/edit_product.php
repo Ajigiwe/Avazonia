@@ -9,6 +9,7 @@
 <?php if(!empty($error)): ?><div style="background:#fef3c7;border:1.5px solid #f59e0b;padding:12px 14px;font-family:var(--f-mono);font-size:11px;color:#92400e;margin-bottom:14px;">&#9888; <?= htmlspecialchars($error) ?></div><?php endif; ?>
 
 <form method="POST" action="<?= APP_URL ?>/seller/products/edit/<?= (int)$product['id'] ?>" style="max-width:700px;">
+    <?= Csrf::field() ?>
     <div style="margin-bottom:20px;">
         <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">Product Name <span style="color:var(--red);">*</span></label>
         <input type="text" name="name" value="<?= htmlspecialchars($product['name']) ?>" required style="width:100%;height:44px;background:var(--off);border:1px solid var(--light-gray);border-radius:8px;padding:0 14px;font-size:13px;color:var(--ink);box-sizing:border-box;">

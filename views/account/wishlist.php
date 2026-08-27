@@ -88,6 +88,7 @@ $user_name = Session::get('user_name') ?: 'Member';
 
                                 <div class="wish-actions">
                                     <form class="ajax-cart-form" action="<?= APP_URL ?>/api/cart-add" method="POST">
+                                        <?= Csrf::field() ?>
                                         <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
                                         <input type="hidden" name="qty" value="1">
                                         <button type="submit" style="padding: 10px 20px; background: var(--ink); color: #fff; border: none; border-radius: 100px; cursor: pointer; font-weight: 700; font-size: 12px; text-transform: uppercase;">Add to Cart</button>

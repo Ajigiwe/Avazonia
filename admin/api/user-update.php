@@ -13,6 +13,9 @@ if (Session::get('user_role') !== 'admin') {
     exit;
 }
 
+// CSRF Check
+require_once __DIR__ . '/../_csrf_check.php';
+
 $db = db();
 
 // 🟢 PROCESS REQUEST

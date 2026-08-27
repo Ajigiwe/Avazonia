@@ -2,8 +2,20 @@
 // api/newsletter-subscribe.php
 require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../core/Csrf.php';
+require_once __DIR__ . '/../core/Session.php';
 
+Session::start();
 header('Content-Type: application/json');
+
+// CSRF validation for POST requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!Csrf::validateRequest()) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'CSRF token invalid. Please refresh and try again.']);
+        exit;
+    }
+}
 
 $email = $_POST['email'] ?? $_GET['email'] ?? $_REQUEST['email'] ?? null;
 if (!$email) {

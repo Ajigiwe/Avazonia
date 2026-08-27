@@ -29,6 +29,7 @@
                             $statusColors = ['pending'=>'#fa8c16','processing'=>'#1677ff','shipped'=>'#722ed1','delivered'=>'#00a854','cancelled'=>'#f5222d'];
                             ?>
                             <form method="POST" action="<?= APP_URL ?>/seller/orders/<?= (int)$order['id'] ?>" style="display:inline;">
+                                <?= Csrf::field() ?>
                                 <input type="hidden" name="item_idx" value="<?= $idx ?>">
                                 <select name="seller_status" onchange="this.form.submit()" style="font-family:var(--f-mono);font-size:10px;padding:4px 8px;border:1px solid var(--light-gray);border-radius:4px;background:#fff;cursor:pointer;color:<?= $statusColors[$curStatus] ?? '#333' ?>;">
                                     <?php foreach($statuses as $s): ?>

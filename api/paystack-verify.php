@@ -5,10 +5,14 @@ require_once __DIR__ . '/../config/paystack.php';
 require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../core/Session.php';
 require_once __DIR__ . '/../core/Mailer.php';
+require_once __DIR__ . '/../core/Csrf.php';
 
 Session::start();
 
 header('Content-Type: application/json');
+
+// CSRF validation
+Csrf::validateRequestOrDie();
 
 $input = json_decode(file_get_contents('php://input'), true);
 $reference = $input['reference'] ?? '';

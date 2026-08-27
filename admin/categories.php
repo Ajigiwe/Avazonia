@@ -11,6 +11,9 @@ if (Session::get('user_role') !== 'admin') {
     exit;
 }
 
+// CSRF Check for POST requests
+require_once __DIR__ . '/_csrf_check.php';
+
 $catModel = new Category(db());
 $error = '';
 $success = '';
@@ -145,6 +148,7 @@ include 'layout/header.php';
                     <div style="display: flex; gap: 16px;">
                         <button onclick='editCategory(<?= json_encode($c) ?>)' style="background: none; border: none; font-size: 10px; color: var(--ink); font-weight: 700; text-transform: uppercase; cursor: pointer; padding: 0;">Edit</button>
                         <form method="POST" onsubmit="return confirm('Really delete this category?')" style="display: inline;">
+                            <?= Csrf::field() ?>
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="id" value="<?= $c['id'] ?>">
                             <button type="submit" style="background: none; border: none; font-size: 10px; color: var(--red); font-weight: 700; text-transform: uppercase; cursor: pointer; padding: 0;">Delete</button>
@@ -162,6 +166,7 @@ include 'layout/header.php';
     <div style="background: #fff; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 40px; border-radius: 8px; border: 1px solid var(--ink); box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
         <h2 id="modal-title" style="font-family: var(--f-display); font-weight: 900; font-size: 28px; text-transform: uppercase; margin-bottom: 32px; letter-spacing: -0.02em;">New Category</h2>
         <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 24px;">
+            <?= Csrf::field() ?>
             <input type="hidden" name="action" id="form-action" value="create">
             <input type="hidden" name="id" id="form-id" value="">
             

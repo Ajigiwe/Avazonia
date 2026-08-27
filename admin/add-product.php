@@ -10,6 +10,9 @@ if (Session::get('user_role') !== 'admin') {
     exit;
 }
 
+// CSRF Check for POST requests
+require_once __DIR__ . '/_csrf_check.php';
+
 $db = db();
 $error = '';
 $success = '';
@@ -205,6 +208,7 @@ include 'layout/header.php';
         <?php endif; ?>
 
         <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 24px;">
+            <?= Csrf::field() ?>
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
                 <div>
                     <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Product Name</label>

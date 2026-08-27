@@ -11,6 +11,9 @@ if (Session::get('user_role') !== 'admin') {
     exit;
 }
 
+// CSRF Check for POST requests
+require_once __DIR__ . '/_csrf_check.php';
+
 $db = db();
 $orderId = $_GET['id'] ?? null;
 if (!$orderId) {
@@ -155,6 +158,7 @@ include 'layout/header.php';
             </div>
             <div style="padding: 24px;">
                 <form method="POST" style="display: flex; flex-direction: column; gap: 10px;">
+                    <?= Csrf::field() ?>
                     <input type="hidden" name="update_status" value="1">
                     
                     <?php if($order['is_preorder'] && $order['status'] !== 'arrived'): ?>

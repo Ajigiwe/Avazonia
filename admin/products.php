@@ -11,6 +11,9 @@ if (Session::get('user_role') !== 'admin') {
     exit;
 }
 
+// CSRF Check for POST requests
+require_once __DIR__ . '/_csrf_check.php';
+
 $db = db();
 $error = '';
 $success = '';
@@ -124,12 +127,14 @@ include 'layout/header.php';
                     <td>
                         <?php if (($p['status_market']??'active')==='pending_review'): ?>
                         <form method="POST" style="display:flex;gap:6px;">
+                            <?= Csrf::field() ?>
                             <input type="hidden" name="action" value="moderate_product"><input type="hidden" name="product_id" value="<?= $p['id'] ?>">
                             <button name="moderate" value="active" style="background:#16a34a;color:#fff;border:none;padding:6px 10px;font-size:9px;font-weight:700;cursor:pointer;">APPROVE</button>
                             <button name="moderate" value="rejected" style="background:var(--red);color:#fff;border:none;padding:6px 10px;font-size:9px;font-weight:700;cursor:pointer;">REJECT</button>
                         </form>
                         <?php else: ?>
                         <form method="POST" style="display:flex;gap:6px;">
+                            <?= Csrf::field() ?>
                             <input type="hidden" name="action" value="moderate_product"><input type="hidden" name="product_id" value="<?= $p['id'] ?>">
                             <button name="moderate" value="pending_review" style="background:var(--ink);color:#fff;border:none;padding:6px 10px;font-size:9px;cursor:pointer;">→ Review</button>
                         </form>
@@ -139,6 +144,7 @@ include 'layout/header.php';
                         <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 92px;">
                             <a href="edit-product.php?id=<?= $p['id'] ?>" class="nav-link" style="font-size: 10px; color: var(--ink); text-decoration: none; font-weight: 700; text-transform: uppercase; line-height: 1;">Edit</a>
                             <form method="POST" onsubmit="return confirm(<?= json_encode($confirmMessage, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>);" style="margin: 0;">
+                                <?= Csrf::field() ?>
                                 <input type="hidden" name="action" value="delete_product">
                                 <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
                                 <button type="submit" style="display: inline-flex; align-items: center; background: none; border: none; padding: 0; color: var(--red); font-size: 10px; font-family: var(--f-semi); font-weight: 700; text-transform: uppercase; cursor: pointer; line-height: 1; white-space: nowrap;">Delete</button>

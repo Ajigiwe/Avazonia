@@ -2,13 +2,19 @@
 // api/subscribe.php
 require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../models/Newsletter.php';
+require_once __DIR__ . '/../core/Csrf.php';
+require_once __DIR__ . '/../core/Session.php';
 
+Session::start();
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
     exit;
 }
+
+// CSRF validation
+Csrf::validateRequestOrDie();
 
 $email = filter_var($_POST['email'] ?? '', FILTER_VALIDATE_EMAIL);
 

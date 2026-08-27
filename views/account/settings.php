@@ -56,6 +56,7 @@ $user_name = Session::get('user_name') ?: 'Member';
                     <?php endif; ?>
 
                     <form method="POST" style="display: flex; flex-direction: column; gap: 24px;">
+                        <?= Csrf::field() ?>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
                             <div>
                                 <label style="display: block; font-family: var(--f-semi); font-size: 11px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px; letter-spacing: 0.05em;">Full Name</label>

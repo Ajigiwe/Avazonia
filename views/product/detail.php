@@ -218,6 +218,7 @@ if (Session::get('user_id')) {
             <?php endif; ?>
 
             <form class="ajax-cart-form" action="<?= APP_URL ?>/api/cart-add" method="POST">
+                <?= Csrf::field() ?>
                 <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
                 <input type="hidden" name="variant_id" id="form-variant-id" value="<?= !empty($variants) ? $variants[0]['id'] : '' ?>">
                 
@@ -714,6 +715,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="review-form-inner">
                 <h3 style="font-family: var(--f-display); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .15em; margin-bottom: 32px; text-align: center;">Share Your Experience</h3>
                 <form action="<?= APP_URL ?>/api/review-add" method="POST" style="display: flex; flex-direction: column; gap: 24px;">
+                    <?= Csrf::field() ?>
                     <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
                     <input type="hidden" name="slug" value="<?= $product['slug'] ?>">
                     
