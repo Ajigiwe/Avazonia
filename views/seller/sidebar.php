@@ -5,13 +5,35 @@ $page = $page ?? 'overview';
 $basePath = APP_URL . '/seller';
 ?>
 <style>
-.seller-layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 72px); }
-.seller-sidebar { background: var(--ink); color: #fff; padding: 0; display: flex; flex-direction: column; position: sticky; top: 72px; height: calc(100vh - 72px); overflow-y: auto; }
+/* ── Hide main site nav on seller pages ── */
+body.seller-dash #main-nav,
+body.seller-dash .nav-search-pill,
+body.seller-dash .mobile-menu,
+body.seller-dash .menu-overlay,
+body.seller-dash .nav-cat-trigger,
+body.seller-dash .nav-account-trigger,
+body.seller-dash .nav-cart,
+body.seller-dash .nav-right-icons .desktop-only,
+body.seller-dash #page-wrapper { padding-top: 0 !important; }
+
+/* ── Seller Layout ── */
+.seller-layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+.seller-sidebar {
+    background: var(--ink); color: #fff; padding: 0;
+    display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    z-index: 900;
+}
 .seller-sidebar-brand { padding: 24px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
 .seller-sidebar-brand .store-name { font-family: var(--f-display); font-weight: 900; font-size: 14px; line-height: 1.2; }
 .seller-sidebar-brand .seller-type { font-family: var(--f-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.5); margin-top: 4px; }
 .seller-nav { padding: 12px 10px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
-.seller-nav a { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: rgba(255,255,255,0.5); font-family: var(--f-semi); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; text-decoration: none; border-radius: 6px; transition: all 0.2s; font-weight: 600; }
+.seller-nav a {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    color: rgba(255,255,255,0.5); font-family: var(--f-semi); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.08em; text-decoration: none;
+    border-radius: 6px; transition: all 0.2s; font-weight: 600;
+}
 .seller-nav a:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
 .seller-nav a.active { background: var(--red); color: #fff; font-weight: 700; box-shadow: 0 4px 16px rgba(232,0,45,0.3); }
 .seller-nav a .nav-icon { font-size: 16px; width: 20px; text-align: center; }
@@ -20,18 +42,18 @@ $basePath = APP_URL . '/seller';
 .seller-sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.08); }
 .seller-sidebar-footer a { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.4); font-size: 10px; text-decoration: none; font-family: var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; transition: color 0.2s; }
 .seller-sidebar-footer a:hover { color: #fff; }
-.seller-content { padding: 32px 40px; background: #fff; min-height: calc(100vh - 72px); overflow-x: hidden; }
+.seller-content { padding: 32px 40px; background: #fff; min-height: 100vh; overflow-x: hidden; }
 .seller-stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 32px; }
 .seller-stat-card { border: 2px solid var(--ink); padding: 20px; }
 .seller-stat-card .stat-label { font-family: var(--f-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--mid-gray); margin-bottom: 6px; }
 .seller-stat-card .stat-value { font-family: var(--f-display); font-weight: 900; font-size: 28px; color: var(--ink); line-height: 1; }
 .seller-stat-card .stat-sub { font-family: var(--f-mono); font-size: 9px; color: var(--mid-gray); margin-top: 6px; }
-/* Dashboard grid */
 .seller-dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-/* Mobile card layout for tables */
 .seller-mobile-cards { display: none; }
 .seller-table-wrap { border: 2px solid var(--ink); overflow-x: auto; }
 .seller-table-wrap table { width: 100%; border-collapse: collapse; min-width: 700px; }
+
+/* ── Mobile ── */
 @media (max-width: 900px) {
     .seller-layout { grid-template-columns: 1fr; }
     .seller-sidebar { display: none; }
@@ -39,11 +61,20 @@ $basePath = APP_URL . '/seller';
     .seller-stats-bar { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 20px; }
     .seller-stat-card { padding: 14px; }
     .seller-stat-card .stat-value { font-size: 22px; }
-    .mobile-seller-nav { display: flex !important; overflow-x: auto; gap: 8px; padding: 12px 16px; background: var(--ink); -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .mobile-seller-nav {
+        display: flex !important; overflow-x: auto; gap: 8px;
+        padding: 12px 16px; background: var(--ink);
+        -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
     .mobile-seller-nav::-webkit-scrollbar { display: none; }
-    .mobile-seller-nav a { white-space: nowrap; padding: 8px 14px; color: rgba(255,255,255,0.6); font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; text-decoration: none; border-radius: 99px; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+    .mobile-seller-nav a {
+        white-space: nowrap; padding: 8px 14px;
+        color: rgba(255,255,255,0.6); font-family: var(--f-semi); font-size: 10px;
+        text-transform: uppercase; letter-spacing: 0.08em; text-decoration: none;
+        border-radius: 99px; transition: all 0.2s;
+        border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;
+    }
     .mobile-seller-nav a.active { background: var(--red); color: #fff; border-color: var(--red); }
-    /* Hide table, show cards */
     .seller-table-wrap { display: none; }
     .seller-mobile-cards { display: flex; flex-direction: column; gap: 12px; }
     .seller-mobile-card { border: 2px solid var(--ink); padding: 16px; display: flex; gap: 14px; align-items: center; }
@@ -60,6 +91,8 @@ $basePath = APP_URL . '/seller';
 }
 .mobile-seller-nav { display: none; }
 </style>
+
+<script>document.body.classList.add('seller-dash');</script>
 
 <!-- Mobile nav -->
 <div class="mobile-seller-nav">
@@ -101,7 +134,10 @@ $basePath = APP_URL . '/seller';
         </a>
     </nav>
     <div class="seller-sidebar-footer">
+        <a href="<?= APP_URL ?>/" style="color:rgba(255,255,255,0.6);">&larr; Back to Store</a>
         <a href="<?= APP_URL ?>/store/<?= htmlspecialchars($store['slug'] ?? '') ?>">View Public Store &rarr;</a>
+        <a href="<?= APP_URL ?>/account" style="margin-top:4px;">My Account</a>
+        <a href="<?= APP_URL ?>/logout" style="margin-top:4px;color:var(--red);">Logout</a>
     </div>
 </aside>
 <main class="seller-content">
