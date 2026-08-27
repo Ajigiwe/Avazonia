@@ -5552,30 +5552,34 @@ form button[type="submit"]:hover {
         position: relative !important;
     }
     .list-view .card-img {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 8px !important;
+        display: block !important;
+        position: relative !important;
         width: 100% !important;
         height: 200px !important;
         min-height: 200px !important;
         background: #fff !important;
         align-self: stretch !important;
         padding: 0 !important;
+        overflow: hidden !important;
     }
     .list-view .slide-img {
-        position: relative !important;
-        opacity: 1 !important;
-        transform: none !important;
-        inset: auto !important;
+        position: absolute !important;
+        inset: 0 !important;
         width: 100% !important;
         height: 100% !important;
         min-height: 200px !important;
         object-fit: cover !important;
+        opacity: 0 !important;
+        transform: scale(1.05) translateY(8px) !important;
+        transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1) !important;
         display: block !important;
         border-radius: 0 !important;
     }
-    .list-view .slide-img:nth-child(n+3) { display: none !important; }
-    .list-view .slide-img:only-child { grid-column: 1 / -1 !important; }
+    .list-view .slide-img:first-child {
+        position: relative !important;
+        opacity: 1 !important;
+        transform: scale(1) translateY(0) !important;
+    }
     .list-view video { display: none !important; }
     /* Top badges like POPULAR / QUICK REPLY */
     .list-view .card-tag { font-size: 9px !important; padding: 4px 10px !important; border-radius: 999px !important; }
@@ -5627,7 +5631,7 @@ form button[type="submit"]:hover {
         padding: 0 !important;
     }
 }
-/* Mobile list view — untouched (original) */
+/* Mobile list view — slider restored (same as desktop) */
 @media (max-width: 768px) {
     .products-grid.list-view,
     .product-grid.list-view {
@@ -5644,29 +5648,32 @@ form button[type="submit"]:hover {
         min-width: 100% !important;
         max-width: 100% !important;
         flex-shrink: 0 !important;
-        aspect-ratio: auto !important;
+        aspect-ratio: 1 / 1 !important;
     }
     .list-view .card-img {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr 1fr !important;
-        gap: 2px !important;
-        height: 140px !important;
-        min-height: 140px !important;
-        background: #f8f8f8 !important;
+        display: block !important;
+        position: relative !important;
+        height: 200px !important;
+        min-height: 200px !important;
+        background: #fff !important;
+        overflow: hidden !important;
     }
     .list-view .slide-img {
-        position: relative !important;
-        opacity: 1 !important;
-        transform: none !important;
+        position: absolute !important;
+        inset: 0 !important;
         width: 100% !important;
         height: 100% !important;
-        min-height: 140px !important;
-        flex: none !important;
-        min-width: 0 !important;
+        min-height: 200px !important;
         object-fit: cover !important;
+        opacity: 0 !important;
+        transform: scale(1.05) translateY(8px) !important;
+        transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1) !important;
     }
-    .list-view .slide-img:nth-child(n+4) { display: none !important; }
-    .list-view .slide-img:only-child { grid-column: 1 / -1 !important; }
+    .list-view .slide-img:first-child {
+        position: relative !important;
+        opacity: 1 !important;
+        transform: scale(1) translateY(0) !important;
+    }
     .list-view video { display: none !important; }
     .list-view .card-body { justify-content: center !important; padding: 10px 14px !important; flex: 1 !important; }
     .view-toggle { margin-left: auto; }
