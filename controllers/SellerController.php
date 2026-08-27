@@ -293,28 +293,96 @@ class SellerController extends Controller {
     public function newProduct() {
         $seller=$this->requireVerified(); if (!$seller) return;
         $store=(new Store())->findBySellerId((int)$seller['id']);
+        // Fetch brands for the form
+        $brands=[];
+        try { require_once __DIR__.'/../config/database.php'; $db=db(); $brands=$db->query("SELECT id,name FROM brands ORDER BY name ASC")->fetchAll(); } catch(\Throwable $e) {}
+
         if ($_SERVER['REQUEST_METHOD']==='POST') {
             $name=trim($_POST['name']??'');
-            $price=(float)($_POST['price_ghs']??0);
+            $price=(float)($_POST['price']??0);
+            $comparePrice=!empty($_POST['compare_price'])?(float)$_POST['compare_price']:null;
             $catId=(int)($_POST['category_id']??0) ?: null;
-            $stock=(int)($_POST['stock_qty']??0);
+            $brandId=(int)($_POST['brand_id']??0) ?: null;
+            $stock=(int)($_POST['stock_qty']??10);
             $listing=$_POST['listing_type']??'retail';
             $allowed=['retail','wholesale','rfq','export']; if(!in_array($listing,$allowed)) $listing='retail';
-            $moq=!empty($_POST['moq'])?(int)$_POST['moq']:null;
             $cond=$_POST['condition_type']??'new';
-            if (!$name || !$price) { $this->view('seller/new_product',['seller'=>$seller,'store'=>$store,'error'=>'Name and price required','categories'=>(new Category())->getAll()]); return; }
+            $visibility=$_POST['visibility']??'public'; if(!in_array($visibility,['public','b2b_only','retail_only'])) $visibility='public';
+            $moq=!empty($_POST['moq'])?(int)$_POST['moq']:null;
+            $wholesalePrice=!empty($_POST['wholesale_price_ghs'])?(float)$_POST['wholesale_price_ghs']:null;
+            $fobPrice=!empty($_POST['fob_price_usd'])?(float)$_POST['fob_price_usd']:null;
+            $incoterms=$_POST['incoterms']??null; if($incoterms && !in_array($incoterms,['EXW','FOB','CIF'])) $incoterms=null;
+            $productionCapacity=$_POST['production_capacity']??null;
+            $oemOdm=isset($_POST['oem_odm'])?1:0;
+            $description=trim($_POST['description']??'');
+            $tags=trim($_POST['tags']??'');
+
+            // Features (one per line → JSON array)
+            $featuresRaw=$_POST['features']??'';
+            $featuresArr=array_filter(array_map('trim', explode("\n", $featuresRaw)));
+            $featuresJson=!empty($featuresArr)?json_encode(array_values($featuresArr)):null;
+
+            // Specs (Key: Value → JSON object)
+            $specsRaw=$_POST['specs']??'';
+            $specsArr=[];
+            foreach(explode("\n",$specsRaw) as $line) {
+                if(strpos($line,':')!==false) { list($k,$v)=explode(':',$line,2); $specsArr[trim($k)]=trim($v); }
+            }
+            $specsJson=!empty($specsArr)?json_encode($specsArr):null;
+
+            if (!$name || !$price) { $this->view('seller/new_product',['seller'=>$seller,'store'=>$store,'error'=>'Name and price required','categories'=>(new Category())->getAll(),'brands'=>$brands]); return; }
+
             $slug=strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/','-',$name))).'-'.time();
             require_once __DIR__.'/../config/database.php';
             $db=db();
-            $stmt=$db->prepare("INSERT INTO products (name,slug,category_id,seller_id,store_id,listing_type,condition_type,moq,price_ghs,currency,stock_qty,description,is_active,status_market) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-            $stmt->execute([$name,$slug,$catId,$seller['id'],$store['id']??null,$listing,$cond,$moq,$price,'GHS',$stock,trim($_POST['description']??''),1,'pending_review']);
-            $pid=$db->lastInsertId();
-            if (!empty($_POST['image_url'])) {
-                $db->prepare("INSERT INTO product_images (product_id,url,is_primary) VALUES (?,?,1)")->execute([$pid, trim($_POST['image_url'])]);
+
+            // Handle file uploads
+            $uploadedImages=[];
+            if(!empty($_FILES['images']['name']) && is_array($_FILES['images']['name'])) {
+                $dir='public/uploads/products/'; if(!is_dir($dir)) mkdir($dir,0777,true);
+                $allowed=['jpg','jpeg','png','webp'];
+                $count=count($_FILES['images']['name']);
+                for($i=0;$i<$count;$i++) {
+                    if($_FILES['images']['error'][$i]===UPLOAD_ERR_OK) {
+                        $ext=strtolower(pathinfo($_FILES['images']['name'][$i],PATHINFO_EXTENSION));
+                        if(in_array($ext,$allowed)) {
+                            $fn='p_'.time().'_'.bin2hex(random_bytes(4)).'_'.$i.'.'.$ext;
+                            if(move_uploaded_file($_FILES['images']['tmp_name'][$i],$dir.$fn)) $uploadedImages[]=$dir.$fn;
+                        }
+                    }
+                }
             }
+
+            // Handle video upload
+            $videoUrl=$_POST['video_url']??'';
+            if(!empty($_FILES['product_video']['name']) && $_FILES['product_video']['error']===UPLOAD_ERR_OK) {
+                $dir='public/uploads/videos/'; if(!is_dir($dir)) mkdir($dir,0777,true);
+                $allowedV=['mp4','webm'];
+                $ext=strtolower(pathinfo($_FILES['product_video']['name'],PATHINFO_EXTENSION));
+                if(in_array($ext,$allowedV)) {
+                    $fn='v_'.time().'_'.bin2hex(random_bytes(4)).'.'.$ext;
+                    if(move_uploaded_file($_FILES['product_video']['tmp_name'],$dir.$fn)) $videoUrl=$dir.$fn;
+                }
+            }
+
+            $stmt=$db->prepare("INSERT INTO products (name,slug,category_id,brand_id,seller_id,store_id,listing_type,visibility,condition_type,moq,wholesale_price_ghs,fob_price_usd,incoterms,production_capacity,oem_odm,price_ghs,compare_at_price_ghs,currency,stock_qty,description,features,specs,tags,is_active,status_market,video_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            $stmt->execute([$name,$slug,$catId,$brandId,$seller['id'],$store['id']??null,$listing,$visibility,$cond,$moq,$wholesalePrice,$fobPrice,$incoterms,$productionCapacity,$oemOdm,$price,$comparePrice,'GHS',$stock,$description,$featuresJson,$specsJson,$tags,1,'pending_review',$videoUrl]);
+            $pid=$db->lastInsertId();
+
+            // Insert uploaded images
+            foreach($uploadedImages as $idx=>$img) {
+                $isPrimary=($idx===0 && empty($_POST['image_url']))?1:0;
+                $db->prepare("INSERT INTO product_images (product_id,url,is_primary) VALUES (?,?,?)")->execute([$pid,$img,$isPrimary]);
+            }
+            // Insert image URL if provided
+            if(!empty($_POST['image_url'])) {
+                $isPrimary=empty($uploadedImages)?1:0;
+                $db->prepare("INSERT INTO product_images (product_id,url,is_primary) VALUES (?,?,?)")->execute([$pid,trim($_POST['image_url']),$isPrimary]);
+            }
+
             $this->redirect(APP_URL.'/seller/products?success=1');
             return;
         }
-        $this->view('seller/new_product',['seller'=>$seller,'store'=>$store,'categories'=>(new Category())->getAll()]);
+        $this->view('seller/new_product',['seller'=>$seller,'store'=>$store,'categories'=>(new Category())->getAll(),'brands'=>$brands]);
     }
 }
