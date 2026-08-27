@@ -5551,12 +5551,13 @@ form button[type="submit"]:hover {
     .list-view .card-img {
         display: grid !important;
         grid-template-columns: 1fr 1fr 1fr !important;
-        gap: 2px !important;
+        gap: 12px !important;
         width: 100% !important;
         height: 220px !important;
         min-height: 220px !important;
-        background: #f8f8f8 !important;
+        background: transparent !important;
         align-self: stretch !important;
+        padding: 0 2px !important;
     }
     .list-view .slide-img {
         position: relative !important;
