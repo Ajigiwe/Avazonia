@@ -87,6 +87,8 @@ $basePath = APP_URL . '/seller';
     .seller-dash-grid { grid-template-columns: 1fr; gap: 16px; }
 }
 .mobile-seller-top { display: none; }
+.seller-mobile-drawer { display: none; }
+.seller-mobile-overlay { display: none; }
 </style>
 
 <!-- Mobile top bar: hamburger + brand -->
