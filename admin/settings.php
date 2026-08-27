@@ -477,6 +477,12 @@ include 'layout/header.php';
                 <input type="number" step="0.01" id="set-usd_to_ghs_rate" value="<?= getSet('usd_to_ghs_rate', '11.35') ?>" class="field-input">
                 <span class="field-sub">Used to convert USD product prices to GHS for checkout. Update when the exchange rate changes.</span>
             </div>
+
+            <div class="field-group" style="margin-top: 24px; border-top: 1px solid var(--light-gray); padding-top: 24px;">
+                <label class="field-label">Seller Commission (%)</label>
+                <input type="number" step="0.1" min="0" max="50" id="set-commission_pct" value="<?= getSet('commission_pct', '5') ?>" class="field-input" style="max-width:200px;">
+                <span class="field-sub">Percentage deducted from each seller sale. Applied to gross sale amount when calculating seller payouts. Affects all sellers platform-wide.</span>
+            </div>
         </section>
 
         <!-- 04: LEGAL -->

@@ -43,7 +43,8 @@ class Order extends Model {
             'is_preorder' => "TINYINT(1) DEFAULT 0",
             'deposit_paid_ghs' => "DECIMAL(10,2) DEFAULT 0.00",
             'seller_id' => "INT UNSIGNED NULL",
-            'store_id' => "INT UNSIGNED NULL"
+            'store_id' => "INT UNSIGNED NULL",
+            'seller_order_status' => "ENUM('pending','processing','shipped','delivered','cancelled') DEFAULT 'pending'"
         ];
         foreach ($itemColumns as $col => $def) {
             try {
@@ -52,6 +53,13 @@ class Order extends Model {
                 // Column likely exists
             }
         }
+
+        // 4. Seed commission_pct in settings if not present
+        try {
+            require_once __DIR__ . '/Settings.php';
+            $s = new Settings();
+            if (!$s->get('commission_pct')) $s->set('commission_pct', '5');
+        } catch (Exception $e) {}
     }
 
     public function create($data, $items) {
@@ -252,5 +260,83 @@ class Order extends Model {
         $stmt = $this->db->prepare("SELECT * FROM orders WHERE order_ref = ? OR order_ref = ?");
         $stmt->execute([$ref, "#$ref"]);
         return $stmt->fetch();
+    }
+
+    public function getSellerOrders(int $sellerId, int $limit=50, int $offset=0): array {
+        $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $dateExpr = $driver==='sqlite' ? "o.created_at" : "DATE_FORMAT(o.created_at, '%d %b %Y %H:%i')";
+        $sql = "SELECT DISTINCT o.*, 
+                SUM(oi.qty) as seller_item_count,
+                SUM(oi.unit_price_ghs * oi.qty) as seller_subtotal
+                FROM orders o
+                JOIN order_items oi ON oi.order_id=o.id AND oi.seller_id=?
+                GROUP BY o.id
+                ORDER BY o.created_at DESC
+                LIMIT ? OFFSET ?";
+        $stmt=$this->db->prepare($sql);
+        $stmt->execute([$sellerId, (int)$limit, (int)$offset]);
+        return $stmt->fetchAll();
+    }
+
+    public function countSellerOrders(int $sellerId): int {
+        $sql = "SELECT COUNT(DISTINCT o.id) FROM orders o JOIN order_items oi ON oi.order_id=o.id WHERE oi.seller_id=?";
+        $stmt=$this->db->prepare($sql);
+        $stmt->execute([$sellerId]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    public function findSellerItems(int $sellerId, int $orderId): array {
+        $stmt=$this->db->prepare("SELECT oi.*, pi.url as primary_image FROM order_items oi LEFT JOIN product_images pi ON oi.product_id=pi.product_id AND pi.is_primary=1 WHERE oi.seller_id=? AND oi.order_id=?");
+        $stmt->execute([$sellerId, $orderId]);
+        return $stmt->fetchAll();
+    }
+
+    public function updateSellerItemStatus(int $orderId, int $sellerId, string $status): bool {
+        $allowed=['pending','processing','shipped','delivered','cancelled'];
+        if (!in_array($status,$allowed)) return false;
+        $stmt=$this->db->prepare("UPDATE order_items SET seller_order_status=? WHERE order_id=? AND seller_id=?");
+        return $stmt->execute([$status, $orderId, $sellerId]);
+    }
+
+    public function getSellerEarnings(int $sellerId): array {
+        $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver==='sqlite') {
+            $sql = "SELECT 
+                    COALESCE(SUM(oi.unit_price_ghs * oi.qty), 0) as gross_sales,
+                    COALESCE(SUM(CASE WHEN oi.seller_order_status IN ('delivered') THEN oi.unit_price_ghs * oi.qty ELSE 0 END), 0) as earned,
+                    COALESCE(SUM(CASE WHEN oi.seller_order_status IN ('pending','processing','shipped') THEN oi.unit_price_ghs * oi.qty ELSE 0 END), 0) as pending_payout
+                    FROM order_items oi
+                    JOIN orders o ON oi.order_id=o.id
+                    WHERE oi.seller_id=? AND o.status NOT IN ('cancelled','refunded','failed')";
+        } else {
+            $sql = "SELECT 
+                    COALESCE(SUM(oi.unit_price_ghs * oi.qty), 0) as gross_sales,
+                    COALESCE(SUM(CASE WHEN oi.seller_order_status IN ('delivered') THEN oi.unit_price_ghs * oi.qty ELSE 0 END), 0) as earned,
+                    COALESCE(SUM(CASE WHEN oi.seller_order_status IN ('pending','processing','shipped') THEN oi.unit_price_ghs * oi.qty ELSE 0 END), 0) as pending_payout
+                    FROM order_items oi
+                    JOIN orders o ON oi.order_id=o.id
+                    WHERE oi.seller_id=? AND o.status NOT IN ('cancelled','refunded','failed')";
+        }
+        $stmt=$this->db->prepare($sql);
+        $stmt->execute([$sellerId]);
+        $row=$stmt->fetch();
+        return [
+            'gross_sales' => (float)($row['gross_sales'] ?? 0),
+            'earned' => (float)($row['earned'] ?? 0),
+            'pending_payout' => (float)($row['pending_payout'] ?? 0),
+        ];
+    }
+
+    public function getSellerEarningsHistory(int $sellerId, int $limit=50): array {
+        $sql = "SELECT o.id as order_id, o.order_ref, o.created_at as order_date, o.status as order_status,
+                oi.product_name, oi.qty, oi.unit_price_ghs, oi.seller_order_status,
+                (oi.unit_price_ghs * oi.qty) as line_total
+                FROM order_items oi
+                JOIN orders o ON oi.order_id=o.id
+                WHERE oi.seller_id=? AND o.status NOT IN ('cancelled','refunded','failed')
+                ORDER BY o.created_at DESC LIMIT ?";
+        $stmt=$this->db->prepare($sql);
+        $stmt->execute([$sellerId, (int)$limit]);
+        return $stmt->fetchAll();
     }
 }

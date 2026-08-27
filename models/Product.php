@@ -409,6 +409,39 @@ class Product extends Model {
         $stmt->bindValue(':offset',(int)$offset,PDO::PARAM_INT);
         $stmt->execute(); return $stmt->fetchAll();
     }
+    public function countBySeller(int $sellerId): int {
+        $stmt=$this->db->prepare("SELECT COUNT(*) FROM products WHERE seller_id=? AND is_active=1");
+        $stmt->execute([$sellerId]); return (int)$stmt->fetchColumn();
+    }
+    public function countPendingBySeller(int $sellerId): int {
+        $stmt=$this->db->prepare("SELECT COUNT(*) FROM products WHERE seller_id=? AND is_active=1 AND status_market='pending_review'");
+        $stmt->execute([$sellerId]); return (int)$stmt->fetchColumn();
+    }
+    public function countActiveBySeller(int $sellerId): int {
+        $stmt=$this->db->prepare("SELECT COUNT(*) FROM products WHERE seller_id=? AND is_active=1 AND status_market='active'");
+        $stmt->execute([$sellerId]); return (int)$stmt->fetchColumn();
+    }
+    public function findByIdAndSeller(int $id, int $sellerId): array|false {
+        $stmt=$this->db->prepare("SELECT p.*, pi.url as primary_image FROM products p LEFT JOIN product_images pi ON p.id=pi.product_id AND pi.is_primary=1 WHERE p.id=? AND p.seller_id=?");
+        $stmt->execute([$id, $sellerId]);
+        return $stmt->fetch();
+    }
+    public function updateBySeller(int $id, int $sellerId, array $data): bool {
+        $fields=[]; $params=[];
+        $allowed=['name','category_id','price_ghs','stock_qty','description','listing_type','condition_type','moq','visibility','wholesale_price_ghs','fob_price_ghs','incoterms','capacity','oem','vehicle_origin'];
+        foreach($allowed as $f) {
+            if (array_key_exists($f,$data)) { $fields[]="$f=?"; $params[]=$data[$f]; }
+        }
+        if (empty($fields)) return false;
+        $params[]=(int)$id; $params[]=(int)$sellerId;
+        $sql="UPDATE products SET ".implode(', ',$fields)." WHERE id=? AND seller_id=?";
+        $stmt=$this->db->prepare($sql);
+        return $stmt->execute($params);
+    }
+    public function deleteBySeller(int $id, int $sellerId): bool {
+        $stmt=$this->db->prepare("UPDATE products SET is_active=0 WHERE id=? AND seller_id=?");
+        return $stmt->execute([$id, $sellerId]);
+    }
     public function getExportListings(int $limit=8): array {
         $sql="SELECT p.*, pi.url as primary_image ".$this->sellerSelect()." FROM products p LEFT JOIN product_images pi ON p.id=pi.product_id AND pi.is_primary=1 ".$this->sellerJoins()." WHERE p.vehicle_origin='international_export' AND p.is_active=1 AND (p.status_market IS NULL OR p.status_market='active') ".$this->getStockSql()." ORDER BY p.created_at DESC LIMIT :limit";
         $stmt=$this->db->prepare($sql);

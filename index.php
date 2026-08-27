@@ -71,6 +71,19 @@ $router->add('GET', '/seller/apply', 'SellerController@apply');
 $router->add('POST', '/seller/apply', 'SellerController@apply');
 $router->add('GET', '/seller/new-product', 'SellerController@newProduct');
 $router->add('POST', '/seller/new-product', 'SellerController@newProduct');
+$router->add('GET', '/seller/products', 'SellerController@products');
+$router->add('GET', '/seller/products/edit/([0-9]+)', 'SellerController@editProduct');
+$router->add('POST', '/seller/products/edit/([0-9]+)', 'SellerController@editProduct');
+$router->add('GET', '/seller/products/delete/([0-9]+)', 'SellerController@deleteProduct');
+$router->add('GET', '/seller/orders', 'SellerController@orders');
+$router->add('GET', '/seller/orders/([0-9]+)', 'SellerController@orderDetail');
+$router->add('POST', '/seller/orders/([0-9]+)', 'SellerController@orderDetail');
+$router->add('GET', '/seller/finances', 'SellerController@finances');
+$router->add('GET', '/seller/finances/csv', 'SellerController@financesCsv');
+$router->add('GET', '/seller/settings', 'SellerController@settings');
+$router->add('POST', '/seller/settings', 'SellerController@settings');
+$router->add('GET', '/seller/rfqs', 'SellerController@rfqs');
+$router->add('POST', '/seller/rfqs/respond/([0-9]+)', 'SellerController@respondRfq');
 
 // Health check (no auth, for Docker & local)
 $router->add('GET', '/health', 'HealthController@index');
