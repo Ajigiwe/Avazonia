@@ -29,10 +29,10 @@ global $dbSettings;
                 <h4 class="footer-col-label">Company</h4>
                 <a href="<?= APP_URL ?>/about" class="footer-col-link">About Us</a>
                 <a href="<?= APP_URL ?>/shop" class="footer-col-link">Shop</a>
-                <a href="<?= APP_URL ?>/contact" class="footer-col-link">Contact Us</a>
+                <a href="<?= APP_URL ?>/contact" class="footer-col-link"><?= t('footer.contact_us', 'Contact Us') ?></a>
                 <a href="<?= APP_URL ?>/track-order" class="footer-col-link">Track Your Order</a>
                 <?php if (!Session::get('user_id')): ?>
-                <a href="<?= APP_URL ?>/login" class="footer-col-link">Login / Register</a>
+                <a href="<?= APP_URL ?>/login" class="footer-col-link"><?= t('nav.login', 'Login') ?> / <?= t('nav.register', 'Register') ?></a>
                 <?php endif; ?>
             </div>
 
@@ -40,7 +40,7 @@ global $dbSettings;
             <div class="reveal rd2">
                 <h4 class="footer-col-label">Support</h4>
                 <a href="<?= APP_URL ?>/terms" class="footer-col-link">Terms & Conditions</a>
-                <a href="<?= APP_URL ?>/privacy" class="footer-col-link">Privacy Policy</a>
+                <a href="<?= APP_URL ?>/privacy" class="footer-col-link"><?= t('footer.privacy', 'Privacy Policy') ?></a>
                 <a href="<?= APP_URL ?>/payment-policy" class="footer-col-link">Payment Policy</a>
                 <a href="<?= APP_URL ?>/shipping" class="footer-col-link">Shipping & Delivery Policy</a>
             </div>

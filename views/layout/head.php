@@ -1,9 +1,11 @@
 <?php
 // views/layout/head.php
 if (!class_exists('Csrf')) require_once __DIR__ . '/../../core/Csrf.php';
+if (!class_exists('Translator')) require_once __DIR__ . '/../../core/Translator.php';
+$_t = Translator::getInstance();
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= $_t->getLang() ?>">
 <head>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-G3GWGCPMPP"></script>
@@ -55,6 +57,7 @@ if (!class_exists('Csrf')) require_once __DIR__ . '/../../core/Csrf.php';
         }
         .page-fade { transition: opacity 0.4s ease, transform 0.4s ease; }
         .page-fade.is-loading { opacity: 0; transform: translateY(10px); }
+    #lang-dropdown.show { display: block !important; }
     </style>
     <link rel="icon" type="image/png" href="<?= APP_URL ?>/public/assets/img/logo2-rounded.png?v=2">
 

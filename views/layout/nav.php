@@ -108,6 +108,25 @@ function getCatIcon($slug) {
                     </a>
                 </div>
             </div>
+                <!-- Language Switcher -->
+                <div class="lang-switcher" id="lang-switcher" style="position:relative;">
+                    <button class="nav-icon-btn desktop-only" aria-label="Language" onclick="document.getElementById('lang-dropdown').classList.toggle('show')" style="font-size:16px;line-height:1;"><?= $_t->getFlag($_t->getLang()) ?></button>
+                    <div id="lang-dropdown" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:#fff;border:1px solid var(--light-gray);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:140px;z-index:1000;overflow:hidden;">
+                        <?php foreach($_t->getOthers() as $code => $info): ?>
+                            <a href="?lang=<?= $code ?>" style="display:flex;align-items:center;gap:8px;padding:10px 14px;text-decoration:none;color:var(--ink);font-size:12px;font-family:var(--f-body);transition:background 0.15s;" onmouseover="this.style.background='var(--off)'" onmouseout="this.style.background='transparent'">
+                                <span style="font-size:16px;"><?= $info['flag'] ?></span>
+                                <span><?= $info['label'] ?></span>
+                            </a>
+                        <?php endforeach; ?>
+                        <a href="?lang=en" style="display:flex;align-items:center;gap:8px;padding:10px 14px;text-decoration:none;color:var(--ink);font-size:12px;font-family:var(--f-body);border-top:1px solid var(--light-gray);transition:background 0.15s;" onmouseover="this.style.background='var(--off)'" onmouseout="this.style.background='transparent'">
+                            <span style="font-size:16px;">🇬🇧</span>
+                            <span>English</span>
+                        </a>
+                    </div>
+                </div>
+                <script>
+                document.addEventListener('click',function(e){var d=document.getElementById('lang-dropdown'),b=document.getElementById('lang-switcher');if(d&&b&&!b.contains(e.target))d.classList.remove('show');});
+                </script>
                 <a href="<?= APP_URL ?>/sourcing" class="nav-icon-btn desktop-only" aria-label="B2B Sourcing" title="B2B Sourcing">🌍</a>
                 <a href="<?= APP_URL ?>/wishlist" class="nav-icon-btn desktop-only" aria-label="Wishlist">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
@@ -123,7 +142,7 @@ function getCatIcon($slug) {
                             <?php if ($is_seller): ?>
                             <a href="<?= APP_URL ?>/seller/dashboard" class="acc-link">🏪 Seller Dashboard</a>
                             <?php else: ?>
-                            <a href="<?= APP_URL ?>/seller/apply" class="acc-link">Become a Seller</a>
+                            <a href="<?= APP_URL ?>/seller/apply" class="acc-link"><?= t('seller.become', 'Become a Seller') ?></a>
                             <?php endif; ?>
                             <a href="<?= APP_URL ?>/sourcing" class="acc-link">🌍 B2B Sourcing</a>
                             <a href="<?= APP_URL ?>/wishlist" class="acc-link">
@@ -199,7 +218,7 @@ function getCatIcon($slug) {
             <a href="<?= APP_URL ?>/account/settings" class="mobile-link">Profile Settings</a>
             <a href="<?= APP_URL ?>/logout" class="mobile-link" style="opacity: 0.5;">Logout ↗</a>
         <?php else: ?>
-            <a href="<?= APP_URL ?>/login" class="mobile-link">Login</a>
+            <a href="<?= APP_URL ?>/login" class="mobile-link"><?= t('nav.login', 'Login') ?></a>
             <a href="<?= APP_URL ?>/register" class="mobile-link">Sign Up</a>
         <?php endif; ?>
     </nav>

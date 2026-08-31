@@ -274,7 +274,7 @@ function updateCartTotal(el) {
     
     const estTotal = subtotal + shipVal;
     
-    document.getElementById('cart-ship-val').innerText = shipVal > 0 ? '₵' + shipVal.toFixed(2) : 'FREE';
+    document.getElementById('cart-ship-val').innerText = shipVal > 0 ? '₵' + shipVal.toFixed(2) : t('cart.free', 'FREE');
     document.getElementById('cart-est-total').innerText = '₵' + estTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     
     // Update the checkout button URL to pass the selected zone
