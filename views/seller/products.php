@@ -4,7 +4,7 @@
 <div style="margin-bottom:32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
     <div>
         <h1 style="font-family:var(--f-display);font-weight:900;font-size:clamp(22px,4vw,32px);margin:0;">Products</h1>
-        <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px;">Manage your product listings</div>
+        <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px;">Manage your product listings &middot; <?= (int)($total_products ?? count($products)) ?> total</div>
     </div>
     <a href="<?= APP_URL ?>/seller/new-product" style="background:var(--red);color:#fff;padding:12px 24px;font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;text-decoration:none;letter-spacing:0.05em;">+ List Product</a>
 </div>

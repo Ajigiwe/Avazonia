@@ -69,7 +69,7 @@ include 'layout/header.php';
 ?>
 
 <div class="admin-header">
-    <h1>Products</h1>
+    <h1>Products <span style="font-family:var(--f-mono);font-size:14px;font-weight:400;color:var(--mid-gray);">(<?= $totalProducts ?>)</span></h1>
     <a href="add-product.php" class="btn-red" style="height: 44px; padding: 0 24px; font-size: 10px; display: flex; align-items: center; justify-content: center;">+ Add New Product</a>
 </div>
 
