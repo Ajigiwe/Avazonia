@@ -67,12 +67,14 @@
                     </div>
                     <div>
                         <label class="form-label">Brand</label>
-                        <select name="brand_id" class="form-select">
+                        <select name="brand_id" id="brand-select" class="form-select" onchange="toggleCustomBrand()">
                             <option value="">Select Brand</option>
                             <?php if(!empty($brands)): foreach($brands as $b): ?>
                                 <option value="<?= (int)$b['id'] ?>"><?= htmlspecialchars($b['name']) ?></option>
                             <?php endforeach; endif; ?>
+                            <option value="_new">✍️ Other (type below)</option>
                         </select>
+                        <input type="text" name="custom_brand_name" id="custom-brand-input" class="form-input" style="display:none;margin-top:8px;" placeholder="Type brand name...">
                     </div>
                 </div>
 
@@ -226,6 +228,12 @@ function toggleMarketplace() {
     var v = document.getElementById('listing_type').value;
     document.getElementById('wholesale-fields').style.display = (v === 'wholesale' || v === 'export') ? '' : 'none';
     document.getElementById('export-fields').style.display = (v === 'export') ? '' : 'none';
+}
+function toggleCustomBrand() {
+    var sel = document.getElementById('brand-select').value;
+    var inp = document.getElementById('custom-brand-input');
+    inp.style.display = sel === '_new' ? 'block' : 'none';
+    inp.required = (sel === '_new');
 }
 </script>
 

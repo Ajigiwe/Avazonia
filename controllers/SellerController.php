@@ -303,6 +303,25 @@ class SellerController extends Controller {
             $comparePrice=!empty($_POST['compare_price'])?(float)$_POST['compare_price']:null;
             $catId=(int)($_POST['category_id']??0) ?: null;
             $brandId=(int)($_POST['brand_id']??0) ?: null;
+            // Handle custom brand creation
+            if (($_POST['brand_id']??'') === '_new') {
+                $customBrandName=trim($_POST['custom_brand_name']??'');
+                if ($customBrandName) {
+                    $brandSlug=strtolower(preg_replace('/[^A-Za-z0-9-]+/','-',$customBrandName));
+                    // Check if brand already exists (case-insensitive)
+                    $existing=$db->prepare("SELECT id FROM brands WHERE LOWER(name)=LOWER(?)");
+                    $existing->execute([$customBrandName]);
+                    $existingRow=$existing->fetch();
+                    if ($existingRow) {
+                        $brandId=(int)$existingRow['id'];
+                    } else {
+                        $db->prepare("INSERT INTO brands (name, slug, is_active) VALUES (?, ?, 0)")->execute([$customBrandName, $brandSlug]);
+                        $brandId=(int)$db->lastInsertId();
+                    }
+                } else {
+                    $brandId=null;
+                }
+            }
             $stock=(int)($_POST['stock_qty']??10);
             $listing=$_POST['listing_type']??'retail';
             $allowed=['retail','wholesale','rfq','export']; if(!in_array($listing,$allowed)) $listing='retail';
