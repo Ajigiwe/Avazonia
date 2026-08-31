@@ -18,6 +18,14 @@ $db = db();
 $error = '';
 $success = '';
 
+// Pagination
+$perPage = 20;
+$page = max(1, (int)($_GET['page'] ?? 1));
+$offset = ($page - 1) * $perPage;
+$totalProducts = (int)$db->query("SELECT COUNT(*) FROM products")->fetchColumn();
+$totalPages = max(1, (int)ceil($totalProducts / $perPage));
+if ($page > $totalPages) $page = $totalPages;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_product') {
     $productId = (int)($_POST['product_id'] ?? 0);
     $productModel = new Product();
@@ -53,6 +61,7 @@ $products = $db->query("
     LEFT JOIN order_items oi ON oi.product_id = p.id
     GROUP BY p.id
     ORDER BY p.status_market='pending_review' DESC, p.created_at DESC
+    LIMIT $perPage OFFSET $offset
 ")->fetchAll();
 
 $title = "Manage Products";
@@ -163,5 +172,27 @@ include 'layout/header.php';
         </table>
     </div>
 </div>
+
+<!-- Pagination -->
+<?php if ($totalPages > 1): ?>
+<div style="display:flex;justify-content:center;align-items:center;gap:8px;padding:24px 32px;border-top:1px solid var(--light-gray);">
+    <?php if ($page > 1): ?>
+        <a href="?page=<?= $page-1 ?>" style="padding:8px 14px;font-family:var(--f-mono);font-size:11px;border:1px solid var(--light-gray);text-decoration:none;color:var(--ink);border-radius:4px;transition:all 0.2s;">&laquo; Prev</a>
+    <?php endif; ?>
+    <?php
+        $start = max(1, $page - 2);
+        $end = min($totalPages, $page + 2);
+        if ($start > 1) echo '<span style="font-family:var(--f-mono);font-size:11px;color:var(--mid-gray);">&hellip;</span>';
+        for ($i = $start; $i <= $end; $i++):
+    ?>
+        <a href="?page=<?= $i ?>" style="padding:8px 14px;font-family:var(--f-mono);font-size:11px;text-decoration:none;border-radius:4px;transition:all 0.2s;<?= $i === $page ? 'background:var(--ink);color:#fff;' : 'border:1px solid var(--light-gray);color:var(--ink);' ?>"><?= $i ?></a>
+    <?php endfor; ?>
+    <?php if ($end < $totalPages) echo '<span style="font-family:var(--f-mono);font-size:11px;color:var(--mid-gray);">&hellip;</span>'; ?>
+    <?php if ($page < $totalPages): ?>
+        <a href="?page=<?= $page+1 ?>" style="padding:8px 14px;font-family:var(--f-mono);font-size:11px;border:1px solid var(--light-gray);text-decoration:none;color:var(--ink);border-radius:4px;transition:all 0.2s;">Next &raquo;</a>
+    <?php endif; ?>
+    <span style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);margin-left:12px;">Page <?= $page ?> of <?= $totalPages ?> (<?= $totalProducts ?> products)</span>
+</div>
+<?php endif; ?>
 
 <?php include 'layout/footer.php'; ?>

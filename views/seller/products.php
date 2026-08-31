@@ -90,7 +90,27 @@
     <?php if(empty($products)): ?>
     <div style="text-align:center;padding:40px;color:var(--mid-gray);font-size:12px;">No products yet. <a href="<?= APP_URL ?>/seller/new-product" style="color:var(--red);">List your first product</a></div>
     <?php endif; ?>
+</div><!-- Pagination -->
+<?php if(!empty($total_pages) && $total_pages > 1): ?>
+<div style="display:flex;justify-content:center;align-items:center;gap:6px;padding:24px 0;flex-wrap:wrap;">
+    <?php if($page_num > 1): ?>
+        <a href="?page=<?= $page_num-1 ?>" style="padding:8px 14px;font-family:var(--f-mono);font-size:11px;border:1px solid var(--light-gray);text-decoration:none;color:var(--ink);border-radius:4px;">&laquo; Prev</a>
+    <?php endif; ?>
+    <?php
+        $start = max(1, $page_num - 2);
+        $end = min($total_pages, $page_num + 2);
+        if ($start > 1) echo '<span style="font-family:var(--f-mono);font-size:11px;color:var(--mid-gray);">&hellip;</span>';
+        for ($i = $start; $i <= $end; $i++):
+    ?>
+        <a href="?page=<?= $i ?>" style="padding:8px 14px;font-family:var(--f-mono);font-size:11px;text-decoration:none;border-radius:4px;<?= $i === $page_num ? 'background:var(--ink);color:#fff;' : 'border:1px solid var(--light-gray);color:var(--ink);' ?>"><?= $i ?></a>
+    <?php endfor; ?>
+    <?php if ($end < $total_pages) echo '<span style="font-family:var(--f-mono);font-size:11px;color:var(--mid-gray);">&hellip;</span>'; ?>
+    <?php if ($page_num < $total_pages): ?>
+        <a href="?page=<?= $page_num+1 ?>" style="padding:8px 14px;font-family:var(--f-mono);font-size:11px;border:1px solid var(--light-gray);text-decoration:none;color:var(--ink);border-radius:4px;">Next &raquo;</a>
+    <?php endif; ?>
+    <span style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);margin-left:8px;">Page <?= $page_num ?> of <?= $total_pages ?> (<?= $total_products ?>)</span>
 </div>
+<?php endif; ?>
 
 <?php include __DIR__ . '/sidebar_footer.php'; ?>
-<?php require_once __DIR__ . '/../layout/footer.php'; ?>
+<?php require_once __DIR__.'/../layout/footer.php'; ?>

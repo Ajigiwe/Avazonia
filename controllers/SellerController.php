@@ -72,10 +72,15 @@ class SellerController extends Controller {
     public function products() {
         $seller=$this->requireSeller(); if (!$seller) return;
         $store=(new Store())->findBySellerId((int)$seller['id']);
-        $products=(new Product())->getBySeller((int)$seller['id'],50,0);
+        $perPage=15; $page=max(1,(int)($_GET['page']??1));
+        $offset=($page-1)*$perPage;
+        $total=(new Product())->countBySeller((int)$seller['id']);
+        $totalPages=max(1,(int)ceil($total/$perPage));
+        if($page>$totalPages) $page=$totalPages;
+        $products=(new Product())->getBySeller((int)$seller['id'],$perPage,$offset);
         $stats=$this->getSellerStats((int)$seller['id']);
         $success=$_GET['success'] ?? null;
-        $this->view('seller/products', ['seller'=>$seller,'store'=>$store,'products'=>$products,'stats'=>$stats,'success'=>$success,'page'=>'products']);
+        $this->view('seller/products', ['seller'=>$seller,'store'=>$store,'products'=>$products,'stats'=>$stats,'success'=>$success,'page'=>'products','page_num'=>$page,'total_pages'=>$totalPages,'total_products'=>$total]);
     }
 
     public function editProduct($id) {
