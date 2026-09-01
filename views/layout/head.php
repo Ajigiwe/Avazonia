@@ -94,8 +94,8 @@ $_t = Translator::getInstance();
     .goog-te-banner-frame, .goog-te-banner-frame + div { display: none !important; }
     body { top: 0 !important; }
     #goog-gt-tt { display: none !important; }
-    /* Hide the "Translated into" banner */
-    .skiptranslate { display: none !important; }
+    /* Hide only the top notification banner, not the widget */
+    body > .skiptranslate:not(#google_translate_element) { display: none !important; }
     .gt-widget-wrap {
         display: inline-block;
         vertical-align: middle;
