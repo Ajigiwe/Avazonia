@@ -195,6 +195,14 @@ $_t = Translator::getInstance();
             pageLanguage: 'en'
         }, 'google_translate_element');
     }
+    /* Make widget draggable */
+    #google_translate_element {
+        cursor: grab;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: none;
+    }
+    #google_translate_element:active { cursor: grabbing; }
     /* Hide the Google Translate notification banner */
     function hideGTBanner() {
         document.querySelectorAll('body > div').forEach(function(d) {
@@ -249,4 +257,76 @@ function gtPick(lang) {
 }
 function gtToggle() { document.getElementById('gt-float-menu').classList.toggle('open'); }
 function gtClose() { document.getElementById('gt-float-menu').classList.remove('open'); }
+
+/* ═══ Draggable Google Translate Widget ═══ */
+(function() {
+    var el = document.getElementById('google_translate_element');
+    if (!el) return;
+    var isDragging = false, startX, startY, origX, origY;
+    var THRESHOLD = 5; // px before we consider it a drag vs a click
+    var didDrag = false;
+
+    /* Restore saved position */
+    var saved = localStorage.getItem('gt_widget_pos');
+    if (saved) {
+        try {
+            var pos = JSON.parse(saved);
+            el.style.left = pos.x + 'px';
+            el.style.top = pos.y + 'px';
+            el.style.right = 'auto';
+            el.style.bottom = 'auto';
+        } catch(e) {}
+    }
+
+    function onStart(ex, ey) {
+        isDragging = true;
+        didDrag = false;
+        startX = ex;
+        startY = ey;
+        origX = el.offsetLeft;
+        origY = el.offsetTop;
+        el.style.transition = 'none';
+    }
+    function onMove(ex, ey) {
+        if (!isDragging) return;
+        var dx = ex - startX;
+        var dy = ey - startY;
+        if (Math.abs(dx) > THRESHOLD || Math.abs(dy) > THRESHOLD) didDrag = true;
+        if (!didDrag) return;
+        var newX = Math.max(0, Math.min(window.innerWidth - el.offsetWidth, origX + dx));
+        var newY = Math.max(0, Math.min(window.innerHeight - el.offsetHeight, origY + dy));
+        el.style.left = newX + 'px';
+        el.style.top = newY + 'px';
+        el.style.right = 'auto';
+        el.style.bottom = 'auto';
+    }
+    function onEnd() {
+        if (isDragging && didDrag) {
+            localStorage.setItem('gt_widget_pos', JSON.stringify({ x: el.offsetLeft, y: el.offsetTop }));
+        }
+        isDragging = false;
+    }
+
+    /* Mouse events */
+    el.addEventListener('mousedown', function(e) {
+        if (e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION') return;
+        e.preventDefault();
+        onStart(e.clientX, e.clientY);
+    });
+    document.addEventListener('mousemove', function(e) { onMove(e.clientX, e.clientY); });
+    document.addEventListener('mouseup', onEnd);
+
+    /* Touch events */
+    el.addEventListener('touchstart', function(e) {
+        if (e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION') return;
+        var t = e.touches[0];
+        onStart(t.clientX, t.clientY);
+    }, { passive: true });
+    document.addEventListener('touchmove', function(e) {
+        if (!isDragging) return;
+        var t = e.touches[0];
+        onMove(t.clientX, t.clientY);
+    }, { passive: true });
+    document.addEventListener('touchend', onEnd);
+})();
 </script>
