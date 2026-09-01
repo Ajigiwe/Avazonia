@@ -10,12 +10,12 @@ require_once __DIR__ . '/../layout/nav.php';
 <section style="background:var(--ink);color:#fff;padding:18px 0;">
   <div class="container" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
     <div>
-      <div style="font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;opacity:.7;">AVAZONIA — AFRICA'S MULTI-VENDOR MARKETPLACE</div>
-      <div style="font-family:var(--f-display);font-weight:900;font-size:18px;letter-spacing:-.02em;">Buy. Sell. Source. Trade.</div>
+      <div style="font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;opacity:.7;"><?= t('home.hero_sub', "AVAZONIA — AFRICA'S MULTI-VENDOR MARKETPLACE") ?></div>
+      <div style="font-family:var(--f-display);font-weight:900;font-size:18px;letter-spacing:-.02em;"><?= t('home.hero_tagline', 'Buy. Sell. Source. Trade.') ?></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <a href="<?= APP_URL ?>/shop" style="background:var(--red);color:#fff;padding:10px 16px;font-family:var(--f-semi);font-weight:800;font-size:11px;text-transform:uppercase;text-decoration:none;">🛒 Buy</a>
-      <a href="<?= $is_seller ? APP_URL.'/seller/dashboard' : APP_URL.'/seller/apply' ?>" style="background:#fff;color:var(--ink);padding:10px 16px;font-family:var(--f-semi);font-weight:800;font-size:11px;text-transform:uppercase;text-decoration:none;">🏪 <?= $is_seller ? 'Dashboard' : 'Sell' ?></a>
+      <a href="<?= $is_seller ? APP_URL.'/seller/dashboard' : APP_URL.'/seller/apply' ?>" style="background:#fff;color:var(--ink);padding:10px 16px;font-family:var(--f-semi);font-weight:800;font-size:11px;text-transform:uppercase;text-decoration:none;">🏪 <?= $is_seller ? t('seller.dashboard', 'Dashboard') : t('home.hero_sell', 'Sell') ?></a>
       <a href="<?= APP_URL ?>/sourcing" style="border:2px solid #fff;color:#fff;padding:8px 14px;font-family:var(--f-semi);font-weight:800;font-size:11px;text-transform:uppercase;text-decoration:none;">🌍 Source</a>
     </div>
   </div>
@@ -127,7 +127,7 @@ require_once __DIR__ . '/../layout/nav.php';
                     Pre-Order Droplist
                 </h2>
             </div>
-            <a href="<?= APP_URL ?>/shop" style="font-family: var(--f-semi); font-size: 12px; text-transform: uppercase; color: var(--mid-gray); font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--light-gray); padding-bottom: 4px;">See all pre-orders →</a>
+            <a href="<?= APP_URL ?>/shop" style="font-family: var(--f-semi); font-size: 12px; text-transform: uppercase; color: var(--mid-gray); font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--light-gray); padding-bottom: 4px;"><?= t('home.see_all_preorders', 'See all pre-orders') ?> →</a>
         </div>
 
         <div class="product-grid">
@@ -144,8 +144,8 @@ require_once __DIR__ . '/../layout/nav.php';
     <div class="container">
         <div class="sec-head reveal">
         <div class="sec-title-box">
-            <div class="sec-over">Hand-picked</div>
-            <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.85;">Bestsellers</h2>
+            <div class="sec-over"<?= t('home.bestsellers_over', 'Hand-picked') ?></div>
+            <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.85;"<?= t('home.bestsellers_title', 'Bestsellers') ?></h2>
         </div>
             <div style="display: flex; align-items: center; gap: 24px;">
                 <div class="slider-nav">
@@ -156,7 +156,7 @@ require_once __DIR__ . '/../layout/nav.php';
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </button>
                 </div>
-                <a href="<?= APP_URL ?>/shop" class="btn-ghost">Full catalogue <span class="arr">→</span></a>
+                <a href="<?= APP_URL ?>/shop" class="btn-ghost"<?= t('home.full_catalogue', 'Full catalogue') ?> <span class="arr">→</span></a>
             </div>
         </div>
 
@@ -181,8 +181,10 @@ require_once __DIR__ . '/../layout/nav.php';
 <section class="products-sec" style="background:var(--off);border-top:2px solid var(--ink);border-bottom:1px solid var(--light-gray);padding:40px 0;">
   <div class="container">
     <div class="sec-head reveal">
-      <div class="sec-title-box"><div class="sec-over" style="color:var(--red);font-size:10px;font-weight:800;letter-spacing:.15em;margin-bottom:8px;">B2B · WHOLESALE</div><h2 class="hero-heading" style="color:var(--ink);margin-bottom:0;line-height:.9;">Wholesale Deals</h2></div>
-      <a href="<?= APP_URL ?>/sourcing" style="font-family:var(--f-semi);font-size:12px;text-transform:uppercase;color:var(--mid-gray);font-weight:700;text-decoration:none;border-bottom:1px solid var(--light-gray);padding-bottom:4px;">Go to Sourcing →</a>
+      <div class="sec-title-box"><div class="sec-over" style="color:var(--red);font-size:10px;font-weight:800;letter-spacing:.15em;margin-bottom:8px;"><?= t('home.wholesale_over', 'B2B · WHOLESALE') ?></div><h2 class="hero-heading" style="color:var(--ink);margin-bottom:0;line-height:.9;">
+                <?= t('home.wholesale_title', 'Wholesale Deals') ?>
+            </h2></div>
+      <a href="<?= APP_URL ?>/sourcing" style="font-family:var(--f-semi);font-size:12px;text-transform:uppercase;color:var(--mid-gray);font-weight:700;text-decoration:none;border-bottom:1px solid var(--light-gray);padding-bottom:4px;"><?= t('home.go_sourcing', 'Go to Sourcing') ?> →</a>
     </div>
     <div class="product-grid">
       <?php foreach($wholesaleDeals as $p): ?><?php require __DIR__ . '/../components/product-card.php'; ?><?php endforeach; ?>
@@ -196,7 +198,7 @@ require_once __DIR__ . '/../layout/nav.php';
   <div class="container">
     <?php if (!empty($featuredBusinesses)): ?>
     <div style="margin-bottom:28px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="width:20px;height:2px;background:var(--red);display:inline-block;"></span><span style="font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;color:var(--red);font-weight:800;text-transform:uppercase;">Featured Businesses</span></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="width:20px;height:2px;background:var(--red);display:inline-block;"></span><span style="font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;color:var(--red);font-weight:800;text-transform:uppercase;"<?= t('home.featured_biz', 'Featured Businesses') ?></span></div>
       <div style="position:relative;">
         <div id="featured-biz-slider" style="overflow-x:auto;scroll-snap-type:x mandatory;display:flex;gap:12px;padding-bottom:4px;scrollbar-width:none;-ms-overflow-style:none;scroll-behavior:smooth;">
           <style>#featured-biz-slider::-webkit-scrollbar{display:none;}</style>
@@ -216,7 +218,7 @@ require_once __DIR__ . '/../layout/nav.php';
     <?php endif; ?>
     <?php if (!empty($intlSuppliers)): ?>
     <div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="width:20px;height:2px;background:var(--red);display:inline-block;"></span><span style="font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;color:var(--red);font-weight:800;text-transform:uppercase;">International Suppliers</span></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="width:20px;height:2px;background:var(--red);display:inline-block;"></span><span style="font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;color:var(--red);font-weight:800;text-transform:uppercase;"<?= t('home.intl_suppliers', 'International Suppliers') ?></span></div>
       <div style="position:relative;">
         <div id="intl-supplier-slider" style="overflow-x:auto;scroll-snap-type:x mandatory;display:flex;gap:12px;padding-bottom:4px;scrollbar-width:none;-ms-overflow-style:none;scroll-behavior:smooth;">
           <style>#intl-supplier-slider::-webkit-scrollbar{display:none;}</style>
@@ -236,7 +238,7 @@ require_once __DIR__ . '/../layout/nav.php';
     <?php endif; ?>
     <?php if (!empty($exportCars)): ?>
     <div style="margin-top:18px;">
-      <div style="font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;color:var(--mid-gray);">INTERNATIONAL VEHICLE SOURCING — FOB / CIF</div>
+      <div style="font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;color:var(--mid-gray);"><?= t('home.vehicle_sourcing', 'INTERNATIONAL VEHICLE SOURCING') ?> — FOB / CIF</div>
       <div class="product-grid" style="margin-top:10px;">
         <?php foreach($exportCars as $p): ?><?php require __DIR__ . '/../components/product-card.php'; ?><?php endforeach; ?>
       </div>
@@ -254,7 +256,7 @@ require_once __DIR__ . '/../layout/nav.php';
                 <div class="sec-head reveal">
                     <div class="sec-title-box">
                         <div class="sec-over" style="color: var(--red); font-size: 10px; font-weight: 800; letter-spacing: 0.15em; margin-bottom: 8px;">
-                            EXPLORE CATEGORY
+                            <?= t('home.explore_category', 'EXPLORE CATEGORY') ?>
                         </div>
                         <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.85;">
                             <?= htmlspecialchars(strtoupper($showcase['category']['name'])) ?>
