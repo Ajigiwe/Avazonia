@@ -161,9 +161,9 @@ $_t = Translator::getInstance();
         .gt-more a { color: var(--red, #E5001A); text-decoration: none; font-weight: 600; }
         .gt-more a:hover { text-decoration: underline; }
         @media (max-width: 768px) {
-            .gt-float { bottom: 72px; left: 16px; }
-            .gt-float-btn { width: 46px; height: 46px; }
-            .gt-float-menu { min-width: 180px; }
+            .gt-float { display: none !important; }
+            .gt-widget-wrap { display: block !important; position: fixed; bottom: 80px; left: 16px; z-index: 99999; background: #fff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); padding: 6px; }
+            .gt-widget-wrap .goog-te-gadget .goog-te-combo { height: 40px; font-size: 14px !important; padding: 4px 28px 4px 10px; }
         }
     </style>
     <link rel="icon" type="image/png" href="<?= APP_URL ?>/public/assets/img/logo2-rounded.png?v=2">
