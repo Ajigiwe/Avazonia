@@ -94,6 +94,13 @@ $_t = Translator::getInstance();
     .goog-te-banner-frame { display: none !important; }
     body { top: 0 !important; }
     #goog-gt-tt { display: none !important; }
+    .gt-widget-wrap {
+        display: inline-block;
+        vertical-align: middle;
+        max-width: 120px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
     #google_translate_element {
         display: inline-block;
         vertical-align: middle;
@@ -105,10 +112,11 @@ $_t = Translator::getInstance();
     }
     #google_translate_element .goog-te-gadget .goog-te-combo {
         height: 30px;
-        padding: 2px 24px 2px 6px;
+        max-width: 110px;
+        padding: 2px 22px 2px 6px;
         border: 1px solid var(--light-gray, #e5e7eb);
         border-radius: 6px;
-        font-size: 12px;
+        font-size: 11px;
         font-family: var(--f-body, sans-serif);
         background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E") no-repeat right 8px center;
         -webkit-appearance: none;
