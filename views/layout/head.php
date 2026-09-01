@@ -46,37 +46,43 @@ $_t = Translator::getInstance();
     <style>
         :root {
             --red: <?= PRIMARY_COLOR ?>;
-            --red-deep: <?= PRIMARY_COLOR ?>; /* Simple fallback for deep red */
+            --red-deep: <?= PRIMARY_COLOR ?>;
             --nav-offset: 72px;
         }
-        /* Global nav offset — prevents fixed nav from covering page content on every page */
         #page-wrapper { padding-top: var(--nav-offset); }
         @media (max-width: 768px) { :root { --nav-offset: 64px; } }
-        @media (min-width: 1024px) {
-            .nav-cat-rail { display: flex; }
-        }
+        @media (min-width: 1024px) { .nav-cat-rail { display: flex; } }
         .page-fade { transition: opacity 0.4s ease, transform 0.4s ease; }
         .page-fade.is-loading { opacity: 0; transform: translateY(10px); }
 
-        /* ═══════════════════════════════════════
-           Google Translate — hide all native chrome
-           ═══════════════════════════════════════ */
+        /* ═══ Google Translate — hide all native chrome ═══ */
         .goog-te-banner-frame,
         .goog-te-banner-frame + div,
         .skiptranslate,
-        #goog-gt-tt,
-        #google_translate_element { display: none !important; }
+        #goog-gt-tt { display: none !important; }
         body { top: 0 !important; }
+        /* Hide the hidden init div */
+        #google_translate_element { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+        /* Hide the Google branding text next to combo */
+        #google_translate_element .goog-te-gadget span:not(.goog-te-combo) { display: none !important; }
+        /* Style the combo to match Avazonia */
+        #google_translate_element .goog-te-gadget { font-size: 0 !important; line-height: 1; margin: 0; padding: 0; }
+        #google_translate_element .goog-te-gadget .goog-te-combo {
+            height: 36px; padding: 4px 28px 4px 10px;
+            border: 1px solid #e5e7eb; border-radius: 8px;
+            font-size: 13px; font-family: var(--f-body, sans-serif);
+            background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E") no-repeat right 8px center;
+            -webkit-appearance: none; -moz-appearance: none; appearance: none;
+            cursor: pointer; outline: none; color: #1a1a1a;
+        }
+        #google_translate_element .goog-te-gadget .goog-te-combo:hover { border-color: var(--red, #E5001A); }
 
-        /* ═══════════════════════════════════════
-           Floating Language Icon
-           ═══════════════════════════════════════ */
+        /* ═══ Floating Language Icon ═══ */
         .gt-float {
             position: fixed;
             bottom: 90px;
             left: 20px;
             z-index: 99999;
-            font-family: var(--f-body, -apple-system, sans-serif);
         }
         .gt-float-btn {
             width: 52px;
@@ -97,13 +103,8 @@ $_t = Translator::getInstance();
             box-shadow: 0 6px 24px rgba(0,0,0,0.35);
         }
         .gt-float-btn svg {
-            width: 24px;
-            height: 24px;
-            fill: none;
-            stroke: #fff;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
+            width: 24px; height: 24px; fill: none; stroke: #fff;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
         }
         .gt-float-menu {
             position: absolute;
@@ -112,14 +113,14 @@ $_t = Translator::getInstance();
             background: #fff;
             border-radius: 14px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-            min-width: 180px;
+            min-width: 200px;
             padding: 8px 0;
             display: none;
             overflow: hidden;
         }
         .gt-float-menu.open { display: block; }
         .gt-float-menu-title {
-            padding: 8px 16px 4px;
+            padding: 8px 16px 6px;
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
@@ -143,17 +144,23 @@ $_t = Translator::getInstance();
             color: #1a1a1a;
         }
         .gt-opt:hover { background: #f5f5f5; }
-        .gt-opt.on {
-            background: rgba(229,0,26,0.06);
-            color: var(--red, #E5001A);
-            font-weight: 600;
-        }
+        .gt-opt.on { background: rgba(229,0,26,0.06); color: var(--red, #E5001A); font-weight: 600; }
         .gt-opt .gt-fl { font-size: 20px; line-height: 1; }
         .gt-opt .gt-nm { flex: 1; }
+        .gt-more {
+            padding: 8px 16px;
+            font-size: 12px;
+            color: #999;
+            border-top: 1px solid #f0f0f0;
+            margin-top: 4px;
+            text-align: center;
+        }
+        .gt-more a { color: var(--red, #E5001A); text-decoration: none; font-weight: 600; }
+        .gt-more a:hover { text-decoration: underline; }
         @media (max-width: 768px) {
             .gt-float { bottom: 72px; left: 16px; }
             .gt-float-btn { width: 46px; height: 46px; }
-            .gt-float-menu { min-width: 160px; }
+            .gt-float-menu { min-width: 180px; }
         }
     </style>
     <link rel="icon" type="image/png" href="<?= APP_URL ?>/public/assets/img/logo2-rounded.png?v=2">
@@ -176,55 +183,100 @@ $_t = Translator::getInstance();
         });
     }
     </script>
+
+    <!-- Google Translate — loaded hidden, reads GOOGTRANS cookie on init -->
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script>
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'en',
+            autoDisplay: false
+        }, 'google_translate_element');
+    }
+    </script>
 </head>
 <body>
+
+<!-- Hidden Google Translate container -->
+<div id="google_translate_element"></div>
 
 <!-- Floating Language Icon -->
 <div class="gt-float" id="gt-float">
     <div class="gt-float-menu" id="gt-float-menu">
-        <div class="gt-float-menu-title">Language</div>
-        <button class="gt-opt" id="gt-opt-en" onclick="gtPick('en')"><span class="gt-fl">🇬🇧</span><span class="gt-nm">English</span></button>
-        <button class="gt-opt" id="gt-opt-fr" onclick="gtPick('fr')"><span class="gt-fl">🇫🇷</span><span class="gt-nm">Français</span></button>
-        <button class="gt-opt" id="gt-opt-zh" onclick="gtPick('zh-CN')"><span class="gt-fl">🇨🇳</span><span class="gt-nm">中文</span></button>
-        <button class="gt-opt" id="gt-opt-es" onclick="gtPick('es')"><span class="gt-fl">🇪🇸</span><span class="gt-nm">Español</span></button>
-        <button class="gt-opt" id="gt-opt-de" onclick="gtPick('de')"><span class="gt-fl">🇩🇪</span><span class="gt-nm">Deutsch</span></button>
-        <button class="gt-opt" id="gt-opt-ar" onclick="gtPick('ar')"><span class="gt-fl">🇸🇦</span><span class="gt-nm">العربية</span></button>
-        <button class="gt-opt" id="gt-opt-pt" onclick="gtPick('pt')"><span class="gt-fl">🇧🇷</span><span class="gt-nm">Português</span></button>
+        <div class="gt-float-menu-title">Translate to</div>
+        <button class="gt-opt" onclick="gtPick('')"><span class="gt-fl">🇬🇧</span><span class="gt-nm">English</span></button>
+        <button class="gt-opt" onclick="gtPick('fr')"><span class="gt-fl">🇫🇷</span><span class="gt-nm">Français</span></button>
+        <button class="gt-opt" onclick="gtPick('zh-CN')"><span class="gt-fl">🇨🇳</span><span class="gt-nm">中文 (Chinese)</span></button>
+        <button class="gt-opt" onclick="gtPick('es')"><span class="gt-fl">🇪🇸</span><span class="gt-nm">Español</span></button>
+        <button class="gt-opt" onclick="gtPick('de')"><span class="gt-fl">🇩🇪</span><span class="gt-nm">Deutsch</span></button>
+        <button class="gt-opt" onclick="gtPick('ar')"><span class="gt-fl">🇸🇦</span><span class="gt-nm">العربية (Arabic)</span></button>
+        <button class="gt-opt" onclick="gtPick('pt')"><span class="gt-fl">🇧🇷</span><span class="gt-nm">Português</span></button>
+        <button class="gt-opt" onclick="gtPick('ja')"><span class="gt-fl">🇯🇵</span><span class="gt-nm">日本語 (Japanese)</span></button>
+        <button class="gt-opt" onclick="gtPick('ko')"><span class="gt-fl">🇰🇷</span><span class="gt-nm">한국어 (Korean)</span></button>
+        <button class="gt-opt" onclick="gtPick('hi')"><span class="gt-fl">🇮🇳</span><span class="gt-nm">हिन्दी (Hindi)</span></button>
+        <button class="gt-opt" onclick="gtPick('sw')"><span class="gt-fl">🇰🇪</span><span class="gt-nm">Kiswahili</span></button>
+        <button class="gt-opt" onclick="gtPick('ha')"><span class="gt-fl">🇳🇬</span><span class="gt-nm">Hausa</span></button>
+        <button class="gt-more">All 100+ languages <a href="#" onclick="gtPick('all');return false;">See all →</a></button>
     </div>
-    <button class="gt-float-btn" onclick="document.getElementById('gt-float-menu').classList.toggle('open')" aria-label="Change Language" title="Change Language">
+    <button class="gt-float-btn" id="gt-float-btn" aria-label="Change Language" title="Change Language">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
     </button>
 </div>
 <script>
-/* Toggle menu open/close */
-function gtToggle() {
-    var m = document.getElementById('gt-float-menu');
-    if (m) m.classList.toggle('open');
-}
-/* Pick language — set GOOGTRANS cookie and reload */
-function gtPick(lang) {
-    document.getElementById('gt-float-menu').classList.remove('open');
-    if (lang === 'en') {
-        document.cookie = 'GOOGTRANS=;path=/;max-age=0';
-    } else {
-        document.cookie = 'GOOGTRANS=/en/' + lang + ';path=/;max-age=' + (365*86400) + ';SameSite=Lax';
-    }
-    localStorage.setItem('avazonia_lang', lang);
-    location.reload();
-}
-/* Close menu on outside click */
+/* Toggle menu */
+document.getElementById('gt-float-btn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    document.getElementById('gt-float-menu').classList.toggle('open');
+});
+
+/* Close on outside click */
 document.addEventListener('click', function(e) {
     var m = document.getElementById('gt-float-menu');
-    var b = document.getElementById('gt-float-btn');
-    if (m && e.target !== b && !b.contains(e.target)) {
-        m.classList.remove('open');
-    }
+    if (m && !e.target.closest('.gt-float')) m.classList.remove('open');
 });
+
+/* Pick language — set GOOGTRANS cookie and reload so Google Translate picks it up */
+function gtPick(lang) {
+    document.getElementById('gt-float-menu').classList.remove('open');
+    if (lang === 'all') {
+        /* "See all" shows Google's native combo */
+        var combo = document.querySelector('#google_translate_element select.goog-te-combo');
+        if (combo) {
+            /* Position it near the floating icon */
+            combo.style.position = 'fixed';
+            combo.style.bottom = '150px';
+            combo.style.left = '20px';
+            combo.style.zIndex = '100000';
+            combo.style.display = 'block';
+            combo.style.height = '40px';
+            combo.style.width = '200px';
+            combo.style.fontSize = '14px';
+            combo.focus();
+        }
+        return;
+    }
+    if (lang === '') {
+        /* English — clear Google Translate */
+        document.cookie = 'GOOGTRANS=;path=/;max-age=0';
+        location.reload();
+        return;
+    }
+    /* Set GOOGTRANS cookie and reload — Google Translate reads it on init */
+    document.cookie = 'GOOGTRANS=/en/' + lang + ';path=/;max-age=' + (365*86400) + ';SameSite=Lax';
+    location.reload();
+}
+
 /* Highlight active language on load */
 (function() {
-    var lang = localStorage.getItem('avazonia_lang') || 'en';
-    var id = 'gt-opt-' + lang.replace(/-CN/i, '').toLowerCase();
-    var el = document.getElementById(id);
-    if (el) el.classList.add('on');
+    var match = document.cookie.match(/GOOGTRANS=\/en\/([a-z-]+)/);
+    if (match) {
+        var lang = match[1];
+        var opts = document.querySelectorAll('.gt-opt');
+        opts.forEach(function(o) {
+            if (o.getAttribute('onclick') && o.getAttribute('onclick').indexOf("'" + lang + "'") !== -1) {
+                o.classList.add('on');
+            }
+        });
+    }
 })();
 </script>
