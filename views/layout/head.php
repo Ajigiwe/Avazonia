@@ -218,65 +218,22 @@ $_t = Translator::getInstance();
         <button class="gt-opt" onclick="gtPick('ha')"><span class="gt-fl">🇳🇬</span><span class="gt-nm">Hausa</span></button>
         <button class="gt-more">All 100+ languages <a href="#" onclick="gtPick('all');return false;">See all →</a></button>
     </div>
-    <button class="gt-float-btn" id="gt-float-btn" aria-label="Change Language" title="Change Language">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+    <button class="gt-float-btn" aria-label="Change Language" title="Change Language" onclick="document.getElementById('gt-float-menu').classList.toggle('open');event.stopPropagation();">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
     </button>
 </div>
 <script>
-/* Toggle menu */
-document.getElementById('gt-float-btn').addEventListener('click', function(e) {
-    e.stopPropagation();
-    document.getElementById('gt-float-menu').classList.toggle('open');
-});
-
-/* Close on outside click */
-document.addEventListener('click', function(e) {
-    var m = document.getElementById('gt-float-menu');
-    if (m && !e.target.closest('.gt-float')) m.classList.remove('open');
-});
-
-/* Pick language — set GOOGTRANS cookie and reload so Google Translate picks it up */
 function gtPick(lang) {
     document.getElementById('gt-float-menu').classList.remove('open');
     if (lang === 'all') {
-        /* "See all" shows Google's native combo */
         var combo = document.querySelector('#google_translate_element select.goog-te-combo');
-        if (combo) {
-            /* Position it near the floating icon */
-            combo.style.position = 'fixed';
-            combo.style.bottom = '150px';
-            combo.style.left = '20px';
-            combo.style.zIndex = '100000';
-            combo.style.display = 'block';
-            combo.style.height = '40px';
-            combo.style.width = '200px';
-            combo.style.fontSize = '14px';
-            combo.focus();
-        }
+        if (combo) { combo.style.cssText = 'position:fixed;bottom:150px;left:20px;z-index:100000;display:block;height:40px;width:200px;font-size:14px;'; combo.focus(); }
         return;
     }
-    if (lang === '') {
-        /* English — clear Google Translate */
-        document.cookie = 'GOOGTRANS=;path=/;max-age=0';
-        location.reload();
-        return;
-    }
-    /* Set GOOGTRANS cookie and reload — Google Translate reads it on init */
+    if (lang === '') { document.cookie = 'GOOGTRANS=;path=/;max-age=0'; location.reload(); return; }
     document.cookie = 'GOOGTRANS=/en/' + lang + ';path=/;max-age=' + (365*86400) + ';SameSite=Lax';
     location.reload();
 }
-
-/* Highlight active language on load */
-(function() {
-    var match = document.cookie.match(/GOOGTRANS=\/en\/([a-z-]+)/);
-    if (match) {
-        var lang = match[1];
-        var opts = document.querySelectorAll('.gt-opt');
-        opts.forEach(function(o) {
-            if (o.getAttribute('onclick') && o.getAttribute('onclick').indexOf("'" + lang + "'") !== -1) {
-                o.classList.add('on');
-            }
-        });
-    }
-})();
+function gtToggle() { document.getElementById('gt-float-menu').classList.toggle('open'); }
+function gtClose() { document.getElementById('gt-float-menu').classList.remove('open'); }
 </script>
