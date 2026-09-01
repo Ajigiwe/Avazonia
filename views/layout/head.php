@@ -80,7 +80,26 @@ $_t = Translator::getInstance();
     }
     </script>
 
-    <!-- Google Translate (cookie-based) -->
+    <!-- Google Translate (PHP-driven) -->
+    <?php
+    $gtLang = $_COOKIE['avazonia_lang'] ?? '';
+    $gtSupported = ['fr','zh-CN','es','ar','ha','de','pt','tw'];
+    if ($gtLang && in_array($gtLang, $gtSupported)):
+    ?>
+    <script>
+    document.cookie = 'GOOGTRANS=/en/<?= $gtLang ?>;path=/;max-age=31536000;SameSite=Lax';
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script type="text/javascript">
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'en',
+            includedLanguages: 'en,fr,zh-CN,ar,es,pt,ha,tw,de',
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+        }, 'google_translate_element');
+    }
+    </script>
+    <?php else: ?>
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <script type="text/javascript">
     function googleTranslateElementInit() {
@@ -92,6 +111,7 @@ $_t = Translator::getInstance();
         }, 'google_translate_element');
     }
     </script>
+    <?php endif; ?>
     <style>
     .goog-te-banner-frame { display: none !important; }
     .goog-te-menu-frame { max-height: 400px !important; overflow: auto !important; }

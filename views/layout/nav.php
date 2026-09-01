@@ -126,11 +126,6 @@ function getCatIcon($slug) {
                     </div>
                 </div>
                 <script>
-                // Cookie-based Google Translate switching
-                function getCookie(name) {
-                    var v = document.cookie.match('(^|;)\s*' + name + '\s*=\s*([^;]+)');
-                    return v ? v.pop() : '';
-                }
                 function setCookie(name, val, days) {
                     document.cookie = name + '=' + val + ';path=/;max-age=' + (days*86400) + ';SameSite=Lax';
                 }
@@ -138,26 +133,18 @@ function getCatIcon($slug) {
                 function switchLang(lang) {
                     document.getElementById('gt-menu').classList.remove('show');
                     if (lang === 'en') {
-                        // Remove Google Translate cookie = back to original
-                        setCookie('GOOGTRANS', '', -1);
-                        localStorage.removeItem('gt_lang');
+                        setCookie('avazonia_lang', '', -1);
                     } else {
-                        setCookie('GOOGTRANS', '/en/' + lang, 365);
-                        localStorage.setItem('gt_lang', lang);
+                        setCookie('avazonia_lang', lang, 365);
                     }
-                    // Update active state
-                    document.querySelectorAll('#gt-menu a').forEach(function(a) { a.classList.remove('active'); });
-                    var active = document.getElementById('gt-' + lang);
-                    if (active) active.classList.add('active');
-                    // Reload to apply
                     location.reload();
                 }
 
-                // Restore active state on load
+                // Highlight active language on load
                 (function() {
-                    var saved = localStorage.getItem('gt_lang');
-                    if (saved) {
-                        var el = document.getElementById('gt-' + saved);
+                    var m = document.cookie.match(/avazonia_lang=([^;]+)/);
+                    if (m && m[1]) {
+                        var el = document.getElementById('gt-' + m[1]);
                         if (el) { el.classList.add('active'); document.getElementById('gt-en')?.classList.remove('active'); }
                     }
                 })();
