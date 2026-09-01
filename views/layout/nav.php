@@ -108,17 +108,47 @@ function getCatIcon($slug) {
                     </a>
                 </div>
             </div>
-                <!-- Language Switcher (server-side via t()) -->
-                <?php $_curLang = $_t->getLang(); ?>
+                <!-- Google Translate Language Switcher -->
+                <div id="google_translate_element"></div>
                 <div class="gt-dropdown" id="gt-switcher" style="position:relative;">
                     <button class="nav-icon-btn desktop-only gt-dropdown-btn" aria-label="Language" onclick="event.stopPropagation();document.getElementById('gt-menu').classList.toggle('show')" style="font-size:16px;line-height:1;">🌐</button>
                     <div class="gt-dropdown-menu" id="gt-menu">
-                        <a href="?lang=en" class="<?= $_curLang === 'en' ? 'active' : '' ?>" id="gt-en"><span class="gt-flag">🇬🇧</span><span>English</span><span class="gt-check">✓</span></a>
-                        <a href="?lang=fr" class="<?= $_curLang === 'fr' ? 'active' : '' ?>" id="gt-fr"><span class="gt-flag">🇫🇷</span><span>Français</span><span class="gt-check">✓</span></a>
-                        <a href="?lang=zh" class="<?= $_curLang === 'zh' ? 'active' : '' ?>" id="gt-zh"><span class="gt-flag">🇨🇳</span><span>中文</span><span class="gt-check">✓</span></a>
+                        <a onclick="switchLang('en')" class="active" id="gt-en"><span class="gt-flag">🇬🇧</span><span>English</span><span class="gt-check">✓</span></a>
+                        <a onclick="switchLang('fr')" id="gt-fr"><span class="gt-flag">🇫🇷</span><span>Français</span><span class="gt-check">✓</span></a>
+                        <a onclick="switchLang('zh-CN')" id="gt-zh-CN"><span class="gt-flag">🇨🇳</span><span>中文</span><span class="gt-check">✓</span></a>
+                        <div class="gt-divider"></div>
+                        <a onclick="switchLang('es')" id="gt-es"><span class="gt-flag">🇪🇸</span><span>Español</span><span class="gt-check">✓</span></a>
+                        <a onclick="switchLang('ar')" id="gt-ar"><span class="gt-flag">🇸🇦</span><span>العربية</span><span class="gt-check">✓</span></a>
+                        <a onclick="switchLang('ha')" id="gt-ha"><span class="gt-flag">🇳🇬</span><span>Hausa</span><span class="gt-check">✓</span></a>
+                        <a onclick="switchLang('de')" id="gt-de"><span class="gt-flag">🇩🇪</span><span>Deutsch</span><span class="gt-check">✓</span></a>
+                        <a onclick="switchLang('pt')" id="gt-pt"><span class="gt-flag">🇧🇷</span><span>Português</span><span class="gt-check">✓</span></a>
+                        <a onclick="switchLang('tw')" id="gt-tw"><span class="gt-flag">🇬🇭</span><span>Twi</span><span class="gt-check">✓</span></a>
                     </div>
                 </div>
                 <script>
+                function setCookie(name, val, days) {
+                    document.cookie = name + '=' + val + ';path=/;max-age=' + (days*86400) + ';SameSite=Lax';
+                }
+
+                function switchLang(lang) {
+                    document.getElementById('gt-menu').classList.remove('show');
+                    if (lang === 'en') {
+                        setCookie('avazonia_lang', '', -1);
+                    } else {
+                        setCookie('avazonia_lang', lang, 365);
+                    }
+                    location.reload();
+                }
+
+                // Highlight active language on load
+                (function() {
+                    var m = document.cookie.match(/avazonia_lang=([^;]+)/);
+                    if (m && m[1]) {
+                        var el = document.getElementById('gt-' + m[1]);
+                        if (el) { el.classList.add('active'); document.getElementById('gt-en')?.classList.remove('active'); }
+                    }
+                })();
+
                 document.addEventListener('click', function(e) {
                     var menu = document.getElementById('gt-menu');
                     var btn = document.getElementById('gt-switcher');

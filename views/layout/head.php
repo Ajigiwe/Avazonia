@@ -57,6 +57,7 @@ $_t = Translator::getInstance();
         }
         .page-fade { transition: opacity 0.4s ease, transform 0.4s ease; }
         .page-fade.is-loading { opacity: 0; transform: translateY(10px); }
+    #lang-dropdown.show { display: block !important; }
     </style>
     <link rel="icon" type="image/png" href="<?= APP_URL ?>/public/assets/img/logo2-rounded.png?v=2">
 
@@ -79,33 +80,72 @@ $_t = Translator::getInstance();
     }
     </script>
 
+    <!-- Google Translate (PHP-driven) -->
+    <?php
+    $gtLang = $_COOKIE['avazonia_lang'] ?? '';
+    $gtSupported = ['fr','zh-CN','es','ar','ha','de','pt','tw'];
+    if ($gtLang && in_array($gtLang, $gtSupported)):
+    ?>
+    <script>
+    document.cookie = 'GOOGTRANS=/en/<?= $gtLang ?>;path=/;max-age=31536000;SameSite=Lax';
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script type="text/javascript">
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'en',
+            includedLanguages: 'en,fr,zh-CN,ar,es,pt,ha,tw,de',
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+        }, 'google_translate_element');
+    }
+    </script>
+    <?php else: ?>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script type="text/javascript">
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'en',
+            includedLanguages: 'en,fr,zh-CN,ar,es,pt,ha,tw,de',
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+            autoDisplay: false
+        }, 'google_translate_element');
+    }
+    </script>
+    <?php endif; ?>
     <style>
-        /* Language dropdown */
-        .gt-dropdown { position: relative; display: inline-block; }
-        .gt-dropdown-btn {
-            background: none; border: none; cursor: pointer;
-            font-size: 16px; line-height: 1; padding: 6px;
-            border-radius: 6px; transition: background 0.15s;
-        }
-        .gt-dropdown-btn:hover { background: var(--off, #f5f5f5); }
-        .gt-dropdown-menu {
-            display: none; position: absolute; top: 100%; right: 0;
-            margin-top: 8px; background: #fff; border: 1px solid var(--light-gray, #e5e7eb);
-            border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-            min-width: 160px; z-index: 10000; overflow: hidden;
-        }
-        .gt-dropdown-menu.show { display: block; }
-        .gt-dropdown-menu a {
-            display: flex; align-items: center; gap: 10px;
-            padding: 10px 14px; text-decoration: none; color: var(--ink, #111);
-            font-size: 12px; font-family: var(--f-body, sans-serif);
-            transition: background 0.12s; cursor: pointer;
-        }
-        .gt-dropdown-menu a:hover { background: var(--off, #f5f5f5); }
-        .gt-dropdown-menu a .gt-flag { font-size: 16px; width: 22px; text-align: center; }
-        .gt-dropdown-menu a .gt-check { margin-left: auto; opacity: 0; font-size: 12px; color: var(--red, #E5001A); font-weight: 700; }
-        .gt-dropdown-menu a.active .gt-check { opacity: 1; }
-        .gt-dropdown-menu .gt-divider { height: 1px; background: var(--light-gray, #e5e7eb); margin: 4px 0; }
+    .goog-te-banner-frame { display: none !important; }
+    .goog-te-menu-frame { max-height: 400px !important; overflow: auto !important; }
+    body { top: 0 !important; }
+    #goog-gt-tt { display: none !important; }
+    .goog-te-spinner-pos { display: none !important; }
+    /* Hide the visible widget, we'll trigger it via custom button */
+    #google_translate_element { display: none; }
+    /* Custom lang dropdown styles */
+    .gt-dropdown { position: relative; display: inline-block; }
+    .gt-dropdown-btn {
+        background: none; border: none; cursor: pointer;
+        font-size: 16px; line-height: 1; padding: 6px;
+        border-radius: 6px; transition: background 0.15s;
+    }
+    .gt-dropdown-btn:hover { background: var(--off, #f5f5f5); }
+    .gt-dropdown-menu {
+        display: none; position: absolute; top: 100%; right: 0;
+        margin-top: 8px; background: #fff; border: 1px solid var(--light-gray, #e5e7eb);
+        border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        min-width: 160px; z-index: 10000; overflow: hidden;
+    }
+    .gt-dropdown-menu.show { display: block; }
+    .gt-dropdown-menu a {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 14px; text-decoration: none; color: var(--ink, #111);
+        font-size: 12px; font-family: var(--f-body, sans-serif);
+        transition: background 0.12s; cursor: pointer;
+    }
+    .gt-dropdown-menu a:hover { background: var(--off, #f5f5f5); }
+    .gt-dropdown-menu a .gt-flag { font-size: 16px; width: 22px; text-align: center; }
+    .gt-dropdown-menu a .gt-check { margin-left: auto; opacity: 0; font-size: 12px; color: var(--red, #E5001A); font-weight: 700; }
+    .gt-dropdown-menu a.active .gt-check { opacity: 1; }
+    .gt-dropdown-menu .gt-divider { height: 1px; background: var(--light-gray, #e5e7eb); margin: 4px 0; }
     </style>
 </head>
 <body>
