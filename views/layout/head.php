@@ -192,8 +192,7 @@ $_t = Translator::getInstance();
     <script>
     function googleTranslateElementInit() {
         new google.translate.TranslateElement({
-            pageLanguage: 'en',
-            autoDisplay: false
+            pageLanguage: 'en'
         }, 'google_translate_element');
     }
     </script>
