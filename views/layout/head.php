@@ -79,5 +79,52 @@ $_t = Translator::getInstance();
         });
     }
     </script>
+
+    <!-- Google Translate Widget -->
+    <script type="text/javascript">
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'en',
+            includedLanguages: 'en,fr,zh-CN,ar,es,pt,ha,tw,de',
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+            autoDisplay: false
+        }, 'google_translate_element');
+    }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <style>
+    /* Hide default Google Translate bar */
+    .goog-te-banner-frame { display: none !important; }
+    .goog-te-menu-frame { max-height: 400px !important; overflow: auto !important; }
+    body { top: 0 !important; }
+    /* Hide the visible widget, we'll trigger it via custom button */
+    #google_translate_element { display: none; }
+    /* Custom lang dropdown styles */
+    .gt-dropdown { position: relative; display: inline-block; }
+    .gt-dropdown-btn {
+        background: none; border: none; cursor: pointer;
+        font-size: 16px; line-height: 1; padding: 6px;
+        border-radius: 6px; transition: background 0.15s;
+    }
+    .gt-dropdown-btn:hover { background: var(--off, #f5f5f5); }
+    .gt-dropdown-menu {
+        display: none; position: absolute; top: 100%; right: 0;
+        margin-top: 8px; background: #fff; border: 1px solid var(--light-gray, #e5e7eb);
+        border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        min-width: 160px; z-index: 10000; overflow: hidden;
+    }
+    .gt-dropdown-menu.show { display: block; }
+    .gt-dropdown-menu a {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 14px; text-decoration: none; color: var(--ink, #111);
+        font-size: 12px; font-family: var(--f-body, sans-serif);
+        transition: background 0.12s; cursor: pointer;
+    }
+    .gt-dropdown-menu a:hover { background: var(--off, #f5f5f5); }
+    .gt-dropdown-menu a .gt-flag { font-size: 16px; width: 22px; text-align: center; }
+    .gt-dropdown-menu a .gt-check { margin-left: auto; opacity: 0; font-size: 12px; color: var(--red, #E5001A); font-weight: 700; }
+    .gt-dropdown-menu a.active .gt-check { opacity: 1; }
+    .gt-dropdown-menu .gt-divider { height: 1px; background: var(--light-gray, #e5e7eb); margin: 4px 0; }
+    </style>
 </head>
 <body>
