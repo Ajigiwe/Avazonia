@@ -91,9 +91,11 @@ $_t = Translator::getInstance();
     }
     </script>
     <style>
-    .goog-te-banner-frame { display: none !important; }
+    .goog-te-banner-frame, .goog-te-banner-frame + div { display: none !important; }
     body { top: 0 !important; }
     #goog-gt-tt { display: none !important; }
+    /* Hide the "Translated into" banner */
+    .skiptranslate { display: none !important; }
     .gt-widget-wrap {
         display: inline-block;
         vertical-align: middle;
