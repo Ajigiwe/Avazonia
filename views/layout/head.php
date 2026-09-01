@@ -62,7 +62,7 @@ $_t = Translator::getInstance();
         #goog-gt-tt { display: none !important; }
         body { top: 0 !important; }
         /* Hide the hidden init div */
-        #google_translate_element { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+        #google_translate_element { display: inline-block; vertical-align: middle; }
         /* Hide the Google branding text next to combo */
         #google_translate_element .goog-te-gadget span:not(.goog-te-combo) { display: none !important; }
         /* Style the combo to match Avazonia */
@@ -76,6 +76,9 @@ $_t = Translator::getInstance();
             cursor: pointer; outline: none; color: #1a1a1a;
         }
         #google_translate_element .goog-te-gadget .goog-te-combo:hover { border-color: var(--red, #E5001A); }
+        .gt-widget-wrap { display: inline-block; vertical-align: middle; flex-shrink: 0; }
+        @media (min-width: 769px) { .gt-float { display: none; } }
+        @media (max-width: 768px) { .gt-widget-wrap { display: none; } }
 
         /* ═══ Floating Language Icon ═══ */
         .gt-float {
@@ -197,8 +200,6 @@ $_t = Translator::getInstance();
 </head>
 <body>
 
-<!-- Hidden Google Translate container -->
-<div id="google_translate_element"></div>
 
 <!-- Floating Language Icon -->
 <div class="gt-float" id="gt-float">
