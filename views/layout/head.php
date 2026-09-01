@@ -62,7 +62,8 @@ $_t = Translator::getInstance();
         body { top: 0 !important; }
         /* Hide any Google Translate banner/notification bar */
         body > div.skiptranslate:not(#google_translate_element) { display: none !important; position: absolute !important; }
-        #google_translate_element { display: inline-block; vertical-align: middle; }
+        #google_translate_element { position: fixed; top: 16px; right: 200px; z-index: 99999; background: #fff; padding: 4px 8px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        @media (max-width: 768px) { #google_translate_element { top: auto; bottom: 80px; right: auto; left: 16px; } }
         /* Hide the Google branding text next to combo */
         #google_translate_element .goog-te-gadget span:not(.goog-te-combo) { display: none !important; }
         /* Style the combo to match Avazonia */
@@ -76,8 +77,7 @@ $_t = Translator::getInstance();
             cursor: pointer; outline: none; color: #1a1a1a;
         }
         #google_translate_element .goog-te-gadget .goog-te-combo:hover { border-color: var(--red, #E5001A); }
-        .gt-widget-wrap { display: inline-block; vertical-align: middle; flex-shrink: 0; }
-        @media (max-width: 768px) { .gt-float { display: none !important; } .gt-widget-wrap { display: block !important; position: fixed; bottom: 80px; left: 16px; z-index: 99999; background: #fff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); padding: 6px; } .gt-widget-wrap .goog-te-gadget .goog-te-combo { height: 40px; font-size: 14px !important; padding: 4px 28px 4px 10px; } }
+        @media (max-width: 768px) { .gt-float { display: none !important; } }
         @media (min-width: 769px) { .gt-float { display: none !important; } }
 
         /* ═══ Floating Language Icon ═══ */
@@ -210,6 +210,8 @@ $_t = Translator::getInstance();
 </head>
 <body>
 
+<!-- Google Translate Widget (direct child of body, not inside any container) -->
+<div id="google_translate_element"></div>
 
 <!-- Floating Language Icon -->
 <div class="gt-float" id="gt-float">
