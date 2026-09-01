@@ -113,18 +113,39 @@ function getCatIcon($slug) {
                 <div class="gt-dropdown" id="gt-switcher" style="position:relative;">
                     <button class="nav-icon-btn desktop-only gt-dropdown-btn" aria-label="Language" onclick="event.stopPropagation();document.getElementById('gt-menu').classList.toggle('show')" style="font-size:16px;line-height:1;">🌐</button>
                     <div class="gt-dropdown-menu" id="gt-menu">
-                        <a onclick="gtTranslate('en')" class="active" id="gt-en"><span class="gt-flag">🇬🇧</span><span>English</span><span class="gt-check">✓</span></a>
-                        <a onclick="gtTranslate('fr')" id="gt-fr"><span class="gt-flag">🇫🇷</span><span>Français</span><span class="gt-check">✓</span></a>
-                        <a onclick="gtTranslate('zh-CN')" id="gt-zh-CN"><span class="gt-flag">🇨🇳</span><span>中文</span><span class="gt-check">✓</span></a>
+                        <a onclick="pickLang('en')" class="active" id="gt-en"><span class="gt-flag">🇬🇧</span><span>English</span><span class="gt-check">✓</span></a>
+                        <a onclick="pickLang('fr')" id="gt-fr"><span class="gt-flag">🇫🇷</span><span>Français</span><span class="gt-check">✓</span></a>
+                        <a onclick="pickLang('zh-CN')" id="gt-zh-CN"><span class="gt-flag">🇨🇳</span><span>中文</span><span class="gt-check">✓</span></a>
                         <div class="gt-divider"></div>
-                        <a onclick="gtTranslate('es')" id="gt-es"><span class="gt-flag">🇪🇸</span><span>Español</span><span class="gt-check">✓</span></a>
-                        <a onclick="gtTranslate('ar')" id="gt-ar"><span class="gt-flag">🇸🇦</span><span>العربية</span><span class="gt-check">✓</span></a>
-                        <a onclick="gtTranslate('ha')" id="gt-ha"><span class="gt-flag">🇳🇬</span><span>Hausa</span><span class="gt-check">✓</span></a>
-                        <a onclick="gtTranslate('de')" id="gt-de"><span class="gt-flag">🇩🇪</span><span>Deutsch</span><span class="gt-check">✓</span></a>
-                        <a onclick="gtTranslate('pt')" id="gt-pt"><span class="gt-flag">🇧🇷</span><span>Português</span><span class="gt-check">✓</span></a>
+                        <a onclick="pickLang('es')" id="gt-es"><span class="gt-flag">🇪🇸</span><span>Español</span><span class="gt-check">✓</span></a>
+                        <a onclick="pickLang('ar')" id="gt-ar"><span class="gt-flag">🇸🇦</span><span>العربية</span><span class="gt-check">✓</span></a>
+                        <a onclick="pickLang('ha')" id="gt-ha"><span class="gt-flag">🇳🇬</span><span>Hausa</span><span class="gt-check">✓</span></a>
+                        <a onclick="pickLang('de')" id="gt-de"><span class="gt-flag">🇩🇪</span><span>Deutsch</span><span class="gt-check">✓</span></a>
+                        <a onclick="pickLang('pt')" id="gt-pt"><span class="gt-flag">🇧🇷</span><span>Português</span><span class="gt-check">✓</span></a>
                     </div>
                 </div>
                 <script>
+                // Language picker: close dropdown + translate with retry
+                function pickLang(lang) {
+                    document.getElementById('gt-menu').classList.remove('show');
+                    // Highlight immediately
+                    document.querySelectorAll('.gt-dropdown-menu a').forEach(function(a) { a.classList.remove('active'); });
+                    var el = document.getElementById('gt-' + lang);
+                    if (el) el.classList.add('active');
+                    // Call gtTranslate with retry if Google isn't loaded yet
+                    function tryTranslate(attempts) {
+                        if (typeof google !== 'undefined' && google.translate && google.translate.TranslateElement) {
+                            gtTranslate(lang);
+                        } else if (attempts < 30) {
+                            setTimeout(function() { tryTranslate(attempts + 1); }, 200);
+                        } else {
+                            // Google Translate failed to load — fall back to cookie + reload
+                            document.cookie = 'avazonia_lang=' + lang + ';path=/;max-age=' + (365*86400) + ';SameSite=Lax';
+                            location.reload();
+                        }
+                    }
+                    tryTranslate(0);
+                }
                 // Highlight active language on load
                 (function() {
                     var m = document.cookie.match(/avazonia_lang=([^;]+)/);
