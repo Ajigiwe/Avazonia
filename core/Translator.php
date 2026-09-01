@@ -26,15 +26,22 @@ class Translator {
     }
 
     private function detectLang(): string {
+        // Ensure session is available (Translator loads before controllers call Session::start())
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            session_start();
+        }
+
         // 1. URL param ?lang=fr (highest priority)
         if (!empty($_GET['lang']) && in_array($_GET['lang'], $this->supported)) {
             $lang = $_GET['lang'];
             $_SESSION['lang'] = $lang;
             // Update cookie for persistence (30 days)
-            setcookie('avazonia_lang', $lang, time() + 30*24*3600, '/');
+            if (!headers_sent()) {
+                setcookie('avazonia_lang', $lang, time() + 30*24*3600, '/');
+            }
             // Redirect to clean URL (remove ?lang= param)
             $url = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
-            if ($url !== false && $url !== '') {
+            if ($url !== false && $url !== '' && !headers_sent()) {
                 header("Location: $url", true, 302);
                 exit;
             }
