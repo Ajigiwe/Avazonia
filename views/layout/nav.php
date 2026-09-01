@@ -204,6 +204,8 @@ function getCatIcon($slug) {
             <a href="<?= APP_URL ?>/login" class="mobile-link"><?= t('nav.login', 'Login') ?></a>
             <a href="<?= APP_URL ?>/register" class="mobile-link">Sign Up</a>
         <?php endif; ?>
+        <div style="height: 1px; background: rgba(0,0,0,0.05); margin: 10px 0;"></div>
+        <div id="google_translate_element_mobile"></div>
     </nav>
 </div>
 

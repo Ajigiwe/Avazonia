@@ -1151,6 +1151,9 @@ img {
         gap: 2px;
         flex-shrink: 0;
     }
+    .gt-widget-wrap {
+        display: none !important;
+    }
 
     .nav-icon-btn {
         width: 32px;
