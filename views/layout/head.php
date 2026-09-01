@@ -63,8 +63,8 @@ $_t = Translator::getInstance();
         /* Hide any Google Translate banner/notification bar */
         body > div.skiptranslate:not(#google_translate_element) { display: none !important; position: absolute !important; }
         #google_translate_element { position: fixed; top: 16px; right: 200px; z-index: 99999; background: #fff; padding: 2px 4px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        #google_translate_element .goog-te-gadget .goog-te-combo { height: 28px; font-size: 11px; padding: 2px 20px 2px 6px; }
-        @media (max-width: 768px) { #google_translate_element { top: auto; bottom: 100px; right: auto; left: 16px; padding: 2px 4px; } #google_translate_element .goog-te-gadget .goog-te-combo { height: 32px; font-size: 12px; } }
+        #google_translate_element .goog-te-gadget .goog-te-combo { height: 24px; font-size: 10px; padding: 1px 16px 1px 4px; }
+        @media (max-width: 768px) { #google_translate_element { top: auto; bottom: 100px; right: auto; left: 16px; padding: 1px 2px; } #google_translate_element .goog-te-gadget .goog-te-combo { height: 28px; font-size: 11px; } }
         /* Hide the Google branding text next to combo */
         #google_translate_element .goog-te-gadget span:not(.goog-te-combo) { display: none !important; }
         /* Style the combo to match Avazonia */
