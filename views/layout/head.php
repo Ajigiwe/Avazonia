@@ -97,8 +97,6 @@ $_t = Translator::getInstance();
     .gt-widget-wrap {
         display: inline-block;
         vertical-align: middle;
-        max-width: 120px;
-        overflow: hidden;
         flex-shrink: 0;
     }
     #google_translate_element {
@@ -109,16 +107,17 @@ $_t = Translator::getInstance();
     #google_translate_element .goog-te-gadget {
         font-size: 0 !important;
         line-height: 1;
+        margin: 0;
+        padding: 0;
     }
     #google_translate_element .goog-te-gadget .goog-te-combo {
         height: 30px;
-        max-width: 110px;
-        padding: 2px 22px 2px 6px;
+        padding: 2px 20px 2px 8px;
         border: 1px solid var(--light-gray, #e5e7eb);
         border-radius: 6px;
         font-size: 11px;
         font-family: var(--f-body, sans-serif);
-        background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E") no-repeat right 8px center;
+        background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23666'/%3E%3C/svg%3E") no-repeat right 6px center;
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
