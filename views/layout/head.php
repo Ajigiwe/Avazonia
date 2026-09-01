@@ -60,8 +60,8 @@ $_t = Translator::getInstance();
         .goog-te-banner-frame + div,
         #goog-gt-tt { display: none !important; }
         body { top: 0 !important; }
-        /* Hide only the top banner wrapper, not the widget */
-        body > .skiptranslate { display: none !important; }
+        /* Hide Google Translate banner but not content wrapper */
+        .goog-te-banner-frame + div { display: none !important; }
         #google_translate_element { display: inline-block; vertical-align: middle; }
         /* Hide the Google branding text next to combo */
         #google_translate_element .goog-te-gadget span:not(.goog-te-combo) { display: none !important; }
@@ -77,7 +77,7 @@ $_t = Translator::getInstance();
         }
         #google_translate_element .goog-te-gadget .goog-te-combo:hover { border-color: var(--red, #E5001A); }
         .gt-widget-wrap { display: inline-block; vertical-align: middle; flex-shrink: 0; }
-        @media (max-width: 768px) { .gt-widget-wrap { display: none !important; } }
+        @media (max-width: 768px) { .gt-float { display: none !important; } .gt-widget-wrap { display: block !important; position: fixed; bottom: 80px; left: 16px; z-index: 99999; background: #fff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); padding: 6px; } .gt-widget-wrap .goog-te-gadget .goog-te-combo { height: 40px; font-size: 14px !important; padding: 4px 28px 4px 10px; } }
         @media (min-width: 769px) { .gt-float { display: none !important; } }
 
         /* ═══ Floating Language Icon ═══ */
