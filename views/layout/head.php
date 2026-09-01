@@ -80,80 +80,50 @@ $_t = Translator::getInstance();
     }
     </script>
 
-    <!-- Google Translate -->
+    <!-- Google Translate Widget -->
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <script type="text/javascript">
     function googleTranslateElementInit() {
         new google.translate.TranslateElement({
             pageLanguage: 'en',
-            includedLanguages: 'en,fr,zh-CN,ar,es,ha,de,pt',
-            layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-            autoDisplay: false
+            layout: google.translate.TranslateElement.InlineLayout.HORIZONTAL
         }, 'google_translate_element');
     }
-    // Translate page directly — no cookie tricks, no reloads
-    function gtTranslate(lang) {
-        if (lang === 'en') {
-            // Reset to English: reload without cookie
-            document.cookie = 'avazonia_lang=;path=/;max-age=0';
-            location.reload();
-            return;
-        }
-        document.cookie = 'avazonia_lang=' + lang + ';path=/;max-age=' + (365*86400) + ';SameSite=Lax';
-        if (typeof google !== 'undefined' && google.translate) {
-            google.translate.TranslateElement.TranslatePage('en', lang);
-        }
-    }
-    // Auto-translate on page load if cookie is set
-    document.addEventListener('DOMContentLoaded', function() {
-        var m = document.cookie.match(/avazonia_lang=([^;]+)/);
-        if (m && m[1] && m[1] !== 'en') {
-            // Wait for Google Translate to load
-            var attempts = 0;
-            var check = setInterval(function() {
-                attempts++;
-                if (typeof google !== 'undefined' && google.translate) {
-                    clearInterval(check);
-                    google.translate.TranslateElement.TranslatePage('en', m[1]);
-                }
-                if (attempts > 50) clearInterval(check); // 5 seconds max
-            }, 100);
-        }
-    });
     </script>
     <style>
     .goog-te-banner-frame { display: none !important; }
-    .goog-te-menu-frame { max-height: 400px !important; overflow: auto !important; }
     body { top: 0 !important; }
     #goog-gt-tt { display: none !important; }
-    .goog-te-spinner-pos { display: none !important; }
-    #google_translate_element { display: none; }
-    /* Custom lang dropdown styles */
-    .gt-dropdown { position: relative; display: inline-block; }
-    .gt-dropdown-btn {
-        background: none; border: none; cursor: pointer;
-        font-size: 16px; line-height: 1; padding: 6px;
-        border-radius: 6px; transition: background 0.15s;
+    #google_translate_element {
+        display: inline-block;
+        vertical-align: middle;
     }
-    .gt-dropdown-btn:hover { background: var(--off, #f5f5f5); }
-    .gt-dropdown-menu {
-        display: none; position: absolute; top: 100%; right: 0;
-        margin-top: 8px; background: #fff; border: 1px solid var(--light-gray, #e5e7eb);
-        border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-        min-width: 160px; z-index: 10000; overflow: hidden;
+    /* Style Google Translate's own combobox to match the nav */
+    #google_translate_element .goog-te-gadget {
+        font-size: 0 !important;
+        line-height: 1;
     }
-    .gt-dropdown-menu.show { display: block; }
-    .gt-dropdown-menu a {
-        display: flex; align-items: center; gap: 10px;
-        padding: 10px 14px; text-decoration: none; color: var(--ink, #111);
-        font-size: 12px; font-family: var(--f-body, sans-serif);
-        transition: background 0.12s; cursor: pointer;
+    #google_translate_element .goog-te-gadget .goog-te-combo {
+        height: 30px;
+        padding: 2px 24px 2px 6px;
+        border: 1px solid var(--light-gray, #e5e7eb);
+        border-radius: 6px;
+        font-size: 12px;
+        font-family: var(--f-body, sans-serif);
+        background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E") no-repeat right 8px center;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        cursor: pointer;
+        outline: none;
     }
-    .gt-dropdown-menu a:hover { background: var(--off, #f5f5f5); }
-    .gt-dropdown-menu a .gt-flag { font-size: 16px; width: 22px; text-align: center; }
-    .gt-dropdown-menu a .gt-check { margin-left: auto; opacity: 0; font-size: 12px; color: var(--red, #E5001A); font-weight: 700; }
-    .gt-dropdown-menu a.active .gt-check { opacity: 1; }
-    .gt-dropdown-menu .gt-divider { height: 1px; background: var(--light-gray, #e5e7eb); margin: 4px 0; }
+    #google_translate_element .goog-te-gadget .goog-te-combo:hover {
+        border-color: var(--red, #E5001A);
+    }
+    /* Hide the Google branding text */
+    #google_translate_element .goog-te-gadget span:not(.goog-te-combo) {
+        display: none !important;
+    }
     </style>
 </head>
 <body>
