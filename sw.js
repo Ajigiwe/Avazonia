@@ -1,4 +1,4 @@
-const CACHE_NAME = 'avazonia-premium-v2';
+const CACHE_NAME = 'avazonia-premium-v3';
 const ASSETS_TO_PRECACHE = [
   '/',
   '/public/css/styles.css',
@@ -42,8 +42,11 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
-        // If successful, clone it and save to cache for next time
-        if (networkResponse && networkResponse.status === 200) {
+        // Skip caching HTML pages (they depend on cookies like language)
+        const ct = networkResponse.headers.get('content-type') || '';
+        const isHTML = ct.includes('text/html');
+        // If successful and not HTML, cache it
+        if (networkResponse && networkResponse.status === 200 && !isHTML) {
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
                 cache.put(event.request, responseToCache);
