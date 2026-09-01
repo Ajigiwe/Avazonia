@@ -195,6 +195,17 @@ $_t = Translator::getInstance();
             pageLanguage: 'en'
         }, 'google_translate_element');
     }
+    /* Hide the Google Translate notification banner */
+    function hideGTBanner() {
+        document.querySelectorAll('body > div').forEach(function(d) {
+            if (d.id === 'google_translate_element' || d.id === 'gt-float' || d.id === 'page-wrapper' || d.classList.length > 0) return;
+            if (d.style && (d.style.position === 'fixed' || d.innerHTML.indexOf('Show original') !== -1 || d.innerHTML.indexOf('translated') !== -1)) {
+                d.style.display = 'none';
+            }
+        });
+    }
+    new MutationObserver(hideGTBanner).observe(document.body, { childList: true, subtree: true });
+    setTimeout(hideGTBanner, 2000);
     </script>
 </head>
 <body>
