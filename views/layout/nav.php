@@ -113,42 +113,27 @@ function getCatIcon($slug) {
                 <div class="gt-dropdown" id="gt-switcher" style="position:relative;">
                     <button class="nav-icon-btn desktop-only gt-dropdown-btn" aria-label="Language" onclick="event.stopPropagation();document.getElementById('gt-menu').classList.toggle('show')" style="font-size:16px;line-height:1;">🌐</button>
                     <div class="gt-dropdown-menu" id="gt-menu">
-                        <a onclick="switchLang('en')" class="active" id="gt-en"><span class="gt-flag">🇬🇧</span><span>English</span><span class="gt-check">✓</span></a>
-                        <a onclick="switchLang('fr')" id="gt-fr"><span class="gt-flag">🇫🇷</span><span>Français</span><span class="gt-check">✓</span></a>
-                        <a onclick="switchLang('zh-CN')" id="gt-zh-CN"><span class="gt-flag">🇨🇳</span><span>中文</span><span class="gt-check">✓</span></a>
+                        <a onclick="gtTranslate('en')" class="active" id="gt-en"><span class="gt-flag">🇬🇧</span><span>English</span><span class="gt-check">✓</span></a>
+                        <a onclick="gtTranslate('fr')" id="gt-fr"><span class="gt-flag">🇫🇷</span><span>Français</span><span class="gt-check">✓</span></a>
+                        <a onclick="gtTranslate('zh-CN')" id="gt-zh-CN"><span class="gt-flag">🇨🇳</span><span>中文</span><span class="gt-check">✓</span></a>
                         <div class="gt-divider"></div>
-                        <a onclick="switchLang('es')" id="gt-es"><span class="gt-flag">🇪🇸</span><span>Español</span><span class="gt-check">✓</span></a>
-                        <a onclick="switchLang('ar')" id="gt-ar"><span class="gt-flag">🇸🇦</span><span>العربية</span><span class="gt-check">✓</span></a>
-                        <a onclick="switchLang('ha')" id="gt-ha"><span class="gt-flag">🇳🇬</span><span>Hausa</span><span class="gt-check">✓</span></a>
-                        <a onclick="switchLang('de')" id="gt-de"><span class="gt-flag">🇩🇪</span><span>Deutsch</span><span class="gt-check">✓</span></a>
-                        <a onclick="switchLang('pt')" id="gt-pt"><span class="gt-flag">🇧🇷</span><span>Português</span><span class="gt-check">✓</span></a>
-                        <a onclick="switchLang('tw')" id="gt-tw"><span class="gt-flag">🇬🇭</span><span>Twi</span><span class="gt-check">✓</span></a>
+                        <a onclick="gtTranslate('es')" id="gt-es"><span class="gt-flag">🇪🇸</span><span>Español</span><span class="gt-check">✓</span></a>
+                        <a onclick="gtTranslate('ar')" id="gt-ar"><span class="gt-flag">🇸🇦</span><span>العربية</span><span class="gt-check">✓</span></a>
+                        <a onclick="gtTranslate('ha')" id="gt-ha"><span class="gt-flag">🇳🇬</span><span>Hausa</span><span class="gt-check">✓</span></a>
+                        <a onclick="gtTranslate('de')" id="gt-de"><span class="gt-flag">🇩🇪</span><span>Deutsch</span><span class="gt-check">✓</span></a>
+                        <a onclick="gtTranslate('pt')" id="gt-pt"><span class="gt-flag">🇧🇷</span><span>Português</span><span class="gt-check">✓</span></a>
                     </div>
                 </div>
                 <script>
-                function setCookie(name, val, days) {
-                    document.cookie = name + '=' + val + ';path=/;max-age=' + (days*86400) + ';SameSite=Lax';
-                }
-
-                function switchLang(lang) {
-                    document.getElementById('gt-menu').classList.remove('show');
-                    if (lang === 'en') {
-                        setCookie('avazonia_lang', '', -1);
-                    } else {
-                        setCookie('avazonia_lang', lang, 365);
-                    }
-                    location.reload();
-                }
-
                 // Highlight active language on load
                 (function() {
                     var m = document.cookie.match(/avazonia_lang=([^;]+)/);
-                    if (m && m[1]) {
+                    if (m && m[1] && m[1] !== 'en') {
                         var el = document.getElementById('gt-' + m[1]);
                         if (el) { el.classList.add('active'); document.getElementById('gt-en')?.classList.remove('active'); }
                     }
                 })();
-
+                // Close dropdown on outside click
                 document.addEventListener('click', function(e) {
                     var menu = document.getElementById('gt-menu');
                     var btn = document.getElementById('gt-switcher');
@@ -615,13 +600,11 @@ function getCatIcon($slug) {
             window.initScrollReveal();
             window.initBestsellersAutoplay();
             // Re-translate dynamically loaded content via Google Translate
-            if (document.cookie.indexOf('avazonia_lang=') !== -1) {
-                var gtLang = document.cookie.match(/avazonia_lang=([^;]+)/);
-                if (gtLang && gtLang[1] !== 'en' && typeof google !== 'undefined' && google.translate) {
-                    setTimeout(function() {
-                        google.translate.TranslateElement.TranslatePage('en', gtLang[1]);
-                    }, 500);
-                }
+            var m = document.cookie.match(/avazonia_lang=([^;]+)/);
+            if (m && m[1] && m[1] !== 'en' && typeof google !== 'undefined' && google.translate) {
+                setTimeout(function() {
+                    google.translate.TranslateElement.TranslatePage('en', m[1]);
+                }, 500);
             }
         };
 

@@ -80,45 +80,53 @@ $_t = Translator::getInstance();
     }
     </script>
 
-    <!-- Google Translate (PHP-driven) -->
-    <?php
-    $gtLang = $_COOKIE['avazonia_lang'] ?? '';
-    $gtSupported = ['fr','zh-CN','es','ar','ha','de','pt','tw'];
-    if ($gtLang && in_array($gtLang, $gtSupported)):
-    ?>
-    <script>
-    document.cookie = 'GOOGTRANS=/en/<?= $gtLang ?>;path=/;max-age=31536000;SameSite=Lax';
-    </script>
+    <!-- Google Translate -->
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <script type="text/javascript">
     function googleTranslateElementInit() {
         new google.translate.TranslateElement({
             pageLanguage: 'en',
-            includedLanguages: 'en,fr,zh-CN,ar,es,pt,ha,tw,de',
-            layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-        }, 'google_translate_element');
-    }
-    </script>
-    <?php else: ?>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-    <script type="text/javascript">
-    function googleTranslateElementInit() {
-        new google.translate.TranslateElement({
-            pageLanguage: 'en',
-            includedLanguages: 'en,fr,zh-CN,ar,es,pt,ha,tw,de',
+            includedLanguages: 'en,fr,zh-CN,ar,es,ha,de,pt',
             layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
             autoDisplay: false
         }, 'google_translate_element');
     }
+    // Translate page directly — no cookie tricks, no reloads
+    function gtTranslate(lang) {
+        if (lang === 'en') {
+            // Reset to English: reload without cookie
+            document.cookie = 'avazonia_lang=;path=/;max-age=0';
+            location.reload();
+            return;
+        }
+        document.cookie = 'avazonia_lang=' + lang + ';path=/;max-age=' + (365*86400) + ';SameSite=Lax';
+        if (typeof google !== 'undefined' && google.translate) {
+            google.translate.TranslateElement.TranslatePage('en', lang);
+        }
+    }
+    // Auto-translate on page load if cookie is set
+    document.addEventListener('DOMContentLoaded', function() {
+        var m = document.cookie.match(/avazonia_lang=([^;]+)/);
+        if (m && m[1] && m[1] !== 'en') {
+            // Wait for Google Translate to load
+            var attempts = 0;
+            var check = setInterval(function() {
+                attempts++;
+                if (typeof google !== 'undefined' && google.translate) {
+                    clearInterval(check);
+                    google.translate.TranslateElement.TranslatePage('en', m[1]);
+                }
+                if (attempts > 50) clearInterval(check); // 5 seconds max
+            }, 100);
+        }
+    });
     </script>
-    <?php endif; ?>
     <style>
     .goog-te-banner-frame { display: none !important; }
     .goog-te-menu-frame { max-height: 400px !important; overflow: auto !important; }
     body { top: 0 !important; }
     #goog-gt-tt { display: none !important; }
     .goog-te-spinner-pos { display: none !important; }
-    /* Hide the visible widget, we'll trigger it via custom button */
     #google_translate_element { display: none; }
     /* Custom lang dropdown styles */
     .gt-dropdown { position: relative; display: inline-block; }
