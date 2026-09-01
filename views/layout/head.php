@@ -76,9 +76,7 @@ $_t = Translator::getInstance();
             cursor: pointer; outline: none; color: #1a1a1a;
         }
         #google_translate_element .goog-te-gadget .goog-te-combo:hover { border-color: var(--red, #E5001A); }
-        .gt-widget-wrap { display: inline-block; vertical-align: middle; flex-shrink: 0; }
-        @media (min-width: 769px) { .gt-float { display: none; } }
-        @media (max-width: 768px) { .gt-widget-wrap { display: none; } }
+        .gt-widget-wrap { display: none !important; }
 
         /* ═══ Floating Language Icon ═══ */
         .gt-float {
