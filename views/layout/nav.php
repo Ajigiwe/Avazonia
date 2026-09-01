@@ -205,11 +205,41 @@ function getCatIcon($slug) {
             <a href="<?= APP_URL ?>/register" class="mobile-link">Sign Up</a>
         <?php endif; ?>
         <div style="height: 1px; background: rgba(0,0,0,0.05); margin: 10px 0;"></div>
-        <div id="google_translate_element_mobile"></div>
+        <div style="padding: 4px 0;">
+            <select id="mobile-lang-select" style="width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:var(--f-body,sans-serif);background:#fff;cursor:pointer;">
+                <option value="">🌐 Language</option>
+                <option value="en">🇬🇧 English</option>
+                <option value="fr">🇫🇷 Français</option>
+                <option value="zh-CN">🇨🇳 中文</option>
+                <option value="es">🇪🇸 Español</option>
+                <option value="ar">🇸🇦 العربية</option>
+                <option value="de">🇩🇪 Deutsch</option>
+                <option value="pt">🇧🇷 Português</option>
+            </select>
+        </div>
     </nav>
 </div>
 
 <script>
+    // Mobile language selector
+    document.addEventListener('change', function(e) {
+        if (e.target.id === 'mobile-lang-select') {
+            var lang = e.target.value;
+            if (!lang) return;
+            // Close menu first
+            if (window.toggleMenu) window.toggleMenu(false);
+            // Wait for Google Translate to load, then translate
+            function tryTranslate(attempts) {
+                if (typeof google !== 'undefined' && google.translate && google.translate.TranslateElement) {
+                    google.translate.TranslateElement.TranslatePage('en', lang);
+                } else if (attempts < 30) {
+                    setTimeout(function() { tryTranslate(attempts + 1); }, 200);
+                }
+            }
+            tryTranslate(0);
+        }
+    });
+
     (function() {
         const mainNav = document.getElementById('main-nav');
         

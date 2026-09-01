@@ -88,13 +88,6 @@ $_t = Translator::getInstance();
             pageLanguage: 'en',
             layout: google.translate.TranslateElement.InlineLayout.HORIZONTAL
         }, 'google_translate_element');
-        // Mobile widget in hamburger menu
-        if (document.getElementById('google_translate_element_mobile')) {
-            new google.translate.TranslateElement({
-                pageLanguage: 'en',
-                layout: google.translate.TranslateElement.InlineLayout.HORIZONTAL
-            }, 'google_translate_element_mobile');
-        }
     }
     </script>
     <style>
