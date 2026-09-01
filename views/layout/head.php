@@ -58,10 +58,10 @@ $_t = Translator::getInstance();
         /* ═══ Google Translate — hide all native chrome ═══ */
         .goog-te-banner-frame,
         .goog-te-banner-frame + div,
-        .skiptranslate,
         #goog-gt-tt { display: none !important; }
         body { top: 0 !important; }
-        /* Hide the hidden init div */
+        /* Hide only the top banner wrapper, not the widget */
+        body > .skiptranslate { display: none !important; }
         #google_translate_element { display: inline-block; vertical-align: middle; }
         /* Hide the Google branding text next to combo */
         #google_translate_element .goog-te-gadget span:not(.goog-te-combo) { display: none !important; }
