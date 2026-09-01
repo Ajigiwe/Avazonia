@@ -136,8 +136,8 @@ $_t = Translator::getInstance();
     /* ═══ Floating Language Icon ═══ */
     .gt-float {
         position: fixed;
-        bottom: 24px;
-        left: 24px;
+        bottom: 80px;
+        left: 20px;
         z-index: 9999;
     }
     .gt-float-btn {
@@ -230,7 +230,7 @@ $_t = Translator::getInstance();
     }
     @media (max-width: 768px) {
         .gt-float {
-            bottom: 16px;
+            bottom: 72px;
             left: 16px;
         }
         .gt-float-btn {
@@ -343,5 +343,3 @@ $_t = Translator::getInstance();
         }
     })();
     </script>
-</head>
-<body>
