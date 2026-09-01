@@ -66,7 +66,7 @@ $_t = Translator::getInstance();
         /* Hide the Google branding text next to combo */
         #google_translate_element .goog-te-gadget span:not(.goog-te-combo) { display: none !important; }
         /* Style the combo to match Avazonia */
-        #google_translate_element .goog-te-gadget { font-size: 0 !important; line-height: 1; margin: 0; padding: 0; }
+        #google_translate_element .goog-te-gadget { line-height: 1; margin: 0; padding: 0; }
         #google_translate_element .goog-te-gadget .goog-te-combo {
             height: 36px; padding: 4px 28px 4px 10px;
             border: 1px solid #e5e7eb; border-radius: 8px;
@@ -76,7 +76,9 @@ $_t = Translator::getInstance();
             cursor: pointer; outline: none; color: #1a1a1a;
         }
         #google_translate_element .goog-te-gadget .goog-te-combo:hover { border-color: var(--red, #E5001A); }
-        .gt-widget-wrap { display: none !important; }
+        .gt-widget-wrap { display: inline-block; vertical-align: middle; flex-shrink: 0; }
+        @media (max-width: 768px) { .gt-widget-wrap { display: none !important; } }
+        @media (min-width: 769px) { .gt-float { display: none !important; } }
 
         /* ═══ Floating Language Icon ═══ */
         .gt-float {
