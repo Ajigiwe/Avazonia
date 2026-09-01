@@ -60,8 +60,8 @@ $_t = Translator::getInstance();
         .goog-te-banner-frame + div,
         #goog-gt-tt { display: none !important; }
         body { top: 0 !important; }
-        /* Hide Google Translate banner but not content wrapper */
-        .goog-te-banner-frame + div { display: none !important; }
+        /* Hide any Google Translate banner/notification bar */
+        body > div.skiptranslate:not(#google_translate_element) { display: none !important; position: absolute !important; }
         #google_translate_element { display: inline-block; vertical-align: middle; }
         /* Hide the Google branding text next to combo */
         #google_translate_element .goog-te-gadget span:not(.goog-te-combo) { display: none !important; }
