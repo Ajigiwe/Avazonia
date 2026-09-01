@@ -80,7 +80,8 @@ $_t = Translator::getInstance();
     }
     </script>
 
-    <!-- Google Translate Widget -->
+    <!-- Google Translate (cookie-based) -->
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <script type="text/javascript">
     function googleTranslateElementInit() {
         new google.translate.TranslateElement({
@@ -91,12 +92,12 @@ $_t = Translator::getInstance();
         }, 'google_translate_element');
     }
     </script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <style>
-    /* Hide default Google Translate bar */
     .goog-te-banner-frame { display: none !important; }
     .goog-te-menu-frame { max-height: 400px !important; overflow: auto !important; }
     body { top: 0 !important; }
+    #goog-gt-tt { display: none !important; }
+    .goog-te-spinner-pos { display: none !important; }
     /* Hide the visible widget, we'll trigger it via custom button */
     #google_translate_element { display: none; }
     /* Custom lang dropdown styles */

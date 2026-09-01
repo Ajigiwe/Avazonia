@@ -126,36 +126,47 @@ function getCatIcon($slug) {
                     </div>
                 </div>
                 <script>
-                var currentLang = 'en';
+                // Cookie-based Google Translate switching
+                function getCookie(name) {
+                    var v = document.cookie.match('(^|;)\s*' + name + '\s*=\s*([^;]+)');
+                    return v ? v.pop() : '';
+                }
+                function setCookie(name, val, days) {
+                    document.cookie = name + '=' + val + ';path=/;max-age=' + (days*86400) + ';SameSite=Lax';
+                }
+
                 function switchLang(lang) {
-                    var select = document.querySelector('.goog-te-combo');
-                    if (!select) { alert('Google Translate still loading, try again in a moment.'); return; }
-                    select.value = lang;
-                    select.dispatchEvent(new Event('change'));
-                    currentLang = lang;
+                    document.getElementById('gt-menu').classList.remove('show');
+                    if (lang === 'en') {
+                        // Remove Google Translate cookie = back to original
+                        setCookie('GOOGTRANS', '', -1);
+                        localStorage.removeItem('gt_lang');
+                    } else {
+                        setCookie('GOOGTRANS', '/en/' + lang, 365);
+                        localStorage.setItem('gt_lang', lang);
+                    }
+                    // Update active state
                     document.querySelectorAll('#gt-menu a').forEach(function(a) { a.classList.remove('active'); });
                     var active = document.getElementById('gt-' + lang);
                     if (active) active.classList.add('active');
-                    document.getElementById('gt-menu').classList.remove('show');
+                    // Reload to apply
+                    location.reload();
                 }
+
+                // Restore active state on load
+                (function() {
+                    var saved = localStorage.getItem('gt_lang');
+                    if (saved) {
+                        var el = document.getElementById('gt-' + saved);
+                        if (el) { el.classList.add('active'); document.getElementById('gt-en')?.classList.remove('active'); }
+                    }
+                })();
+
                 document.addEventListener('click', function(e) {
                     var menu = document.getElementById('gt-menu');
                     var btn = document.getElementById('gt-switcher');
                     if (menu && btn && !btn.contains(e.target)) menu.classList.remove('show');
                 });
-                // Auto-detect saved language
-                (function() {
-                    var saved = localStorage.getItem('gt_lang');
-                    if (saved && saved !== 'en') {
-                        setTimeout(function() { switchLang(saved); }, 1500);
-                    }
-                })();
-                // Persist choice
-                var origSwitch = switchLang;
-                switchLang = function(lang) {
-                    origSwitch(lang);
-                    localStorage.setItem('gt_lang', lang);
-                };
                 </script>
                                 <a href="<?= APP_URL ?>/sourcing" class="nav-icon-btn desktop-only" aria-label="B2B Sourcing" title="B2B Sourcing">🌍</a>
                 <a href="<?= APP_URL ?>/wishlist" class="nav-icon-btn desktop-only" aria-label="Wishlist">
