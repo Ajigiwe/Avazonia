@@ -614,7 +614,15 @@ function getCatIcon($slug) {
             window.initSlider();
             window.initScrollReveal();
             window.initBestsellersAutoplay();
-            // Handle any other page-specific setup here
+            // Re-translate dynamically loaded content via Google Translate
+            if (document.cookie.indexOf('avazonia_lang=') !== -1) {
+                var gtLang = document.cookie.match(/avazonia_lang=([^;]+)/);
+                if (gtLang && gtLang[1] !== 'en' && typeof google !== 'undefined' && google.translate) {
+                    setTimeout(function() {
+                        google.translate.TranslateElement.TranslatePage('en', gtLang[1]);
+                    }, 500);
+                }
+            }
         };
 
         // Initial launch

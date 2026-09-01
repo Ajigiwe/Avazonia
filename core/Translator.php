@@ -81,6 +81,15 @@ class Translator {
     }
 
     public function get(string $key, string $fallback = ''): string {
+        // When Google Translate is handling translation (non-English cookie set),
+        // return English so Google Translate has a clean page to translate from.
+        // This prevents conflicts between t() output and Google Translate.
+        $gtLang = $_COOKIE['avazonia_lang'] ?? '';
+        if ($gtLang && $gtLang !== 'en') {
+            // Return English fallback — Google Translate will handle the rest
+            $enStrings = require __DIR__ . '/../lang/en.php';
+            return $enStrings[$key] ?? $fallback ?: $key;
+        }
         return $this->strings[$key] ?? $fallback ?: $key;
     }
 
