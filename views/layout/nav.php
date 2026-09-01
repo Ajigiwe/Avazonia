@@ -221,22 +221,16 @@ function getCatIcon($slug) {
 </div>
 
 <script>
-    // Mobile language selector
+    // Mobile language selector — set GOOGTRANS cookie and reload
     document.addEventListener('change', function(e) {
         if (e.target.id === 'mobile-lang-select') {
             var lang = e.target.value;
             if (!lang) return;
-            // Close menu first
+            // Close menu
             if (window.toggleMenu) window.toggleMenu(false);
-            // Wait for Google Translate to load, then translate
-            function tryTranslate(attempts) {
-                if (typeof google !== 'undefined' && google.translate && google.translate.TranslateElement) {
-                    google.translate.TranslateElement.TranslatePage('en', lang);
-                } else if (attempts < 30) {
-                    setTimeout(function() { tryTranslate(attempts + 1); }, 200);
-                }
-            }
-            tryTranslate(0);
+            // Set cookie for Google Translate, then reload
+            document.cookie = 'GOOGTRANS=/en/' + lang + ';path=/;max-age=' + (365*86400) + ';SameSite=Lax';
+            location.reload();
         }
     });
 
