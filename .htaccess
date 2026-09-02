@@ -24,8 +24,9 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [L,QSA]
 
-# PWA Support
-AddType application/manifest+json .json
-<Files "manifest.json">
+# PWA Support — set correct MIME for the web app manifest
+AddType application/manifest+json .webmanifest .json
+<FilesMatch "manifest\.(webmanifest|json)$">
+    Header set Content-Type "application/manifest+json"
     Header set Access-Control-Allow-Origin "*"
-</Files>
+</FilesMatch>
