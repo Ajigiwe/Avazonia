@@ -7,6 +7,7 @@
  */
 
 header('Content-Type: text/plain');
+require_once __DIR__ . '/config/app.php'; // loads .env so DB creds are available
 require_once __DIR__ . '/config/database.php';
 
 echo "🚀 Avazonia Migration Runner\n";
