@@ -124,7 +124,7 @@ $_t = Translator::getInstance();
             stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
         }
     </style>
-    <link rel="icon" type="image/png" href="<?= APP_URL ?>/public/assets/img/logo2-rounded.png?v=2">
+    <link rel="icon" type="image/png" href="<?= APP_URL ?>/public/assets/img/icon-maskable-192.png?v=2">
 
     <!-- PWA Support -->
     <link rel="manifest" href="<?= APP_URL ?>/manifest.webmanifest?v=2">
@@ -133,7 +133,7 @@ $_t = Translator::getInstance();
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="<?= APP_NAME ?>">
-    <link rel="apple-touch-icon" href="<?= APP_URL ?>/public/assets/img/logo2-rounded.png?v=2">
+    <link rel="apple-touch-icon" href="<?= APP_URL ?>/public/assets/img/icon-maskable.png?v=2">
 
     <script>
     if ('serviceWorker' in navigator) {
