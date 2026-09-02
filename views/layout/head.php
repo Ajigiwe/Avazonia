@@ -62,8 +62,6 @@ $_t = Translator::getInstance();
         body { top: 0 !important; }
         /* Hide any Google Translate banner/notification bar */
         body > div.skiptranslate:not(#google_translate_element) { display: none !important; position: absolute !important; }
-        /* Desktop: widget sits inline in the nav bar (parent .nav-right-icons) */
-        #google_translate_element { position: static !important; display: inline-flex !important; align-items: center; }
         #google_translate_element .goog-te-gadget { line-height: 1; margin: 0; padding: 0; }
         #google_translate_element .goog-te-gadget span:not(.goog-te-combo) { display: none !important; }
         #google_translate_element .goog-te-gadget .goog-te-combo {
@@ -75,12 +73,24 @@ $_t = Translator::getInstance();
             cursor: pointer; outline: none; color: #1a1a1a;
         }
         #google_translate_element .goog-te-gadget .goog-te-combo:hover { border-color: var(--red, #E5001A); }
-        /* Mobile: hide the nav widget, show the floating icon instead */
+        /* Desktop: native combo inline in the nav bar (parent .nav-right-icons) */
+        @media (min-width: 769px) {
+            #google_translate_element { position: static !important; display: inline-flex !important; align-items: center; }
+            .gt-float { display: none !important; }
+        }
+        /* Mobile: combo hidden until the floating globe is tapped, then shown as a floating card */
         @media (max-width: 768px) {
-            #google_translate_element { display: none !important; }
+            #google_translate_element {
+                display: none !important;
+                position: fixed !important;
+                bottom: 150px !important; left: 20px !important; top: auto !important; right: auto !important;
+                background: #fff !important; padding: 8px 10px !important;
+                border-radius: 12px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.18) !important; z-index: 100000 !important;
+            }
+            #google_translate_element.open { display: block !important; }
+            #google_translate_element .goog-te-gadget .goog-te-combo { height: 34px !important; font-size: 13px !important; }
             .gt-float { display: block !important; }
         }
-        @media (min-width: 769px) { .gt-float { display: none !important; } }
 
         /* ═══ Floating Language Icon ═══ */
         .gt-float {
@@ -111,58 +121,6 @@ $_t = Translator::getInstance();
             width: 24px; height: 24px; fill: none; stroke: #fff;
             stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
         }
-        .gt-float-menu {
-            position: absolute;
-            bottom: 62px;
-            left: 0;
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-            min-width: 200px;
-            padding: 8px 0;
-            display: none;
-            overflow: hidden;
-        }
-        .gt-float-menu.open { display: block; }
-        .gt-float-menu-title {
-            padding: 8px 16px 6px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #999;
-            font-family: var(--f-mono, monospace);
-        }
-        .gt-opt {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 16px;
-            cursor: pointer;
-            transition: background 0.15s;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-            font-size: 14px;
-            font-family: var(--f-body, sans-serif);
-            color: #1a1a1a;
-        }
-        .gt-opt:hover { background: #f5f5f5; }
-        .gt-opt.on { background: rgba(229,0,26,0.06); color: var(--red, #E5001A); font-weight: 600; }
-        .gt-opt .gt-fl { font-size: 20px; line-height: 1; }
-        .gt-opt .gt-nm { flex: 1; }
-        .gt-more {
-            padding: 8px 16px;
-            font-size: 12px;
-            color: #999;
-            border-top: 1px solid #f0f0f0;
-            margin-top: 4px;
-            text-align: center;
-        }
-        .gt-more a { color: var(--red, #E5001A); text-decoration: none; font-weight: 600; }
-        .gt-more a:hover { text-decoration: underline; }
-
     </style>
     <link rel="icon" type="image/png" href="<?= APP_URL ?>/public/assets/img/logo2-rounded.png?v=2">
 
@@ -208,40 +166,31 @@ $_t = Translator::getInstance();
 </head>
 <body>
 
-<!-- Floating Language Icon -->
+<!-- Floating Language Icon (mobile) — toggles the native full-language combo -->
 <div class="gt-float" id="gt-float">
-    <div class="gt-float-menu" id="gt-float-menu">
-        <div class="gt-float-menu-title">Translate to</div>
-        <button class="gt-opt" onclick="gtPick('')"><span class="gt-fl">🇬🇧</span><span class="gt-nm">English</span></button>
-        <button class="gt-opt" onclick="gtPick('fr')"><span class="gt-fl">🇫🇷</span><span class="gt-nm">Français</span></button>
-        <button class="gt-opt" onclick="gtPick('zh-CN')"><span class="gt-fl">🇨🇳</span><span class="gt-nm">中文 (Chinese)</span></button>
-        <button class="gt-opt" onclick="gtPick('es')"><span class="gt-fl">🇪🇸</span><span class="gt-nm">Español</span></button>
-        <button class="gt-opt" onclick="gtPick('de')"><span class="gt-fl">🇩🇪</span><span class="gt-nm">Deutsch</span></button>
-        <button class="gt-opt" onclick="gtPick('ar')"><span class="gt-fl">🇸🇦</span><span class="gt-nm">العربية (Arabic)</span></button>
-        <button class="gt-opt" onclick="gtPick('pt')"><span class="gt-fl">🇧🇷</span><span class="gt-nm">Português</span></button>
-        <button class="gt-opt" onclick="gtPick('ja')"><span class="gt-fl">🇯🇵</span><span class="gt-nm">日本語 (Japanese)</span></button>
-        <button class="gt-opt" onclick="gtPick('ko')"><span class="gt-fl">🇰🇷</span><span class="gt-nm">한국어 (Korean)</span></button>
-        <button class="gt-opt" onclick="gtPick('hi')"><span class="gt-fl">🇮🇳</span><span class="gt-nm">हिन्दी (Hindi)</span></button>
-        <button class="gt-opt" onclick="gtPick('sw')"><span class="gt-fl">🇰🇪</span><span class="gt-nm">Kiswahili</span></button>
-        <button class="gt-opt" onclick="gtPick('ha')"><span class="gt-fl">🇳🇬</span><span class="gt-nm">Hausa</span></button>
-        <button class="gt-more">All 100+ languages <a href="#" onclick="gtPick('all');return false;">See all →</a></button>
-    </div>
-    <button class="gt-float-btn" aria-label="Change Language" title="Change Language" onclick="document.getElementById('gt-float-menu').classList.toggle('open');event.stopPropagation();">
+    <button class="gt-float-btn" aria-label="Change Language" title="Change Language" onclick="gtMobileToggle(event)">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
     </button>
 </div>
 <script>
-function gtPick(lang) {
-    document.getElementById('gt-float-menu').classList.remove('open');
-    if (lang === 'all') {
-        var combo = document.querySelector('#google_translate_element select.goog-te-combo');
-        if (combo) { combo.style.cssText = 'position:fixed;bottom:150px;left:20px;z-index:100000;display:block;height:40px;width:200px;font-size:14px;'; combo.focus(); }
-        return;
+function gtMobileToggle(e) {
+    if (e) e.stopPropagation();
+    var el = document.getElementById('google_translate_element');
+    if (!el) return;
+    el.classList.toggle('open');
+    if (el.classList.contains('open')) {
+        var combo = el.querySelector('select.goog-te-combo');
+        if (combo) setTimeout(function(){ combo.focus(); }, 50);
     }
-    if (lang === '') { document.cookie = 'GOOGTRANS=;path=/;max-age=0'; location.reload(); return; }
-    document.cookie = 'GOOGTRANS=/en/' + lang + ';path=/;max-age=' + (365*86400) + ';SameSite=Lax';
-    location.reload();
 }
-function gtToggle() { document.getElementById('gt-float-menu').classList.toggle('open'); }
-function gtClose() { document.getElementById('gt-float-menu').classList.remove('open'); }
+// Close the mobile combo when tapping outside
+function gtCloseIfOutside(e) {
+    var el = document.getElementById('google_translate_element');
+    if (!el || !el.classList.contains('open')) return;
+    if (!el.contains(e.target) && !document.querySelector('.gt-float-btn').contains(e.target)) {
+        el.classList.remove('open');
+    }
+}
+document.addEventListener('click', gtCloseIfOutside);
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') { var el = document.getElementById('google_translate_element'); if (el) el.classList.remove('open'); } });
 </script>
