@@ -62,23 +62,24 @@ $_t = Translator::getInstance();
         body { top: 0 !important; }
         /* Hide any Google Translate banner/notification bar */
         body > div.skiptranslate:not(#google_translate_element) { display: none !important; position: absolute !important; }
-        #google_translate_element { position: fixed; top: 16px; right: 200px; z-index: 99999; background: #fff; padding: 2px 4px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        #google_translate_element .goog-te-gadget .goog-te-combo { height: 24px; font-size: 10px; padding: 1px 16px 1px 4px; }
-        @media (max-width: 768px) { #google_translate_element { top: auto; bottom: 100px; right: auto; left: 16px; padding: 1px 2px; } #google_translate_element .goog-te-gadget .goog-te-combo { height: 28px; font-size: 11px; } }
-        /* Hide the Google branding text next to combo */
-        #google_translate_element .goog-te-gadget span:not(.goog-te-combo) { display: none !important; }
-        /* Style the combo to match Avazonia */
+        /* Desktop: widget sits inline in the nav bar (parent .nav-right-icons) */
+        #google_translate_element { position: static !important; display: inline-flex !important; align-items: center; }
         #google_translate_element .goog-te-gadget { line-height: 1; margin: 0; padding: 0; }
+        #google_translate_element .goog-te-gadget span:not(.goog-te-combo) { display: none !important; }
         #google_translate_element .goog-te-gadget .goog-te-combo {
             height: 36px; padding: 4px 28px 4px 10px;
             border: 1px solid #e5e7eb; border-radius: 8px;
-            font-size: 13px; font-family: var(--f-body, sans-serif);
+            font-size: 12px; font-family: var(--f-body, sans-serif);
             background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E") no-repeat right 8px center;
             -webkit-appearance: none; -moz-appearance: none; appearance: none;
             cursor: pointer; outline: none; color: #1a1a1a;
         }
         #google_translate_element .goog-te-gadget .goog-te-combo:hover { border-color: var(--red, #E5001A); }
-        @media (max-width: 768px) { .gt-float { display: none !important; } }
+        /* Mobile: hide the nav widget, show the floating icon instead */
+        @media (max-width: 768px) {
+            #google_translate_element { display: none !important; }
+            .gt-float { display: block !important; }
+        }
         @media (min-width: 769px) { .gt-float { display: none !important; } }
 
         /* ═══ Floating Language Icon ═══ */
@@ -206,9 +207,6 @@ $_t = Translator::getInstance();
     </script>
 </head>
 <body>
-
-<!-- Google Translate Widget (direct child of body) -->
-<div id="google_translate_element"></div>
 
 <!-- Floating Language Icon -->
 <div class="gt-float" id="gt-float">
