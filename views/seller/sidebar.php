@@ -86,9 +86,12 @@ $basePath = APP_URL . '/seller';
     .seller-mobile-card .card-actions .btn-remove { color: #f5222d; border: 1px solid #f5222d; }
     .seller-dash-grid { grid-template-columns: 1fr; gap: 16px; }
 }
-.mobile-seller-top { display: none; }
-.seller-mobile-drawer { display: none; }
-.seller-mobile-overlay { display: none; }
+/* Desktop: hide mobile-only chrome (must be media-scoped or it overrides the drawer on mobile) */
+@media (min-width: 901px) {
+    .mobile-seller-top { display: none; }
+    .seller-mobile-drawer { display: none; }
+    .seller-mobile-overlay { display: none; }
+}
 </style>
 
 <!-- Mobile top bar: hamburger + brand -->
