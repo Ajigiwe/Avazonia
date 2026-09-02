@@ -72,10 +72,12 @@ $_t = Translator::getInstance();
             -webkit-appearance: none; -moz-appearance: none; appearance: none;
             cursor: pointer; outline: none; color: #1a1a1a;
         }
-        #google_translate_element .goog-te-gadget .goog-te-combo:hover { border-color: var(--red, #E5001A); }
-        /* Desktop: native combo inline in the nav bar (parent .nav-right-icons) */
+        /* Desktop: sit the combo in the nav bar (top-right) — body-level, so position:fixed works */
         @media (min-width: 769px) {
-            #google_translate_element { position: static !important; display: inline-flex !important; align-items: center; }
+            #google_translate_element {
+                position: fixed !important; top: 16px !important; right: 240px !important;
+                z-index: 2001 !important; display: inline-flex !important; align-items: center;
+            }
             .gt-float { display: none !important; }
         }
         /* Mobile: combo hidden until the floating globe is tapped, then shown as a floating card */
@@ -165,6 +167,9 @@ $_t = Translator::getInstance();
     </script>
 </head>
 <body>
+
+<!-- Google Translate widget (single instance; direct child of body so it escapes the nav's backdrop-filter containing block) -->
+<div id="google_translate_element"></div>
 
 <!-- Floating Language Icon (mobile) — toggles the native full-language combo -->
 <div class="gt-float" id="gt-float">
