@@ -49,6 +49,7 @@ $router->add('GET', '/orders', 'AccountController@index');
 $router->add('GET', '/wishlist', 'WishlistController@index');
 $router->add('POST', '/api/wishlist-toggle', 'WishlistController@toggle');
 $router->add('GET', '/account/order/([0-9]+)', 'AccountController@orderDetails');
+$router->add('GET', '/account/enquiries', 'AccountController@enquiries');
 $router->add('GET', '/account/settings', 'AccountController@settings');
 $router->add('POST', '/account/settings', 'AccountController@settings');
 

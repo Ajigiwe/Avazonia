@@ -168,6 +168,27 @@ class AccountController extends Controller {
         $this->redirect(APP_URL);
     }
 
+    // MY ENQUIRIES (buyer-side RFQ list)
+    public function enquiries() {
+        if (!Session::get('user_id')) {
+            $this->redirect(APP_URL . '/login');
+        }
+        require_once __DIR__ . '/../models/Rfq.php';
+        $rfqModel = new Rfq();
+        $rfqs = $rfqModel->getByBuyer((int)Session::get('user_id'), 50);
+        // Attach the latest seller reply to each quoted enquiry
+        foreach ($rfqs as &$r) {
+            if ($r['status'] === 'quoted') {
+                try {
+                    $msgs = $rfqModel->messages((int)$r['id']);
+                    $r['seller_reply'] = end($msgs)['body'] ?? null;
+                } catch (\Throwable $e) { $r['seller_reply'] = null; }
+            }
+        }
+        unset($r);
+        $this->view('account/enquiries', ['rfqs' => $rfqs]);
+    }
+
     // ACCOUNT INDEX
     public function index() {
         if (!Session::get('user_id')) {

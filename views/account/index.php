@@ -35,6 +35,9 @@ $user_name = Session::get('user_name') ?: 'Member';
                         <a href="<?= APP_URL ?>/account/settings" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; text-decoration: none; color: var(--mid-gray); font-size: 13px; transition: 0.2s;">
                             <span style="font-size: 16px;">⚙️</span> Profile Settings
                         </a>
+                        <a href="<?= APP_URL ?>/account/enquiries" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; text-decoration: none; color: var(--mid-gray); font-size: 13px; transition: 0.2s;">
+                            <span style="font-size: 16px;">✉️</span> My Enquiries
+                        </a>
                         <div style="margin: 12px 0; border-top: 1px solid #eee;"></div>
                         <a href="<?= APP_URL ?>/logout" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; text-decoration: none; color: #f5222d; font-size: 13px;">
                             <span style="font-size: 16px;">👋</span> Logout

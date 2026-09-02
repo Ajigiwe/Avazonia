@@ -123,6 +123,13 @@ class CheckoutController extends Controller {
             }
 
             $item['price_ghs'] = $realPrice;
+
+            // MOQ guard (server-side final check) — matches CartController rules
+            $moq = (int)($dbProduct['moq'] ?? 0);
+            if ($moq > 1 && in_array($dbProduct['listing_type'] ?? 'retail', ['wholesale','rfq','export'], true) && (int)$item['qty'] < $moq) {
+                return $this->json(['success' => false, 'message' => "'" . $item['name'] . "' has a minimum order of {$moq} units. Update your cart."]);
+            }
+
             $item_total = $realPrice * $item['qty'];
             $subtotal += $item_total;
             

@@ -33,6 +33,18 @@ require_once __DIR__ . '/../layout/nav.php';
   </div>
   <?php endif; ?>
 
+  <?php if (!empty($wholesaleStores)): ?>
+  <h2 style="font-family:var(--f-display);font-weight:800;margin:24px 0 12px;">Wholesale & Distribution Partners</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;">
+    <?php foreach($wholesaleStores as $st): ?>
+      <a href="<?= APP_URL ?>/supplier/<?= htmlspecialchars($st['slug']) ?>" style="border:2px solid var(--ink);padding:16px;display:flex;gap:12px;text-decoration:none;color:var(--ink);background:#fff;">
+        <div style="width:48px;height:48px;background:var(--off);border:1px solid var(--light-gray);display:flex;align-items:center;justify-content:center;">&#128230;</div>
+        <div><div style="font-weight:800;"><?= htmlspecialchars($st['name']) ?></div><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);"><?= htmlspecialchars($st['country_code']) ?> · <?= htmlspecialchars($st['seller_type']) ?></div><?= verification_badge($st) ?></div>
+      </a>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
+
   <?php if (!empty($exportCars)): ?>
   <h2 style="font-family:var(--f-display);font-weight:800;margin:24px 0 12px;">International Vehicle Sourcing (FOB China)</h2>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;">

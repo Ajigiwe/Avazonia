@@ -9,6 +9,7 @@
 <div class="seller-stats-bar">
     <div class="seller-stat-card"><div class="stat-label">Total RFQs</div><div class="stat-value"><?= count($rfqs) ?></div></div>
     <div class="seller-stat-card"><div class="stat-label">Pending</div><div class="stat-value"><?= count(array_filter($rfqs, fn($r)=>$r['status']==='pending')) ?></div></div>
+    <div class="seller-stat-card"><div class="stat-label">Quoted</div><div class="stat-value"><?= count(array_filter($rfqs, fn($r)=>$r['status']==='quoted')) ?></div></div>
 </div>
 
 <?php if(!empty($rfqs)): ?>
@@ -26,21 +27,34 @@
             </div>
             <div style="display:flex;gap:8px;">
                 <?php if($r['status']==='pending'): ?>
-                <form method="POST" action="<?= APP_URL ?>/seller/rfqs/respond/<?= (int)$r['id'] ?>" style="display:inline;">
+                <form method="POST" action="<?= APP_URL ?>/seller/rfqs/respond/<?= (int)$r['id'] ?>" style="display:flex;flex-direction:column;gap:8px;width:100%;margin-top:12px;border-top:1px dashed var(--light-gray);padding-top:12px;">
                     <?= Csrf::field() ?>
                     <input type="hidden" name="rfq_action" value="quote">
-                    <button type="submit" style="background:var(--ink);color:#fff;padding:8px 16px;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;border:none;cursor:pointer;">Reply</button>
+                    <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.1em;">Send a quote</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <input type="number" name="quote_unit_price" step="0.01" min="0.01" required placeholder="Unit price (GHS)" style="flex:1;min-width:130px;height:38px;border:1px solid var(--light-gray);padding:0 10px;">
+                        <input type="number" name="quote_qty" min="1" value="<?= (int)$r['qty'] ?>" style="width:90px;height:38px;border:1px solid var(--light-gray);padding:0 10px;">
+                        <input type="number" name="quote_lead_time_days" min="1" placeholder="Lead days" style="width:110px;height:38px;border:1px solid var(--light-gray);padding:0 10px;">
+                    </div>
+                    <textarea name="quote_note" rows="2" placeholder="Terms, shipping, validity&hellip;" style="border:1px solid var(--light-gray);padding:8px;font-family:inherit;"></textarea>
+                    <div style="display:flex;gap:8px;">
+                        <button type="submit" style="background:var(--ink);color:#fff;padding:8px 16px;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;border:none;cursor:pointer;">Send Quote</button>
+                    </div>
                 </form>
-                <form method="POST" action="<?= APP_URL ?>/seller/rfqs/respond/<?= (int)$r['id'] ?>" style="display:inline;">
-                    <?= Csrf::field() ?>
-                    <input type="hidden" name="rfq_action" value="accept">
-                    <button type="submit" style="background:#00a854;color:#fff;padding:8px 16px;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;border:none;cursor:pointer;">Accept</button>
-                </form>
-                <form method="POST" action="<?= APP_URL ?>/seller/rfqs/respond/<?= (int)$r['id'] ?>" style="display:inline;">
-                    <?= Csrf::field() ?>
-                    <input type="hidden" name="rfq_action" value="reject">
-                    <button type="submit" style="background:#fff;color:#f5222d;border:1px solid #f5222d;padding:8px 16px;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;cursor:pointer;" onclick="return confirm('Reject this enquiry?')">Reject</button>
-                </form>
+                <div style="display:flex;gap:8px;">
+                    <form method="POST" action="<?= APP_URL ?>/seller/rfqs/respond/<?= (int)$r['id'] ?>" style="display:inline;">
+                        <?= Csrf::field() ?>
+                        <input type="hidden" name="rfq_action" value="accept">
+                        <button type="submit" style="background:#00a854;color:#fff;padding:8px 16px;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;border:none;cursor:pointer;">Accept</button>
+                    </form>
+                    <form method="POST" action="<?= APP_URL ?>/seller/rfqs/respond/<?= (int)$r['id'] ?>" style="display:inline;">
+                        <?= Csrf::field() ?>
+                        <input type="hidden" name="rfq_action" value="reject">
+                        <button type="submit" style="background:#fff;color:#f5222d;border:1px solid #f5222d;padding:8px 16px;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;cursor:pointer;" onclick="return confirm('Reject this enquiry?')">Reject</button>
+                    </form>
+                </div>
+                <?php elseif($r['status']==='quoted'): ?>
+                <div style="font-family:var(--f-mono);font-size:10px;padding:8px 16px;background:#e6f4ea;border:1px solid #00a854;color:#00a854;text-transform:uppercase;">Quoted — awaiting buyer</div>
                 <?php else: ?>
                 <span style="font-family:var(--f-mono);font-size:10px;padding:8px 16px;background:var(--off);border:1px solid var(--light-gray);text-transform:uppercase;"><?= htmlspecialchars($r['status']) ?></span>
                 <?php endif; ?>

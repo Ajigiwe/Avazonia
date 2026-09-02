@@ -47,6 +47,20 @@ class CartController extends Controller {
             $this->redirect(APP_URL . '/shop');
         }
 
+        // MOQ enforcement: wholesale/rfq/export listings carry a minimum order quantity
+        $moq = (int)($product['moq'] ?? 0);
+        if ($moq > 1 && in_array($product['listing_type'] ?? 'retail', ['wholesale','rfq','export'], true)) {
+            if ($qty < $moq) {
+                $msg = "Minimum order quantity for this product is {$moq} units.";
+                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                    return $this->json(['success' => false, 'message' => $msg]);
+                }
+                $this->redirect(APP_URL . '/product/' . ($product['slug'] ?? $productId) . '?error=' . urlencode($msg));
+                return;
+            }
+            $qty = min($qty, (int)($product['stock_qty'] ?: $qty)); // never exceed stock
+        }
+
         $cart = Session::get('cart', []);
         $key = $productId . '-' . ($variantId ?? '0');
 
@@ -85,6 +99,11 @@ class CartController extends Controller {
 
         if (isset($cart[$key])) {
             $cart[$key]['qty'] += $qty;
+            // Keep existing MOQ items at or above their minimum on repeat adds
+            $moq = (int)($product['moq'] ?? 0);
+            if ($moq > 1 && in_array($product['listing_type'] ?? 'retail', ['wholesale','rfq','export'], true) && $cart[$key]['qty'] < $moq) {
+                $cart[$key]['qty'] = $moq;
+            }
         } else {
             $cart[$key] = [
                 'product_id' => $productId,

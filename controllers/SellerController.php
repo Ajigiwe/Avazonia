@@ -234,11 +234,39 @@ class SellerController extends Controller {
 
     public function respondRfq($id) {
         $seller=$this->requireSeller(); if (!$seller) return;
+        $rfqModel=new Rfq();
+        // Ownership check: this RFQ must belong to this seller
+        $rfq=$rfqModel->findForSeller((int)$id, (int)$seller['id']);
+        if (!$rfq) { $this->redirect(APP_URL.'/seller/rfqs'); return; }
         if ($_SERVER['REQUEST_METHOD']==='POST') {
             $action=$_POST['rfq_action']??'';
-            $statusMap=['accept'=>'accepted','reject'=>'rejected','quote'=>'quoted'];
-            if (isset($statusMap[$action])) {
-                (new Rfq())->updateStatus((int)$id, $statusMap[$action]);
+            if ($action==='quote') {
+                $unitPrice=(float)($_POST['quote_unit_price']??0);
+                $qty=max(1,(int)($_POST['quote_qty']??$rfq['qty']));
+                $leadTime=isset($_POST['quote_lead_time_days'])&&$_POST['quote_lead_time_days']!==''?(int)$_POST['quote_lead_time_days']:null;
+                $note=trim($_POST['quote_note']??'');
+                if ($unitPrice>0) {
+                    try {
+                        $okQuote=$rfqModel->addQuote((int)$id,$unitPrice,$qty,$leadTime,$note);
+                    } catch (\Throwable $e) {
+                        $this->logError("respondRfq quote failed (migration 011 missing?): " . $e->getMessage());
+                        $okQuote=false;
+                    }
+                    if ($okQuote) {
+                        // Notify buyer (best-effort)
+                        try {
+                            require_once __DIR__.'/../models/Notification.php';
+                            Notification::create('rfq_quoted', "Your enquiry #{$id} got a quote: GHS {$unitPrice} x {$qty}", ['rfq_id'=>(int)$id,'buyer_user_id'=>(int)$rfq['buyer_user_id']]);
+                        } catch (\Throwable $e) {}
+                        // Message thread (best-effort; table may not exist yet on prod)
+                        try { if ($note!=='') $rfqModel->addMessage((int)$id,(int)$seller['user_id'],$note); } catch (\Throwable $e) {}
+                    } else {
+                        $_SESSION['rfq_error'] = 'Could not save quote — run migrations/011_rfq_quotes.sql on the server first.';
+                    }
+                }
+            } else {
+                $statusMap=['accept'=>'accepted','reject'=>'rejected'];
+                if (isset($statusMap[$action])) $rfqModel->updateStatus((int)$id,$statusMap[$action]);
             }
         }
         $this->redirect(APP_URL.'/seller/rfqs');
