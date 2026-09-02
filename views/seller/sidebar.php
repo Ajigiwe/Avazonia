@@ -167,15 +167,18 @@ $basePath = APP_URL . '/seller';
 
 <script>
 (function(){
-    const toggle = document.getElementById('seller-menu-toggle');
-    const drawer = document.getElementById('seller-drawer');
-    const overlay = document.getElementById('seller-overlay');
-    if (!toggle || !drawer || !overlay) return;
-    const open = () => { drawer.classList.add('active'); overlay.classList.add('active'); document.body.style.overflow = 'hidden'; };
-    const close = () => { drawer.classList.remove('active'); overlay.classList.remove('active'); document.body.style.overflow = '';
-    };
-    toggle.addEventListener('click', open);
-    overlay.addEventListener('click', close);
+    // Delegated on document so it survives SPA content swaps
+    // (scripts injected via innerHTML never execute, so direct binding dies on SPA nav)
+    const drawer = () => document.getElementById('seller-drawer');
+    const overlay = () => document.getElementById('seller-overlay');
+    const open = () => { drawer() && drawer().classList.add('active'); overlay() && overlay().classList.add('active'); document.body.style.overflow = 'hidden'; };
+    const close = () => { drawer() && drawer().classList.remove('active'); overlay() && overlay().classList.remove('active'); document.body.style.overflow = ''; };
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#seller-menu-toggle')) { open(); return; }
+        if (e.target.closest('#seller-overlay')) { close(); return; }
+        // Close the drawer after tapping any nav/footer link inside it
+        if (drawer() && drawer().classList.contains('active') && e.target.closest('#seller-drawer a')) close();
+    });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
 })();
 </script>
