@@ -135,6 +135,16 @@ $_t = Translator::getInstance();
     <meta name="apple-mobile-web-app-title" content="<?= APP_NAME ?>">
     <link rel="apple-touch-icon" href="<?= APP_URL ?>/public/assets/img/icon-maskable.png?v=2">
 
+    <!-- iOS PWA launch (splash) screen: red background with centered logo -->
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" href="<?= APP_URL ?>/public/assets/img/apple-splash-1125x2436.png">
+    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)" href="<?= APP_URL ?>/public/assets/img/apple-splash-1242x2688.png">
+    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="<?= APP_URL ?>/public/assets/img/apple-splash-1170x2532.png">
+    <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="<?= APP_URL ?>/public/assets/img/apple-splash-1179x2556.png">
+    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="<?= APP_URL ?>/public/assets/img/apple-splash-1290x2796.png">
+    <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" href="<?= APP_URL ?>/public/assets/img/apple-splash-750x1334.png">
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" href="<?= APP_URL ?>/public/assets/img/apple-splash-750x1334.png">
+    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)" href="<?= APP_URL ?>/public/assets/img/apple-splash-828x1792.png">
+
     <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
