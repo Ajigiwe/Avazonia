@@ -1,4 +1,4 @@
-const CACHE_NAME = 'avazonia-premium-v3';
+const CACHE_NAME = 'avazonia-premium-v4';
 const ASSETS_TO_PRECACHE = [
   '/',
   '/public/css/styles.css',
@@ -45,8 +45,14 @@ self.addEventListener('fetch', (event) => {
         // Skip caching HTML pages (they depend on cookies like language)
         const ct = networkResponse.headers.get('content-type') || '';
         const isHTML = ct.includes('text/html');
+        // NEVER cache install-critical files; they must always update from network
+        const url = event.request.url;
+        const mustRevalidate = url.includes('/manifest.webmanifest')
+            || url.includes('/apple-touch-startup-image')
+            || url.includes('/icon-maskable')
+            || url.includes('/apple-splash-');
         // If successful and not HTML, cache it
-        if (networkResponse && networkResponse.status === 200 && !isHTML) {
+        if (networkResponse && networkResponse.status === 200 && !isHTML && !mustRevalidate) {
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
                 cache.put(event.request, responseToCache);
