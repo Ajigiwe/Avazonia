@@ -192,6 +192,44 @@ include 'layout/header.php';
                 <span class="field-sub">Displayed in browser titles, emails, and invoices.</span>
             </div>
 
+            <div class="field-group">
+                <label class="field-label">Require Seller Verification</label>
+                <div style="display:flex;align-items:center;gap:16px;background:var(--off);padding:16px 20px;border-radius:8px;">
+                    <label style="position:relative;display:inline-block;width:56px;height:30px;flex-shrink:0;">
+                        <input type="checkbox" id="set-seller_verification_required" value="1" <?= getSet('seller_verification_required', '1') == '1' ? 'checked' : '' ?> style="opacity:0;width:0;height:0;">
+                        <span style="position:absolute;cursor:pointer;inset:0;background:#8a8a8a;transition:.3s;border-radius:999px;"></span>
+                        <span class="verif-slider" style="position:absolute;cursor:pointer;inset:0;border-radius:999px;background:#8a8a8a;transition:.3s;
+                            <?= getSet('seller_verification_required', '1') == '1' ? 'background:var(--red);' : '' ?>"></span>
+                        <span class="verif-knob" style="position:absolute;height:22px;width:22px;left:4px;bottom:4px;background:#fff;border-radius:50%;transition:.3s;
+                            <?= getSet('seller_verification_required', '1') == '1' ? 'transform:translateX(26px);' : '' ?>"></span>
+                    </label>
+                    <div>
+                        <div id="verif-state-label" style="font-family:var(--f-semi);font-size:13px;font-weight:800;">
+                            <?= getSet('seller_verification_required', '1') == '1' ? 'ON — new sellers must pass Ghana Card + Face ID' : 'OFF — anyone can start selling instantly' ?>
+                        </div>
+                        <div class="field-sub" style="margin-top:4px;">When OFF, seller applications skip document capture and their products go straight to the marketplace without verification. Existing verified sellers keep their badges.</div>
+                    </div>
+                    <script>
+                    (function(){
+                        const cb = document.getElementById('set-seller_verification_required');
+                        const stateLabel = document.getElementById('verif-state-label');
+                        const track = cb.parentElement.querySelector('.verif-slider');
+                        const knob = cb.parentElement.querySelector('.verif-knob');
+                        function paint(){
+                            track.style.background = cb.checked ? 'var(--red)' : '#8a8a8a';
+                            knob.style.transform = cb.checked ? 'translateX(26px)' : 'translateX(0)';
+                            stateLabel.textContent = cb.checked
+                                ? 'ON — new sellers must pass Ghana Card + Face ID'
+                                : 'OFF — anyone can start selling instantly';
+                            // checkbox value must persist so the save loop picks it up
+                            cb.value = cb.checked ? '1' : '0';
+                        }
+                        cb.addEventListener('change', paint);
+                    })();
+                    </script>
+                </div>
+            </div>
+
             <div class="field-grid">
                 <div class="field-group">
                     <label class="field-label">Support Email</label>

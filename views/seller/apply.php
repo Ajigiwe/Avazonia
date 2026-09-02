@@ -15,9 +15,10 @@
     </label>
     <label style="font-family:var(--f-mono);font-size:11px;">Business / Display Name <input type="text" name="business_name" placeholder="e.g. ABC Electronics Ghana" style="width:100%;height:44px;border:1px solid var(--light-gray);padding:0 12px;margin-top:6px;"></label>
     <label style="font-family:var(--f-mono);font-size:11px;">City <input type="text" name="city" placeholder="Accra, Kumasi..." style="width:100%;height:44px;border:1px solid var(--light-gray);padding:0 12px;margin-top:6px;"></label>
-    <div style="border:1.5px solid var(--ink);padding:16px;background:var(--paper);">
+    <?php $verifRequired = seller_verification_required(); ?>
+    <div style="border:1.5px solid var(--ink);padding:16px;background:var(--paper);display:<?= $verifRequired ? 'block' : 'none' ?>;">
       <div style="font-family:var(--f-mono);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">Verification — Ghana Card + Face ID</div>
-      <label style="font-family:var(--f-mono);font-size:11px;">Ghana Card (image, front) <span style="color:var(--red);">*</span> <input type="file" name="ghana_card" accept="image/*" required style="width:100%;padding:10px;border:1px solid var(--light-gray);margin-top:6px;"></label>
+      <label style="font-family:var(--f-mono);font-size:11px;">Ghana Card (image, front) <span style="color:var(--red);">*</span> <input type="file" name="ghana_card" accept="image/*" <?= $verifRequired ? 'required' : '' ?> style="width:100%;padding:10px;border:1px solid var(--light-gray);margin-top:6px;"></label>
       <div style="margin-top:14px;">
         <div style="font-family:var(--f-mono);font-size:11px;">Face ID — capture via camera <span style="color:var(--red);">*</span> <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--mid-gray);">(allow camera, center face, capture)</span></div>
         <div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap;align-items:start;">
@@ -67,10 +68,10 @@
         faceData.value=''; preview.style.display='none'; preview.src=''; statusEl.textContent='Retake — start camera again'; statusEl.style.color='var(--mid-gray)';
         btnRetake.style.display='none'; btnStart.style.display='block';
       });
-      // Block submit until face captured
+      // Block submit until face captured (only when verification is required)
       const form=document.querySelector('form');
       form?.addEventListener('submit', (e)=>{
-        if(!faceData.value){
+        if(<?= $verifRequired ? 'true' : 'false' ?> && !faceData.value){
           e.preventDefault();
           statusEl.textContent='Face capture required'; statusEl.style.color='var(--red)';
           document.getElementById('face-video')?.scrollIntoView({behavior:'smooth',block:'center'});

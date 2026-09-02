@@ -128,6 +128,24 @@ function convert_usd_to_ghs(?float $priceUsd): float {
     if (!$priceUsd) return 0;
     return round($priceUsd * USD_TO_GHS_RATE, 2);
 }
+/**
+ * Global switch: is seller verification currently required?
+ * Admin Settings → General → "Require seller verification".
+ * Fail-safe: returns true (ON) if the setting or DB is unavailable.
+ */
+function seller_verification_required(): bool {
+    static $cache = null;
+    if ($cache !== null) return $cache;
+    $cache = true;
+    try {
+        if (!class_exists('Settings')) require_once __DIR__ . '/../models/Settings.php';
+        $val = (new Settings())->get('seller_verification_required', '1');
+        $cache = !in_array(strtolower(trim((string)$val)), ['0', 'off', 'false', ''], true);
+    } catch (\Throwable $e) {
+        $cache = true;
+    }
+    return $cache;
+}
 function verification_badge(?array $sellerOrProduct): string {
     if (!$sellerOrProduct) return '';
     $level=$sellerOrProduct['verification_level'] ?? 'unverified';
