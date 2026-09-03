@@ -20,8 +20,13 @@ class Category extends Model {
         return $stmt->fetch();
     }
 
+    public function getTopLevels() {
+        $stmt = $this->db->query("SELECT * FROM categories WHERE parent_id IS NULL AND is_active = 1 ORDER BY sort_order ASC, name ASC");
+        return $stmt->fetchAll();
+    }
+
     public function getGridCategories($limit = 7) {
-        $stmt = $this->db->prepare("SELECT * FROM categories WHERE is_active = 1 ORDER BY sort_order ASC, name ASC LIMIT :limit");
+        $stmt = $this->db->prepare("SELECT * FROM categories WHERE parent_id IS NULL AND is_active = 1 ORDER BY sort_order ASC, name ASC LIMIT :limit");
         $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll();

@@ -31,7 +31,7 @@ if (Session::get('user_id')) {
 if (!isset($navCategories)) {
     require_once __DIR__ . '/../../models/Category.php';
     $catModel = new Category();
-    $navCategories = array_slice($catModel->getAll(), 0, 10);
+    $navCategories = $catModel->getTopLevels();
 }
 
 function getCatIcon($slug) {
