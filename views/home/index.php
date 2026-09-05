@@ -4,10 +4,40 @@ require_once __DIR__ . '/../layout/head.php';
 require_once __DIR__ . '/../layout/nav.php';
 ?>
 
+<?php
+// ── MOBILE CATEGORY LAUNCHER GRID (first thing under the nav on mobile) ──
+$launchCats = !empty($mobileCategories) ? $mobileCategories : (!empty($categoryGrid) ? array_slice($categoryGrid, 0, 16) : []);
+if (!empty($launchCats)):
+    $postUrl = (!empty($is_seller)) ? APP_URL . '/seller/dashboard' : APP_URL . '/seller/apply';
+?>
+<section class="category-grid-section">
+    <div class="container">
+        <div class="category-grid">
+            <a href="<?= $postUrl ?>" class="cat-tile mcat-post">
+                <span class="mcat-ic mcat-plus" aria-hidden="true">＋</span>
+                <span class="cat-name"><?= t('home.post_ad', 'Post ad') ?></span>
+            </a>
+            <a href="<?= APP_URL ?>/shop" class="cat-tile">
+                <span class="mcat-ic" aria-hidden="true">🔥</span>
+                <span class="cat-name"><?= t('home.trending', 'Trending') ?></span>
+            </a>
+            <?php foreach ($launchCats as $cat): ?>
+                <a href="<?= APP_URL ?>/shop?cat=<?= htmlspecialchars($cat['slug']) ?>" class="cat-tile">
+                    <span class="mcat-ic" aria-hidden="true"><?= !empty($cat['icon']) ? $cat['icon'] : '📦' ?></span>
+                    <span class="cat-name"><?= htmlspecialchars($cat['name']) ?></span>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
+<div class="home-hero-band">
 <?php require_once __DIR__ . '/../layout/hero.php'; ?>
+</div>
 
 <!-- AVAZONIA MARKETPLACE HERO BAND -->
-<section style="background:var(--ink);color:#fff;padding:18px 0;">
+<section class="marketplace-band" style="background:var(--ink);color:#fff;padding:18px 0;">
   <div class="container" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
     <div>
       <div style="font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;opacity:.7;"><?= t('home.hero_sub', "AVAZONIA — AFRICA'S MULTI-VENDOR MARKETPLACE") ?></div>
@@ -21,36 +51,7 @@ require_once __DIR__ . '/../layout/nav.php';
   </div>
 </section>
 
-<!-- CATEGORY GRID SECTION -->
-<?php if (!empty($categoryGrid)): ?>
-<section class="category-grid-section">
-    <div class="container">
-        <div class="category-grid">
-            <?php
-            $first = array_shift($categoryGrid);
-            $img = !empty($first['image_url']) ? $first['image_url'] : '';
-            if ($img && !filter_var($img, FILTER_VALIDATE_URL)) {
-                $img = APP_PATH . '/' . ltrim($img, '/');
-            }
-            $fallbackBg = 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)';
-            ?>
-            <a href="<?= APP_URL ?>/shop?cat=<?= $first['slug'] ?>" class="cat-tile cat-hero" style="background-image: <?= $img ? 'url(\'' . $img . '\')' : $fallbackBg ?>;">
-                <span class="cat-label"><?= htmlspecialchars($first['name']) ?></span>
-            </a>
-            <?php foreach ($categoryGrid as $cat):
-                $img2 = !empty($cat['image_url']) ? $cat['image_url'] : '';
-                if ($img2 && !filter_var($img2, FILTER_VALIDATE_URL)) {
-                    $img2 = APP_PATH . '/' . ltrim($img2, '/');
-                }
-            ?>
-                <a href="<?= APP_URL ?>/shop?cat=<?= $cat['slug'] ?>" class="cat-tile" style="background-image: <?= $img2 ? 'url(\'' . $img2 . '\')' : $fallbackBg ?>;">
-                    <span class="cat-label"><?= htmlspecialchars($cat['name']) ?></span>
-                </a>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</section>
-<?php endif; ?>
+
 
 <section class="featured">
     <div class="container">

@@ -35,6 +35,8 @@ class HomeController extends Controller {
         $bestsellers = $productModel->getBestsellers(8);
         $preorderProducts = $productModel->getPreorderProducts(8);
         $categories = $categoryModel->getAll();
+        // All top-level categories for the mobile marketplace launcher grid
+        $mobileCategories = $categoryModel->getTopLevels();
         
         $settings = $settingsModel->all();
         $gridIds = !empty($settings['home_mobile_category_grid'])
@@ -74,6 +76,7 @@ class HomeController extends Controller {
             'bestsellers' => $bestsellers,
             'preorders' => $preorderProducts,
             'categories' => $categories,
+            'mobileCategories' => $mobileCategories,
             'categoryGrid' => $categoryGrid,
             'categoryShowcase' => $categoryShowcase,
             'pagination' => $pagination,

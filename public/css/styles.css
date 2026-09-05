@@ -5387,8 +5387,11 @@ form button[type="submit"]:hover {
     display: flex;
 }
 
+/* ── MOBILE MARKETPLACE CATEGORY GRID (Jiji-style launcher) ── */
 .category-grid-section {
-    padding: 40px 0;
+    background: #fff;
+    padding: 14px 0 10px;
+    border-bottom: 1px solid var(--light-gray);
 }
 
 @media (min-width: 769px) {
@@ -5399,62 +5402,97 @@ form button[type="submit"]:hover {
 
 .category-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px 8px;
 }
 
 .cat-tile {
-    position: relative;
-    aspect-ratio: 1 / 1;
-    border-radius: 12px;
-    overflow: hidden;
-    background-size: cover;
-    background-position: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 7px;
+    min-width: 0;
+    padding: 12px 2px 10px;
+    background: #fff;
+    border: 1px solid #efede9;
+    border-radius: 14px;
     text-decoration: none;
-    display: block;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    color: var(--ink);
+    transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
+.cat-tile:active {
+    transform: scale(0.97);
 }
 
 .cat-tile:hover {
-    transform: scale(1.02);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border-color: var(--red);
 }
 
-.cat-hero {
-    grid-column: 1 / -1;
-    aspect-ratio: 2.7 / 1;
+.mcat-ic {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--off);
+    font-size: 19px;
+    line-height: 1;
 }
 
-.cat-label {
-    position: absolute;
-    top: 16px;
-    left: 16px;
+/* Orange "+" tile — primary "Post ad" CTA */
+.mcat-post .mcat-ic {
+    background: #FF9900;
     color: #fff;
-    font-family: var(--f-semi);
     font-weight: 800;
-    font-size: clamp(18px, 2.5vw, 28px);
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    line-height: 1.1;
-    pointer-events: none;
+    font-size: 22px;
+    font-family: var(--f-display);
 }
 
-@media (max-width: 600px) {
-    .category-grid {
-        gap: 8px;
+.cat-name {
+    font-family: var(--f-semi);
+    font-weight: 700;
+    font-size: 10.5px;
+    line-height: 1.25;
+    color: var(--ink);
+    text-align: center;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* On mobile the category grid leads; hide the full hero + marketplace band so
+   products appear right after the launcher (desktop keeps both untouched). */
+@media (max-width: 768px) {
+    .home-hero-band {
+        display: none !important;
     }
-    .cat-hero {
-        aspect-ratio: 2 / 1;
+    .marketplace-band {
+        display: none !important;
     }
-    .cat-tile {
-        border-radius: 8px;
+
+    /* No dark hero behind the nav anymore on mobile home — give it a solid light bar */
+    .nav.nav-home {
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(20px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03) !important;
     }
-    .cat-label {
-        top: 12px;
-        left: 12px;
-        font-size: clamp(14px, 4vw, 18px);
+    .nav.nav-home .nav-icon-btn,
+    .nav.nav-home .mobile-search-toggle {
+        color: var(--ink);
+        background: #f4f5f7;
     }
-    .category-grid-section {
-        padding: 24px 0;
+    .nav.nav-home .nav-cart {
+        color: var(--ink);
+    }
+    .nav.nav-home .nav-link {
+        color: var(--mid-gray);
     }
 }
 
