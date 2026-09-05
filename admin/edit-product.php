@@ -36,7 +36,7 @@ $variantsStmt->execute([$productId]);
 $existing_variants = $variantsStmt->fetchAll();
 
 // Fetch categories, brands, and existing tags for the form
-$categories = $db->query("SELECT id, name FROM categories ORDER BY name ASC")->fetchAll();
+$categories = $db->query("SELECT id, name FROM categories WHERE parent_id IS NOT NULL AND is_active = 1 ORDER BY name ASC")->fetchAll();
 $brands = $db->query("SELECT id, name FROM brands ORDER BY name ASC")->fetchAll();
 $sellers=[]; try{ $sellers=$db->query("SELECT s.id, s.business_name, s.seller_type, s.verification_level, u.email FROM sellers s LEFT JOIN users u ON s.user_id=u.id ORDER BY s.business_name ASC")->fetchAll(); }catch(Throwable $e){}
 

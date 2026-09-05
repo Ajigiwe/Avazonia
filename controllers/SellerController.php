@@ -102,7 +102,7 @@ class SellerController extends Controller {
                 'category_id' => (int)($_POST['category_id']??0) ?: null,
             ];
             if (!$data['name'] || !$data['price_ghs']) {
-                $this->view('seller/edit_product', ['seller'=>$seller,'product'=>$product,'categories'=>(new Category())->getAll(),'error'=>'Name and price required','page'=>'products']);
+                $this->view('seller/edit_product', ['seller'=>$seller,'product'=>$product,'categories'=>(new Category())->getSubcategories(),'error'=>'Name and price required','page'=>'products']);
                 return;
             }
             (new Product())->updateBySeller((int)$id, (int)$seller['id'], $data);
@@ -110,7 +110,7 @@ class SellerController extends Controller {
             return;
         }
         $stats=$this->getSellerStats((int)$seller['id']);
-        $this->view('seller/edit_product', ['seller'=>$seller,'product'=>$product,'categories'=>(new Category())->getAll(),'stats'=>$stats,'page'=>'products']);
+        $this->view('seller/edit_product', ['seller'=>$seller,'product'=>$product,'categories'=>(new Category())->getSubcategories(),'stats'=>$stats,'page'=>'products']);
     }
 
     public function deleteProduct($id) {
@@ -389,7 +389,7 @@ class SellerController extends Controller {
             }
             $specsJson=!empty($specsArr)?json_encode($specsArr):null;
 
-            if (!$name || !$price) { $this->view('seller/new_product',['seller'=>$seller,'store'=>$store,'error'=>'Name and price required','categories'=>(new Category())->getAll(),'brands'=>$brands]); return; }
+            if (!$name || !$price) { $this->view('seller/new_product',['seller'=>$seller,'store'=>$store,'error'=>'Name and price required','categories'=>(new Category())->getSubcategories(),'brands'=>$brands]); return; }
 
             $slug=strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/','-',$name))).'-'.time();
             require_once __DIR__.'/../config/database.php';
@@ -442,6 +442,6 @@ class SellerController extends Controller {
             $this->redirect(APP_URL.'/seller/products?success=1');
             return;
         }
-        $this->view('seller/new_product',['seller'=>$seller,'store'=>$store,'categories'=>(new Category())->getAll(),'brands'=>$brands]);
+        $this->view('seller/new_product',['seller'=>$seller,'store'=>$store,'categories'=>(new Category())->getSubcategories(),'brands'=>$brands]);
     }
 }
