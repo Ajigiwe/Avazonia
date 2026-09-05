@@ -9,6 +9,11 @@ require_once __DIR__ . '/../layout/nav.php';
 $launchCats = !empty($mobileCategories) ? $mobileCategories : (!empty($categoryGrid) ? array_slice($categoryGrid, 0, 16) : []);
 if (!empty($launchCats)):
     $postUrl = (!empty($is_seller)) ? APP_URL . '/seller/dashboard' : APP_URL . '/seller/apply';
+    // Force emoji presentation (color glyphs) for icons that platforms like
+    // Windows default to monochrome text style (needs U+FE0F variation selector).
+    $emojiFaces = function (string $icon): string {
+        return str_replace(['⌚','⚡','⚽','🎵'], ["⌚\u{FE0F}","⚡\u{FE0F}","⚽\u{FE0F}","🎵\u{FE0F}"], $icon);
+    };
 ?>
 <section class="category-grid-section">
     <div class="container">
@@ -23,7 +28,7 @@ if (!empty($launchCats)):
             </a>
             <?php foreach ($launchCats as $cat): ?>
                 <a href="<?= APP_URL ?>/shop?cat=<?= htmlspecialchars($cat['slug']) ?>" class="cat-tile">
-                    <span class="mcat-ic" aria-hidden="true"><?= !empty($cat['icon']) ? $cat['icon'] : '📦' ?></span>
+                    <span class="mcat-ic" aria-hidden="true"><?= !empty($cat['icon']) ? $emojiFaces($cat['icon']) : '📦' ?></span>
                     <span class="cat-name"><?= htmlspecialchars($cat['name']) ?></span>
                 </a>
             <?php endforeach; ?>

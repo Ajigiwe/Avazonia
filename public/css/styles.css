@@ -5394,7 +5394,9 @@ form button[type="submit"]:hover {
     border-bottom: 1px solid var(--light-gray);
 }
 
-@media (min-width: 769px) {
+/* Grid leads on phones AND landscape phones/portrait tablets (≤1024px);
+   desktop (≥1025px) keeps its own layout. */
+@media (min-width: 1025px) {
     .category-grid-section {
         display: none;
     }
@@ -5466,8 +5468,9 @@ form button[type="submit"]:hover {
 }
 
 /* On mobile the category grid leads; hide the full hero + marketplace band so
-   products appear right after the launcher (desktop keeps both untouched). */
-@media (max-width: 768px) {
+   products appear right after the launcher (desktop keeps both untouched).
+   Use ≤1024px so landscape phones and portrait tablets get the same layout. */
+@media (max-width: 1024px) {
     .home-hero-band {
         display: none !important;
     }

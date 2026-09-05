@@ -1,4 +1,4 @@
-const CACHE_NAME = 'avazonia-premium-v4';
+const CACHE_NAME = 'avazonia-premium-v5';
 const ASSETS_TO_PRECACHE = [
   '/',
   '/public/css/styles.css',
