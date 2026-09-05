@@ -106,7 +106,7 @@ class SellerController extends Controller {
                 return;
             }
             (new Product())->updateBySeller((int)$id, (int)$seller['id'], $data);
-            $this->redirect(APP_URL.'/seller/products?success=1');
+            $this->redirect((defined('APP_PATH') ? APP_PATH : '') . '/seller/products?success=1');
             return;
         }
         $stats=$this->getSellerStats((int)$seller['id']);
@@ -434,12 +434,11 @@ class SellerController extends Controller {
                 $db->prepare("INSERT INTO product_images (product_id,url,is_primary) VALUES (?,?,?)")->execute([$pid,$img,$isPrimary]);
             }
             // Insert image URL if provided
-            if(!empty($_POST['image_url'])) {
-                $isPrimary=empty($uploadedImages)?1:0;
-                $db->prepare("INSERT INTO product_images (product_id,url,is_primary) VALUES (?,?,?)")->execute([$pid,trim($_POST['image_url']),$isPrimary]);
+            if (!empty($_POST['image_url'])) {
+                $isPrimary = empty($uploadedImages) ? 1 : 0;
+                $db->prepare("INSERT INTO product_images (product_id,url,is_primary) VALUES (?,?,?)")->execute([$pid, trim($_POST['image_url']), $isPrimary]);
             }
-
-            $this->redirect(APP_URL.'/seller/products?success=1');
+            $this->redirect((defined('APP_PATH') ? APP_PATH : '') . '/seller/products?success=1');
             return;
         }
         $this->view('seller/new_product',['seller'=>$seller,'store'=>$store,'categories'=>(new Category())->getSubcategories(),'brands'=>$brands]);
