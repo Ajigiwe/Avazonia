@@ -101,7 +101,7 @@
                             <h3 style="font-family: var(--f-display); font-size: 22px; font-weight: 800; color: var(--ink); margin-bottom: 8px;">Avazonia Accra HUB</h3>
                             <div style="display: flex; gap: 12px; color: var(--mid-gray); font-size: 14px; line-height: 1.6;">
                                 <div style="width: 8px; height: 8px; background: var(--red); border-radius: 50%; margin-top: 6px; flex-shrink: 0;"></div>
-                                <div>Spintex Road, Near Shell Signboard, Greater Accra, Ghana</div>
+                                <div><?= htmlspecialchars($settingsModel->get('store_map_address', 'Spintex Road, Near Shell Signboard, Greater Accra, Ghana')) ?></div>
                             </div>
                             <a href="mailto:<?= $settingsModel->get('support_email', 'hello@avazonia.gh') ?>" style="display: inline-block; margin-top: 16px; border-bottom: 2px solid var(--ink); font-weight: 800; font-size: 14px; color: var(--ink);"><?= $settingsModel->get('support_email', 'hello@avazonia.gh') ?></a>
                         </div>
