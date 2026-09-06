@@ -1,4 +1,4 @@
-const CACHE_NAME = 'avazonia-premium-v5';
+const CACHE_NAME = 'avazonia-premium-v6';
 const ASSETS_TO_PRECACHE = [
   '/',
   '/public/css/styles.css',
@@ -65,10 +65,18 @@ self.addEventListener('fetch', (event) => {
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) return cachedResponse;
           
-          // Fallback for navigation requests
+          // Fallback for navigation requests; respondWith() must always receive a Response.
           if (event.request.mode === 'navigate') {
-            return caches.match('/');
+            return caches.match('/').then((homeResponse) => {
+              return homeResponse || new Response('Offline', {
+                status: 503,
+                statusText: 'Service Unavailable',
+                headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+              });
+            });
           }
+
+          return new Response('', { status: 503, statusText: 'Service Unavailable' });
         });
       })
   );

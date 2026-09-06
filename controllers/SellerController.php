@@ -383,7 +383,8 @@ class SellerController extends Controller {
             $moq=!empty($_POST['moq'])?(int)$_POST['moq']:null;
             $wholesalePrice=!empty($_POST['wholesale_price_ghs'])?(float)$_POST['wholesale_price_ghs']:null;
             $fobPrice=!empty($_POST['fob_price_usd'])?(float)$_POST['fob_price_usd']:null;
-            $incoterms=$_POST['incoterms']??null; if($incoterms && !in_array($incoterms,['EXW','FOB','CIF'])) $incoterms=null;
+            $incoterms=trim((string)($_POST['incoterms']??''));
+            if ($incoterms === '' || !in_array($incoterms,['EXW','FOB','CIF'],true)) $incoterms=null;
             $productionCapacity=$_POST['production_capacity']??null;
             $oemOdm=isset($_POST['oem_odm'])?1:0;
             $description=trim($_POST['description']??'');

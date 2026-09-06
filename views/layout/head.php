@@ -172,8 +172,16 @@ $_t = Translator::getInstance();
             }
         });
     }
-    new MutationObserver(hideGTBanner).observe(document.body, { childList: true, subtree: true });
-    setTimeout(hideGTBanner, 2000);
+    function startGTBannerObserver() {
+        if (!document.body || typeof MutationObserver === 'undefined') return;
+        new MutationObserver(hideGTBanner).observe(document.body, { childList: true, subtree: true });
+        setTimeout(hideGTBanner, 2000);
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startGTBannerObserver, { once: true });
+    } else {
+        startGTBannerObserver();
+    }
     </script>
 </head>
 <body>
