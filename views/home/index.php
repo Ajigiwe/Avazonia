@@ -4,8 +4,12 @@ require_once __DIR__ . '/../layout/head.php';
 require_once __DIR__ . '/../layout/nav.php';
 ?>
 
+<div class="home-hero-band">
+<?php require_once __DIR__ . '/../layout/hero.php'; ?>
+</div>
+
 <?php
-// ── MOBILE CATEGORY LAUNCHER GRID (first thing under the nav on mobile) ──
+// ── MOBILE CATEGORY LAUNCHER GRID (shown immediately after the hero on mobile) ──
 $launchCats = !empty($mobileCategories) ? $mobileCategories : (!empty($categoryGrid) ? array_slice($categoryGrid, 0, 16) : []);
 if (!empty($launchCats)):
     $postUrl = (!empty($is_seller)) ? APP_URL . '/seller/dashboard' : APP_URL . '/seller/apply';
@@ -36,10 +40,6 @@ if (!empty($launchCats)):
     </div>
 </section>
 <?php endif; ?>
-
-<div class="home-hero-band">
-<?php require_once __DIR__ . '/../layout/hero.php'; ?>
-</div>
 
 <!-- AVAZONIA MARKETPLACE HERO BAND -->
 <section class="marketplace-band" style="background:var(--ink);color:#fff;padding:18px 0;">

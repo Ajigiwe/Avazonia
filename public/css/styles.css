@@ -5394,8 +5394,7 @@ form button[type="submit"]:hover {
     border-bottom: 1px solid var(--light-gray);
 }
 
-/* Grid leads on phones AND landscape phones/portrait tablets (≤1024px);
-   desktop (≥1025px) keeps its own layout. */
+/* Category launcher is mobile/tablet-only; desktop keeps its existing layout. */
 @media (min-width: 1025px) {
     .category-grid-section {
         display: none;
@@ -5467,35 +5466,11 @@ form button[type="submit"]:hover {
     overflow: hidden;
 }
 
-/* On mobile the category grid leads; hide the full hero + marketplace band so
-   products appear right after the launcher (desktop keeps both untouched).
-   Use ≤1024px so landscape phones and portrait tablets get the same layout. */
+/* Keep the marketplace action band out of the compact mobile/tablet flow.
+   The hero remains first, followed by the category launcher. */
 @media (max-width: 1024px) {
-    .home-hero-band {
-        display: none !important;
-    }
     .marketplace-band {
         display: none !important;
-    }
-
-    /* No dark hero behind the nav anymore on mobile home — give it a solid light bar */
-    .nav.nav-home {
-        background: rgba(255, 255, 255, 0.85) !important;
-        backdrop-filter: blur(20px) saturate(180%) !important;
-        -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03) !important;
-    }
-    .nav.nav-home .nav-icon-btn,
-    .nav.nav-home .mobile-search-toggle {
-        color: var(--ink);
-        background: #f4f5f7;
-    }
-    .nav.nav-home .nav-cart {
-        color: var(--ink);
-    }
-    .nav.nav-home .nav-link {
-        color: var(--mid-gray);
     }
 }
 
