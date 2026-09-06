@@ -892,8 +892,8 @@ img {
     position: absolute;
     top: -4px;
     right: -4px;
-    background: #ffc107;
-    color: var(--ink);
+    background: var(--red);
+    color: #fff;
     font-family: var(--f-mono);
     font-size: 10px;
     font-weight: 900;
