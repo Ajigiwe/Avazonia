@@ -18,7 +18,7 @@ $sliderEnabled = !isset($dbSettings['product_card_slider_enabled']) || $dbSettin
 $processedCardImages = [];
 if ($sliderEnabled) {
     $db = db();
-    $stmt = $db->prepare("SELECT url FROM product_images WHERE product_id = ? ORDER BY is_primary DESC, sort_order ASC, id ASC");
+    $stmt = $db->prepare("SELECT url FROM product_images WHERE product_id = ? ORDER BY is_primary DESC, sort_order ASC, id ASC LIMIT 5");
     $stmt->execute([$p['id']]);
     $cardImagesRaw = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
@@ -50,19 +50,14 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
                 <span class="card-tag new">NEW</span>
             <?php endif; ?>
             
-            <div class="card-img card-image-carousel <?= $sliderEnabled && count($processedCardImages) > 1 ? 'has-carousel' : '' ?>" data-carousel data-index="0" data-total="<?= count($processedCardImages) ?>" style="position: relative;" aria-label="Product images">
+            <div class="card-img <?= $sliderEnabled && count($processedCardImages) > 1 ? 'card-auto-slider' : '' ?>" style="position: relative;">
                 <?php foreach ($processedCardImages as $idx => $src): ?>
-                    <img src="<?= htmlspecialchars($src, ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($p['name']) ?><?= $idx > 0 ? ' image ' . ($idx + 1) : '' ?>" loading="<?= $idx === 0 ? 'eager' : 'lazy' ?>" class="slide-img carousel-slide<?= $idx === 0 ? ' is-active' : '' ?>">
+                    <img src="<?= $src ?>" alt="<?= htmlspecialchars($p['name']) ?>" loading="lazy" class="slide-img" style="<?= $idx === 0 ? 'transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1); opacity: 1; transform: scale(1) translateY(0);' : 'position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0; transform: scale(1.05) translateY(8px); transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);' ?>">
                 <?php endforeach; ?>
-                <?php if ($sliderEnabled && count($processedCardImages) > 1): ?>
-                    <button type="button" class="card-carousel-control card-carousel-prev" data-carousel-prev aria-label="Previous image">&#10094;</button>
-                    <button type="button" class="card-carousel-control card-carousel-next" data-carousel-next aria-label="Next image">&#10095;</button>
-                    <span class="card-image-count" data-carousel-count>1/<?= count($processedCardImages) ?></span>
-                <?php endif; ?>
                 <?php if (!empty($p['video_url'])): 
                     $vidUrl = filter_var($p['video_url'], FILTER_VALIDATE_URL) ? $p['video_url'] : APP_PATH . '/' . ltrim($p['video_url'], '/');
                 ?>
-                    <video src="<?= htmlspecialchars($vidUrl, ENT_QUOTES, 'UTF-8') ?>" muted loop playsinline style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0; transition: opacity 0.3s; z-index: 2; pointer-events:none;"></video>
+                    <video src="<?= $vidUrl ?>" muted loop playsinline style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0; transition: opacity 0.3s; z-index: 2; pointer-events:none;"></video>
                 <?php endif; ?>
             </div>
 
