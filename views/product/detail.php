@@ -62,38 +62,56 @@ if (Session::get('user_id')) {
     <div class="container product-detail-layout">
         <!-- Image Gallery -->
         <div class="product-gallery" style="display: flex; flex-direction: column; gap: 16px;">
-            <div class="zoom-container" id="zoom-container" style="position:relative; aspect-ratio: 1; background: var(--off); border: 1px solid var(--light-gray); display: flex; align-items: center; justify-content: center;">
+            <div class="zoom-container gallery-carousel" id="zoom-container" style="position:relative; aspect-ratio: 1; background: var(--off); border: 1px solid var(--light-gray); display: flex; align-items: center; justify-content: center;">
                 <?php 
                 $primaryImgUrl = $product['primary_image'] ?: 'https://via.placeholder.com/800x800';
                 if (!filter_var($primaryImgUrl, FILTER_VALIDATE_URL)) {
                     $primaryImgUrl = APP_PATH . '/' . ltrim($primaryImgUrl, '/');
                 }
+                $galleryImgs = $images;
+                if (empty($galleryImgs)) {
+                    $galleryImgs = [['url' => $primaryImgUrl, 'alt_text' => $product['alt_text'] ?? $product['name']]];
+                }
+                $galleryTotal = count($galleryImgs);
                 ?>
-                <img id="main-product-image" src="<?= $primaryImgUrl ?>" alt="<?= htmlspecialchars($product['alt_text'] ?? $product['name']) ?>" style="width: 100%; height: 100%; object-fit: contain; padding: 40px; transition: transform 0.1s ease-out, opacity 0.2s ease;">
-                
-                <?php if(!empty($product['video_url'])): 
+                <div class="gallery-slides" id="gallery-slides">
+                    <?php foreach ($galleryImgs as $gi => $imgData):
+                        $gSrc = $imgData['url'];
+                        if (!filter_var($gSrc, FILTER_VALIDATE_URL)) {
+                            $gSrc = APP_PATH . '/' . ltrim($gSrc, '/');
+                        }
+                    ?>
+                        <img class="gallery-slide<?= $gi === 0 ? ' is-active' : '' ?>" src="<?= $gSrc ?>" alt="<?= htmlspecialchars($imgData['alt_text'] ?? $product['name']) ?>" data-index="<?= $gi ?>" loading="<?= $gi === 0 ? 'eager' : 'lazy' ?>">
+                    <?php endforeach; ?>
+                </div>
+                <?php if(!empty($product['video_url'])):
                     $vidUrl = filter_var($product['video_url'], FILTER_VALIDATE_URL) ? $product['video_url'] : APP_PATH . '/' . ltrim($product['video_url'], '/');
                 ?>
                     <video id="main-product-video" src="<?= $vidUrl ?>" controls muted loop playsinline onmouseenter="this.play()" onmouseleave="this.pause()" style="display:none; width: 100%; height: 100%; object-fit: contain; padding: 20px;"></video>
                 <?php endif; ?>
+                <?php if ($galleryTotal > 1): ?>
+                    <button type="button" class="gallery-control gallery-prev" id="gallery-prev" aria-label="Previous image">&#10094;</button>
+                    <button type="button" class="gallery-control gallery-next" id="gallery-next" aria-label="Next image">&#10095;</button>
+                    <span class="gallery-count" id="gallery-count">1/<?= $galleryTotal ?></span>
+                <?php endif; ?>
             </div>
             
-            <?php if ((!empty($images) && count($images) > 0) || !empty($product['video_url'])): ?>
-            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
+            <?php if ($galleryTotal > 1 || !empty($product['video_url'])): ?>
+            <div class="gallery-thumbs" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
                 
                 <?php if(!empty($product['video_url'])): ?>
-                    <div class="thumbnail-item" onclick="document.getElementById('main-product-image').style.display='none'; document.getElementById('main-product-video').style.display='block'; document.getElementById('main-product-video').play(); document.querySelectorAll('.thumbnail-item').forEach(t=>t.style.borderColor='var(--light-gray)'); this.style.borderColor='var(--red)';" style="aspect-ratio: 1; background: var(--off); border: 1.5px solid var(--light-gray); cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 8px;">
+                    <div class="thumbnail-item" data-video-thumb onclick="document.getElementById('gallery-slides').style.display='none'; document.getElementById('main-product-video').style.display='block'; document.getElementById('main-product-video').play(); document.querySelectorAll('.thumbnail-item').forEach(t=>t.style.borderColor='var(--light-gray)'); this.style.borderColor='var(--red)';" style="aspect-ratio: 1; background: var(--off); border: 1.5px solid var(--light-gray); cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 8px;">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--red)" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                     </div>
                 <?php endif; ?>
 
-                <?php foreach ($images as $index => $imgData): 
+                <?php foreach ($galleryImgs as $index => $imgData):
                     $thumbUrl = $imgData['url'];
                     if (!filter_var($thumbUrl, FILTER_VALIDATE_URL)) {
                         $thumbUrl = APP_PATH . '/' . ltrim($thumbUrl, '/');
                     }
                 ?>
-                    <div class="thumbnail-item" onclick="const vid = document.getElementById('main-product-video'); if(vid){vid.pause(); vid.style.display='none';} document.getElementById('main-product-image').style.display='block'; const mainImg = document.getElementById('main-product-image'); mainImg.style.opacity='0.5'; setTimeout(()=>{mainImg.src='<?= $thumbUrl ?>'; mainImg.style.opacity='1';},100); document.querySelectorAll('.thumbnail-item').forEach(t=>t.style.borderColor='var(--light-gray)'); this.style.borderColor='var(--red)';" style="aspect-ratio: 1; background: var(--off); border: 1.5px solid <?= ($index === 0 && empty($product['video_url'])) ? 'var(--red)' : 'var(--light-gray)' ?>; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 8px;">
+                    <div class="thumbnail-item" data-gallery-index="<?= $index ?>" onclick="window.__galleryShow ? window.__galleryShow(<?= $index ?>) : null;" style="aspect-ratio: 1; background: var(--off); border: 1.5px solid <?= ($index === 0 && empty($product['video_url'])) ? 'var(--red)' : 'var(--light-gray)' ?>; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 8px;">
                         <img src="<?= $thumbUrl ?>" alt="<?= htmlspecialchars($imgData['alt_text'] ?? 'Product Thumbnail') ?>" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;">
                     </div>
                 <?php endforeach; ?>
@@ -190,7 +208,7 @@ if (Session::get('user_id')) {
                 window.selectVariant = function(pill) {
                     const priceDisplay = document.getElementById('live-price-display');
                     const formVarInput = document.getElementById('form-variant-id');
-                    const mainImg = document.getElementById('main-product-image');
+                    const mainImg = document.querySelector('.gallery-slide.is-active');
                     
                     document.querySelectorAll('.variant-pill').forEach(p => p.style.borderColor = 'var(--light-gray)');
                     pill.style.borderColor = 'var(--ink)';
@@ -204,7 +222,9 @@ if (Session::get('user_id')) {
                     const newImage = pill.getAttribute('data-image');
                     if (newImage && mainImg) {
                         const vid = document.getElementById('main-product-video');
+                        const slidesWrap = document.getElementById('gallery-slides');
                         if (vid) { vid.pause(); vid.style.display = 'none'; }
+                        if (slidesWrap) slidesWrap.style.display = 'block';
                         mainImg.style.display = 'block';
                         
                         mainImg.style.opacity = '0.5';
@@ -441,16 +461,73 @@ if (Session::get('user_id')) {
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('zoom-container');
-        const img = document.getElementById('main-product-image');
+        const slides = Array.from(document.querySelectorAll('.gallery-slide'));
         const lightbox = document.getElementById('mobile-lightbox');
         const lightboxImg = document.getElementById('lightbox-img');
         const closeLightbox = document.getElementById('close-lightbox');
+        const prevBtn = document.getElementById('gallery-prev');
+        const nextBtn = document.getElementById('gallery-next');
+        const countEl = document.getElementById('gallery-count');
+        const videoEl = document.getElementById('main-product-video');
+        let index = 0;
+        let touchStartX = 0;
+        let touchStartY = 0;
 
-        if (!container || !img) return;
+        if (!container || slides.length === 0) return;
+
+        function showSlide(i) {
+            index = (i + slides.length) % slides.length;
+            slides.forEach(function(s, n) {
+                s.classList.toggle('is-active', n === index);
+            });
+            if (countEl) countEl.textContent = (index + 1) + '/' + slides.length;
+            document.querySelectorAll('.thumbnail-item[data-gallery-index]').forEach(function(t) {
+                var on = parseInt(t.getAttribute('data-gallery-index'), 10) === index;
+                t.style.borderColor = on ? 'var(--red)' : 'var(--light-gray)';
+            });
+            const vThumb = document.querySelector('.thumbnail-item[data-video-thumb]');
+            if (vThumb) vThumb.style.borderColor = 'var(--light-gray)';
+            if (videoEl && videoEl.style.display !== 'none') {
+                videoEl.pause();
+                videoEl.style.display = 'none';
+                const wrap = document.getElementById('gallery-slides');
+                if (wrap) wrap.style.display = 'block';
+            }
+        }
+        window.__galleryShow = showSlide;
+
+        if (prevBtn) prevBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showSlide(index - 1);
+        });
+        if (nextBtn) nextBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showSlide(index + 1);
+        });
+
+        // Swipe support
+        container.addEventListener('touchstart', function(e) {
+            const t = e.changedTouches[0];
+            touchStartX = t.clientX;
+            touchStartY = t.clientY;
+        }, { passive: true });
+        container.addEventListener('touchend', function(e) {
+            const t = e.changedTouches[0];
+            const dx = t.clientX - touchStartX;
+            const dy = t.clientY - touchStartY;
+            if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+            e.preventDefault();
+            showSlide(dx < 0 ? index + 1 : index - 1);
+        }, { passive: false });
 
         // --- CLICK TO EXPAND (UNIVERSAL) ---
-        container.addEventListener('click', function() {
-            lightboxImg.src = img.src;
+        container.addEventListener('click', function(e) {
+            if (e.target.closest('.gallery-control')) return;
+            const active = slides[index];
+            if (!active) return;
+            lightboxImg.src = active.src;
             lightbox.classList.add('active');
             document.body.style.overflow = 'hidden';
         });
