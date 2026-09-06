@@ -333,11 +333,24 @@ class SellerController extends Controller {
     public function newProduct() {
         $seller=$this->requireVerified(); if (!$seller) return;
         $store=(new Store())->findBySellerId((int)$seller['id']);
-        // Fetch brands for the form
+        // Fetch form options once so validation/database errors can safely re-render the form.
         $brands=[];
-        try { require_once __DIR__.'/../config/database.php'; $db=db(); $brands=$db->query("SELECT id,name FROM brands ORDER BY name ASC")->fetchAll(); } catch(\Throwable $e) {}
+        $categories=[];
+        try {
+            require_once __DIR__.'/../config/database.php';
+            $db=db();
+            $brands=$db->query("SELECT id,name FROM brands ORDER BY name ASC")->fetchAll();
+        } catch(\Throwable $e) {
+            $this->logError("newProduct() brand lookup failed: " . $e->getMessage());
+        }
+        try {
+            $categories=(new Category())->getSubcategories();
+        } catch(\Throwable $e) {
+            $this->logError("newProduct() category lookup failed: " . $e->getMessage());
+        }
 
         if ($_SERVER['REQUEST_METHOD']==='POST') {
+            try {
             $name=trim($_POST['name']??'');
             $price=(float)($_POST['price']??0);
             $comparePrice=!empty($_POST['compare_price'])?(float)$_POST['compare_price']:null;
@@ -389,7 +402,7 @@ class SellerController extends Controller {
             }
             $specsJson=!empty($specsArr)?json_encode($specsArr):null;
 
-            if (!$name || !$price) { $this->view('seller/new_product',['seller'=>$seller,'store'=>$store,'error'=>'Name and price required','categories'=>(new Category())->getSubcategories(),'brands'=>$brands]); return; }
+            if (!$name || !$price) { $this->view('seller/new_product',['seller'=>$seller,'store'=>$store,'error'=>'Name and price required','categories'=>$categories,'brands'=>$brands]); return; }
 
             $slug=strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/','-',$name))).'-'.time();
             require_once __DIR__.'/../config/database.php';
@@ -424,8 +437,51 @@ class SellerController extends Controller {
                 }
             }
 
-            $stmt=$db->prepare("INSERT INTO products (name,slug,category_id,brand_id,seller_id,store_id,listing_type,visibility,condition_type,moq,wholesale_price_ghs,fob_price_usd,incoterms,production_capacity,oem_odm,price_ghs,compare_at_price_ghs,currency,stock_qty,description,features,specs,tags,is_active,status_market,video_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-            $stmt->execute([$name,$slug,$catId,$brandId,$seller['id'],$store['id']??null,$listing,$visibility,$cond,$moq,$wholesalePrice,$fobPrice,$incoterms,$productionCapacity,$oemOdm,$price,$comparePrice,'GHS',$stock,$description,$featuresJson,$specsJson,$tags,1,'pending_review',$videoUrl]);
+            $productData = [
+                'name'=>$name,
+                'slug'=>$slug,
+                'category_id'=>$catId,
+                'brand_id'=>$brandId,
+                'seller_id'=>$seller['id'],
+                'store_id'=>$store['id']??null,
+                'listing_type'=>$listing,
+                'visibility'=>$visibility,
+                'condition_type'=>$cond,
+                'moq'=>$moq,
+                'wholesale_price_ghs'=>$wholesalePrice,
+                'fob_price_usd'=>$fobPrice,
+                'incoterms'=>$incoterms,
+                'production_capacity'=>$productionCapacity,
+                'oem_odm'=>$oemOdm,
+                'price_ghs'=>$price,
+                'compare_at_price_ghs'=>$comparePrice,
+                'currency'=>'GHS',
+                'stock_qty'=>$stock,
+                'description'=>$description,
+                'features'=>$featuresJson,
+                'specs'=>$specsJson,
+                'tags'=>$tags,
+                'is_active'=>1,
+                'status_market'=>'pending_review',
+                'video_url'=>$videoUrl,
+            ];
+
+            // Production may be running an older products schema because deploys do not run migrations.
+            // Build the insert from columns that actually exist so a missing optional marketplace column
+            // cannot turn a seller submission into an HTTP 500.
+            if ($db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+                $existingColumns = $db->query("PRAGMA table_info(products)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            } else {
+                $existingColumns = $db->query("SHOW COLUMNS FROM products")->fetchAll(PDO::FETCH_COLUMN, 0);
+            }
+            $insertColumns = array_values(array_intersect(array_keys($productData), $existingColumns));
+            $requiredColumns = ['name','slug','category_id','price_ghs','currency','stock_qty','is_active'];
+            if (count(array_intersect($requiredColumns, $insertColumns)) !== count($requiredColumns)) {
+                throw new RuntimeException('The production products table is missing required columns. Please run the marketplace migration.');
+            }
+            $placeholders = implode(',', array_fill(0, count($insertColumns), '?'));
+            $stmt=$db->prepare("INSERT INTO products (".implode(',', $insertColumns).") VALUES (".$placeholders.")");
+            $stmt->execute(array_map(static function($column) use ($productData) { return $productData[$column]; }, $insertColumns));
             $pid=$db->lastInsertId();
 
             // Insert uploaded images
@@ -440,7 +496,23 @@ class SellerController extends Controller {
             }
             $this->redirect((defined('APP_PATH') ? APP_PATH : '') . '/seller/products?success=1');
             return;
+        } catch (\Throwable $e) {
+            $this->logError("newProduct() FAILED: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine() . "\n" . $e->getTraceAsString());
+            $this->view('seller/new_product', [
+                'seller'=>$seller,
+                'store'=>$store,
+                'error'=>'We could not save this product. Please check the details and try again.',
+                'categories'=>$categories,
+                'brands'=>$brands
+            ]);
+            return;
         }
-        $this->view('seller/new_product',['seller'=>$seller,'store'=>$store,'categories'=>(new Category())->getSubcategories(),'brands'=>$brands]);
+        }
+
+        $this->view('seller/new_product', [            'seller'=>$seller,
+            'store'=>$store,
+            'categories'=>$categories,
+            'brands'=>$brands
+        ]);
     }
 }
