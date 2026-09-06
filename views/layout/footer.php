@@ -392,32 +392,54 @@ document.addEventListener('DOMContentLoaded', window.initProductView);
     }
 })();
 
-// Auto slider for product cards — 3s precise, no stuck
-window._cardSliderIntervals = window._cardSliderIntervals || [];
+// Interactive product-card image carousel: arrows, swipe gestures, and counter.
 window.initCardSliders = function() {
-    // Clear previous intervals (SPA navigation may re-init)
-    window._cardSliderIntervals.forEach(id => clearInterval(id));
-    window._cardSliderIntervals = [];
-    document.querySelectorAll('.card-auto-slider').forEach(slider => {
-        const images = slider.querySelectorAll('img.slide-img');
-        if(images.length <= 1) return;
-        let idx = 0;
-        // Ensure first visible, rest hidden
-        images.forEach((img,i)=>{ img.style.opacity = i===0?'1':'0'; img.style.transform = i===0?'scale(1) translateY(0)':'scale(1.05) translateY(8px)'; });
-        const id = setInterval(() => {
-            if(document.hidden) return; // don't advance when tab hidden — prevents stuck/jump
-            images[idx].style.opacity = '0';
-            images[idx].style.transform = 'scale(1.05) translateY(8px)';
-            idx = (idx + 1) % images.length;
-            images[idx].style.opacity = '1';
-            images[idx].style.transform = 'scale(1) translateY(0)';
-        }, 3000);
-        window._cardSliderIntervals.push(id);
-        slider.dataset.sliderId = id;
+    document.querySelectorAll('[data-carousel]').forEach(function(carousel) {
+        if (carousel.dataset.carouselReady === '1') return;
+        var slides = Array.from(carousel.querySelectorAll('.carousel-slide'));
+        var total = slides.length;
+        if (total <= 1) return;
+
+        var count = carousel.querySelector('[data-carousel-count]');
+        var index = 0;
+        var touchStartX = 0;
+        var touchStartY = 0;
+
+        function show(nextIndex) {
+            index = (nextIndex + total) % total;
+            slides.forEach(function(slide, i) {
+                slide.classList.toggle('is-active', i === index);
+            });
+            if (count) count.textContent = (index + 1) + '/' + total;
+            carousel.dataset.index = String(index);
+        }
+
+        carousel.addEventListener('click', function(event) {
+            var control = event.target.closest('[data-carousel-prev], [data-carousel-next]');
+            if (!control) return;
+            event.preventDefault();
+            event.stopPropagation();
+            show(control.hasAttribute('data-carousel-next') ? index + 1 : index - 1);
+        });
+        carousel.addEventListener('touchstart', function(event) {
+            var touch = event.changedTouches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+        }, { passive: true });
+        carousel.addEventListener('touchend', function(event) {
+            var touch = event.changedTouches[0];
+            var dx = touch.clientX - touchStartX;
+            var dy = touch.clientY - touchStartY;
+            if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+            event.preventDefault();
+            show(dx < 0 ? index + 1 : index - 1);
+        }, { passive: false });
+
+        carousel.dataset.carouselReady = '1';
+        show(0);
     });
 };
 document.addEventListener("DOMContentLoaded", window.initCardSliders);
-document.addEventListener("visibilitychange", () => { if(!document.hidden) window.initCardSliders(); }); // re-sync after tab hidden
 
 // Trio image cycling for mobile list view (3 images side-by-side)
 window._trioSliderIntervals = window._trioSliderIntervals || [];
