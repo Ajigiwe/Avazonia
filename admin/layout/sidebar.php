@@ -1,6 +1,12 @@
 <?php
 // admin/layout/sidebar.php
 $current_page = basename($_SERVER['PHP_SELF']);
+// Live count of products awaiting review, shown as a badge on the Approvals nav item.
+$pending_approvals = 0;
+try {
+    if (!isset($db)) { require_once __DIR__ . '/../../config/database.php'; $db = db(); }
+    $pending_approvals = (int)$db->query("SELECT COUNT(*) FROM products WHERE status_market='pending_review'")->fetchColumn();
+} catch (\Throwable $e) { $pending_approvals = 0; }
 ?>
 <aside class="admin-sidebar">
     <div class="sidebar-brand">
@@ -12,6 +18,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <span class="nav-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="11" width="7" height="10"></rect><rect x="3" y="15" width="7" height="6"></rect></svg>
             </span> Dashboard
+        </a>
+        <a href="<?= APP_URL ?>/admin/approvals.php" class="nav-item <?= $current_page === 'approvals.php' ? 'active' : '' ?>">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </span> Approvals
+            <?php if ($pending_approvals > 0): ?>
+                <span style="margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;min-width:20px;height:20px;border-radius:99px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px;"><?= $pending_approvals ?></span>
+            <?php endif; ?>
         </a>
         <a href="<?= APP_URL ?>/admin/products.php" class="nav-item <?= $current_page === 'products.php' || $current_page === 'add-product.php' || $current_page === 'edit-product.php' ? 'active' : '' ?>">
             <span class="nav-icon">
