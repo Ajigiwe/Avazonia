@@ -15,26 +15,10 @@ class HomeController extends Controller {
         $wishModel = new Wishlist();
         $settingsModel = new Settings();
 
-        $featuredProducts = $productModel->getFeatured();
-        
-        $page = max(1, (int)($_GET['page'] ?? 1));
-        $perPage = 24;
-        $offset = ($page - 1) * $perPage;
-        $allProducts = $productModel->getAll($perPage, $offset);
-        $totalProducts = $productModel->countAll();
-        $totalPages = (int)ceil($totalProducts / $perPage);
-        $pagination = [
-            'page'      => $page,
-            'perPage'   => $perPage,
-            'total'     => $totalProducts,
-            'totalPages' => $totalPages,
-            'hasPrev'   => $page > 1,
-            'hasNext'   => $page < $totalPages,
-        ];
-        
-        $bestsellers = $productModel->getBestsellers(8);
+        // NEW DROPS — the 10 most recently added items from any category
+        $newDrops = $productModel->getAll(10, 0);
+
         $preorderProducts = $productModel->getPreorderProducts(8);
-        $categories = $categoryModel->getAll();
         // All top-level categories for the mobile marketplace launcher grid
         $mobileCategories = $categoryModel->getTopLevels();
         
@@ -46,20 +30,17 @@ class HomeController extends Controller {
             ? $categoryModel->findByIds($gridIds)
             : $categoryModel->getGridCategories(7);
 
-        // Fetch products for a few main categories to showcase on homepage
-        $categoryShowcase = [];
-        $showcaseCount = 0;
-        foreach ($categories as $cat) {
-            if (empty($cat['parent_id']) && $showcaseCount < 3) {
-                $catProducts = $productModel->getByCategory($cat['id'], 4);
-                if (!empty($catProducts)) {
-                    $categoryShowcase[] = [
-                        'category' => $cat,
-                        'products' => $catProducts
-                    ];
-                    $showcaseCount++;
-                }
-            }
+        // TOP 10 PER MAJOR CATEGORY — every top-level category that has products
+        // gets a row of its 10 newest items (approved seller listings included).
+        $categoryDrops = [];
+        foreach ($categoryModel->getTopLevels() as $cat) {
+            if ((int)$categoryModel->countProductsInSubtree((int)$cat['id']) === 0) continue;
+            $catProducts = $productModel->getByCategory((int)$cat['id'], 10, 0);
+            if (empty($catProducts)) continue;
+            $categoryDrops[] = [
+                'category' => $cat,
+                'products' => $catProducts
+            ];
         }
 
         $wishlistIds = Session::get('user_id') ? $wishModel->getProductIds(Session::get('user_id')) : [];
@@ -71,15 +52,11 @@ class HomeController extends Controller {
         $intlSuppliers=$storeModel->getByType('international_supplier',4);
 
         $this->view('home/index', [
-            'featured' => $featuredProducts,
-            'all_products' => $allProducts,
-            'bestsellers' => $bestsellers,
+            'newDrops' => $newDrops,
+            'categoryDrops' => $categoryDrops,
             'preorders' => $preorderProducts,
-            'categories' => $categories,
             'mobileCategories' => $mobileCategories,
             'categoryGrid' => $categoryGrid,
-            'categoryShowcase' => $categoryShowcase,
-            'pagination' => $pagination,
             'wishlistIds' => $wishlistIds,
             'wholesaleDeals' => $wholesaleDeals,
             'exportCars' => $exportCars,

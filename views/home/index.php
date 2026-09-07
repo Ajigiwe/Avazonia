@@ -58,67 +58,79 @@ if (!empty($launchCats)):
 
 
 
-<section class="featured">
+<!-- NEW DROPS — the 10 most recently added items from any category -->
+<section class="products-sec" style="border-top: 2px solid var(--ink); padding: 48px 0 32px;">
     <div class="container">
-        <div class="sec-head reveal">
-        <div class="sec-title-box">
-            <div class="sec-over" style="color: var(--red); font-size: 10px; font-weight: 800; letter-spacing: 0.15em; margin-bottom: 8px;">
-                <?= htmlspecialchars($settings['home_deals_eyebrow'] ?? 'EXCLUSIVE OPPORTUNITY HUB') ?>
-            </div>
-            <h2 class="hero-heading" style="color: var(--ink); font-size: clamp(24px, 4vw, 38px); margin-bottom: 0; line-height: 1;">
-                <?= htmlspecialchars($settings['home_deals_title'] ?? 'FLASH DEALS & DROPS') ?>
-            </h2>
-        </div>
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div class="view-toggle" role="group" aria-label="View toggle">
-                    <button id="view-grid" class="view-btn active" aria-pressed="true" onclick="setProductView('grid')" title="Grid view">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                    </button>
-                    <button id="view-list" class="view-btn" aria-pressed="false" onclick="setProductView('list')" title="List view">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-                    </button>
+        <div class="rail-scroller">
+            <div class="sec-head reveal">
+                <div class="sec-title-box">
+                    <div class="sec-over" style="color: var(--red); font-size: 10px; font-weight: 800; letter-spacing: 0.15em; margin-bottom: 8px;">JUST IN</div>
+                    <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.9;">New Drops</h2>
                 </div>
-                <a href="<?= APP_URL ?>/shop" style="font-family: var(--f-semi); font-size: 12px; text-transform: uppercase; color: var(--mid-gray); font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--light-gray); padding-bottom: 4px;">See all products →</a>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="slider-nav">
+                        <button type="button" class="slider-nav-btn rail-prev" data-rail-prev aria-label="Previous">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        </button>
+                        <button type="button" class="slider-nav-btn rail-next" data-rail-next aria-label="Next">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </button>
+                    </div>
+                    <a href="<?= APP_URL ?>/shop" style="font-family: var(--f-semi); font-size: 12px; text-transform: uppercase; color: var(--mid-gray); font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--light-gray); padding-bottom: 4px;">See all products →</a>
+                </div>
+            </div>
+            <div class="slider-container" style="position: relative; width: 100%; overflow: hidden;">
+                <div class="slider-viewport" style="overflow-x: auto !important; scroll-snap-type: x mandatory !important; display: flex !important; -webkit-overflow-scrolling: touch !important; scrollbar-width: none !important;">
+                    <div class="slider-track" style="display: flex !important; flex-wrap: nowrap !important; gap: 12px !important; padding: 10px 0 !important; width: max-content !important;">
+                        <?php if (!empty($newDrops)): foreach ($newDrops as $p): ?>
+                            <?php require __DIR__ . '/../components/product-card.php'; ?>
+                        <?php endforeach; else: ?>
+                            <p style="color: var(--mid-gray); padding: 20px 0;">No products yet — check back soon.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="product-grid">
-            <?php 
-            if (!empty($all_products)):
-                foreach ($all_products as $p): ?>
-                <?php 
-                // Pass current product to the unified component
-                require __DIR__ . '/../components/product-card.php'; 
-                ?>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <p>No products found.</p>
-            <?php endif; ?>
-        </div>
-
-        <?php if ($pagination['totalPages'] > 1): ?>
-        <div class="shop-pagination" style="margin-top: 32px;">
-            <?php if ($pagination['hasPrev']): ?>
-                <a href="<?= APP_URL ?>/?page=<?= $pagination['page'] - 1 ?>" class="page-btn">&laquo; Prev</a>
-            <?php endif; ?>
-            <?php
-            $start = max(1, $pagination['page'] - 2);
-            $end = min($pagination['totalPages'], $pagination['page'] + 2);
-            if ($start > 1) echo '<span class="page-dots">...</span>';
-            for ($i = $start; $i <= $end; $i++):
-                $isActive = $i === $pagination['page'];
-            ?>
-                <a href="<?= APP_URL ?>/?page=<?= $i ?>" class="page-btn <?= $isActive ? 'active' : '' ?>"><?= $i ?></a>
-            <?php endfor; 
-            if ($end < $pagination['totalPages']) echo '<span class="page-dots">...</span>';
-            ?>
-            <?php if ($pagination['hasNext']): ?>
-                <a href="<?= APP_URL ?>/?page=<?= $pagination['page'] + 1 ?>" class="page-btn">Next &raquo;</a>
-            <?php endif; ?>
-        </div>
-        <?php endif; ?>
     </div>
 </section>
+
+<!-- TOP 10 PER MAJOR CATEGORY (seller listings included) -->
+<?php if (!empty($categoryDrops)): ?>
+    <?php foreach ($categoryDrops as $drop): ?>
+        <section class="products-sec" style="border-top: 1px solid var(--border-color); padding: 40px 0 28px;">
+            <div class="container">
+                <div class="rail-scroller">
+                    <div class="sec-head reveal">
+                        <div class="sec-title-box">
+                            <div class="sec-over" style="color: var(--red); font-size: 10px; font-weight: 800; letter-spacing: 0.15em; margin-bottom: 8px;">EXPLORE CATEGORY</div>
+                            <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.9;"><?= !empty($drop['category']['icon']) ? htmlspecialchars($drop['category']['icon']) . ' ' : '' ?><?= htmlspecialchars($drop['category']['name']) ?></h2>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="slider-nav">
+                                <button type="button" class="slider-nav-btn rail-prev" data-rail-prev aria-label="Previous">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                                </button>
+                                <button type="button" class="slider-nav-btn rail-next" data-rail-next aria-label="Next">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                </button>
+                            </div>
+                            <a href="<?= APP_URL ?>/shop?cat=<?= htmlspecialchars($drop['category']['slug']) ?>" style="font-family: var(--f-semi); font-size: 12px; text-transform: uppercase; color: var(--mid-gray); font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--light-gray); padding-bottom: 4px;">Shop all <?= htmlspecialchars($drop['category']['name']) ?> →</a>
+                        </div>
+                    </div>
+                    <div class="slider-container" style="position: relative; width: 100%; overflow: hidden;">
+                        <div class="slider-viewport" style="overflow-x: auto !important; scroll-snap-type: x mandatory !important; display: flex !important; -webkit-overflow-scrolling: touch !important; scrollbar-width: none !important;">
+                            <div class="slider-track" style="display: flex !important; flex-wrap: nowrap !important; gap: 12px !important; padding: 10px 0 !important; width: max-content !important;">
+                                <?php foreach ($drop['products'] as $p): ?>
+                                    <?php require __DIR__ . '/../components/product-card.php'; ?>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    <?php endforeach; ?>
+<?php endif; ?>
 
 <!-- PRE-ORDER SECTION -->
 <?php if (!empty($preorders)): ?>
@@ -145,42 +157,6 @@ if (!empty($launchCats)):
 </section>
 <?php endif; ?>
 
-<!-- BESTSELLERS ROW -->
-<section class="products-sec">
-    <div class="container">
-        <div class="sec-head reveal">
-        <div class="sec-title-box">
-            <div class="sec-over"<?= t('home.bestsellers_over', 'Hand-picked') ?></div>
-            <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.85;"<?= t('home.bestsellers_title', 'Bestsellers') ?></h2>
-        </div>
-            <div style="display: flex; align-items: center; gap: 24px;">
-                <div class="slider-nav">
-                    <button class="slider-nav-btn prev" id="slide-prev" aria-label="Previous">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                    </button>
-                    <button class="slider-nav-btn next" id="slide-next" aria-label="Next">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                    </button>
-                </div>
-                <a href="<?= APP_URL ?>/shop" class="btn-ghost"<?= t('home.full_catalogue', 'Full catalogue') ?> <span class="arr">→</span></a>
-            </div>
-        </div>
-
-        <div class="slider-container" style="position: relative; width: 100%; overflow: hidden;">
-            <div class="slider-viewport" id="bestsellers-slider" style="overflow-x: auto !important; scroll-snap-type: x mandatory !important; display: flex !important; -webkit-overflow-scrolling: touch !important; scrollbar-width: none !important;">
-                <div class="slider-track" style="display: flex !important; flex-wrap: nowrap !important; gap: 12px !important; padding: 10px 0 !important; width: max-content !important;">
-                    <?php 
-                    // Using manually selected bestsellers from controller
-                    if (empty($bestsellers)) $bestsellers = array_slice($featured, 0, 5); 
-                    ?>
-                    <?php foreach ($bestsellers as $p): ?>
-                        <?php require __DIR__ . '/../components/product-card.php'; ?>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
 
  <!-- MARKETPLACE: Wholesale + Intl Suppliers + Featured Businesses -->
 <?php if (!empty($wholesaleDeals)): ?>
@@ -254,32 +230,6 @@ if (!empty($launchCats)):
 </section>
 <?php endif; ?>
 
- <!-- CATEGORY SHOWCASE SECTIONS -->
-<?php if (!empty($categoryShowcase)): ?>
-    <?php foreach ($categoryShowcase as $showcase): ?>
-        <section class="products-sec" style="border-top: 1px solid var(--border-color); padding: 60px 0;">
-            <div class="container">
-                <div class="sec-head reveal">
-                    <div class="sec-title-box">
-                        <div class="sec-over" style="color: var(--red); font-size: 10px; font-weight: 800; letter-spacing: 0.15em; margin-bottom: 8px;">
-                            <?= t('home.explore_category', 'EXPLORE CATEGORY') ?>
-                        </div>
-                        <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.85;">
-                            <?= htmlspecialchars(strtoupper($showcase['category']['name'])) ?>
-                        </h2>
-                    </div>
-                    <a href="<?= APP_URL ?>/shop?cat=<?= $showcase['category']['slug'] ?>" style="font-family: var(--f-semi); font-size: 12px; text-transform: uppercase; color: var(--mid-gray); font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--light-gray); padding-bottom: 4px;">Shop All <?= htmlspecialchars($showcase['category']['name']) ?> →</a>
-                </div>
-
-                <div class="product-grid">
-                    <?php foreach ($showcase['products'] as $p): ?>
-                        <?php require __DIR__ . '/../components/product-card.php'; ?>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </section>
-    <?php endforeach; ?>
-<?php endif; ?>
 
  <?php if ($popup['enabled'] == '1'): ?>
 <div id="promo-popup" class="promo-overlay" style="display: none;">
@@ -459,40 +409,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ── BESTSELLERS SLIDER ────────────────────────────
-    const slider = document.getElementById('bestsellers-slider');
-    const nextBtn = document.getElementById('slide-next');
-    const prevBtn = document.getElementById('slide-prev');
-
-    if (slider && nextBtn && prevBtn) {
-        // High-fidelity scroll logic
-        const scrollAmount = 320; // Pro Console snap distance
-
-        nextBtn.addEventListener('click', () => {
-            slider.scrollTo({
-                left: slider.scrollLeft + scrollAmount,
-                behavior: 'smooth'
-            });
-        });
-
-        prevBtn.addEventListener('click', () => {
-            slider.scrollTo({
-                left: slider.scrollLeft - scrollAmount,
-                behavior: 'smooth'
-            });
-        });
-
-        // Toggle visibility based on scroll position
-        const checkButtons = () => {
-             // Logic to fade buttons if at start/end for premium feel
-             // slider.scrollLeft <= 0 ? prevBtn.style.opacity = '0.3' : prevBtn.style.opacity = '1';
-        };
-
-        slider.addEventListener('scroll', checkButtons);
-    }
 });
 </script>
 </script>
 <?php endif; ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Generic prev/next scrolling for every homepage product rail.
+    // Works for New Drops and each per-category row: arrows + swipe both scroll the rail.
+    document.querySelectorAll('.rail-scroller').forEach((rail) => {
+        const vp = rail.querySelector('.slider-viewport');
+        const prev = rail.querySelector('[data-rail-prev]');
+        const next = rail.querySelector('[data-rail-next]');
+        if (!vp || !prev || !next) return;
+        const step = () => {
+            const card = vp.querySelector('.card');
+            return card ? card.getBoundingClientRect().width + 12 : 320;
+        };
+        next.addEventListener('click', () => vp.scrollBy({ left: step(), behavior: 'smooth' }));
+        prev.addEventListener('click', () => vp.scrollBy({ left: -step(), behavior: 'smooth' }));
+    });
+});
+</script>
 
 <!-- SUPPORT BANNER section -->
 <?php require __DIR__ . '/../components/support-card.php'; ?>
