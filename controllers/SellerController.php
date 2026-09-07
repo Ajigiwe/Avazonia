@@ -426,6 +426,10 @@ class SellerController extends Controller {
                 }
             }
 
+            // Verified sellers skip the moderation queue — their products go live immediately.
+            // Unverified sellers still require admin approval before the product shows publicly.
+            $marketStatus = !empty($seller['is_verified']) ? 'active' : 'pending_review';
+
             // Handle video upload
             $videoUrl=$_POST['video_url']??'';
             if(!empty($_FILES['product_video']['name']) && $_FILES['product_video']['error']===UPLOAD_ERR_OK) {
@@ -463,7 +467,7 @@ class SellerController extends Controller {
                 'specs'=>$specsJson,
                 'tags'=>$tags,
                 'is_active'=>1,
-                'status_market'=>'pending_review',
+                'status_market'=>$marketStatus,
                 'video_url'=>$videoUrl,
             ];
 
