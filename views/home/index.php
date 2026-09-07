@@ -76,6 +76,12 @@ if (!empty($launchCats)):
             .rail-arrow.rail-prev-arr { left: -10px; }
             .rail-arrow.rail-next-arr { right: -10px; }
             @media (max-width: 900px) { .rail-arrow { display: none; } }
+            /* Mobile: product rails become 2-column grids instead of horizontal scroll */
+            @media (max-width: 900px) {
+                .rail-scroller .slider-viewport { display: grid !important; grid-template-columns: repeat(2, 1fr); gap: 14px 10px; overflow-x: visible !important; padding-bottom: 0 !important; margin-bottom: 0 !important; }
+                .rail-scroller .slider-track { display: contents !important; width: auto !important; padding: 0 !important; }
+                .rail-scroller .slider-track .card { flex: none !important; width: auto !important; min-width: 0 !important; }
+            }
         </style>
         <div class="rail-scroller">
             <div class="rail-head reveal">
@@ -90,8 +96,8 @@ if (!empty($launchCats)):
                 <button type="button" class="rail-arrow rail-next-arr" data-rail-next aria-label="Next">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                 </button>
-                <div class="slider-viewport" style="overflow-x: auto !important; scroll-snap-type: x mandatory !important; display: flex !important; -webkit-overflow-scrolling: touch !important; scrollbar-width: none !important;">
-                    <div class="slider-track" style="display: flex !important; flex-wrap: nowrap !important; gap: 12px !important; padding: 10px 0 !important; width: max-content !important;">
+                <div class="slider-viewport">
+                    <div class="slider-track">
                         <?php if (!empty($newDrops)): foreach ($newDrops as $p): ?>
                             <?php require __DIR__ . '/../components/product-card.php'; ?>
                         <?php endforeach; else: ?>
@@ -143,8 +149,8 @@ if (!empty($launchCats)):
                         <button type="button" class="rail-arrow rail-next-arr" data-rail-next aria-label="Next">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                         </button>
-                        <div class="slider-viewport" style="overflow-x: auto !important; scroll-snap-type: x mandatory !important; display: flex !important; -webkit-overflow-scrolling: touch !important; scrollbar-width: none !important;">
-                            <div class="slider-track" style="display: flex !important; flex-wrap: nowrap !important; gap: 12px !important; padding: 10px 0 !important; width: max-content !important;">
+                        <div class="slider-viewport">
+                            <div class="slider-track">
                                 <?php foreach ($drop['products'] as $p): ?>
                                     <?php require __DIR__ . '/../components/product-card.php'; ?>
                                 <?php endforeach; ?>
