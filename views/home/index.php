@@ -59,27 +59,37 @@ if (!empty($launchCats)):
 
 
 <!-- NEW DROPS — the 10 most recently added items from any category -->
-<section class="products-sec" style="border-top: 2px solid var(--ink); padding: 48px 0 32px;">
+<section class="products-sec" style="border-top: 2px solid var(--ink); padding: 48px 0 40px;">
     <div class="container">
+        <style>
+            .rail-scroller { position: relative; }
+            .rail-scroller .slider-container { position: relative; width: 100%; }
+            /* Centered rail headers */
+            .rail-head { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 5px; margin-bottom: 16px; }
+            .rail-eyebrow { color: var(--red); font-size: 10px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; }
+            .rail-head h2 { font-weight: 800; font-size: clamp(20px, 3vw, 30px); margin: 0; line-height: 1.1; text-transform: uppercase; letter-spacing: -0.01em; }
+            .rail-head a.rail-link { font-size: 11px; text-transform: uppercase; color: var(--mid-gray); font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--light-gray); padding-bottom: 3px; margin-top: 3px; }
+            .rail-head a.rail-link:hover { color: var(--red); border-color: var(--red); }
+            /* Arrows centered on the rail (side overlay), hidden on touch sizes */
+            .rail-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 6; width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.08); background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: center; cursor: pointer; color: #000; padding: 0; }
+            .rail-arrow:hover { background: #000; color: #fff; }
+            .rail-arrow.rail-prev-arr { left: -10px; }
+            .rail-arrow.rail-next-arr { right: -10px; }
+            @media (max-width: 900px) { .rail-arrow { display: none; } }
+        </style>
         <div class="rail-scroller">
-            <div class="sec-head reveal">
-                <div class="sec-title-box">
-                    <div class="sec-over" style="color: var(--red); font-size: 10px; font-weight: 800; letter-spacing: 0.15em; margin-bottom: 8px;">JUST IN</div>
-                    <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.9;">New Drops</h2>
-                </div>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div class="slider-nav">
-                        <button type="button" class="slider-nav-btn rail-prev" data-rail-prev aria-label="Previous">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                        </button>
-                        <button type="button" class="slider-nav-btn rail-next" data-rail-next aria-label="Next">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                        </button>
-                    </div>
-                    <a href="<?= APP_URL ?>/shop" style="font-family: var(--f-semi); font-size: 12px; text-transform: uppercase; color: var(--mid-gray); font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--light-gray); padding-bottom: 4px;">See all products →</a>
-                </div>
+            <div class="rail-head reveal">
+                <div class="rail-eyebrow">JUST IN</div>
+                <h2>New Drops</h2>
+                <a class="rail-link" href="<?= APP_URL ?>/shop">See all products →</a>
             </div>
-            <div class="slider-container" style="position: relative; width: 100%; overflow: hidden;">
+            <div class="slider-container">
+                <button type="button" class="rail-arrow rail-prev-arr" data-rail-prev aria-label="Previous">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </button>
+                <button type="button" class="rail-arrow rail-next-arr" data-rail-next aria-label="Next">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
                 <div class="slider-viewport" style="overflow-x: auto !important; scroll-snap-type: x mandatory !important; display: flex !important; -webkit-overflow-scrolling: touch !important; scrollbar-width: none !important;">
                     <div class="slider-track" style="display: flex !important; flex-wrap: nowrap !important; gap: 12px !important; padding: 10px 0 !important; width: max-content !important;">
                         <?php if (!empty($newDrops)): foreach ($newDrops as $p): ?>
@@ -121,24 +131,18 @@ if (!empty($launchCats)):
         <section class="products-sec" style="border-top: 1px solid var(--border-color); padding: 40px 0 28px;">
             <div class="container">
                 <div class="rail-scroller">
-                    <div class="sec-head reveal">
-                        <div class="sec-title-box">
-                            <div class="sec-over" style="color: var(--red); font-size: 10px; font-weight: 800; letter-spacing: 0.15em; margin-bottom: 8px;">EXPLORE CATEGORY</div>
-                            <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.9;"><?= !empty($drop['category']['icon']) ? htmlspecialchars($drop['category']['icon']) . ' ' : '' ?><?= htmlspecialchars($drop['category']['name']) ?></h2>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div class="slider-nav">
-                                <button type="button" class="slider-nav-btn rail-prev" data-rail-prev aria-label="Previous">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                                </button>
-                                <button type="button" class="slider-nav-btn rail-next" data-rail-next aria-label="Next">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                                </button>
-                            </div>
-                            <a href="<?= APP_URL ?>/shop?cat=<?= htmlspecialchars($drop['category']['slug']) ?>" style="font-family: var(--f-semi); font-size: 12px; text-transform: uppercase; color: var(--mid-gray); font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--light-gray); padding-bottom: 4px;">Shop all <?= htmlspecialchars($drop['category']['name']) ?> →</a>
-                        </div>
+                    <div class="rail-head reveal">
+                        <div class="rail-eyebrow">EXPLORE CATEGORY</div>
+                        <h2><?= !empty($drop['category']['icon']) ? htmlspecialchars($drop['category']['icon']) . ' ' : '' ?><?= htmlspecialchars($drop['category']['name']) ?></h2>
+                        <a class="rail-link" href="<?= APP_URL ?>/shop?cat=<?= htmlspecialchars($drop['category']['slug']) ?>">Shop all <?= htmlspecialchars($drop['category']['name']) ?> →</a>
                     </div>
-                    <div class="slider-container" style="position: relative; width: 100%; overflow: hidden;">
+                    <div class="slider-container">
+                        <button type="button" class="rail-arrow rail-prev-arr" data-rail-prev aria-label="Previous">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        </button>
+                        <button type="button" class="rail-arrow rail-next-arr" data-rail-next aria-label="Next">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </button>
                         <div class="slider-viewport" style="overflow-x: auto !important; scroll-snap-type: x mandatory !important; display: flex !important; -webkit-overflow-scrolling: touch !important; scrollbar-width: none !important;">
                             <div class="slider-track" style="display: flex !important; flex-wrap: nowrap !important; gap: 12px !important; padding: 10px 0 !important; width: max-content !important;">
                                 <?php foreach ($drop['products'] as $p): ?>
