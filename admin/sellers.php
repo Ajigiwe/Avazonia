@@ -24,6 +24,11 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
             $level=$_POST['verification_level'] ?? 'business_verified';
             $verified = ($level==='avazonia_verified' || $level==='company_verified' || $level==='business_verified') ? 1 : (int)($_POST['is_verified'] ?? 0);
             $s->updateVerification((int)$seller['id'],$level,$verified);
+            // Once the seller is verified, their pending products go live automatically —
+            // no need for a separate approve action per product.
+            if ($verified) {
+                $db->prepare("UPDATE products SET status_market='active' WHERE seller_id=? AND status_market='pending_review'")->execute([(int)$seller['id']]);
+            }
             header('Location: sellers.php?success=1'); exit;
         }
     }
