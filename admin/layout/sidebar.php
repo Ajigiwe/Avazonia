@@ -37,6 +37,11 @@ try {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
             </span> Hero Sliders
         </a>
+        <a href="<?= APP_URL ?>/admin/banners.php" class="nav-item <?= $current_page === 'banners.php' ? 'active' : '' ?>">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect><line x1="7" y1="11" x2="7" y2="6"></line><line x1="17" y1="11" x2="17" y2="6"></line><line x1="12" y1="11" x2="12" y2="3"></line><path d="M7 6h4"></path><path d="M17 6h-4"></path><path d="M8 21h8"></path></svg>
+            </span> Banners
+        </a>
         <a href="<?= APP_URL ?>/admin/categories.php" class="nav-item <?= $current_page === 'categories.php' ? 'active' : '' ?>">
             <span class="nav-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>

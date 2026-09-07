@@ -7,6 +7,7 @@ require_once __DIR__ . '/../models/Category.php';
 require_once __DIR__ . '/../models/Wishlist.php';
 require_once __DIR__ . '/../models/Settings.php';
 require_once __DIR__ . '/../models/Store.php';
+require_once __DIR__ . '/../models/HomeBanner.php';
 
 class HomeController extends Controller {
     public function index() {
@@ -29,6 +30,9 @@ class HomeController extends Controller {
         $categoryGrid = !empty($gridIds)
             ? $categoryModel->findByIds($gridIds)
             : $categoryModel->getGridCategories(7);
+
+        // Homepage promo banners (admin-managed) shown between New Drops and the category rows
+        $homeBanners = (new HomeBanner())->active();
 
         // TOP 10 PER MAJOR CATEGORY — every top-level category that has products
         // gets a row of its 10 newest items (approved seller listings included).
@@ -54,6 +58,7 @@ class HomeController extends Controller {
         $this->view('home/index', [
             'newDrops' => $newDrops,
             'categoryDrops' => $categoryDrops,
+            'homeBanners' => $homeBanners,
             'preorders' => $preorderProducts,
             'mobileCategories' => $mobileCategories,
             'categoryGrid' => $categoryGrid,

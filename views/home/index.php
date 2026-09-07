@@ -94,6 +94,27 @@ if (!empty($launchCats)):
     </div>
 </section>
 
+<!-- HOMEPAGE PROMO BANNERS (admin-managed) — between New Drops and the category rows -->
+<?php if (!empty($homeBanners)): ?>
+<section class="products-sec" style="padding: 8px 0 40px;">
+    <div class="container">
+        <style>
+            .home-banners-list { display: flex; flex-direction: column; gap: 16px; }
+            .home-banners-list a.banner-link { display: block; border-radius: 14px; overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,0.08); transition: transform .25s ease, box-shadow .25s ease; }
+            .home-banners-list a.banner-link:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.14); }
+            .home-banners-list img { display: block; width: 100%; height: auto; max-height: 320px; object-fit: cover; }
+        </style>
+        <div class="home-banners-list">
+            <?php foreach ($homeBanners as $banner): $bSrc = $banner['image_url'] ?? ''; if (!$bSrc) continue; if (!filter_var($bSrc, FILTER_VALIDATE_URL)) $bSrc = APP_URL . '/' . ltrim($bSrc, '/'); $bLink = trim($banner['link_url'] ?? '/shop'); if (preg_match('~^https?://~i', $bLink)) { $bHref = $bLink; $bExternal = true; } else { $bHref = APP_URL . ($bLink !== '' && $bLink[0] !== '/' ? '/' : '') . $bLink; $bExternal = false; } ?>
+                <a class="banner-link" href="<?= htmlspecialchars($bHref) ?>"<?= !empty($bExternal) ? ' target="_blank" rel="noopener"' : '' ?>>
+                    <img src="<?= htmlspecialchars($bSrc) ?>" alt="<?= htmlspecialchars($banner['title'] ?? 'Promotion') ?>" loading="lazy">
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
 <!-- TOP 10 PER MAJOR CATEGORY (seller listings included) -->
 <?php if (!empty($categoryDrops)): ?>
     <?php foreach ($categoryDrops as $drop): ?>
