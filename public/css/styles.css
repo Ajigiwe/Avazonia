@@ -2774,7 +2774,7 @@ form button[type="submit"]:hover {
 }
 
 .card-tag.preorder {
-    background: #4F46E5;
+    background: var(--red);
     color: #fff;
 }
 
@@ -2874,7 +2874,7 @@ form button[type="submit"]:hover {
 }
 
 .card-cart-btn.preorder {
-    background: #4F46E5;
+    background: var(--red);
     color: #fff;
     font-family: var(--f-mono);
     font-size: 8px;
@@ -2882,7 +2882,7 @@ form button[type="submit"]:hover {
 }
 
 .card-cart-btn.preorder:hover {
-    background: #4338CA;
+    background: #C00025;
     color: #fff;
 }
 
