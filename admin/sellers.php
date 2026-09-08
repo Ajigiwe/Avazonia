@@ -20,17 +20,19 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     }
     if (isset($_POST['verify_id'])) {
         $seller=$s->findById((int)$_POST['verify_id']);
-        if ($seller) {
-            $level=$_POST['verification_level'] ?? 'business_verified';
-            $verified = ($level==='avazonia_verified' || $level==='company_verified' || $level==='business_verified') ? 1 : (int)($_POST['is_verified'] ?? 0);
-            $s->updateVerification((int)$seller['id'],$level,$verified);
+        if (!$seller) { header('Location: sellers.php?error=seller_not_found'); exit; }
+        $level=$_POST['verification_level'] ?? 'business_verified';
+        $verified = ($level==='avazonia_verified' || $level==='company_verified' || $level==='business_verified') ? 1 : (int)($_POST['is_verified'] ?? 0);
+        if ($verified && empty(preg_replace('/[^0-9]/', '', (string)($seller['whatsapp_number'] ?? '')))) {
+            header('Location: sellers.php?error=contact_required'); exit;
+        }
+        $s->updateVerification((int)$seller['id'],$level,$verified);
             // Once the seller is verified, their pending products go live automatically —
             // no need for a separate approve action per product.
             if ($verified) {
                 $db->prepare("UPDATE products SET status_market='active' WHERE seller_id=? AND status_market='pending_review'")->execute([(int)$seller['id']]);
             }
             header('Location: sellers.php?success=1'); exit;
-        }
     }
 }
 
@@ -54,6 +56,11 @@ include 'layout/header.php';
     <h1>Sellers <span style="font-family:var(--f-mono);font-size:14px;font-weight:400;color:var(--mid-gray);">(<?= $totalSellers ?>)</span></h1>
 </div>
 
+<?php if (isset($_GET['error'])): ?>
+    <div style="background:#fff7ed;border:1px solid #fed7aa;color:#c2410c;padding:12px 20px;border-radius:8px;margin-bottom:24px;font-family:var(--f-semi);font-size:13px;">
+        <?= $_GET['error']==='contact_required' ? 'This seller must add a WhatsApp number in Account Settings before verification.' : 'Seller could not be found.' ?>
+    </div>
+<?php endif; ?>
 <?php if(isset($_GET['success'])): ?>
     <div style="background:#f6ffed;border:1px solid #b7eb8f;color:#52c41a;padding:12px 20px;border-radius:8px;margin-bottom:24px;font-family:var(--f-semi);font-size:13px;">
         Seller updated successfully.

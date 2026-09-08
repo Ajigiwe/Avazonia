@@ -232,21 +232,36 @@ class AccountController extends Controller {
         $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->execute([Session::get('user_id')]);
         $user = $stmt->fetch();
+        require_once __DIR__ . '/../models/Seller.php';
+        $seller = (new Seller())->findByUserId((int)Session::get('user_id'));
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $fullName = $_POST['full_name'] ?? $user['full_name'];
-            $phone    = $_POST['phone']     ?? $user['phone'];
+            $fullName = trim((string)($_POST['full_name'] ?? $user['full_name']));
+            $phone    = trim((string)($_POST['phone'] ?? $user['phone']));
+            if ($seller) {
+                $whatsapp = preg_replace('/[^0-9]/', '', trim((string)($_POST['whatsapp_number'] ?? '')));
+                $wechat = trim((string)($_POST['wechat_id'] ?? ''));
+                if ($whatsapp === '') {
+                    $this->view('account/settings', ['user' => $user, 'seller' => $seller, 'error' => 'WhatsApp number is required for seller accounts.']);
+                    return;
+                }
+            }
             $stmt = $db->prepare("UPDATE users SET full_name = ?, phone = ? WHERE id = ?");
             if ($stmt->execute([$fullName, $phone, $user['id']])) {
+                if ($seller) {
+                    $sellerStmt = $db->prepare("UPDATE sellers SET whatsapp_number = ?, wechat_id = ? WHERE id = ?");
+                    $sellerStmt->execute([$whatsapp, $wechat ?: null, (int)$seller['id']]);
+                    $seller = (new Seller())->findByUserId((int)Session::get('user_id'));
+                }
                 Session::set('user_name', $fullName);
                 $success = "Profile updated successfully.";
                 $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
                 $stmt->execute([Session::get('user_id')]);
                 $user = $stmt->fetch();
-                $this->view('account/settings', ['user' => $user, 'success' => $success]);
+                $this->view('account/settings', ['user' => $user, 'seller' => $seller, 'success' => $success]);
                 return;
             }
         }
-        $this->view('account/settings', ['user' => $user]);
+        $this->view('account/settings', ['user' => $user, 'seller' => $seller]);
     }
 
     // VERIFY PENDING PAGE

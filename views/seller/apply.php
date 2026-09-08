@@ -15,6 +15,16 @@
     </label>
     <label style="font-family:var(--f-mono);font-size:11px;">Business / Display Name <input type="text" name="business_name" placeholder="e.g. ABC Electronics Ghana" style="width:100%;height:44px;border:1px solid var(--light-gray);padding:0 12px;margin-top:6px;"></label>
     <label style="font-family:var(--f-mono);font-size:11px;">City <input type="text" name="city" placeholder="Accra, Kumasi..." style="width:100%;height:44px;border:1px solid var(--light-gray);padding:0 12px;margin-top:6px;"></label>
+    <div style="border:1.5px solid var(--ink);padding:16px;background:var(--off);">
+      <div style="font-family:var(--f-mono);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Seller Contact Details</div>
+      <div style="font-family:var(--f-mono);font-size:9px;color:var(--mid-gray);margin-bottom:12px;">These details are required for verification and will be used for buyer enquiries.</div>
+      <label style="font-family:var(--f-mono);font-size:11px;">WhatsApp Number <span style="color:var(--red);">*</span>
+        <input type="tel" name="whatsapp_number" value="<?= htmlspecialchars($_POST['whatsapp_number'] ?? '') ?>" placeholder="+233 24 000 0000" inputmode="tel" required style="width:100%;height:44px;border:1px solid var(--light-gray);padding:0 12px;margin-top:6px;">
+      </label>
+      <label style="display:block;font-family:var(--f-mono);font-size:11px;margin-top:12px;">WeChat ID <span style="font-weight:400;color:var(--mid-gray);">(optional)</span>
+        <input type="text" name="wechat_id" value="<?= htmlspecialchars($_POST['wechat_id'] ?? '') ?>" placeholder="Your WeChat ID" autocomplete="off" style="width:100%;height:44px;border:1px solid var(--light-gray);padding:0 12px;margin-top:6px;">
+      </label>
+    </div>
     <?php $verifRequired = seller_verification_required(); ?>
     <div style="border:1.5px solid var(--ink);padding:16px;background:var(--paper);display:<?= $verifRequired ? 'block' : 'none' ?>;">
       <div style="font-family:var(--f-mono);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">Verification — Ghana Card + Face ID</div>

@@ -179,15 +179,6 @@ class SellerController extends Controller {
             $tagline=trim($_POST['tagline']??'');
             $description=trim($_POST['description']??'');
             $city=trim($_POST['city']??'');
-            $whatsapp=trim($_POST['whatsapp_number']??'');
-            $wechat=trim($_POST['wechat_id']??'');
-            // Store digits only for WhatsApp's international URL format.
-            $whatsapp=preg_replace('/[^0-9]/', '', $whatsapp);
-            if (!$whatsapp) {
-                $stats=$this->getSellerStats((int)$seller['id']);
-                $this->view('seller/settings', ['seller'=>$seller,'store'=>$store,'error'=>'WhatsApp number is required so buyers can contact you about your products.','stats'=>$stats,'page'=>'settings']);
-                return;
-            }
             if (!$name) {
                 $stats=$this->getSellerStats((int)$seller['id']);
                 $this->view('seller/settings', ['seller'=>$seller,'store'=>$store,'error'=>'Store name required','stats'=>$stats,'page'=>'settings']);
@@ -223,10 +214,10 @@ class SellerController extends Controller {
                 $stmt->execute($params);
             } else {
                 $st=new Store();
-                $sid=$st->create((int)$seller['id'],['name'=>$name,'tagline'=>$tagline,'city'=>$city,'country_code'=>'GH']);
+                $st->create((int)$seller['id'],['name'=>$name,'tagline'=>$tagline,'city'=>$city,'country_code'=>'GH']);
             }
-            $stmt=$db->prepare("UPDATE sellers SET description=?, whatsapp_number=?, wechat_id=? WHERE id=?");
-            $stmt->execute([$description,$whatsapp ?: null,$wechat ?: null,(int)$seller['id']]);
+            $stmt=$db->prepare("UPDATE sellers SET description=? WHERE id=?");
+            $stmt->execute([$description,(int)$seller['id']]);
             $this->redirect(APP_URL.'/seller/settings?success=1');
             return;
         }
@@ -290,6 +281,12 @@ class SellerController extends Controller {
             if (!in_array($type,$allowed)) $type='individual';
             $biz=trim($_POST['business_name']??'');
             $city=trim($_POST['city']??'');
+            $whatsapp = preg_replace('/[^0-9]/', '', trim((string)($_POST['whatsapp_number'] ?? '')));
+            $wechat = trim((string)($_POST['wechat_id'] ?? ''));
+            if ($whatsapp === '') {
+                $this->view('seller/apply', ['error'=>'WhatsApp number is required for seller verification','seller_type'=>$type,'business_name'=>$biz,'city'=>$city]);
+                return;
+            }
             $s=new Seller(); $st=new Store();
             if ($s->findByUserId((int)Session::get('user_id'))) { $this->redirect(APP_URL.'/seller/dashboard'); return; }
             $docsArr=[];
@@ -331,7 +328,9 @@ class SellerController extends Controller {
             $sid=$s->create((int)Session::get('user_id'), ['seller_type'=>$type,'business_name'=>$biz?:Session::get('user_name'),'full_name'=>Session::get('user_name'),'country_code'=>'GH','city'=>$city,
                 'verification_level'=>$verifRequired ? 'phone_verified' : 'business_verified',
                 'is_verified'=>$verifRequired ? 0 : 1,
-                'docs'=>$docs]);
+                'docs'=>$docs,
+                'whatsapp_number'=>$whatsapp,
+                'wechat_id'=>$wechat]);
             if ($sid) $st->create($sid, ['name'=>$biz?:Session::get('user_name'),'country_code'=>'GH','city'=>$city]);
             $this->redirect(APP_URL.'/seller/dashboard');
             return;
@@ -341,10 +340,6 @@ class SellerController extends Controller {
 
     public function newProduct() {
         $seller=$this->requireVerified(); if (!$seller) return;
-        if (empty(trim((string)($seller['whatsapp_number'] ?? '')))) {
-            $this->redirect(APP_URL.'/seller/settings?contact_required=1');
-            return;
-        }
         $store=(new Store())->findBySellerId((int)$seller['id']);
         // Fetch form options once so validation/database errors can safely re-render the form.
         $brands=[];

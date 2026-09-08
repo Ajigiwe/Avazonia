@@ -70,7 +70,7 @@ class Seller extends Model {
         $slug = $this->slugify($data['business_name'] ?? $data['full_name'] ?? 'seller-'.$userId);
         // ensure unique slug
         $base=$slug; $i=1; while($this->findBySlug($slug)) { $slug=$base.'-'.$i++; }
-        $stmt=$this->db->prepare("INSERT INTO sellers (user_id,seller_type,business_name,slug,country_code,city,verification_level,is_verified,description,docs) VALUES (?,?,?,?,?,?,?,?,?,?)");
+        $stmt=$this->db->prepare("INSERT INTO sellers (user_id,seller_type,business_name,slug,country_code,city,verification_level,is_verified,description,docs,whatsapp_number,wechat_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
         $ok=$stmt->execute([
             $userId,
             $data['seller_type'] ?? 'individual',
@@ -81,7 +81,9 @@ class Seller extends Model {
             $data['verification_level'] ?? 'phone_verified',
             $data['is_verified'] ?? 0,
             $data['description'] ?? null,
-            $data['docs'] ?? null
+            $data['docs'] ?? null,
+            $data['whatsapp_number'] ?? null,
+            $data['wechat_id'] ?? null
         ]);
         return $ok ? (int)$this->db->lastInsertId() : false;
     }

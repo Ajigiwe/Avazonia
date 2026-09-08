@@ -49,6 +49,12 @@ $user_name = Session::get('user_name') ?: 'Member';
             <!-- Main Content -->
             <main>
                 <div style="background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 40px; max-width: 680px;">
+                    <?php if (isset($error)): ?>
+                        <div style="background:#fff7ed;color:#c2410c;padding:16px;border-radius:8px;margin-bottom:32px;font-size:13px;font-weight:500;border-left:4px solid #f59e0b;">
+                            ⚠️ <?= htmlspecialchars($error) ?>
+                        </div>
+                    <?php endif; ?>
+
                     <?php if (isset($success)): ?>
                         <div style="background: #e6f7ec; color: #00a854; padding: 16px; border-radius: 8px; margin-bottom: 32px; font-size: 13px; font-weight: 500; border-left: 4px solid #00a854;">
                             ✅ <?= $success ?>
@@ -72,6 +78,24 @@ $user_name = Session::get('user_name') ?: 'Member';
                             <label style="display: block; font-family: var(--f-semi); font-size: 11px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px; letter-spacing: 0.05em;">Email Address (Locked)</label>
                             <input type="email" value="<?= $user['email'] ?>" disabled style="width: 100%; padding: 14px 16px; background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; color: #999; font-family: inherit; font-size: 14px; cursor: not-allowed;">
                         </div>
+
+                        <?php if (!empty($seller)): ?>
+                        <div style="border-top:1px solid #eee;padding-top:24px;margin-top:4px;">
+                            <div style="font-family:var(--f-semi);font-size:11px;text-transform:uppercase;color:var(--ink);font-weight:800;letter-spacing:.05em;margin-bottom:6px;">Seller Contact Details</div>
+                            <div style="font-size:12px;color:var(--mid-gray);margin-bottom:16px;">These details appear on your products so buyers can enquire directly.</div>
+                            <div class="seller-contact-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+                                <div>
+                                    <label style="display:block;font-family:var(--f-semi);font-size:11px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:8px;letter-spacing:.05em;">WhatsApp Number <span style="color:var(--red);">*</span></label>
+                                    <input type="tel" name="whatsapp_number" value="<?= htmlspecialchars($seller['whatsapp_number'] ?? '') ?>" placeholder="+233 24 000 0000" inputmode="tel" required style="width:100%;padding:14px 16px;border:1px solid #ddd;border-radius:8px;font-family:inherit;font-size:14px;">
+                                    <div style="font-size:11px;color:var(--mid-gray);margin-top:6px;">Include your country code.</div>
+                                </div>
+                                <div>
+                                    <label style="display:block;font-family:var(--f-semi);font-size:11px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:8px;letter-spacing:.05em;">WeChat ID <span style="font-weight:400;text-transform:none;">(optional)</span></label>
+                                    <input type="text" name="wechat_id" value="<?= htmlspecialchars($seller['wechat_id'] ?? '') ?>" placeholder="Your WeChat ID" autocomplete="off" style="width:100%;padding:14px 16px;border:1px solid #ddd;border-radius:8px;font-family:inherit;font-size:14px;">
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
 
                         <div style="margin-top: 12px;">
                             <button type="submit" style="height: 52px; padding: 0 40px; background: var(--ink); color: #fff; border: none; border-radius: 8px; font-family: var(--f-display); font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; transition: 0.2s;">
@@ -98,6 +122,8 @@ $user_name = Session::get('user_name') ?: 'Member';
             grid-template-columns: 1fr !important;
             gap: 16px !important;
         }
+
+        .account-page .seller-contact-fields { grid-template-columns: 1fr !important; gap: 16px !important; }
 
         main > div {
             padding: 24px !important;
