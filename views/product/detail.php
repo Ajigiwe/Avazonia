@@ -87,7 +87,7 @@ if (Session::get('user_id')) {
                 <?php if(!empty($product['video_url'])):
                     $vidUrl = filter_var($product['video_url'], FILTER_VALIDATE_URL) ? $product['video_url'] : APP_PATH . '/' . ltrim($product['video_url'], '/');
                 ?>
-                    <video id="main-product-video" src="<?= $vidUrl ?>" controls muted loop playsinline onmouseenter="this.play()" onmouseleave="this.pause()" style="display:none; width: 100%; height: 100%; object-fit: contain; padding: 20px;"></video>
+                    <video id="main-product-video" src="<?= $vidUrl ?>" controls muted loop playsinline onmouseenter="this.play()" onmouseleave="this.pause()" style="display:none; width: 100%; height: 100%; object-fit: cover;"></video>
                 <?php endif; ?>
                 <?php if ($galleryTotal > 1): ?>
                     <button type="button" class="gallery-control gallery-prev" id="gallery-prev" aria-label="Previous image">&#10094;</button>
