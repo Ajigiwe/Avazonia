@@ -6,6 +6,7 @@
     <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px;">Manage your store profile</div>
 </div>
 
+<?php if(!empty($_GET['contact_required'])): ?><div style="background:#fff7ed;border:1.5px solid #f59e0b;padding:12px 14px;font-family:var(--f-mono);font-size:11px;color:#92400e;margin-bottom:14px;">&#9888; Add your WhatsApp number before publishing a product. Buyers need a direct way to enquire with you.</div><?php endif; ?>
 <?php if(!empty($success)): ?><div style="background:#e6f7ec;border:1.5px solid #00a854;padding:12px 14px;font-family:var(--f-mono);font-size:11px;color:#00a854;margin-bottom:14px;">&#10003; Store settings saved successfully.</div><?php endif; ?>
 <?php if(!empty($error)): ?><div style="background:#fef3c7;border:1.5px solid #f59e0b;padding:12px 14px;font-family:var(--f-mono);font-size:11px;color:#92400e;margin-bottom:14px;">&#9888; <?= htmlspecialchars($error) ?></div><?php endif; ?>
 
@@ -24,6 +25,18 @@
     <div style="margin-bottom:20px;">
         <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">City / Location</label>
         <input type="text" name="city" value="<?= htmlspecialchars($store['city'] ?? $seller['city'] ?? '') ?>" style="width:100%;height:44px;background:var(--off);border:1px solid var(--light-gray);border-radius:8px;padding:0 14px;font-size:13px;color:var(--ink);box-sizing:border-box;">
+    </div>
+
+    <div style="margin-bottom:20px;">
+        <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">WhatsApp Number</label>
+        <input type="text" name="whatsapp_number" value="<?= htmlspecialchars($seller['whatsapp_number'] ?? '') ?>" placeholder="233 24 000 0000" inputmode="tel" required style="width:100%;height:44px;background:var(--off);border:1px solid var(--light-gray);border-radius:8px;padding:0 14px;font-size:13px;color:var(--ink);box-sizing:border-box;">
+        <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);margin-top:6px;">Required for seller contact. Include your country code so buyers can enquire about products.</div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+        <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">WeChat ID</label>
+        <input type="text" name="wechat_id" value="<?= htmlspecialchars($seller['wechat_id'] ?? '') ?>" placeholder="Your WeChat ID" autocomplete="off" style="width:100%;height:44px;background:var(--off);border:1px solid var(--light-gray);border-radius:8px;padding:0 14px;font-size:13px;color:var(--ink);box-sizing:border-box;">
+        <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);margin-top:6px;">Optional. Add it to let buyers contact you on WeChat.</div>
     </div>
 
     <div style="margin-bottom:20px;">

@@ -179,6 +179,15 @@ class SellerController extends Controller {
             $tagline=trim($_POST['tagline']??'');
             $description=trim($_POST['description']??'');
             $city=trim($_POST['city']??'');
+            $whatsapp=trim($_POST['whatsapp_number']??'');
+            $wechat=trim($_POST['wechat_id']??'');
+            // Store digits only for WhatsApp's international URL format.
+            $whatsapp=preg_replace('/[^0-9]/', '', $whatsapp);
+            if (!$whatsapp) {
+                $stats=$this->getSellerStats((int)$seller['id']);
+                $this->view('seller/settings', ['seller'=>$seller,'store'=>$store,'error'=>'WhatsApp number is required so buyers can contact you about your products.','stats'=>$stats,'page'=>'settings']);
+                return;
+            }
             if (!$name) {
                 $stats=$this->getSellerStats((int)$seller['id']);
                 $this->view('seller/settings', ['seller'=>$seller,'store'=>$store,'error'=>'Store name required','stats'=>$stats,'page'=>'settings']);
@@ -216,8 +225,8 @@ class SellerController extends Controller {
                 $st=new Store();
                 $sid=$st->create((int)$seller['id'],['name'=>$name,'tagline'=>$tagline,'city'=>$city,'country_code'=>'GH']);
             }
-            $stmt=$db->prepare("UPDATE sellers SET description=? WHERE id=?");
-            $stmt->execute([$description,(int)$seller['id']]);
+            $stmt=$db->prepare("UPDATE sellers SET description=?, whatsapp_number=?, wechat_id=? WHERE id=?");
+            $stmt->execute([$description,$whatsapp ?: null,$wechat ?: null,(int)$seller['id']]);
             $this->redirect(APP_URL.'/seller/settings?success=1');
             return;
         }
@@ -332,6 +341,10 @@ class SellerController extends Controller {
 
     public function newProduct() {
         $seller=$this->requireVerified(); if (!$seller) return;
+        if (empty(trim((string)($seller['whatsapp_number'] ?? '')))) {
+            $this->redirect(APP_URL.'/seller/settings?contact_required=1');
+            return;
+        }
         $store=(new Store())->findBySellerId((int)$seller['id']);
         // Fetch form options once so validation/database errors can safely re-render the form.
         $brands=[];

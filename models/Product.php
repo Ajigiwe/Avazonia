@@ -3,6 +3,12 @@
 require_once __DIR__ . '/../core/Model.php';
 
 class Product extends Model {
+    public function __construct() {
+        parent::__construct();
+        require_once __DIR__ . '/Seller.php';
+        Seller::ensureContactColumns($this->db);
+    }
+
     private function createDeletedProductBackup($productId, $product, $ordersUsingProduct) {
         $backupDir = __DIR__ . '/../backups/deleted-products/';
         if (!is_dir($backupDir)) {
@@ -60,7 +66,7 @@ class Product extends Model {
         return " AND (:min_stock = :min_stock)";
     }
     private function sellerSelect(): string {
-        return ", s.business_name as seller_name, s.seller_type, s.verification_level, s.is_verified, st.slug as store_slug, st.name as store_name ";
+        return ", s.business_name as seller_name, s.seller_type, s.verification_level, s.is_verified, s.whatsapp_number as seller_whatsapp, s.wechat_id as seller_wechat, st.slug as store_slug, st.name as store_name ";
     }
     private function sellerJoins(): string {
         return " LEFT JOIN sellers s ON p.seller_id=s.id LEFT JOIN stores st ON p.store_id=st.id ";
@@ -89,11 +95,11 @@ class Product extends Model {
 
     public function getAll($limit = 12, $offset = 0) {
         $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating ".$this->sellerSelect()."
-                FROM products p 
+                FROM products p
                 LEFT JOIN brands b ON p.brand_id = b.id
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 ".$this->sellerJoins()."
-                WHERE p.is_active = 1 " . $this->getStockSql() . $this->marketplaceWhere() . " 
+                WHERE p.is_active = 1 " . $this->getStockSql() . $this->marketplaceWhere() . "
                 ORDER BY p.created_at DESC LIMIT :limit OFFSET :offset";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':min_stock', $this->getMinStock(), PDO::PARAM_INT);
@@ -113,9 +119,9 @@ class Product extends Model {
 
     public function findBySlug($slug) {
         $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating ".$this->sellerSelect()."
-                FROM products p 
-                LEFT JOIN brands b ON p.brand_id = b.id 
-                LEFT JOIN categories c ON p.category_id = c.id 
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 ".$this->sellerJoins()."
                 WHERE p.slug = :slug AND p.is_active = 1 " . $this->getStockSql();
         $stmt = $this->db->prepare($sql);
@@ -127,11 +133,11 @@ class Product extends Model {
 
     public function getFeatured() {
         $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating ".$this->sellerSelect()."
-                FROM products p 
+                FROM products p
                 LEFT JOIN brands b ON p.brand_id = b.id
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 ".$this->sellerJoins()."
-                WHERE p.is_active = 1 AND p.is_featured = 1 " . $this->getStockSql() . $this->marketplaceWhere() . " 
+                WHERE p.is_active = 1 AND p.is_featured = 1 " . $this->getStockSql() . $this->marketplaceWhere() . "
                 ORDER BY p.created_at DESC LIMIT 8";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':min_stock', $this->getMinStock(), PDO::PARAM_INT);
@@ -141,11 +147,11 @@ class Product extends Model {
 
     public function getBestsellers($limit = 8) {
         $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating ".$this->sellerSelect()."
-                FROM products p 
-                LEFT JOIN brands b ON p.brand_id = b.id 
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 ".$this->sellerJoins()."
-                WHERE p.is_active = 1 AND p.is_bestseller = 1 " . $this->getStockSql() . $this->marketplaceWhere() . " 
+                WHERE p.is_active = 1 AND p.is_bestseller = 1 " . $this->getStockSql() . $this->marketplaceWhere() . "
                 ORDER BY p.created_at DESC LIMIT :limit";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':min_stock', $this->getMinStock(), PDO::PARAM_INT);
@@ -155,12 +161,12 @@ class Product extends Model {
     }
 
     public function getPreorderProducts($limit = 8) {
-        $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
-                FROM products p 
+        $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating ".$this->sellerSelect()."
+                FROM products p
                 LEFT JOIN brands b ON p.brand_id = b.id
                 LEFT JOIN categories c ON p.category_id = c.id
-                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
-                WHERE p.is_active = 1 AND p.is_preorder = 1 " . $this->getStockSql() . " 
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 ".$this->sellerJoins()."
+                WHERE p.is_active = 1 AND p.is_preorder = 1 " . $this->getStockSql() . $this->marketplaceWhere() . "
                 ORDER BY p.created_at DESC LIMIT :limit";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':min_stock', $this->getMinStock(), PDO::PARAM_INT);
@@ -194,12 +200,12 @@ class Product extends Model {
     }
 
     public function getByCategory($categoryId, $limit = 24, $offset = 0) {
-        $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
-                FROM products p 
-                LEFT JOIN brands b ON p.brand_id = b.id 
+        $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating ".$this->sellerSelect()."
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
                 LEFT JOIN categories c ON p.category_id = c.id
-                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
-                WHERE (p.category_id = :cat OR p.category_id IN (SELECT id FROM categories WHERE parent_id = :cat)) AND p.is_active = 1 " . $this->getStockSql() . $this->marketplaceWhere() . " 
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 ".$this->sellerJoins()."
+                WHERE (p.category_id = :cat OR p.category_id IN (SELECT id FROM categories WHERE parent_id = :cat)) AND p.is_active = 1 " . $this->getStockSql() . $this->marketplaceWhere() . "
                 ORDER BY p.created_at DESC LIMIT :limit OFFSET :offset";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':cat', (int)$categoryId, PDO::PARAM_INT);
@@ -211,8 +217,8 @@ class Product extends Model {
     }
 
     public function countByCategory($categoryId) {
-        $sql = "SELECT COUNT(*) FROM products p 
-                WHERE (p.category_id = :cat OR p.category_id IN (SELECT id FROM categories WHERE parent_id = :cat)) 
+        $sql = "SELECT COUNT(*) FROM products p
+                WHERE (p.category_id = :cat OR p.category_id IN (SELECT id FROM categories WHERE parent_id = :cat))
                 AND p.is_active = 1 " . $this->getStockSql() . $this->marketplaceWhere();
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':cat', (int)$categoryId, PDO::PARAM_INT);
@@ -223,12 +229,12 @@ class Product extends Model {
 
     public function getRelated($categoryId, $excludeId, $limit = 5) {
         $randFn = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite' ? 'RANDOM()' : 'RAND()';
-        $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
-                FROM products p 
-                LEFT JOIN brands b ON p.brand_id = b.id 
+        $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating ".$this->sellerSelect()."
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
                 LEFT JOIN categories c ON p.category_id = c.id
-                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
-                WHERE (p.category_id = :cat OR p.category_id IN (SELECT id FROM categories WHERE parent_id = :cat)) AND p.id != :exc AND p.is_active = 1 " . $this->getStockSql() . " 
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 ".$this->sellerJoins()."
+                WHERE (p.category_id = :cat OR p.category_id IN (SELECT id FROM categories WHERE parent_id = :cat)) AND p.id != :exc AND p.is_active = 1 " . $this->getStockSql() . $this->marketplaceWhere() . "
                 ORDER BY $randFn LIMIT :limit";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':cat', (int)$categoryId, PDO::PARAM_INT);
@@ -247,8 +253,8 @@ class Product extends Model {
         if (!empty($filters['vehicle_origin'])) { $mpFilter.=" AND p.vehicle_origin=:vo "; $mpParams[':vo']=$filters['vehicle_origin']; }
         if (!empty($filters['location_country'])) { $mpFilter.=" AND p.location_country=:lc "; $mpParams[':lc']=$filters['location_country']; }
         $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating ".$this->sellerSelect()."
-                FROM products p 
-                LEFT JOIN brands b ON p.brand_id = b.id 
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 ".$this->sellerJoins()."
                 WHERE (p.name LIKE :q1 OR p.description LIKE :q2) AND p.is_active = 1 " . $this->getStockSql() . $catFilter . $mpFilter . $this->marketplaceWhere() . "
@@ -288,10 +294,10 @@ class Product extends Model {
 
     public function getSuggestions($query, $categoryId = null, $limit = 5) {
         $catFilter = $categoryId ? " AND (p.category_id = :cat_id OR p.category_id IN (SELECT id FROM categories WHERE parent_id = :cat_id)) " : "";
-        $sql = "SELECT p.name, p.slug, pi.url as primary_image 
-                FROM products p 
-                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
-                WHERE p.name LIKE :q AND p.is_active = 1 " . $this->getStockSql() . $catFilter . " 
+        $sql = "SELECT p.name, p.slug, pi.url as primary_image
+                FROM products p
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
+                WHERE p.name LIKE :q AND p.is_active = 1 " . $this->getStockSql() . $catFilter . "
                 ORDER BY p.name ASC LIMIT :limit";
         $stmt = $this->db->prepare($sql);
         $term = "%$query%";
@@ -304,12 +310,12 @@ class Product extends Model {
     }
 
     public function getDiscounted($limit = 24, $offset = 0) {
-        $sql = "SELECT p.*, b.name as brand_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
-                FROM products p 
-                LEFT JOIN brands b ON p.brand_id = b.id 
-                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
-                WHERE p.compare_at_price_ghs IS NOT NULL AND p.compare_at_price_ghs > p.price_ghs 
-                AND p.is_active = 1 " . $this->getStockSql() . $this->marketplaceWhere() . " 
+        $sql = "SELECT p.*, b.name as brand_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating ".$this->sellerSelect()."
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 ".$this->sellerJoins()."
+                WHERE p.compare_at_price_ghs IS NOT NULL AND p.compare_at_price_ghs > p.price_ghs
+                AND p.is_active = 1 " . $this->getStockSql() . $this->marketplaceWhere() . "
                 ORDER BY (p.compare_at_price_ghs - p.price_ghs) DESC LIMIT :limit OFFSET :offset";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':min_stock', $this->getMinStock(), PDO::PARAM_INT);
@@ -320,8 +326,8 @@ class Product extends Model {
     }
 
     public function countDiscounted() {
-        $sql = "SELECT COUNT(*) FROM products p 
-                WHERE p.compare_at_price_ghs IS NOT NULL AND p.compare_at_price_ghs > p.price_ghs 
+        $sql = "SELECT COUNT(*) FROM products p
+                WHERE p.compare_at_price_ghs IS NOT NULL AND p.compare_at_price_ghs > p.price_ghs
                 AND p.is_active = 1 " . $this->getStockSql();
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':min_stock', $this->getMinStock(), PDO::PARAM_INT);
@@ -330,12 +336,12 @@ class Product extends Model {
     }
 
     public function getDealsPageItems($limit = 36) {
-        $sql = "SELECT p.*, b.name as brand_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
-                FROM products p 
-                LEFT JOIN brands b ON p.brand_id = b.id 
-                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
-                WHERE (p.compare_at_price_ghs > 0 OR p.is_preorder = 1 OR p.is_dropshipping = 1) 
-                AND p.is_active = 1 " . $this->getStockSql() . " 
+        $sql = "SELECT p.*, b.name as brand_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating ".$this->sellerSelect()."
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 ".$this->sellerJoins()."
+                WHERE (p.compare_at_price_ghs > 0 OR p.is_preorder = 1 OR p.is_dropshipping = 1)
+                AND p.is_active = 1 " . $this->getStockSql() . $this->marketplaceWhere() . "
                 ORDER BY p.is_preorder DESC, p.created_at DESC LIMIT :limit";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':min_stock', $this->getMinStock(), PDO::PARAM_INT);
@@ -345,14 +351,14 @@ class Product extends Model {
     }
 
     public function getPreOrders($limit = 12) {
-        $stmt = $this->db->prepare("SELECT p.*, b.name as brand_name, pi.url as primary_image FROM products p LEFT JOIN brands b ON p.brand_id = b.id LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 WHERE p.is_preorder = 1 AND p.is_active = 1 LIMIT :limit");
+        $stmt = $this->db->prepare("SELECT p.*, b.name as brand_name, pi.url as primary_image ".$this->sellerSelect()." FROM products p LEFT JOIN brands b ON p.brand_id = b.id LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 ".$this->sellerJoins()." WHERE p.is_preorder = 1 AND p.is_active = 1 " . $this->marketplaceWhere() . " LIMIT :limit");
         $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll();
     }
 
     public function getDropshipping($limit = 12) {
-        $stmt = $this->db->prepare("SELECT p.*, b.name as brand_name, pi.url as primary_image FROM products p LEFT JOIN brands b ON p.brand_id = b.id LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 WHERE p.is_dropshipping = 1 AND p.is_active = 1 LIMIT :limit");
+        $stmt = $this->db->prepare("SELECT p.*, b.name as brand_name, pi.url as primary_image ".$this->sellerSelect()." FROM products p LEFT JOIN brands b ON p.brand_id = b.id LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 ".$this->sellerJoins()." WHERE p.is_dropshipping = 1 AND p.is_active = 1 " . $this->marketplaceWhere() . " LIMIT :limit");
         $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll();
@@ -363,11 +369,11 @@ class Product extends Model {
     }
 
     public function getTopSelling($limit = 24, $offset = 0) {
-        $sql = "SELECT p.*, b.name as brand_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating 
-                FROM products p 
-                LEFT JOIN brands b ON p.brand_id = b.id 
-                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 
-                WHERE p.is_active = 1 " . $this->getStockSql() . " 
+        $sql = "SELECT p.*, b.name as brand_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating ".$this->sellerSelect()."
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 ".$this->sellerJoins()."
+                WHERE p.is_active = 1 " . $this->getStockSql() . $this->marketplaceWhere() . "
                 ORDER BY p.stock_qty ASC LIMIT :limit OFFSET :offset";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':min_stock', $this->getMinStock(), PDO::PARAM_INT);

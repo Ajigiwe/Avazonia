@@ -2747,6 +2747,90 @@ form button[type="submit"]:hover {
     transform: scale(1.06);
 }
 
+.card-contact-btn {
+    flex: 1;
+    height: 30px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    color: #fff;
+    font-family: var(--f-mono);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.card-contact-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.card-contact-btn.whatsapp,
+.seller-contact-btn.whatsapp {
+    background: #25D366;
+}
+
+.card-contact-btn.wechat,
+.seller-contact-btn.wechat {
+    background: #07C160;
+}
+
+.card-contact-btn:hover,
+.seller-contact-btn:hover {
+    color: #fff;
+    filter: brightness(.92);
+}
+
+.seller-contact-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 0 0 24px;
+}
+
+.seller-contact-btn {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 16px;
+    border-radius: 8px;
+    color: #fff;
+    font-family: var(--f-semi);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    text-decoration: none;
+}
+
+.seller-contact-btn svg {
+    width: 19px;
+    height: 19px;
+}
+
+@media (max-width: 480px) {
+    .seller-contact-btn {
+        flex: 1;
+        min-width: 0;
+        padding: 0 10px;
+        font-size: 10px;
+    }
+}
+
+/* Keep enquiry controls usable on touch cards. */
+@media (max-width: 768px) {
+    .card-contact-btn {
+        height: 28px;
+    }
+}
+
 /* Tags */
 .card-tag {
     position: absolute;

@@ -3,6 +3,34 @@
 require_once __DIR__ . '/../core/Model.php';
 
 class Seller extends Model {
+    private static bool $contactColumnsReady = false;
+
+    public function __construct() {
+        parent::__construct();
+        self::ensureContactColumns($this->db);
+    }
+
+    /** Ensure optional seller contact fields exist on older production databases. */
+    public static function ensureContactColumns(?PDO $db = null): void {
+        if (self::$contactColumnsReady) return;
+        try {
+            $db = $db ?: db();
+            if ($db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+                $columns = $db->query("PRAGMA table_info(sellers)")->fetchAll(PDO::FETCH_COLUMN, 1);
+                if (!in_array('whatsapp_number', $columns, true)) $db->exec("ALTER TABLE sellers ADD COLUMN whatsapp_number TEXT");
+                if (!in_array('wechat_id', $columns, true)) $db->exec("ALTER TABLE sellers ADD COLUMN wechat_id TEXT");
+            } else {
+                $columns = $db->query("SHOW COLUMNS FROM sellers")->fetchAll(PDO::FETCH_COLUMN, 0);
+                if (!in_array('whatsapp_number', $columns, true)) $db->exec("ALTER TABLE sellers ADD COLUMN whatsapp_number VARCHAR(30) NULL");
+                if (!in_array('wechat_id', $columns, true)) $db->exec("ALTER TABLE sellers ADD COLUMN wechat_id VARCHAR(100) NULL");
+            }
+            self::$contactColumnsReady = true;
+        } catch (Throwable $e) {
+            // A read-only/old database must not take the storefront down.
+            error_log('[seller contacts] schema check failed: ' . $e->getMessage());
+        }
+    }
+
     public function findByUserId(int $userId): array|false {
         $stmt = $this->db->prepare("SELECT * FROM sellers WHERE user_id = ? LIMIT 1");
         $stmt->execute([$userId]);

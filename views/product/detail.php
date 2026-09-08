@@ -120,6 +120,26 @@ if (Session::get('user_id')) {
             <?php endif; ?>
 
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"><?= listing_type_badge($product) ?><?php if(!empty($product['vehicle_origin'])): ?><span style="font-family:var(--f-mono);font-size:9px;background:<?= $product['vehicle_origin']==='international_export'?'var(--ink)':'var(--off)' ?>;color:<?= $product['vehicle_origin']==='international_export'?'#fff':'var(--ink)' ?>;padding:4px 8px;border-radius:999px;"><?= $product['vehicle_origin']==='international_export'?'International Export':'Local — Ghana' ?></span><?php endif; ?><?php if(!empty($product['store_slug'])): ?><a href="<?= APP_URL ?>/store/<?= htmlspecialchars($product['store_slug']) ?>" style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-decoration:none;border-bottom:1px dotted;">Sold by: <?= htmlspecialchars($product['store_name'] ?: $product['seller_name']) ?> →</a><?php endif; ?> <?= verification_badge($product) ?></div>
+            <?php
+                $detailWhatsApp = preg_replace('/[^0-9]/', '', (string)($product['seller_whatsapp'] ?? ''));
+                $detailWeChat = trim((string)($product['seller_wechat'] ?? ''));
+                $detailMessage = rawurlencode("Hi, I'm interested in {$product['name']} on Avazonia: " . APP_URL . '/product/' . $product['slug']);
+            ?>
+            <?php if ($detailWhatsApp !== '' || $detailWeChat !== ''): ?>
+                <div class="seller-contact-actions" aria-label="Contact seller">
+                    <?php if ($detailWhatsApp !== ''): ?>
+                        <a href="https://wa.me/<?= htmlspecialchars($detailWhatsApp) ?>?text=<?= $detailMessage ?>" class="seller-contact-btn whatsapp" target="_blank" rel="noopener">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.03 2C6.5 2 2 6.48 2 12c0 1.76.46 3.42 1.32 4.87L2 22l5.27-1.38A9.96 9.96 0 0 0 12.03 22C17.55 22 22 17.52 22 12S17.55 2 12.03 2Zm0 18.2c-1.53 0-3.02-.41-4.34-1.18l-.31-.18-3.13.82.84-3.05-.2-.31A8.2 8.2 0 1 1 12.03 20.2Zm4.5-6.15c-.25-.13-1.48-.73-1.71-.81-.23-.08-.4-.13-.57.13-.17.25-.65.81-.79.98-.15.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.49-1.41-1.74-.15-.25-.02-.39.11-.51.12-.12.25-.29.38-.44.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.57-1.37-.78-1.88-.2-.49-.41-.42-.57-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.43 1.02 2.6c.13.17 1.76 2.68 4.27 3.76.6.26 1.07.42 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.48-.61 1.69-1.2.21-.59.21-1.1.15-1.2-.06-.11-.23-.17-.48-.3Z"/></svg>
+                            Enquire on WhatsApp
+                        </a>
+                    <?php elseif ($detailWeChat !== ''): ?>
+                        <a href="weixin://dl/chat?<?= rawurlencode($detailWeChat) ?>" class="seller-contact-btn wechat" title="WeChat: <?= htmlspecialchars($detailWeChat) ?>" onclick="if(navigator.clipboard){navigator.clipboard.writeText('<?= htmlspecialchars($detailWeChat, ENT_QUOTES) ?>');}">
+                            <svg viewBox="0 0 36 24" fill="currentColor" aria-hidden="true"><path d="M11 2C5.48 2 1 5.58 1 10c0 2.35 1.2 4.48 3.2 5.92L3 20l4.35-2.18c1.1.38 2.3.58 3.65.58 5.52 0 10-3.58 10-8.4S16.52 2 11 2Zm0 14.4c-1.2 0-2.3-.2-3.25-.58l-.65-.25-1.45.73.42-1.42-.55-.42C4.25 13.55 3 11.88 3 10c0-3.3 3.6-6 8-6s8 2.7 8 6-3.6 6.4-8 6.4Z"/><path d="M25 7.5c5.52 0 10 3.05 10 7.2 0 1.84-.97 3.5-2.58 4.8l.55 2.5-3.3-1.35c-1.34.48-2.9.75-4.67.75-2.65 0-5.02-.67-6.78-1.8 1.9-.1 3.7-.62 5.2-1.55 1.65-1.02 2.62-2.45 2.62-4.05 0-2.3-1.55-4.3-4-5.55.9-.58 1.9-.95 2.96-.95Z"/></svg>
+                            Enquire on WeChat
+                        </a>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
             <?php if(!empty($product['moq'])): ?><div style="font-family:var(--f-mono);font-size:11px;color:var(--ink);margin-bottom:8px;">MOQ: <strong><?= (int)$product['moq'] ?> units</strong><?php if(!empty($product['wholesale_price_ghs'])): ?> · Wholesale <?= '₵'.number_format($product['wholesale_price_ghs'],2) ?><?php endif; ?><?php if(!empty($product['incoterms'])): ?> · <?= htmlspecialchars($product['incoterms']) ?><?php endif; ?></div><?php endif; ?>
             <?php if(!empty($product['seller_type']) && $product['seller_type']==='international_supplier'): ?><div style="font-family:var(--f-mono);font-size:10px;background:#fef3c7;color:#92400e;padding:6px 10px;border-radius:6px;margin-bottom:10px;">B2B / Wholesale / Export — for Business Buyers</div><?php endif; ?>
             <h1 style="font-family: var(--f-display); font-weight: 700; font-size: clamp(24px, 4vw, 38px); text-transform: uppercase; margin-bottom: 16px; line-height: 1.1; letter-spacing: -0.02em;"><?= $product['name'] ?></h1>

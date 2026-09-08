@@ -38,6 +38,7 @@ function run_sql_file_ignore_errors($db, $file) {
 
 $files = [
     __DIR__ . '/migrations/011_rfq_quotes.sql',
+    __DIR__ . '/migrations/012_seller_contact_channels.sql',
 ];
 
 foreach ($files as $f) {

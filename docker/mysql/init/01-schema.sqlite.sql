@@ -278,6 +278,8 @@ CREATE TABLE IF NOT EXISTS sellers (
   is_verified INTEGER DEFAULT 0,
   docs TEXT,
   description TEXT,
+  whatsapp_number TEXT,
+  wechat_id TEXT,
   logo_url TEXT,
   banner_url TEXT,
   is_active INTEGER DEFAULT 1,
