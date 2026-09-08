@@ -162,10 +162,10 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
             </div>
             <?php $showMkt = !empty($p['listing_type']) && $p['listing_type']!=='retail'; $showSeller = !empty($p['store_name']) || !empty($p['seller_name']); ?>
             <?php if ($showMkt || $showSeller): ?>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center;">
+            <div class="card-seller-meta">
               <?php if ($showMkt): ?><?= listing_type_badge($p) ?><?php endif; ?>
-              <?php if ($showSeller && !empty($p['store_slug'])): ?><a href="<?= APP_URL ?>/store/<?= htmlspecialchars($p['store_slug']) ?>" style="font-family:var(--f-mono);font-size:9px;color:var(--mid-gray);text-decoration:none;border-bottom:1px dotted var(--light-gray);"><?= htmlspecialchars($p['store_name'] ?: $p['seller_name']) ?> →</a><?php elseif ($showSeller): ?><span style="font-family:var(--f-mono);font-size:9px;color:var(--mid-gray);"><?= htmlspecialchars($p['store_name'] ?: $p['seller_name']) ?></span><?php endif; ?>
-              <?php if (!empty($p['verification_level']) && $p['verification_level']!=='unverified'): ?><span style="font-family:var(--f-mono);font-size:8px;background:#dcfce7;color:#166534;padding:2px 6px;border-radius:999px;">✓</span><?php endif; ?>
+              <?php if ($showSeller && !empty($p['store_slug'])): ?><a href="<?= APP_URL ?>/store/<?= htmlspecialchars($p['store_slug']) ?>" class="card-seller-link">Sold by: <?= htmlspecialchars($p['store_name'] ?: $p['seller_name']) ?> →</a><?php elseif ($showSeller): ?><span class="card-seller-name">Sold by: <?= htmlspecialchars($p['store_name'] ?: $p['seller_name']) ?></span><?php endif; ?>
+              <?php if (!empty($p['verification_level']) && $p['verification_level']!=='unverified'): ?><span class="card-seller-verified"><?php if (($p['verification_level'] ?? '') === 'business_verified'): ?>✓ Verified Business<?php elseif (($p['verification_level'] ?? '') === 'company_verified'): ?>✓ Verified Supplier<?php elseif (($p['verification_level'] ?? '') === 'avazonia_verified'): ?>★ Avazonia Verified<?php else: ?>✓ Verified<?php endif; ?></span><?php endif; ?>
             </div>
             <?php endif; ?>
         </div>
