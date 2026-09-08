@@ -20,16 +20,17 @@ class HomeController extends Controller {
         $newDrops = $productModel->getAll(10, 0);
 
         $preorderProducts = $productModel->getPreorderProducts(8);
-        // All top-level categories for the mobile marketplace launcher grid
-        $mobileCategories = $categoryModel->getTopLevels();
+        // Only show categories that contain visible inventory themselves or in a child category.
+        $topCategoriesWithProducts = $categoryModel->getTopLevelsWithProducts();
+        $mobileCategories = $topCategoriesWithProducts;
         
         $settings = $settingsModel->all();
         $gridIds = !empty($settings['home_mobile_category_grid'])
             ? array_filter(array_map('intval', explode(',', $settings['home_mobile_category_grid'])))
             : [];
         $categoryGrid = !empty($gridIds)
-            ? $categoryModel->findByIds($gridIds)
-            : $categoryModel->getGridCategories(7);
+            ? $categoryModel->filterWithProducts($categoryModel->findByIds($gridIds))
+            : $categoryModel->filterWithProducts($categoryModel->getGridCategories(7));
 
         // Homepage promo banners (admin-managed) shown between New Drops and the category rows
         $homeBanners = (new HomeBanner())->active();
@@ -37,7 +38,7 @@ class HomeController extends Controller {
         // TOP 10 PER MAJOR CATEGORY — every top-level category that has products
         // gets a row of its 10 newest items (approved seller listings included).
         $categoryDrops = [];
-        foreach ($categoryModel->getTopLevels() as $cat) {
+        foreach ($topCategoriesWithProducts as $cat) {
             if ((int)$categoryModel->countProductsInSubtree((int)$cat['id']) === 0) continue;
             $catProducts = $productModel->getByCategory((int)$cat['id'], 10, 0);
             if (empty($catProducts)) continue;

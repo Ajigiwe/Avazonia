@@ -25,6 +25,27 @@ class Category extends Model {
         return $stmt->fetchAll();
     }
 
+    /**
+     * Return only top-level categories containing at least one active product,
+     * either directly or in their child categories.
+     */
+    public function getTopLevelsWithProducts(): array {
+        return array_values(array_filter(
+            $this->getTopLevels(),
+            fn(array $category): bool => $this->countProductsInSubtree((int)$category['id']) > 0
+        ));
+    }
+
+    /**
+     * Preserve a configured category order while excluding empty categories.
+     */
+    public function filterWithProducts(array $categories): array {
+        return array_values(array_filter(
+            $categories,
+            fn(array $category): bool => $this->countProductsInSubtree((int)$category['id']) > 0
+        ));
+    }
+
     public function getSubcategories() {
         $stmt = $this->db->query("SELECT * FROM categories WHERE parent_id IS NOT NULL AND is_active = 1 ORDER BY name ASC");
         return $stmt->fetchAll();
@@ -104,17 +125,30 @@ class Category extends Model {
     }
 
     public function getChildrenWithCounts(int $parentId): array {
-        $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
-        // Aggregated count: products directly in child OR in its own children (grandchildren)
-        // Works for both MySQL and SQLite (no MySQL-only functions)
+        $sellerFilter = " AND (p.seller_id IS NULL OR EXISTS (SELECT 1 FROM sellers s WHERE s.id = p.seller_id AND s.is_active = 1";
+        if (function_exists('seller_verification_required') && seller_verification_required()) {
+            $sellerFilter .= " AND s.is_verified = 1";
+        }
+        $sellerFilter .= ")) ";
+        // Count only products that can actually appear in the marketplace.
         $sql = "SELECT c.*, 
                        (SELECT COUNT(*) FROM products p 
-                        WHERE p.is_active = 1 
+                        WHERE p.is_active = 1
+                          AND (p.status_market IS NULL OR p.status_market = 'active')
+                          AND p.visibility IN ('public', 'retail_only')
+                          $sellerFilter
                           AND (p.category_id = c.id 
                                OR p.category_id IN (SELECT id FROM categories WHERE parent_id = c.id))
                        ) AS product_count
                 FROM categories c
                 WHERE c.parent_id = :pid AND c.is_active = 1
+                  AND (SELECT COUNT(*) FROM products p
+                       WHERE p.is_active = 1
+                         AND (p.status_market IS NULL OR p.status_market = 'active')
+                         AND p.visibility IN ('public', 'retail_only')
+                         $sellerFilter
+                         AND (p.category_id = c.id
+                              OR p.category_id IN (SELECT id FROM categories WHERE parent_id = c.id))) > 0
                 ORDER BY c.sort_order ASC, c.name ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':pid', $parentId, PDO::PARAM_INT);
@@ -134,8 +168,17 @@ class Category extends Model {
     }
 
     public function countProductsInSubtree(int $categoryId): int {
+        $visibility = " AND p.visibility IN ('public', 'retail_only') ";
+        $sellerAccess = " AND (p.seller_id IS NULL OR EXISTS (SELECT 1 FROM sellers s WHERE s.id = p.seller_id AND s.is_active = 1";
+        if (function_exists('seller_verification_required') && seller_verification_required()) {
+            $sellerAccess .= " AND s.is_verified = 1";
+        }
+        $sellerAccess .= ")) ";
         $sql = "SELECT COUNT(*) FROM products p 
-                WHERE p.is_active = 1 
+                WHERE p.is_active = 1
+                  AND (p.status_market IS NULL OR p.status_market = 'active')
+                  $visibility
+                  $sellerAccess
                   AND (p.category_id = :cat 
                        OR p.category_id IN (SELECT id FROM categories WHERE parent_id = :cat)
                        OR p.category_id IN (SELECT id FROM categories WHERE parent_id IN (SELECT id FROM categories WHERE parent_id = :cat)))";
