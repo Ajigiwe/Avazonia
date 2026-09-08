@@ -79,9 +79,9 @@ $basePath = APP_URL . '/seller';
     .seller-mobile-card .card-info { flex: 1; min-width: 0; }
     .seller-mobile-card .card-name { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .seller-mobile-card .card-meta { font-family: var(--f-mono); font-size: 10px; color: var(--mid-gray); margin-top: 2px; display: flex; gap: 12px; flex-wrap: wrap; }
-    .seller-mobile-card .card-actions { display: flex; gap: 8px; flex-shrink: 0; }
-    .seller-mobile-card .card-actions a { font-family: var(--f-mono); font-size: 10px; text-decoration: none; padding: 6px 12px; border-radius: 4px; }
-    .seller-mobile-card .card-actions .btn-edit { background: var(--ink); color: #fff; }
+    .seller-mobile-card .seller-product-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .seller-mobile-card .seller-product-actions a { font-family: var(--f-mono); font-size: 10px; text-decoration: none; padding: 8px 12px; border-radius: 4px; white-space: nowrap; }
+    .seller-mobile-card .seller-product-actions .btn-edit { background: var(--ink); color: #fff; }
     .seller-mobile-card .card-actions .btn-view { border: 1px solid var(--light-gray); color: var(--mid-gray); }
     .seller-mobile-card .card-actions .btn-remove { color: #f5222d; border: 1px solid #f5222d; }
     .seller-dash-grid { grid-template-columns: 1fr; gap: 16px; }

@@ -82,8 +82,10 @@
                 <span style="font-family:var(--f-mono);padding:1px 6px;border-radius:99px;background:<?= $sm==='active'?'#e6f7ec;color:#00a854':($sm==='pending_review'?'#fff7e6;color:#fa8c16':'#fff1f0;color:#f5222d') ?>;font-size:9px;"><?= $sm ?></span>
             </div>
         </div>
-        <div class="card-actions">
+        <div class="seller-product-actions">
+            <?php if(!empty($seller['is_verified'])): ?>
             <a href="<?= APP_URL ?>/seller/products/edit/<?= (int)$p['id'] ?>" class="btn-edit">Edit</a>
+            <?php endif; ?>
         </div>
     </div>
     <?php endforeach; ?>
