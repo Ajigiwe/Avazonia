@@ -155,8 +155,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$error) {
         try {
-            $stmt = $db->prepare("INSERT INTO products (name, slug, category_id, brand_id, seller_id, store_id, listing_type, visibility, condition_type, moq, wholesale_price_ghs, fob_price_usd, incoterms, production_capacity, oem_odm, location_country, vehicle_origin, status_market, price_ghs, compare_at_price_ghs, price_usd, compare_at_price_usd, currency, stock_qty, description, features, specs, tags, meta_title, meta_description, meta_keywords, is_preorder, is_bestseller, is_featured, is_dropshipping, lead_time_days, video_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$name, $slug, $category_id, $brand_id, $seller_id, $store_id, $listing_type, $visibility, $condition_type, $moq, $wholesale_price, $fob_price, $incoterms, $production_capacity, $oem_odm, $location_country, $vehicle_origin, $status_market, $price, $compare_price, $price_usd, $compare_price_usd, $currency, $stock, $description, $features_json, $specs_json, $tags, $meta_title, $meta_description, $meta_keywords, $is_preorder, $is_bestseller, $is_featured, $is_dropshipping, $lead_time, $uploaded_video]);
+            // Keep the column list, values, and placeholders in one explicit mapping.
+            // This prevents a future field addition from causing a PDO binding mismatch.
+            $productValues = [
+                $name, $slug, $category_id, $brand_id, $seller_id, $store_id,
+                $listing_type, $visibility, $condition_type, $moq, $wholesale_price,
+                $fob_price, $incoterms, $production_capacity, $oem_odm, $location_country,
+                $vehicle_origin, $status_market, $price, $compare_price, $price_usd,
+                $compare_price_usd, $currency, $stock, $description, $features_json,
+                $specs_json, $tags, $meta_title, $meta_description, $meta_keywords,
+                $is_preorder, $is_bestseller, $is_featured, $is_dropshipping,
+                $lead_time, $uploaded_video
+            ];
+            $productColumns = 'name, slug, category_id, brand_id, seller_id, store_id, listing_type, visibility, condition_type, moq, wholesale_price_ghs, fob_price_usd, incoterms, production_capacity, oem_odm, location_country, vehicle_origin, status_market, price_ghs, compare_at_price_ghs, price_usd, compare_at_price_usd, currency, stock_qty, description, features, specs, tags, meta_title, meta_description, meta_keywords, is_preorder, is_bestseller, is_featured, is_dropshipping, lead_time_days, video_url';
+            $placeholders = implode(', ', array_fill(0, count($productValues), '?'));
+            $stmt = $db->prepare("INSERT INTO products ($productColumns) VALUES ($placeholders)");
+            $stmt->execute($productValues);
             
             $productId = $db->lastInsertId();
             
