@@ -74,6 +74,11 @@ if (Session::get('user_id')) {
                 }
                 $galleryTotal = count($galleryImgs);
                 ?>
+                <?php
+                // The video, when present, is the final slide of the same carousel.
+                $hasVideo = !empty($product['video_url']);
+                $slideTotal = $galleryTotal + ($hasVideo ? 1 : 0);
+                ?>
                 <div class="gallery-slides" id="gallery-slides">
                     <?php foreach ($galleryImgs as $gi => $imgData):
                         $gSrc = $imgData['url'];
@@ -83,26 +88,18 @@ if (Session::get('user_id')) {
                     ?>
                         <img class="gallery-slide<?= $gi === 0 ? ' is-active' : '' ?>" src="<?= $gSrc ?>" alt="<?= htmlspecialchars($imgData['alt_text'] ?? $product['name']) ?>" data-index="<?= $gi ?>" loading="<?= $gi === 0 ? 'eager' : 'lazy' ?>">
                     <?php endforeach; ?>
+                    <?php if ($hasVideo):
+                        $vidUrl = filter_var($product['video_url'], FILTER_VALIDATE_URL) ? $product['video_url'] : APP_PATH . '/' . ltrim($product['video_url'], '/');
+                    ?>
+                        <video class="gallery-slide gallery-slide-video" src="<?= $vidUrl ?>" controls muted loop playsinline preload="metadata"></video>
+                    <?php endif; ?>
                 </div>
-                <?php if(!empty($product['video_url'])):
-                    $vidUrl = filter_var($product['video_url'], FILTER_VALIDATE_URL) ? $product['video_url'] : APP_PATH . '/' . ltrim($product['video_url'], '/');
-                ?>
-                    <video id="main-product-video" src="<?= $vidUrl ?>" controls muted loop playsinline onmouseenter="this.play()" onmouseleave="this.pause()" style="display:none; width: 100%; height: 100%; object-fit: cover;"></video>
-                <?php endif; ?>
-                <?php if ($galleryTotal > 1): ?>
+                <?php if ($slideTotal > 1): ?>
                     <button type="button" class="gallery-control gallery-prev" id="gallery-prev" aria-label="Previous image">&#10094;</button>
                     <button type="button" class="gallery-control gallery-next" id="gallery-next" aria-label="Next image">&#10095;</button>
-                    <span class="gallery-count" id="gallery-count">1/<?= $galleryTotal ?></span>
+                    <span class="gallery-count" id="gallery-count">1/<?= $slideTotal ?></span>
                 <?php endif; ?>
             </div>
-            
-            <?php if(!empty($product['video_url'])): ?>
-            <div class="gallery-thumbs" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
-                <div class="thumbnail-item" data-video-thumb onclick="document.getElementById('gallery-slides').style.display='none'; document.getElementById('main-product-video').style.display='block'; document.getElementById('main-product-video').play(); document.querySelectorAll('.thumbnail-item').forEach(t=>t.style.borderColor='var(--light-gray)'); this.style.borderColor='var(--red)';" style="aspect-ratio: 1; background: var(--off); border: 1.5px solid var(--light-gray); cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 8px;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--red)" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                </div>
-            </div>
-            <?php endif; ?>
         </div>
 
         <!-- Product Info -->
@@ -226,18 +223,14 @@ if (Session::get('user_id')) {
                     }
                     
                     const newImage = pill.getAttribute('data-image');
-                    if (newImage && mainImg) {
-                        const vid = document.getElementById('main-product-video');
-                        const slidesWrap = document.getElementById('gallery-slides');
-                        if (vid) { vid.pause(); vid.style.display = 'none'; }
-                        if (slidesWrap) slidesWrap.style.display = 'block';
-                        mainImg.style.display = 'block';
-                        
-                        mainImg.style.opacity = '0.5';
-                        setTimeout(() => {
-                            mainImg.src = newImage.startsWith('http') ? newImage : '<?= APP_PATH ?>/' + newImage;
-                            mainImg.style.opacity = '1';
-                        }, 100);
+                    if (newImage) {
+                        // Return to the first image slide; the video (when present)
+                        // is just another slide now and is paused automatically.
+                        if (window.__galleryShow) window.__galleryShow(0);
+                        const img = document.querySelector('.gallery-slide.is-active');
+                        if (img && img.tagName === 'IMG') {
+                            img.src = newImage.startsWith('http') ? newImage : '<?= APP_PATH ?>/' + newImage;
+                        }
                     }
                 };
             </script>
@@ -474,7 +467,6 @@ if (Session::get('user_id')) {
         const prevBtn = document.getElementById('gallery-prev');
         const nextBtn = document.getElementById('gallery-next');
         const countEl = document.getElementById('gallery-count');
-        const videoEl = document.getElementById('main-product-video');
         let index = 0;
         let touchStartX = 0;
         let touchStartY = 0;
@@ -491,14 +483,12 @@ if (Session::get('user_id')) {
                 var on = parseInt(t.getAttribute('data-gallery-index'), 10) === index;
                 t.style.borderColor = on ? 'var(--red)' : 'var(--light-gray)';
             });
-            const vThumb = document.querySelector('.thumbnail-item[data-video-thumb]');
-            if (vThumb) vThumb.style.borderColor = 'var(--light-gray)';
-            if (videoEl && videoEl.style.display !== 'none') {
-                videoEl.pause();
-                videoEl.style.display = 'none';
-                const wrap = document.getElementById('gallery-slides');
-                if (wrap) wrap.style.display = 'block';
-            }
+            // Pause the video when it is no longer the active slide.
+            slides.forEach(function(s) {
+                if (s.tagName === 'VIDEO' && !s.classList.contains('is-active')) {
+                    s.pause();
+                }
+            });
         }
         window.__galleryShow = showSlide;
 
@@ -514,15 +504,21 @@ if (Session::get('user_id')) {
         });
 
         // Swipe support
+        let touchOnVideoControls = false;
         container.addEventListener('touchstart', function(e) {
             const t = e.changedTouches[0];
             touchStartX = t.clientX;
             touchStartY = t.clientY;
+            // Ignore swipes that start on the video control bar so seeking
+            // does not flip slides.
+            touchOnVideoControls = !!(e.target.closest && e.target.closest('.gallery-slide-video'))
+                && (t.clientY - container.getBoundingClientRect().top) > container.clientHeight * 0.8;
         }, { passive: true });
         container.addEventListener('touchend', function(e) {
             const t = e.changedTouches[0];
             const dx = t.clientX - touchStartX;
             const dy = t.clientY - touchStartY;
+            if (touchOnVideoControls) return;
             if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
             e.preventDefault();
             showSlide(dx < 0 ? index + 1 : index - 1);
@@ -532,7 +528,7 @@ if (Session::get('user_id')) {
         container.addEventListener('click', function(e) {
             if (e.target.closest('.gallery-control')) return;
             const active = slides[index];
-            if (!active) return;
+            if (!active || active.tagName === 'VIDEO') return;
             lightboxImg.src = active.src;
             lightbox.classList.add('active');
             document.body.style.overflow = 'hidden';
