@@ -207,7 +207,7 @@ include 'layout/header.php';
             </div>
         <?php endif; ?>
 
-        <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 24px;">
+        <form method="POST" enctype="multipart/form-data" id="add-product-form" style="display: flex; flex-direction: column; gap: 24px;">
             <?= Csrf::field() ?>
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
                 <div>
@@ -434,6 +434,24 @@ function addTag(tag) {
         input.value = currentTags.join(', ');
     }
 }
+function validateProductUpload() {
+    const form = document.getElementById('add-product-form');
+    if (!form) return true;
+    let totalBytes = 0;
+    form.querySelectorAll('input[type="file"]').forEach(input => {
+        Array.from(input.files || []).forEach(file => { totalBytes += file.size; });
+    });
+    const maxBytes = 120 * 1024 * 1024;
+    if (totalBytes > maxBytes) {
+        alert('Please keep the combined product upload below 120 MB.');
+        return false;
+    }
+    return true;
+}
+const productForm = document.getElementById('add-product-form');
+if (productForm) productForm.addEventListener('submit', function(event) {
+    if (!validateProductUpload()) event.preventDefault();
+});
 function toggleCurrency() {
     const sel = document.getElementById('currency-select').value;
     document.getElementById('price-ghs-fields').style.display = sel === 'GHS' ? '' : 'none';
