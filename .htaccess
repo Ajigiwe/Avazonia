@@ -2,6 +2,15 @@
 Options -Indexes
 RewriteEngine On
 
+# PHP upload limits for the production LiteSpeed/Apache handler.
+# The host was still enforcing its default 8M post_max_size despite .user.ini.
+php_value upload_max_filesize 32M
+php_value post_max_size 128M
+php_value max_file_uploads 20
+php_value max_execution_time 120
+php_value max_input_time 120
+php_value memory_limit 256M
+
 # Force HTTPS (DISABLED FOR LOCALHOST COMPATIBILITY)
 # RewriteCond %{HTTPS} off
 # RewriteCond %{HTTP_HOST} !^localhost$ [NC]
