@@ -105,11 +105,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $moq=!empty($_POST['moq'])?(int)$_POST['moq']:null;
         $wholesale_price=!empty($_POST['wholesale_price_ghs'])?(float)$_POST['wholesale_price_ghs']:null;
         $fob_price=!empty($_POST['fob_price_usd'])?(float)$_POST['fob_price_usd']:null;
-        $incoterms=$_POST['incoterms']??null; if($incoterms && !in_array($incoterms,['EXW','FOB','CIF'])) $incoterms=null;
+        // ENUM columns are nullable: an empty form value must become NULL or MariaDB
+        // strict mode rejects the row with "Data truncated for column".
+        $incoterms=in_array((string)($_POST['incoterms']??''),['EXW','FOB','CIF'],true)?$_POST['incoterms']:null;
         $production_capacity=$_POST['production_capacity']??null;
         $oem_odm=isset($_POST['oem_odm'])?1:0;
         $location_country=$_POST['location_country']??'GH';
-        $vehicle_origin=$_POST['vehicle_origin']??null; if($vehicle_origin && !in_array($vehicle_origin,['local','international_export'])) $vehicle_origin=null;
+        $vehicle_origin=in_array((string)($_POST['vehicle_origin']??''),['local','international_export'],true)?$_POST['vehicle_origin']:null;
         $tags = $_POST['tags'] ?? '';
         $meta_title = $_POST['meta_title'] ?? '';
         $meta_description = $_POST['meta_description'] ?? '';
