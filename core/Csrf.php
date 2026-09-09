@@ -68,27 +68,35 @@ class Csrf {
      * Returns true if valid, false otherwise.
      */
     public static function validateRequest(): bool {
-        // 1. Check X-CSRF-Token header (AJAX / fetch calls)
+        // Accept any supplied token source that matches the session token. This
+        // avoids a stale AJAX header masking a valid hidden form field while
+        // still requiring a valid session-bound token.
+        $candidates = [];
+
+        // 1. X-CSRF-Token header (AJAX / fetch calls)
         $headerName = self::headerName();
-        if (!empty($_SERVER['HTTP_' . str_replace('-', '_', strtoupper($headerName))])) {
-            $token = $_SERVER['HTTP_' . str_replace('-', '_', strtoupper($headerName))];
-            return self::validate($token);
+        $headerKey = 'HTTP_' . str_replace('-', '_', strtoupper($headerName));
+        if (!empty($_SERVER[$headerKey])) {
+            $candidates[] = (string)$_SERVER[$headerKey];
         }
 
-        // 2. Check _csrf_token in POST data (HTML forms)
+        // 2. _csrf_token in POST data (HTML forms)
         if (!empty($_POST[self::TOKEN_KEY])) {
-            return self::validate($_POST[self::TOKEN_KEY]);
+            $candidates[] = (string)$_POST[self::TOKEN_KEY];
         }
 
-        // 3. Check _csrf_token in JSON body (API endpoints reading php://input)
+        // 3. _csrf_token in JSON body (API endpoints reading php://input)
         $rawInput = file_get_contents('php://input');
         if ($rawInput) {
             $json = json_decode($rawInput, true);
             if (is_array($json) && !empty($json[self::TOKEN_KEY])) {
-                return self::validate($json[self::TOKEN_KEY]);
+                $candidates[] = (string)$json[self::TOKEN_KEY];
             }
         }
 
+        foreach ($candidates as $candidate) {
+            if (self::validate($candidate)) return true;
+        }
         return false;
     }
 

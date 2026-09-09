@@ -1,3 +1,12 @@
+<?php
+// Admin pages contain session-bound CSRF tokens; prevent stale HTML from being
+// reused after login/session changes.
+if (!headers_sent()) {
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
