@@ -40,6 +40,7 @@ $files = [
     __DIR__ . '/migrations/011_rfq_quotes.sql',
     __DIR__ . '/migrations/012_seller_contact_channels.sql',
     __DIR__ . '/migrations/013_community_popups.sql',
+    __DIR__ . '/migrations/014_configure_community_links.sql',
 ];
 
 foreach ($files as $f) {
