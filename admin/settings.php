@@ -471,6 +471,46 @@ include 'layout/header.php';
                 </div>
             </div>
 
+            <!-- COMMUNITY POPUPS -->
+            <div style="background: var(--off); padding: 32px; border-radius: 12px; margin-top: 24px;">
+                <h3 style="font-size: 13px; text-transform: uppercase; margin-bottom: 8px;">Community Popups</h3>
+                <p style="font-size: 11px; color: var(--mid-gray); margin-bottom: 24px;">Show closeable Telegram and WhatsApp community invitations in the bottom corner of public pages. A popup only appears when its link is filled in.</p>
+                <div class="field-group">
+                    <label class="field-label">Community Popups Enabled</label>
+                    <select id="set-community_popup_enabled" class="field-input">
+                        <option value="1" <?= getSet('community_popup_enabled', '1') == '1' ? 'selected' : '' ?>>YES</option>
+                        <option value="0" <?= getSet('community_popup_enabled') == '0' ? 'selected' : '' ?>>NO</option>
+                    </select>
+                </div>
+                <div class="field-grid">
+                    <div class="field-group">
+                        <label class="field-label">Telegram Community Link</label>
+                        <input type="url" id="set-community_telegram_link" value="<?= getSet('community_telegram_link') ?>" class="field-input" placeholder="https://t.me/your-community">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">WhatsApp Community Link</label>
+                        <input type="url" id="set-community_whatsapp_link" value="<?= getSet('community_whatsapp_link') ?>" class="field-input" placeholder="https://chat.whatsapp.com/...">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Telegram Popup Title</label>
+                        <input type="text" id="set-community_telegram_title" value="<?= getSet('community_telegram_title', 'Join our Telegram community') ?>" class="field-input">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">WhatsApp Popup Title</label>
+                        <input type="text" id="set-community_whatsapp_title" value="<?= getSet('community_whatsapp_title', 'Join our WhatsApp community') ?>" class="field-input">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Telegram Popup Message</label>
+                        <input type="text" id="set-community_telegram_text" value="<?= getSet('community_telegram_text', 'Get updates, new drops and offers.') ?>" class="field-input">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">WhatsApp Popup Message</label>
+                        <input type="text" id="set-community_whatsapp_text" value="<?= getSet('community_whatsapp_text', 'Connect with the Avazonia community.') ?>" class="field-input">
+                    </div>
+                </div>
+                <span class="field-sub">Visitors can dismiss each popup with the X button. Links should point directly to the relevant community invite.</span>
+            </div>
+
             <div class="field-group">
                 <label class="field-label">Default Meta Description (SEO)</label>
                 <textarea id="set-meta_description" class="field-input" style="height: 100px;"><?= getSet('meta_description') ?></textarea>

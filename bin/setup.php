@@ -104,6 +104,7 @@ if ($driver === 'sqlite') {
     run_sql_file($db, __DIR__ . '/../migrations/010_marketplace.sql');
     run_sql_file($db, __DIR__ . '/../migrations/011_rfq_quotes.sql');
     run_sql_file($db, __DIR__ . '/../migrations/012_seller_contact_channels.sql');
+    run_sql_file($db, __DIR__ . '/../migrations/013_community_popups.sql');
     // Seed Avazonia Owned seller for existing products
     try {
         $hasSeller = $db->query("SELECT id FROM sellers LIMIT 1")->fetch();

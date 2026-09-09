@@ -3566,6 +3566,84 @@ form button[type="submit"]:hover {
     font-style: italic;
 }
 
+/* ── COMMUNITY POPUPS ────────────────────────────────── */
+.community-popups {
+    position: fixed;
+    right: 84px;
+    bottom: 24px;
+    z-index: 11000;
+    width: min(340px, calc(100vw - 116px));
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.community-popup {
+    position: relative;
+    overflow: hidden;
+    pointer-events: auto;
+    background: #fff;
+    border: 1px solid rgba(13, 13, 13, .08);
+    border-left: 4px solid #229ED9;
+    border-radius: 14px;
+    box-shadow: 0 14px 40px rgba(13, 13, 13, .18);
+    animation: communityPopupIn .35s cubic-bezier(.19, 1, .22, 1) both;
+}
+
+.community-popup-whatsapp { border-left-color: #25D366; }
+.community-popup.is-closing { animation: communityPopupOut .22s ease forwards; }
+.community-popup-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 76px;
+    padding: 15px 38px 15px 15px;
+    color: var(--ink);
+}
+.community-popup-link > span:last-child { min-width: 0; }
+.community-popup-link strong,
+.community-popup-link small { display: block; }
+.community-popup-link strong { font-size: 13px; line-height: 1.25; }
+.community-popup-link small { margin-top: 4px; color: var(--mid-gray); font-size: 11px; line-height: 1.35; }
+.community-popup-icon {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #fff;
+}
+.community-popup-icon svg { width: 22px; height: 22px; }
+.community-popup-icon-telegram { background: #229ED9; }
+.community-popup-icon-whatsapp { background: #25D366; }
+.community-popup-close {
+    position: absolute;
+    top: 7px;
+    right: 8px;
+    z-index: 1;
+    width: 25px;
+    height: 25px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(13, 13, 13, .06);
+    color: var(--mid-gray);
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.community-popup-close:hover { background: var(--ink); color: #fff; }
+@keyframes communityPopupIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes communityPopupOut { to { opacity: 0; transform: translateY(18px); } }
+@media (max-width: 600px) {
+    .community-popups { left: 12px; right: auto; bottom: 78px; width: min(320px, calc(100vw - 24px)); }
+}
+
 /* ── PROMOTIONAL POPUP ────────────────────────────────── */
 .promo-overlay {
     position: fixed;

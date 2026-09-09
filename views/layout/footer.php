@@ -133,6 +133,58 @@ global $dbSettings;
 </a>
 <?php endif; // end !isSellerDash ?>
 
+<?php
+$communityPopupsEnabled = ($dbSettings['community_popup_enabled'] ?? '1') === '1';
+$communityTelegramLink = trim((string)($dbSettings['community_telegram_link'] ?? ''));
+$communityWhatsAppLink = trim((string)($dbSettings['community_whatsapp_link'] ?? ''));
+$communityTelegramTitle = trim((string)($dbSettings['community_telegram_title'] ?? 'Join our Telegram community'));
+$communityWhatsAppTitle = trim((string)($dbSettings['community_whatsapp_title'] ?? 'Join our WhatsApp community'));
+$communityTelegramText = trim((string)($dbSettings['community_telegram_text'] ?? 'Get updates, new drops and offers.'));
+$communityWhatsAppText = trim((string)($dbSettings['community_whatsapp_text'] ?? 'Connect with the Avazonia community.'));
+?>
+<?php if (!$isSellerDash && $communityPopupsEnabled && ($communityTelegramLink !== '' || $communityWhatsAppLink !== '')): ?>
+<div class="community-popups" aria-label="Community links">
+    <?php if ($communityTelegramLink !== ''): ?>
+    <div class="community-popup community-popup-telegram" data-community-popup="telegram">
+        <button type="button" class="community-popup-close" aria-label="Close Telegram community popup">&times;</button>
+        <a href="<?= htmlspecialchars($communityTelegramLink, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="community-popup-link">
+            <span class="community-popup-icon community-popup-icon-telegram" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0Zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.14-.26.26-.53.26l.204-2.925 5.328-4.814c.232-.206-.05-.32-.36-.11l-6.58 4.142-2.837-.887c-.615-.192-.627-.615.128-.9l11.08-4.271c.513-.192.962.115.787.892Z"/></svg>
+            </span>
+            <span><strong><?= htmlspecialchars($communityTelegramTitle, ENT_QUOTES, 'UTF-8') ?></strong><small><?= htmlspecialchars($communityTelegramText, ENT_QUOTES, 'UTF-8') ?></small></span>
+        </a>
+    </div>
+    <?php endif; ?>
+    <?php if ($communityWhatsAppLink !== ''): ?>
+    <div class="community-popup community-popup-whatsapp" data-community-popup="whatsapp">
+        <button type="button" class="community-popup-close" aria-label="Close WhatsApp community popup">&times;</button>
+        <a href="<?= htmlspecialchars($communityWhatsAppLink, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="community-popup-link">
+            <span class="community-popup-icon community-popup-icon-whatsapp" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 2C6.523 2 2.044 6.479 2.044 11.987c0 1.763.461 3.42 1.262 4.853L2 22l5.335-1.4a9.96 9.96 0 0 0 4.696 1.194c5.508 0 9.987-4.479 9.987-9.987S17.539 2 12.031 2Zm0 18.281c-1.524 0-2.946-.406-4.175-1.112l-.299-.173-3.102.814.828-3.023-.191-.303a7.96 7.96 0 0 1-1.185-4.153c0-4.401 3.581-7.982 7.982-7.982s7.982 3.581 7.982 7.982-3.581 7.982-7.982 7.982Zm4.385-6.081c-.241-.121-1.423-.701-1.645-.781-.221-.081-.382.121-.543.362-.161.241-.623.781-.764.942-.141.161-.281.181-.523.061-.241-.121-1.018-.375-1.938-1.196-.716-.639-1.199-1.428-1.34-1.669-.141-.241-.015-.371.106-.491.11-.108.241-.281.362-.421.121-.141.161-.241.241-.402.081-.161.041-.301-.02-.421-.06-.121-.543-1.305-.744-1.787-.195-.47-.394-.406-.543-.414h-.462c-.161 0-.422.06-.643.301-.221.241-.844.824-.844 2.008s.864 2.329.985 2.489c.121.161 1.7 2.595 4.118 3.639.575.249 1.025.397 1.375.508.578.184 1.104.158 1.519.096.463-.069 1.423-.582 1.624-1.145.201-.563.201-1.044.141-1.145-.06-.101-.221-.161-.462-.281Z"/></svg>
+            </span>
+            <span><strong><?= htmlspecialchars($communityWhatsAppTitle, ENT_QUOTES, 'UTF-8') ?></strong><small><?= htmlspecialchars($communityWhatsAppText, ENT_QUOTES, 'UTF-8') ?></small></span>
+        </a>
+    </div>
+    <?php endif; ?>
+</div>
+<script>
+(function () {
+    document.querySelectorAll('.community-popup').forEach(function (popup) {
+        var key = 'avazonia_community_popup_closed_' + popup.dataset.communityPopup;
+        var close = popup.querySelector('.community-popup-close');
+        try {
+            if (localStorage.getItem(key) === '1') popup.remove();
+        } catch (e) {}
+        if (close) close.addEventListener('click', function () {
+            popup.classList.add('is-closing');
+            try { localStorage.setItem(key, '1'); } catch (e) {}
+            setTimeout(function () { popup.remove(); }, 220);
+        });
+    });
+})();
+</script>
+<?php endif; ?>
+
 <?php if (!$isSellerDash): ?>
 <!-- PWA Smart Install UI -->
 <div id="pwa-install-banner" class="pwa-banner" style="display: none;">
