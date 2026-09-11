@@ -114,9 +114,10 @@ include 'layout/header.php';
     @media (max-width: 600px) { .analytics-grid { grid-template-columns: 1fr; } }
     
     .stat-card-bold { 
-        border: 2px solid var(--ink); padding: 32px; position: relative; overflow: hidden;
-        display: flex; flex-direction: column; gap: 8px;
+        background: #fff; border: 1px solid var(--light-gray); border-radius: 16px; padding: 32px; position: relative; overflow: hidden;
+        display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 3px rgba(13,13,13,0.04); transition: box-shadow .3s, transform .3s;
     }
+    .stat-card-bold:hover { box-shadow: 0 12px 28px rgba(232,0,45,0.08); transform: translateY(-2px); }
     .stat-card-bold .label { font-family: var(--f-mono); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); letter-spacing: 0.1em; }
     .stat-card-bold .value { font-family: var(--f-display); font-size: 32px; font-weight: 800; letter-spacing: -0.02em; }
     .trend-indicator { font-family: var(--f-mono); font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
@@ -125,8 +126,8 @@ include 'layout/header.php';
     
     .chart-container { display: flex; flex-direction: column; gap: 24px; margin-top: 24px; }
     .bar-row { display: grid; grid-template-columns: 140px 1fr 80px; align-items: center; gap: 16px; }
-    .bar-bg { height: 12px; background: #eee; border-radius: 2px; overflow: hidden; }
-    .bar-fill { height: 100%; background: var(--ink); border-radius: 2px; }
+    .bar-bg { height: 12px; background: #eee; border-radius: 99px; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, var(--red) 0%, var(--red-deep) 100%); border-radius: 99px; }
     
     .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--light-gray); }
     .leaderboard-item:last-child { border: none; }
@@ -135,17 +136,13 @@ include 'layout/header.php';
     @media (max-width: 1024px) { .dashboard-layout { grid-template-columns: 1fr; } }
 </style>
 
-<div class="admin-header" style="margin-bottom: 48px;">
-    <div style="display: flex; flex-direction: column; gap: 8px;">
-        <h1 class="insights-title">Performance<br>Insights</h1>
-        <div style="font-family: var(--f-mono); font-size: 11px; color: var(--mid-gray); margin-top: 12px;">Unified Intelligence Engine • Active Tracking</div>
+<div class="admin-hero" style="margin-bottom: 48px;">
+    <div>
+        <div class="hero-kicker">&#9632; Admin Control</div>
+        <div class="hero-title">Performance Insights</div>
+        <div class="hero-sub">Unified intelligence engine &middot; Active tracking</div>
     </div>
 </div>
-
-<style>
-    .insights-title { font-size: clamp(38px, 8vw, 64px); line-height: 0.9; margin: 0; letter-spacing: -0.04em; }
-    @media (max-width: 600px) { .insights-title { font-size: 38px; } }
-</style>
 
 <div class="analytics-grid">
     <!-- STAT 01: REVENUE -->
@@ -187,10 +184,10 @@ include 'layout/header.php';
 
 <!-- MARKETPLACE STATS -->
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:32px;">
-  <div style="border:2px solid var(--ink);padding:16px;"><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);">SELLERS</div><div style="font-weight:900;font-size:24px;"><?= (int)($marketStats['sellers']??0) ?></div><a href="sellers.php" style="font-size:10px;color:var(--red);">Manage →</a></div>
-  <div style="border:2px solid var(--ink);padding:16px;"><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);">PENDING PRODUCTS</div><div style="font-weight:900;font-size:24px;"><?= (int)($marketStats['pending_products']??0) ?></div><a href="approvals.php" style="font-size:10px;color:var(--red);">Approve →</a></div>
-  <div style="border:2px solid var(--ink);padding:16px;"><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);">RFQs</div><div style="font-weight:900;font-size:24px;"><?= (int)($marketStats['rfqs']??0) ?></div><a href="rfqs.php" style="font-size:10px;color:var(--red);">View →</a></div>
-  <div style="border:2px solid var(--ink);padding:16px;"><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);">WHOLESALE / EXPORT</div><div style="font-weight:900;font-size:24px;"><?= (int)($marketStats['wholesale']??0) ?> / <?= (int)($marketStats['export']??0) ?></div><a href="sellers.php" style="font-size:10px;color:var(--red);">Sellers →</a></div>
+  <div class="mini-card"><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">SELLERS</div><div style="font-weight:900;font-size:24px;margin-top:6px;"><?= (int)($marketStats['sellers']??0) ?></div><a href="sellers.php" style="font-size:10px;color:var(--red);font-weight:700;text-decoration:none;">Manage →</a></div>
+  <div class="mini-card"><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">PENDING PRODUCTS</div><div style="font-weight:900;font-size:24px;margin-top:6px;"><?= (int)($marketStats['pending_products']??0) ?></div><a href="approvals.php" style="font-size:10px;color:var(--red);font-weight:700;text-decoration:none;">Approve →</a></div>
+  <div class="mini-card"><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">RFQs</div><div style="font-weight:900;font-size:24px;margin-top:6px;"><?= (int)($marketStats['rfqs']??0) ?></div><a href="rfqs.php" style="font-size:10px;color:var(--red);font-weight:700;text-decoration:none;">View →</a></div>
+  <div class="mini-card"><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">WHOLESALE / EXPORT</div><div style="font-weight:900;font-size:24px;margin-top:6px;"><?= (int)($marketStats['wholesale']??0) ?> / <?= (int)($marketStats['export']??0) ?></div><a href="sellers.php" style="font-size:10px;color:var(--red);font-weight:700;text-decoration:none;">Sellers →</a></div>
 </div>
 
 <div style="margin-bottom: 40px;">
@@ -251,8 +248,8 @@ include 'layout/header.php';
         <div class="panel">
             <div class="panel-header"><div class="panel-title">Strategic Actions</div></div>
             <div style="padding: 32px; display: flex; flex-direction: column; gap: 16px;">
-                <a href="add-product.php" class="btn-ink" style="width: 100%; justify-content: center; height: 50px; font-weight: 900; border-radius: 0;">DEPLOY NEW DROP</a>
-                <a href="products.php" class="btn-ink" style="width: 100%; justify-content: center; height: 50px; font-weight: 900; border-radius: 0; background: transparent; color: var(--ink); border: 2px solid var(--ink);">INVENTORY CONTROL</a>
+                <a href="add-product.php" class="admin-btn admin-btn-primary" style="width: 100%; height: 50px;">Deploy New Drop</a>
+                <a href="products.php" class="admin-btn admin-btn-secondary" style="width: 100%; height: 50px;">Inventory Control</a>
             </div>
         </div>
     </div>

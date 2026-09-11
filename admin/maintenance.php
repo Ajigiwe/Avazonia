@@ -16,7 +16,7 @@ include 'layout/header.php';
 <style>
     .maintenance-grid { display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: start; }
     
-    .maintenance-card { background: #fff; border: 2px solid var(--ink); padding: 32px; border-radius: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
+    .maintenance-card { background: #fff; border: 1px solid var(--light-gray); padding: 32px; border-radius: 16px; box-shadow: 0 1px 3px rgba(13,13,13,0.04); }
     .card-label { font-family: 'Outfit', sans-serif; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--mid-gray); margin-bottom: 24px; font-weight: 800; display: block; }
     
     .backup-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--light-gray); }
@@ -43,7 +43,8 @@ include 'layout/header.php';
     .modal-title { font-family: var(--f-display); font-weight: 900; font-size: 20px; color: var(--ink); text-transform: uppercase; margin-bottom: 12px; }
     .modal-desc { font-size: 13px; color: var(--mid-gray); margin-bottom: 24px; line-height: 1.5; }
     
-    .pass-input { width: 100%; padding: 14px 20px; border: 2px solid var(--ink); border-radius: 4px; font-family: var(--f-semi); font-size: 14px; margin-bottom: 16px; }
+    .pass-input { width: 100%; padding: 14px 20px; border: 1.5px solid var(--light-gray); border-radius: 12px; font-family: var(--f-semi); font-size: 14px; margin-bottom: 16px; outline: none; }
+    .pass-input:focus { border-color: var(--red); }
     .pass-input:focus { outline: none; background: #fff; border-color: var(--red); }
 
     .modal-btn-row { display: flex; gap: 12px; }

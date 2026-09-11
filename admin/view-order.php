@@ -152,7 +152,7 @@ include 'layout/header.php';
     <!-- Sidebar Controls -->
     <div style="display: flex; flex-direction: column; gap: 24px;">
         <!-- Manage Order (PRIORITIZED TOP) -->
-        <div class="panel" style="border: 2px solid var(--ink); border-radius: 8px; background: var(--paper); overflow: hidden;">
+        <div class="panel">
             <div class="panel-header" style="border-bottom: 2px solid var(--ink); padding: 16px 24px; background: var(--ink); color: #fff;">
                 <div class="panel-title" style="font-family: var(--f-display); font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; font-size: 14px;">Manage Order</div>
             </div>
