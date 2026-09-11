@@ -66,6 +66,20 @@ if (!headers_sent()) {
         .nav-item.logout { margin-top: auto; color: var(--red); }
         .sidebar-footer { padding: 24px 12px; border-top: 1px solid rgba(255,255,255,0.05); }
 
+        /* Red notification badges on sidebar items */
+        .nav-badge {
+            margin-left: auto; background: var(--red); color: #fff;
+            font-size: 10px; font-weight: 700; font-family: var(--f-mono);
+            min-width: 20px; height: 20px; border-radius: 99px;
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0 6px; box-shadow: 0 2px 8px rgba(232,0,45,0.4);
+        }
+        .nav-badge-live { animation: badge-pulse 1.6s ease-in-out infinite; }
+        @keyframes badge-pulse {
+            0%, 100% { box-shadow: 0 2px 8px rgba(232,0,45,0.4); }
+            50% { box-shadow: 0 0 0 5px rgba(232,0,45,0.25); }
+        }
+
         /* Main Content */
         .admin-main { margin-left: var(--sidebar-w); padding: 40px; box-sizing: border-box; }
         
