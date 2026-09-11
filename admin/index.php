@@ -269,8 +269,10 @@ include 'layout/header.php';
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
                     <button type="button" id="copy-invite" class="admin-btn admin-btn-primary" style="height:44px;flex:1;min-width:140px;">&#128203; Copy Invite Message</button>
                     <a href="https://wa.me/?text=" id="wa-share" target="_blank" rel="noopener" class="admin-btn admin-btn-secondary" style="height:44px;flex:1;min-width:140px;text-decoration:none;">Share on WhatsApp</a>
+                    <button type="button" id="dl-invite-img" class="admin-btn admin-btn-secondary" style="height:44px;flex:1;min-width:140px;">&#11015;&#65039; Download Invite Image</button>
                 </div>
                 <div id="copy-feedback" style="font-family:var(--f-mono);font-size:10px;color:#00a854;margin-top:10px;display:none;">&#10003; Copied — paste it into WhatsApp, Instagram or email</div>
+                <div id="img-feedback" style="font-family:var(--f-mono);font-size:10px;color:#00a854;margin-top:10px;display:none;">&#10003; Invite image downloaded — attach it when you share the message</div>
             </div>
         </div>
 
@@ -280,6 +282,7 @@ include 'layout/header.php';
             var btn = document.getElementById('copy-invite');
             var wa = document.getElementById('wa-share');
             var feedback = document.getElementById('copy-feedback');
+            var imgFeedback = document.getElementById('img-feedback');
             var text = msg ? msg.textContent.trim() : '';
             if (wa) wa.href = 'https://wa.me/?text=' + encodeURIComponent(text);
             if (btn) btn.addEventListener('click', function(){
@@ -292,6 +295,62 @@ include 'layout/header.php';
                     ta.select(); try { document.execCommand('copy'); done(); } catch(e){} ta.remove();
                 }
             });
+
+            /* ── Branded invite image generator (1080×1080 PNG, drawn client-side) ── */
+            function roundRect(x, X, Y, w, h, r){
+                x.beginPath(); x.moveTo(X+r, Y);
+                x.arcTo(X+w, Y, X+w, Y+h, r); x.arcTo(X+w, Y+h, X, Y+h, r);
+                x.arcTo(X, Y+h, X, Y, r); x.arcTo(X, Y, X+w, Y, r); x.closePath();
+            }
+            function drawInvite(cb){
+                var W=1080, H=1080;
+                var c=document.createElement('canvas'); c.width=W; c.height=H;
+                var x=c.getContext('2d');
+                var g=x.createLinearGradient(0,0,W,H); g.addColorStop(0,'#E8002D'); g.addColorStop(1,'#B8001F');
+                x.fillStyle=g; x.fillRect(0,0,W,H);
+                x.fillStyle='rgba(255,255,255,0.07)';
+                x.beginPath(); x.arc(960,130,200,0,7); x.fill();
+                x.beginPath(); x.arc(80,980,160,0,7); x.fill();
+                var ready = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+                ready.then(function(){
+                    x.textAlign='center';
+                    // Invitation pill
+                    x.fillStyle='rgba(255,255,255,0.22)'; roundRect(x, W/2-200, 84, 400, 58, 29); x.fill();
+                    x.fillStyle='#fff'; x.font='800 23px Inter, Arial, sans-serif';
+                    x.fillText('\u2605  VENDOR INVITATION', W/2, 122);
+                    // Headline
+                    x.font='900 100px Outfit, Arial, sans-serif';
+                    x.fillText('SELL ON', W/2, 288);
+                    x.fillText('AVAZONIA', W/2, 396);
+                    // Subline
+                    x.font='500 30px Inter, Arial, sans-serif'; x.fillStyle='rgba(255,255,255,0.94)';
+                    x.fillText("Ghana's home for hot drops & trusted vendors", W/2, 462);
+                    // Benefits
+                    var items=['Free to list — pay only when you sell','Get the \u2713 Verified Vendor badge','Reach buyers across Ghana & beyond'];
+                    x.textAlign='left';
+                    items.forEach(function(t,i){
+                        var y=560+i*76;
+                        x.fillStyle='#fff'; x.beginPath(); x.arc(210,y-10,20,0,7); x.fill();
+                        x.fillStyle='#E8002D'; x.font='900 24px Inter, Arial'; x.fillText('\u2713',202,y-1);
+                        x.fillStyle='#fff'; x.font='600 30px Inter, Arial, sans-serif'; x.fillText(t,252,y);
+                    });
+                    // Link pill
+                    x.fillStyle='#fff'; roundRect(x, W/2-300, 860, 600, 86, 43); x.fill();
+                    x.fillStyle='#B8001F'; x.font='800 36px Inter, Arial, sans-serif'; x.textAlign='center';
+                    x.fillText('www.avazonia.com/sell', W/2, 915);
+                    cb(c);
+                });
+            }
+            function downloadCanvas(c){
+                c.toBlob(function(b){
+                    var a=document.createElement('a'); a.href=URL.createObjectURL(b);
+                    a.download='avazonia-vendor-invite.png'; a.click();
+                    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+                    if (imgFeedback){ imgFeedback.style.display='block'; setTimeout(function(){ imgFeedback.style.display='none'; }, 4000); }
+                },'image/png');
+            }
+            var dlBtn=document.getElementById('dl-invite-img');
+            if (dlBtn) dlBtn.addEventListener('click', function(){ drawInvite(downloadCanvas); });
         })();
         </script>
     </div>
