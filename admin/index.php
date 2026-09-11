@@ -252,6 +252,43 @@ include 'layout/header.php';
                 <a href="products.php" class="admin-btn admin-btn-secondary" style="width: 100%; height: 50px;">Inventory Control</a>
             </div>
         </div>
+
+        <div class="panel" id="vendor-invite">
+            <div class="panel-header"><div class="panel-title">Invite Vendors</div></div>
+            <div style="padding: 24px 32px 32px;">
+                <div style="background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%); color: #fff; border-radius: 14px; padding: 20px 24px; margin-bottom: 16px;">
+                    <div style="display:inline-block;background:rgba(255,255,255,.2);font-family:var(--f-mono);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;padding:4px 10px;border-radius:999px;margin-bottom:10px;">&#9733; Vendor Invitation</div>
+                    <div style="font-family:var(--f-display);font-weight:900;font-size:16px;text-transform:uppercase;letter-spacing:-0.01em;">Sell on Avazonia</div>
+                    <div id="invite-msg" style="font-family:var(--f-body);font-size:12.5px;line-height:1.55;color:rgba(255,255,255,.94);margin-top:6px;">Hi! I'd love to have you selling on Avazonia — Ghana's home for hot drops and trusted vendors. Setting up your store is free and takes less than two minutes. Start here: <?= APP_URL ?>/sell</div>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <button type="button" id="copy-invite" class="admin-btn admin-btn-primary" style="height:44px;flex:1;min-width:140px;">&#128203; Copy Invite Message</button>
+                    <a href="https://wa.me/?text=" id="wa-share" target="_blank" rel="noopener" class="admin-btn admin-btn-secondary" style="height:44px;flex:1;min-width:140px;text-decoration:none;">Share on WhatsApp</a>
+                </div>
+                <div id="copy-feedback" style="font-family:var(--f-mono);font-size:10px;color:#00a854;margin-top:10px;display:none;">&#10003; Copied — paste it into WhatsApp, Instagram or email</div>
+            </div>
+        </div>
+
+        <script>
+        (function(){
+            var msg = document.getElementById('invite-msg');
+            var btn = document.getElementById('copy-invite');
+            var wa = document.getElementById('wa-share');
+            var feedback = document.getElementById('copy-feedback');
+            var text = msg ? msg.textContent.trim() : '';
+            if (wa) wa.href = 'https://wa.me/?text=' + encodeURIComponent(text);
+            if (btn) btn.addEventListener('click', function(){
+                var done = function(){ feedback.style.display='block'; setTimeout(function(){ feedback.style.display='none'; }, 3000); };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(done).catch(function(){ fallback(); });
+                } else { fallback(); }
+                function fallback(){
+                    var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
+                    ta.select(); try { document.execCommand('copy'); done(); } catch(e){} ta.remove();
+                }
+            });
+        })();
+        </script>
     </div>
 
 </div>
