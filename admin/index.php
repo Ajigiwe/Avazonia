@@ -259,7 +259,12 @@ include 'layout/header.php';
                 <div style="background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%); color: #fff; border-radius: 14px; padding: 20px 24px; margin-bottom: 16px;">
                     <div style="display:inline-block;background:rgba(255,255,255,.2);font-family:var(--f-mono);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;padding:4px 10px;border-radius:999px;margin-bottom:10px;">&#9733; Vendor Invitation</div>
                     <div style="font-family:var(--f-display);font-weight:900;font-size:16px;text-transform:uppercase;letter-spacing:-0.01em;">Sell on Avazonia</div>
-                    <div id="invite-msg" style="font-family:var(--f-body);font-size:12.5px;line-height:1.55;color:rgba(255,255,255,.94);margin-top:6px;">Hi! I'd love to have you selling on Avazonia — Ghana's home for hot drops and trusted vendors. Setting up your store is free and takes less than two minutes. Start here: <?= APP_URL ?>/sell</div>
+                    <?php
+                    $inviteMsg = '';
+                    try { $inviteMsg = trim((string)(new Settings())->get('vendor_invite_message', '')); } catch (\Throwable $e) {}
+                    if ($inviteMsg === '') $inviteMsg = "Hi! I'd love to have you selling on Avazonia — Ghana's home for hot drops and trusted vendors. Setting up your store is free and takes less than two minutes. Start here: " . APP_URL . "/sell";
+                    ?>
+                    <div id="invite-msg" style="font-family:var(--f-body);font-size:12.5px;line-height:1.55;color:rgba(255,255,255,.94);margin-top:6px;"><?= htmlspecialchars($inviteMsg) ?></div>
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
                     <button type="button" id="copy-invite" class="admin-btn admin-btn-primary" style="height:44px;flex:1;min-width:140px;">&#128203; Copy Invite Message</button>

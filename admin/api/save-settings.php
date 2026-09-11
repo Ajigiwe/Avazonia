@@ -43,6 +43,7 @@ try {
         'community_popup_enabled', 'community_telegram_link', 'community_whatsapp_link',
         'community_telegram_title', 'community_whatsapp_title',
         'community_telegram_text', 'community_whatsapp_text',
+        'vendor_invite_message',
         'meta_description', 'meta_keywords', 'store_map_address',
         'paystack_public_key', 'paystack_secret_key', 'currency_symbol', 'usd_to_ghs_rate',
         'support_title', 'support_subtitle', 'support_phone', 'support_hours',

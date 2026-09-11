@@ -512,6 +512,12 @@ include 'layout/header.php';
             </div>
 
             <div class="field-group">
+                <label class="field-label">Vendor Invite Message</label>
+                <textarea id="set-vendor_invite_message" class="field-input" style="height: 110px;"><?= getSet('vendor_invite_message', "Hi! I'd love to have you selling on Avazonia — Ghana's home for hot drops and trusted vendors. Setting up your store is free and takes less than two minutes. Start here: " . APP_URL . "/sell") ?></textarea>
+                <span class="field-sub">Message admins share when inviting vendors. Shown in the Invite Vendors card on the admin dashboard — include the link <strong><?= APP_URL ?>/sell</strong> so vendors land on the signup flow.</span>
+            </div>
+
+            <div class="field-group">
                 <label class="field-label">Default Meta Description (SEO)</label>
                 <textarea id="set-meta_description" class="field-input" style="height: 100px;"><?= getSet('meta_description') ?></textarea>
                 <span class="field-sub">Summarize your shop for search engine results. Used when no product-specific metadata exists.</span>
