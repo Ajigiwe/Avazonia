@@ -32,7 +32,11 @@ class AccountController extends Controller {
                     require_once __DIR__ . '/../models/Seller.php';
                     $sellerCheck = new Seller();
                     $sellerProfile = $sellerCheck->findByUserId((int)$user['id']);
-                    if ($sellerProfile) {
+                    if (Session::get('vendor_invite') && !$sellerProfile) {
+                        // Vendor invite: existing account without a store → continue to store setup.
+                        Session::remove('vendor_invite');
+                        $this->redirect(APP_URL . '/seller/apply');
+                    } elseif ($sellerProfile) {
                         $this->redirect(APP_URL . '/seller/dashboard');
                     } else {
                         $this->redirect(APP_URL);
@@ -44,20 +48,42 @@ class AccountController extends Controller {
                 return;
             }
         }
+        // Vendor invite: existing users signing in via /sell continue to store setup.
+        if (Session::get('vendor_invite') && Session::get('user_id') && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            Session::remove('vendor_invite');
+            $this->redirect(APP_URL . '/seller/apply');
+            return;
+        }
         $error   = $_GET['error']   ?? null;
         $success = $_GET['success'] ?? null;
         $this->view('account/login', ['error' => $error, 'success' => $success]);
     }
 
     // REGISTER — marketplace: seller_type + buyer_type — hardened (honeypot, time trap, math captcha, IP rate limit)
+    // VENDOR INVITE — /sell entry point: remember intent, then continue into the normal auth flow.
+    public function sell() {
+        Session::start();
+        Session::set('vendor_invite', 1);
+        if (Session::get('user_id')) {
+            // Already has an account → go straight to vendor store setup.
+            $this->redirect(APP_URL . '/seller/apply');
+            return;
+        }
+        // No account yet → register first, then continue to the vendor application.
+        $this->redirect(APP_URL . '/register?invite=vendor');
+    }
+
     public function register() {
         Session::start();
+        $invite = $_GET['invite'] ?? null;
+        if ($invite === 'vendor') Session::set('vendor_invite', 1);
+        elseif ($invite === '0' || $invite === 'buyer') Session::remove('vendor_invite');
         // Generate captcha on GET
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $a=random_int(2,9); $b=random_int(2,9);
             Session::set('register_captcha_a', $a); Session::set('register_captcha_b', $b); Session::set('register_captcha_answer', $a+$b);
             Session::set('register_form_time', time());
-            $this->view('account/register', ['captcha_a'=>$a,'captcha_b'=>$b]);
+            $this->view('account/register', ['captcha_a'=>$a,'captcha_b'=>$b,'vendor_invite'=>Session::get('vendor_invite')]);
             return;
         }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -150,6 +176,11 @@ class AccountController extends Controller {
                 Session::set('buyer_type',     $user['buyer_type']);
                 Session::set('email_verified', false);
                 Session::set('register_captcha_answer', null); // clear captcha
+                if (Session::get('vendor_invite')) {
+                    Session::remove('vendor_invite');
+                    $this->redirect(APP_URL . '/seller/apply');
+                    return;
+                }
                 $this->redirect(APP_URL . '/verify-pending');
             } else {
                 $a=Session::get('register_captcha_a',3); $b=Session::get('register_captcha_b',4);

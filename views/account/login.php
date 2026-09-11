@@ -10,7 +10,7 @@ require_once __DIR__ . '/../layout/nav.php';
         <div style="max-width: 400px; width: 100%; margin: 0 auto;">
             
             <h1 style="font-family: var(--f-display); font-weight: 900; font-size: 40px; text-transform: uppercase; margin-bottom: 8px; line-height: 1; letter-spacing: -0.04em;">Welcome back</h1>
-            <p style="font-family: var(--f-body); font-size: 14px; color: var(--mid-gray); margin-bottom: 48px;">Please enter your details to initialize session.</p>
+            <p style="font-family: var(--f-body); font-size: 14px; color: var(--mid-gray); margin-bottom: 48px;"><?= !empty($vendor_invite) ? 'Sign in to set up your vendor store.' : 'Please enter your details to initialize session.' ?></p>
 
             <?php if (isset($error)): ?>
                 <div style="background: #fffafa; border: 1px solid #feeaea; color: var(--red); padding: 16px; font-family: var(--f-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; border-radius: 4px; margin-bottom: 32px;">
@@ -65,7 +65,7 @@ require_once __DIR__ . '/../layout/nav.php';
                 
                 <div style="margin-top: 32px; text-align: center;">
                     <p style="font-family: var(--f-body); font-size: 13px; color: var(--mid-gray);">
-                        Don't have an account? <a href="<?= APP_URL ?>/register" style="color: var(--red); font-weight: 700; margin-left:8px; border-bottom: 1px solid var(--red); text-decoration: none;">Sign up</a>
+                        Don't have an account? <a href="<?= APP_URL ?>/register<?= !empty($vendor_invite) ? '?invite=vendor' : '' ?>" style="color: var(--red); font-weight: 700; margin-left:8px; border-bottom: 1px solid var(--red); text-decoration: none;">Sign up</a>
                     </p>
                 </div>
             </form>

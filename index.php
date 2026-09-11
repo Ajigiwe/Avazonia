@@ -43,6 +43,8 @@ $router->add('GET', '/login', 'AccountController@login');
 $router->add('POST', '/login', 'AccountController@login');
 $router->add('GET', '/register', 'AccountController@register');
 $router->add('POST', '/register', 'AccountController@register');
+// Vendor invite entry point
+$router->add('GET', '/sell', 'AccountController@sell');
 $router->add('GET', '/logout', 'AccountController@logout');
 $router->add('GET', '/account', 'AccountController@index');
 $router->add('GET', '/orders', 'AccountController@index');
