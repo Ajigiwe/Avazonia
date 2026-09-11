@@ -11,10 +11,19 @@ require_once __DIR__ . '/../layout/nav.php';
             
             <?php $isVendorInvite = !empty($vendor_invite); ?>
             <?php if ($isVendorInvite): ?>
-            <div style="display:inline-block;background:var(--ink);color:#fff;font-family:var(--f-mono);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;padding:6px 10px;border-radius:4px;margin-bottom:16px;">Vendor Invitation</div>
+            <div style="background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%); color: #fff; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+                <div style="display:inline-block;background:rgba(255,255,255,.2);color:#fff;font-family:var(--f-mono);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;padding:5px 12px;border-radius:999px;margin-bottom:14px;">★ Vendor Invitation</div>
+                <div style="font-family: var(--f-display); font-weight: 900; font-size: 26px; line-height: 1.1; text-transform: uppercase; letter-spacing: -0.02em; margin-bottom: 8px;">Sell on Avazonia</div>
+                <p style="font-family: var(--f-body); font-size: 13px; color: rgba(255,255,255,.92); margin-bottom: 14px;">Create your account first — setting up your vendor store takes less than two minutes.</p>
+                <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;margin:0;padding:0;font-family:var(--f-mono);font-size:11px;">
+                    <li style="display:flex;align-items:center;gap:8px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:#fff;color:var(--red);border-radius:50%;font-weight:900;font-size:10px;">✓</span> Reach buyers across Ghana &amp; beyond</li>
+                    <li style="display:flex;align-items:center;gap:8px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:#fff;color:var(--red);border-radius:50%;font-weight:900;font-size:10px;">✓</span> Free to list — pay only when you sell</li>
+                    <li style="display:flex;align-items:center;gap:8px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:#fff;color:var(--red);border-radius:50%;font-weight:900;font-size:10px;">✓</span> Get a verified vendor badge</li>
+                </ul>
+            </div>
             <?php endif; ?>
-            <h1 style="font-family: var(--f-display); font-weight: 900; font-size: 40px; text-transform: uppercase; margin-bottom: 8px; line-height: 1; letter-spacing: -0.04em;"><?= $isVendorInvite ? 'Become a Vendor' : 'Join the Drop' ?></h1>
-            <p style="font-family: var(--f-body); font-size: 14px; color: var(--mid-gray); margin-bottom: 48px;"><?= $isVendorInvite ? 'Create your account first — you\'ll set up your vendor store right after.' : 'Create your account to access exclusive architectural tech.' ?></p>
+            <h1 style="font-family: var(--f-display); font-weight: 900; font-size: 40px; text-transform: uppercase; margin-bottom: 8px; line-height: 1; letter-spacing: -0.04em;<?= $isVendorInvite ? ' color: var(--red);' : '' ?>"><?= $isVendorInvite ? 'Create your account' : 'Join the Drop' ?></h1>
+            <p style="font-family: var(--f-body); font-size: 14px; color: var(--mid-gray); margin-bottom: 48px;"><?= $isVendorInvite ? 'Step 1 of 2 — your vendor store setup comes right after.' : 'Create your account to access exclusive architectural tech.' ?></p>
 
             <?php if (isset($error)): ?>
                 <div style="background: #fffafa; border: 1px solid #feeaea; color: var(--red); padding: 16px; font-family: var(--f-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; border-radius: 4px; margin-bottom: 32px;">
@@ -49,7 +58,7 @@ require_once __DIR__ . '/../layout/nav.php';
                 </div>
 
                 <div class="form-group">
-                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;">Also sell on Avazonia? (optional)</label>
+                    <label style="display: block; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); margin-bottom: 8px;"><?= $isVendorInvite ? 'Your vendor type' : 'Also sell on Avazonia? (optional)' ?></label>
                     <select name="seller_type" style="width:100%;height:48px;background:#fff;border:1px solid var(--light-gray);border-radius:12px;padding:0 14px;font-family:var(--f-mono);font-size:11px;color:var(--ink);outline:none;">
                         <option value="" <?= $isVendorInvite ? '' : 'selected' ?>>No, I just want to buy</option>
                         <option value="individual">Individual Seller (C2C - used items)</option>
@@ -96,7 +105,7 @@ require_once __DIR__ . '/../layout/nav.php';
                     <div style="font-family:var(--f-mono);font-size:9px;color:var(--mid-gray);margin-top:6px;">Prevents bots. Takes 2 seconds.</div>
                 </div>
 
-                <button type="submit" class="btn-red" style="width: 100%; height: 48px; font-size: 11px; margin-top: 16px;">Create Account →</button>
+                <button type="submit" class="btn-red" style="width: 100%; height: 48px; font-size: 11px; margin-top: 16px;"><?= $isVendorInvite ? 'Continue — Set Up My Store →' : 'Create Account →' ?></button>
                 
                 <div style="margin-top: 32px; text-align: center;">
                     <p style="font-family: var(--f-body); font-size: 13px; color: var(--mid-gray);">

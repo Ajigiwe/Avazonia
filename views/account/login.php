@@ -9,8 +9,15 @@ require_once __DIR__ . '/../layout/nav.php';
     <div class="auth-form-side">
         <div style="max-width: 400px; width: 100%; margin: 0 auto;">
             
+            <?php $isVendorInvite = !empty($vendor_invite); ?>
+            <?php if ($isVendorInvite): ?>
+            <div style="background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%); color: #fff; border-radius: 16px; padding: 20px 24px; margin-bottom: 24px;">
+                <div style="display:inline-block;background:rgba(255,255,255,.2);color:#fff;font-family:var(--f-mono);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;padding:5px 12px;border-radius:999px;margin-bottom:10px;">★ Vendor Invitation</div>
+                <div style="font-family: var(--f-display); font-weight: 900; font-size: 20px; line-height: 1.15; text-transform: uppercase; letter-spacing: -0.02em;">Sign in to set up your vendor store</div>
+            </div>
+            <?php endif; ?>
             <h1 style="font-family: var(--f-display); font-weight: 900; font-size: 40px; text-transform: uppercase; margin-bottom: 8px; line-height: 1; letter-spacing: -0.04em;">Welcome back</h1>
-            <p style="font-family: var(--f-body); font-size: 14px; color: var(--mid-gray); margin-bottom: 48px;"><?= !empty($vendor_invite) ? 'Sign in to set up your vendor store.' : 'Please enter your details to initialize session.' ?></p>
+            <p style="font-family: var(--f-body); font-size: 14px; color: var(--mid-gray); margin-bottom: 48px;"><?= $isVendorInvite ? 'Your vendor store setup is waiting right after you sign in.' : 'Please enter your details to initialize session.' ?></p>
 
             <?php if (isset($error)): ?>
                 <div style="background: #fffafa; border: 1px solid #feeaea; color: var(--red); padding: 16px; font-family: var(--f-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; border-radius: 4px; margin-bottom: 32px;">
