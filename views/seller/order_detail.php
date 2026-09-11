@@ -10,7 +10,7 @@
 <div style="display:grid;grid-template-columns:1fr 300px;gap:24px;">
     <!-- Items -->
     <div>
-        <div style="border:2px solid var(--ink);padding:0;">
+        <div class="seller-panel">
             <div style="padding:16px 20px;border-bottom:1px solid var(--light-gray);font-family:var(--f-display);font-weight:800;font-size:14px;">Your Items in This Order</div>
             <?php foreach($items as $idx => $item): ?>
             <div style="padding:16px 20px;border-bottom:1px solid var(--light-gray);<?= $idx===count($items)-1?'border-bottom:none;':'' ?>">
@@ -47,7 +47,7 @@
 
     <!-- Order Info Sidebar -->
     <div>
-        <div style="border:2px solid var(--ink);padding:20px;">
+        <div class="seller-panel" style="padding:20px;">
             <div style="font-family:var(--f-display);font-weight:800;font-size:14px;margin-bottom:16px;">Order Details</div>
 
             <div style="margin-bottom:16px;">

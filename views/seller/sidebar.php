@@ -35,16 +35,35 @@ $basePath = APP_URL . '/seller';
 .seller-sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.08); }
 .seller-sidebar-footer a { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.4); font-size: 10px; text-decoration: none; font-family: var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; transition: color 0.2s; padding: 4px 0; }
 .seller-sidebar-footer a:hover { color: #fff; }
-.seller-content { padding: 32px 40px; background: #fff; min-height: 100vh; overflow-x: hidden; }
+.seller-content { padding: 32px 40px; background: #FDFBFA; min-height: 100vh; overflow-x: hidden; }
 .seller-stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 32px; }
-.seller-stat-card { border: 2px solid var(--ink); padding: 20px; }
-.seller-stat-card .stat-label { font-family: var(--f-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--mid-gray); margin-bottom: 6px; }
+.seller-stat-card { background: #fff; border: 1px solid var(--light-gray); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(13,13,13,0.04); transition: box-shadow 0.2s, transform 0.2s; }
+.seller-stat-card:hover { box-shadow: 0 6px 18px rgba(13,13,13,0.07); transform: translateY(-1px); }
+.seller-stat-card .stat-label { font-family: var(--f-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--mid-gray); margin-bottom: 8px; }
 .seller-stat-card .stat-value { font-family: var(--f-display); font-weight: 900; font-size: 28px; color: var(--ink); line-height: 1; }
-.seller-stat-card .stat-sub { font-family: var(--f-mono); font-size: 9px; color: var(--mid-gray); margin-top: 6px; }
+.seller-stat-card .stat-sub { font-family: var(--f-mono); font-size: 9px; color: var(--mid-gray); margin-top: 8px; }
 .seller-dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.seller-panel { background: #fff; border: 1px solid var(--light-gray); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(13,13,13,0.04); }
+.seller-panel-head { padding: 16px 20px; border-bottom: 1px solid var(--light-gray); display: flex; justify-content: space-between; align-items: center; }
+.seller-panel-title { font-family: var(--f-display); font-weight: 800; font-size: 14px; color: var(--ink); }
+.seller-panel-link { font-family: var(--f-mono); font-size: 10px; color: var(--red); text-decoration: none; font-weight: 700; }
 .seller-mobile-cards { display: none; }
-.seller-table-wrap { border: 2px solid var(--ink); overflow-x: auto; }
+.seller-table-wrap { background: #fff; border: 1px solid var(--light-gray); border-radius: 16px; overflow-x: auto; box-shadow: 0 1px 3px rgba(13,13,13,0.04); }
 .seller-table-wrap table { width: 100%; border-collapse: collapse; min-width: 700px; }
+
+/* ── Shared seller UI bits ── */
+.seller-btn-primary { display: inline-block; background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%); color: #fff; padding: 12px 24px; font-family: var(--f-semi); font-size: 11px; font-weight: 800; text-transform: uppercase; text-decoration: none; letter-spacing: 0.05em; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(232,0,45,0.25); transition: transform 0.15s, box-shadow 0.15s; }
+.seller-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(232,0,45,0.32); }
+.seller-btn-secondary { display: inline-block; background: #fff; border: 1.5px solid var(--ink); color: var(--ink); padding: 11px 24px; font-family: var(--f-semi); font-size: 11px; font-weight: 800; text-transform: uppercase; text-decoration: none; letter-spacing: 0.05em; border-radius: 12px; transition: background 0.15s; }
+.seller-btn-secondary:hover { background: var(--off); }
+.seller-hero { background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%); color: #fff; border-radius: 16px; padding: 24px 28px; margin-bottom: 28px; box-shadow: 0 8px 24px rgba(232,0,45,0.18); }
+.seller-hero .hero-kicker { display: inline-block; background: rgba(255,255,255,.2); font-family: var(--f-mono); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; padding: 5px 12px; border-radius: 999px; margin-bottom: 12px; }
+.seller-hero .hero-title { font-family: var(--f-display); font-weight: 900; font-size: 26px; line-height: 1.1; text-transform: uppercase; letter-spacing: -0.02em; }
+.seller-hero .hero-sub { font-family: var(--f-body); font-size: 13px; color: rgba(255,255,255,.92); margin-top: 8px; }
+.seller-notice-pending { background: #fff; border: 1.5px dashed var(--red); border-radius: 16px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; }
+.seller-notice-pending .np-icon { flex: 0 0 40px; width: 40px; height: 40px; background: rgba(232,0,45,.08); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--red); }
+.seller-notice-pending .np-title { font-family: var(--f-semi); font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--ink); }
+.seller-notice-pending .np-text { font-family: var(--f-mono); font-size: 11px; color: var(--mid-gray); margin-top: 3px; line-height: 1.5; }
 
 /* ── Mobile ── */
 @media (max-width: 900px) {
@@ -74,7 +93,7 @@ $basePath = APP_URL . '/seller';
     .drawer-footer a:hover { color: #fff; }
     .seller-table-wrap { display: none; }
     .seller-mobile-cards { display: flex; flex-direction: column; gap: 12px; }
-    .seller-mobile-card { border: 2px solid var(--ink); padding: 16px; display: flex; gap: 14px; align-items: center; }
+    .seller-mobile-card { background: #fff; border: 1px solid var(--light-gray); border-radius: 14px; padding: 16px; display: flex; gap: 14px; align-items: center; box-shadow: 0 1px 3px rgba(13,13,13,0.04); }
     .seller-mobile-card img { width: 56px; height: 56px; object-fit: cover; border: 1px solid var(--light-gray); flex-shrink: 0; }
     .seller-mobile-card .card-info { flex: 1; min-width: 0; }
     .seller-mobile-card .card-name { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

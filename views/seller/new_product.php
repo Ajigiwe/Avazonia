@@ -15,7 +15,7 @@
         <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px;">Free listing &middot; <?= htmlspecialchars($seller['seller_type']) ?> &middot; <?= htmlspecialchars($seller['verification_level']) ?></div>
     </div>
 
-    <div style="border:2px solid var(--ink);max-width:860px;">
+    <div class="seller-panel" style="max-width:860px;">
         <div style="padding:16px 24px;border-bottom:1px solid var(--light-gray);background:var(--ink);color:#fff;">
             <span style="font-family:var(--f-display);font-weight:800;font-size:14px;">Product Details</span>
         </div>

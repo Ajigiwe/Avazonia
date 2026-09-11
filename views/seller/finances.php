@@ -6,7 +6,7 @@
         <h1 style="font-family:var(--f-display);font-weight:900;font-size:clamp(22px,4vw,32px);margin:0;">Finances</h1>
         <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px;">Earnings &amp; commission breakdown</div>
     </div>
-    <a href="<?= APP_URL ?>/seller/finances/csv" style="border:2px solid var(--ink);color:var(--ink);padding:10px 20px;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;text-decoration:none;letter-spacing:0.05em;">Export CSV</a>
+    <a href="<?= APP_URL ?>/seller/finances/csv" class="seller-btn-secondary" style="padding:10px 20px;font-size:10px;">Export CSV</a>
 </div>
 
 <div class="seller-stats-bar">
@@ -41,8 +41,8 @@
 </div>
 
 <!-- Earnings History Table -->
-<div style="border:2px solid var(--ink);overflow-x:auto;">
-    <div style="padding:16px 20px;border-bottom:1px solid var(--light-gray);font-family:var(--f-display);font-weight:800;font-size:14px;">Earnings History</div>
+<div class="seller-panel" style="overflow-x:auto;">
+    <div class="seller-panel-head" style="border-bottom:1px solid var(--light-gray);"><div class="seller-panel-title">Earnings History</div></div>
     <table style="width:100%;border-collapse:collapse;min-width:800px;">
         <thead>
             <tr style="background:var(--off);">

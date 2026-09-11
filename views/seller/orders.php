@@ -12,7 +12,7 @@
     <div class="seller-stat-card"><div class="stat-label">Pending Payout</div><div class="stat-value">&#8373;<?= number_format($stats['pending_payout']??0,2) ?></div></div>
 </div>
 
-<div style="border:2px solid var(--ink);overflow-x:auto;">
+<div class="seller-panel" style="overflow-x:auto;">
     <table style="width:100%;border-collapse:collapse;min-width:700px;">
         <thead>
             <tr style="background:var(--off);">

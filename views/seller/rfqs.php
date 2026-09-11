@@ -15,7 +15,7 @@
 <?php if(!empty($rfqs)): ?>
 <div style="display:flex;flex-direction:column;gap:12px;">
     <?php foreach($rfqs as $r): ?>
-    <div style="border:2px solid var(--ink);padding:20px;">
+    <div class="seller-panel" style="padding:20px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
             <div style="flex:1;min-width:200px;">
                 <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);margin-bottom:6px;"><?= date('d M Y H:i', strtotime($r['created_at'])) ?> &middot; <span style="font-weight:700;text-transform:uppercase;"><?= htmlspecialchars($r['status']) ?></span></div>

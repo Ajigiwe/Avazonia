@@ -1,18 +1,26 @@
 <?php require_once __DIR__ . '/../layout/head.php'; require_once __DIR__ . '/../layout/nav.php'; ?>
 <?php include __DIR__ . '/sidebar.php'; ?>
 
-<div style="margin-bottom:32px;">
-    <h1 style="font-family:var(--f-display);font-weight:900;font-size:clamp(22px,4vw,32px);margin:0;">Seller Dashboard</h1>
-    <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px;">Overview &middot; <?= date('d M Y') ?></div>
+<div class="seller-hero">
+    <div class="hero-kicker"><?= !empty($seller['is_verified']) ? '&#10003; Verified Vendor' : '&#9733; Vendor' ?></div>
+    <div class="hero-title"><?= htmlspecialchars($seller['business_name']) ?></div>
+    <div class="hero-sub"><?= !empty($seller['is_verified']) ? 'Your store is live and verified — keep the momentum going.' : 'Welcome to your store hub. Track products, orders and earnings here.' ?></div>
+</div>
+
+<div style="margin-bottom:28px;">
+    <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.1em;"><?= date('d M Y') ?> &middot; Overview</div>
 </div>
 
 <?php if (!empty($error)): ?><div style="background:#fef3c7;border:1.5px solid #f59e0b;padding:12px 14px;font-family:var(--f-mono);font-size:11px;color:#92400e;margin-bottom:14px;">&#9888; <?= htmlspecialchars($error) ?></div><?php endif; ?>
 <?php if (!empty($_GET['success'])): ?><div style="background:#e6f7ec;border:1.5px solid #00a854;padding:12px 14px;font-family:var(--f-mono);font-size:11px;color:#00a854;margin-bottom:14px;">&#10003; Changes saved successfully.</div><?php endif; ?>
 
 <?php if (empty($seller['is_verified'])): ?>
-<div style="background:var(--off);border:2px dashed var(--ink);padding:16px;margin-bottom:20px;">
-    <div style="font-family:var(--f-semi);font-size:12px;font-weight:800;text-transform:uppercase;">Verification Pending</div>
-    <div style="font-family:var(--f-mono);font-size:11px;color:var(--mid-gray);margin-top:6px;line-height:1.5;">Your Ghana Card + Face ID is under review. You can list products after Admin verifies you.</div>
+<div class="seller-notice-pending">
+    <div class="np-icon">&#9203;</div>
+    <div>
+        <div class="np-title">Verification in progress</div>
+        <div class="np-text">Your Ghana Card + Face ID is under review. You can list products right after admin verifies you.</div>
+    </div>
 </div>
 <?php endif; ?>
 
@@ -43,10 +51,10 @@
 
 <div class="seller-dash-grid">
     <!-- Recent Products -->
-    <div style="border:2px solid var(--ink);padding:0;">
-        <div style="padding:16px 20px;border-bottom:1px solid var(--light-gray);display:flex;justify-content:space-between;align-items:center;">
-            <div style="font-family:var(--f-display);font-weight:800;font-size:14px;">Recent Products</div>
-            <a href="<?= APP_URL ?>/seller/products" style="font-family:var(--f-mono);font-size:10px;color:var(--red);text-decoration:none;">View All &rarr;</a>
+    <div class="seller-panel">
+        <div class="seller-panel-head">
+            <div class="seller-panel-title">Recent Products</div>
+            <a href="<?= APP_URL ?>/seller/products" class="seller-panel-link">View All &rarr;</a>
         </div>
         <div style="padding:12px 20px;">
             <?php foreach($products as $p): ?>
@@ -66,10 +74,10 @@
     </div>
 
     <!-- Recent Orders -->
-    <div style="border:2px solid var(--ink);padding:0;">
-        <div style="padding:16px 20px;border-bottom:1px solid var(--light-gray);display:flex;justify-content:space-between;align-items:center;">
-            <div style="font-family:var(--f-display);font-weight:800;font-size:14px;">Recent Orders</div>
-            <a href="<?= APP_URL ?>/seller/orders" style="font-family:var(--f-mono);font-size:10px;color:var(--red);text-decoration:none;">View All &rarr;</a>
+    <div class="seller-panel">
+        <div class="seller-panel-head">
+            <div class="seller-panel-title">Recent Orders</div>
+            <a href="<?= APP_URL ?>/seller/orders" class="seller-panel-link">View All &rarr;</a>
         </div>
         <div style="padding:12px 20px;">
             <?php foreach($orders as $o): ?>
@@ -94,9 +102,9 @@
 <!-- Quick Actions -->
 <?php if(!empty($seller['is_verified'])): ?>
 <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;">
-    <a href="<?= APP_URL ?>/seller/new-product" style="background:var(--red);color:#fff;padding:12px 24px;font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;text-decoration:none;letter-spacing:0.05em;">+ List New Product</a>
-    <a href="<?= APP_URL ?>/seller/finances" style="border:2px solid var(--ink);color:var(--ink);padding:12px 24px;font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;text-decoration:none;letter-spacing:0.05em;">View Finances</a>
-    <a href="<?= APP_URL ?>/store/<?= htmlspecialchars($store['slug'] ?? '') ?>" style="border:2px solid var(--ink);color:var(--ink);padding:12px 24px;font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;text-decoration:none;letter-spacing:0.05em;">Public Store</a>
+    <a href="<?= APP_URL ?>/seller/new-product" class="seller-btn-primary">+ List New Product</a>
+    <a href="<?= APP_URL ?>/seller/finances" class="seller-btn-secondary">View Finances</a>
+    <a href="<?= APP_URL ?>/store/<?= htmlspecialchars($store['slug'] ?? '') ?>" class="seller-btn-secondary">Public Store</a>
 </div>
 <?php endif; ?>
 

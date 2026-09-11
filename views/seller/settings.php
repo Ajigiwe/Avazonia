@@ -57,7 +57,7 @@
 
     <div style="display:flex;gap:12px;">
         <button type="submit" style="background:var(--red);color:#fff;padding:14px 32px;font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;border:none;cursor:pointer;letter-spacing:0.05em;">Save Settings</button>
-        <a href="<?= APP_URL ?>/seller/dashboard" style="border:2px solid var(--ink);color:var(--ink);padding:14px 32px;font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;text-decoration:none;letter-spacing:0.05em;">Cancel</a>
+        <a href="<?= APP_URL ?>/seller/dashboard" class="seller-btn-secondary" style="padding:14px 32px;">Cancel</a>
     </div>
 </form>
 
