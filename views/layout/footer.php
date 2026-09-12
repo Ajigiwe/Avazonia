@@ -107,12 +107,6 @@ global $dbSettings;
             <div class="partner-box">
                 <img src="<?= APP_URL ?>/public/assets/img/ghana post.webp" alt="Ghana Post">
             </div>
-            <div class="partner-box">
-                <img src="<?= APP_URL ?>/public/assets/img/paystack1.png" alt="Paystack">
-            </div>
-            <div class="partner-box">
-                <img src="<?= APP_URL ?>/public/assets/img/uba logo.webp" alt="UBA Bank">
-            </div>
         </div>
 
         <div class="footer-bottom">
