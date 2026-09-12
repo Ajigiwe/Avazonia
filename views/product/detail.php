@@ -75,9 +75,10 @@ if (Session::get('user_id')) {
                 $galleryTotal = count($galleryImgs);
                 ?>
                 <?php
-                // The video, when present, is the final slide of the same carousel.
+                // Videos no longer hide as the final carousel slide — they get their
+                // own highlighted section directly below the gallery so they stand out.
                 $hasVideo = !empty($product['video_url']);
-                $slideTotal = $galleryTotal + ($hasVideo ? 1 : 0);
+                $slideTotal = $galleryTotal;
                 ?>
                 <div class="gallery-slides" id="gallery-slides">
                     <?php foreach ($galleryImgs as $gi => $imgData):
@@ -88,11 +89,6 @@ if (Session::get('user_id')) {
                     ?>
                         <img class="gallery-slide<?= $gi === 0 ? ' is-active' : '' ?>" src="<?= $gSrc ?>" alt="<?= htmlspecialchars($imgData['alt_text'] ?? $product['name']) ?>" data-index="<?= $gi ?>" loading="<?= $gi === 0 ? 'eager' : 'lazy' ?>">
                     <?php endforeach; ?>
-                    <?php if ($hasVideo):
-                        $vidUrl = filter_var($product['video_url'], FILTER_VALIDATE_URL) ? $product['video_url'] : APP_PATH . '/' . ltrim($product['video_url'], '/');
-                    ?>
-                        <video class="gallery-slide gallery-slide-video" src="<?= $vidUrl ?>" controls muted loop playsinline preload="metadata"></video>
-                    <?php endif; ?>
                 </div>
                 <?php if ($slideTotal > 1): ?>
                     <button type="button" class="gallery-control gallery-prev" id="gallery-prev" aria-label="Previous image">&#10094;</button>
@@ -100,6 +96,21 @@ if (Session::get('user_id')) {
                     <span class="gallery-count" id="gallery-count">1/<?= $slideTotal ?></span>
                 <?php endif; ?>
             </div>
+            <?php if ($hasVideo):
+                $vidUrl = filter_var($product['video_url'], FILTER_VALIDATE_URL) ? $product['video_url'] : APP_PATH . '/' . ltrim($product['video_url'], '/');
+            ?>
+            <!-- Dedicated video showcase — deliberately separate from the image slider -->
+            <div class="product-video-block" id="product-video-block">
+                <div class="product-video-head">
+                    <span class="product-video-badge">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v13.72c0 .8.87 1.3 1.56.88l10.54-6.86a1.05 1.05 0 0 0 0-1.76L9.56 4.26A1.04 1.04 0 0 0 8 5.14Z"/></svg>
+                        Video
+                    </span>
+                    <span class="product-video-title">Watch it in action</span>
+                </div>
+                <video class="product-video-player" src="<?= $vidUrl ?>" controls playsinline preload="metadata" poster="<?= $primaryImgUrl ?>"></video>
+            </div>
+            <?php endif; ?>
         </div>
 
         <!-- Product Info -->
@@ -251,8 +262,8 @@ if (Session::get('user_id')) {
                     
                     const newImage = pill.getAttribute('data-image');
                     if (newImage) {
-                        // Return to the first image slide; the video (when present)
-                        // is just another slide now and is paused automatically.
+                        // Return to the first image slide; the video lives in its
+                        // own section below the gallery, outside this carousel.
                         if (window.__galleryShow) window.__galleryShow(0);
                         const img = document.querySelector('.gallery-slide.is-active');
                         if (img && img.tagName === 'IMG') {
