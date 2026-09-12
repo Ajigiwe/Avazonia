@@ -271,6 +271,8 @@ class AccountController extends Controller {
             if ($seller) {
                 $whatsapp = preg_replace('/[^0-9]/', '', trim((string)($_POST['whatsapp_number'] ?? '')));
                 $wechat = trim((string)($_POST['wechat_id'] ?? ''));
+                $callNumber = preg_replace('/[^0-9+]/', '', trim((string)($_POST['phone_number'] ?? '')));
+                if ($callNumber === '') $callNumber = $whatsapp; // default call number to WhatsApp
                 if ($whatsapp === '') {
                     $this->view('account/settings', ['user' => $user, 'seller' => $seller, 'error' => 'WhatsApp number is required for seller accounts.']);
                     return;
@@ -279,8 +281,8 @@ class AccountController extends Controller {
             $stmt = $db->prepare("UPDATE users SET full_name = ?, phone = ? WHERE id = ?");
             if ($stmt->execute([$fullName, $phone, $user['id']])) {
                 if ($seller) {
-                    $sellerStmt = $db->prepare("UPDATE sellers SET whatsapp_number = ?, wechat_id = ? WHERE id = ?");
-                    $sellerStmt->execute([$whatsapp, $wechat ?: null, (int)$seller['id']]);
+                    $sellerStmt = $db->prepare("UPDATE sellers SET whatsapp_number = ?, wechat_id = ?, phone_number = ? WHERE id = ?");
+                    $sellerStmt->execute([$whatsapp, $wechat ?: null, $callNumber ?: null, (int)$seller['id']]);
                     $seller = (new Seller())->findByUserId((int)Session::get('user_id'));
                 }
                 Session::set('user_name', $fullName);

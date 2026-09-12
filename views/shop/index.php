@@ -8,14 +8,16 @@ require_once __DIR__ . '/../layout/nav.php';
 
 <section class="shop-content" style="padding: 120px 0 80px;">
     <div class="container">
-        <div class="sec-head reveal">
-            <div>
-                <div class="sec-over">THE DROP</div>
-                <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.85;">
-                    <?= $currentCat ? strtoupper($currentCat) : 'ALL PRODUCTS' ?>
-                </h2>
+        <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:48px; border-bottom:1px solid var(--extra-light-gray); padding-bottom:16px;">
+            <div class="sec-head reveal" style="margin-bottom:0; border-bottom:none; padding-bottom:0;">
+                <div>
+                    <div class="sec-over">THE DROP</div>
+                    <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.85;">
+                        <?= $currentCat ? strtoupper($currentCat) : 'ALL PRODUCTS' ?>
+                    </h2>
+                </div>
             </div>
-            <div style="display:flex; align-items:center; gap:16px;">
+            <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
                 <div class="view-toggle" role="group" aria-label="View toggle">
                     <button id="view-grid" class="view-btn active" aria-pressed="true" onclick="setProductView('grid')" title="Grid view">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>

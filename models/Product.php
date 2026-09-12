@@ -66,7 +66,7 @@ class Product extends Model {
         return " AND (:min_stock = :min_stock)";
     }
     private function sellerSelect(): string {
-        return ", s.business_name as seller_name, s.seller_type, s.verification_level, s.is_verified, s.whatsapp_number as seller_whatsapp, s.wechat_id as seller_wechat, st.slug as store_slug, st.name as store_name ";
+        return ", s.business_name as seller_name, s.seller_type, s.verification_level, s.is_verified, s.whatsapp_number as seller_whatsapp, s.wechat_id as seller_wechat, s.phone_number as seller_phone, st.slug as store_slug, st.name as store_name ";
     }
     private function sellerJoins(): string {
         return " LEFT JOIN sellers s ON p.seller_id=s.id LEFT JOIN stores st ON p.store_id=st.id ";

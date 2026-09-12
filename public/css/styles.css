@@ -2780,6 +2780,41 @@ form button[type="submit"]:hover {
     background: #07C160;
 }
 
+/* Direct-call buttons (seller phone number) */
+.card-contact-btn.call {
+    background: var(--ink);
+    color: #fff;
+}
+
+.seller-contact-btn.call {
+    background: var(--ink);
+    border: 1.5px solid var(--ink);
+}
+
+.seller-contact-btn.call:hover {
+    background: var(--red);
+    border-color: var(--red);
+}
+
+/* "Official Store" / "Contact Seller" micro-label above card buttons */
+.card-contact-official {
+    flex-basis: 100%;
+    width: 100%;
+    text-align: center;
+    font-family: var(--f-mono);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #fff;
+    background: rgba(17, 17, 17, .82);
+    border-radius: 4px;
+    padding: 3px 4px;
+    margin-bottom: 2px;
+    line-height: 1.4;
+    pointer-events: none;
+}
+
 .card-contact-btn:hover,
 .seller-contact-btn:hover {
     color: #fff;

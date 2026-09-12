@@ -119,15 +119,42 @@ if (Session::get('user_id')) {
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"><?= listing_type_badge($product) ?><?php if(!empty($product['vehicle_origin'])): ?><span style="font-family:var(--f-mono);font-size:9px;background:<?= $product['vehicle_origin']==='international_export'?'var(--ink)':'var(--off)' ?>;color:<?= $product['vehicle_origin']==='international_export'?'#fff':'var(--ink)' ?>;padding:4px 8px;border-radius:999px;"><?= $product['vehicle_origin']==='international_export'?'International Export':'Local — Ghana' ?></span><?php endif; ?><?php if(!empty($product['store_slug'])): ?><a href="<?= APP_URL ?>/store/<?= htmlspecialchars($product['store_slug']) ?>" style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-decoration:none;border-bottom:1px dotted;">Sold by: <?= htmlspecialchars($product['store_name'] ?: $product['seller_name']) ?> →</a><?php endif; ?> <?= verification_badge($product) ?></div>
             <?php
                 $detailWhatsApp = preg_replace('/[^0-9]/', '', (string)($product['seller_whatsapp'] ?? ''));
+                $detailPhone = preg_replace('/[^0-9]/', '', (string)($product['seller_phone'] ?? ''));
+                if ($detailWhatsApp === '' && $detailPhone === '') {
+                    // Avazonia Official products (no seller row) use the site contact number
+                    $officialContact = '';
+                    try {
+                        require_once __DIR__ . '/../../models/Settings.php';
+                        $officialContact = preg_replace('/[^0-9]/', '', (string)(new Settings())->get('whatsapp_number', WHATSAPP_NUMBER));
+                    } catch (Throwable $e) {
+                        $officialContact = preg_replace('/[^0-9]/', '', WHATSAPP_NUMBER);
+                    }
+                    if ($officialContact !== '') {
+                        $detailWhatsApp = $officialContact;
+                        $detailPhone = $officialContact;
+                    }
+                }
+                if ($detailPhone === '' && $detailWhatsApp !== '') $detailPhone = $detailWhatsApp; // WhatsApp numbers are callable
                 $detailWeChat = trim((string)($product['seller_wechat'] ?? ''));
                 $detailMessage = rawurlencode("Hi, I'm interested in {$product['name']} on Avazonia: " . APP_URL . '/product/' . $product['slug']);
             ?>
-            <?php if ($detailWhatsApp !== '' || $detailWeChat !== ''): ?>
+            <?php if ($detailWhatsApp !== '' || $detailWeChat !== '' || $detailPhone !== ''): ?>
                 <div class="seller-contact-actions" aria-label="Contact seller">
                     <?php if ($detailWhatsApp !== ''): ?>
                         <a href="https://wa.me/<?= htmlspecialchars($detailWhatsApp) ?>?text=<?= $detailMessage ?>" class="seller-contact-btn whatsapp" target="_blank" rel="noopener">
                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.03 2C6.5 2 2 6.48 2 12c0 1.76.46 3.42 1.32 4.87L2 22l5.27-1.38A9.96 9.96 0 0 0 12.03 22C17.55 22 22 17.52 22 12S17.55 2 12.03 2Zm0 18.2c-1.53 0-3.02-.41-4.34-1.18l-.31-.18-3.13.82.84-3.05-.2-.31A8.2 8.2 0 1 1 12.03 20.2Zm4.5-6.15c-.25-.13-1.48-.73-1.71-.81-.23-.08-.4-.13-.57.13-.17.25-.65.81-.79.98-.15.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.49-1.41-1.74-.15-.25-.02-.39.11-.51.12-.12.25-.29.38-.44.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.57-1.37-.78-1.88-.2-.49-.41-.42-.57-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.43 1.02 2.6c.13.17 1.76 2.68 4.27 3.76.6.26 1.07.42 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.48-.61 1.69-1.2.21-.59.21-1.1.15-1.2-.06-.11-.23-.17-.48-.3Z"/></svg>
                             Enquire on WhatsApp
+                        </a>
+                        <?php if ($detailPhone !== ''): ?>
+                            <a href="tel:+<?= htmlspecialchars($detailPhone) ?>" class="seller-contact-btn call">
+                                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.85 21 3 13.15 3 3.5a1 1 0 0 1 1-1H7.5a1 1 0 0 1 1 1c0 1.24.2 2.45.57 3.57a1 1 0 0 1-.25 1.02l-2.2 2.2Z"/></svg>
+                                Call Seller
+                            </a>
+                        <?php endif; ?>
+                    <?php elseif ($detailPhone !== ''): ?>
+                        <a href="tel:+<?= htmlspecialchars($detailPhone) ?>" class="seller-contact-btn call">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.85 21 3 13.15 3 3.5a1 1 0 0 1 1-1H7.5a1 1 0 0 1 1 1c0 1.24.2 2.45.57 3.57a1 1 0 0 1-.25 1.02l-2.2 2.2Z"/></svg>
+                            Call Seller
                         </a>
                     <?php elseif ($detailWeChat !== ''): ?>
                         <a href="weixin://dl/chat?<?= rawurlencode($detailWeChat) ?>" class="seller-contact-btn wechat" title="WeChat: <?= htmlspecialchars($detailWeChat) ?>" onclick="if(navigator.clipboard){navigator.clipboard.writeText('<?= htmlspecialchars($detailWeChat, ENT_QUOTES) ?>');}">

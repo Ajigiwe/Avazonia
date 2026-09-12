@@ -90,9 +90,14 @@ $user_name = Session::get('user_name') ?: 'Member';
                                     <div style="font-size:11px;color:var(--mid-gray);margin-top:6px;">Include your country code.</div>
                                 </div>
                                 <div>
-                                    <label style="display:block;font-family:var(--f-semi);font-size:11px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:8px;letter-spacing:.05em;">WeChat ID <span style="font-weight:400;text-transform:none;">(optional)</span></label>
-                                    <input type="text" name="wechat_id" value="<?= htmlspecialchars($seller['wechat_id'] ?? '') ?>" placeholder="Your WeChat ID" autocomplete="off" style="width:100%;padding:14px 16px;border:1px solid #ddd;border-radius:8px;font-family:inherit;font-size:14px;">
+                                    <label style="display:block;font-family:var(--f-semi);font-size:11px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:8px;letter-spacing:.05em;">Call Number <span style="font-weight:400;text-transform:none;">(optional)</span></label>
+                                    <input type="tel" name="phone_number" value="<?= htmlspecialchars($seller['phone_number'] ?? '') ?>" placeholder="Defaults to your WhatsApp number" inputmode="tel" style="width:100%;padding:14px 16px;border:1px solid #ddd;border-radius:8px;font-family:inherit;font-size:14px;">
+                                    <div style="font-size:11px;color:var(--mid-gray);margin-top:6px;">Buyers can call you directly from your products.</div>
                                 </div>
+                            </div>
+                            <div style="margin-top:16px;">
+                                <label style="display:block;font-family:var(--f-semi);font-size:11px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:8px;letter-spacing:.05em;">WeChat ID <span style="font-weight:400;text-transform:none;">(optional)</span></label>
+                                <input type="text" name="wechat_id" value="<?= htmlspecialchars($seller['wechat_id'] ?? '') ?>" placeholder="Your WeChat ID" autocomplete="off" style="width:100%;max-width:340px;padding:14px 16px;border:1px solid #ddd;border-radius:8px;font-family:inherit;font-size:14px;">
                             </div>
                         </div>
                         <?php endif; ?>

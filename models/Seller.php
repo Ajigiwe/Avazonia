@@ -19,10 +19,12 @@ class Seller extends Model {
                 $columns = $db->query("PRAGMA table_info(sellers)")->fetchAll(PDO::FETCH_COLUMN, 1);
                 if (!in_array('whatsapp_number', $columns, true)) $db->exec("ALTER TABLE sellers ADD COLUMN whatsapp_number TEXT");
                 if (!in_array('wechat_id', $columns, true)) $db->exec("ALTER TABLE sellers ADD COLUMN wechat_id TEXT");
+                if (!in_array('phone_number', $columns, true)) $db->exec("ALTER TABLE sellers ADD COLUMN phone_number TEXT");
             } else {
                 $columns = $db->query("SHOW COLUMNS FROM sellers")->fetchAll(PDO::FETCH_COLUMN, 0);
                 if (!in_array('whatsapp_number', $columns, true)) $db->exec("ALTER TABLE sellers ADD COLUMN whatsapp_number VARCHAR(30) NULL");
                 if (!in_array('wechat_id', $columns, true)) $db->exec("ALTER TABLE sellers ADD COLUMN wechat_id VARCHAR(100) NULL");
+                if (!in_array('phone_number', $columns, true)) $db->exec("ALTER TABLE sellers ADD COLUMN phone_number VARCHAR(30) NULL");
             }
             self::$contactColumnsReady = true;
         } catch (Throwable $e) {
