@@ -171,6 +171,68 @@ function listing_type_badge(array $product): string {
     return '<span style="font-family:var(--f-mono);font-size:9px;background:'.$bg.';padding:4px 8px;border-radius:999px;">'.$label.$extra.'</span>';
 }
 
+// ── Video URL parsing (YouTube / Vimeo / native video files) ────────────────
+// Sellers and admins may paste a YouTube link, a Vimeo link, or upload an MP4.
+// This helper normalises all three so views can render the right player.
+function video_embed_info(?string $url): array {
+    $url = trim((string)$url);
+    if ($url === '') return ['type' => 'none'];
+    // Relative path = uploaded file (e.g. public/uploads/videos/v_xxx.mp4)
+    if (!preg_match('#^https?://#i', $url)) {
+        return ['type' => 'file', 'src' => APP_PATH . '/' . ltrim($url, '/')];
+    }
+    $host = strtolower(parse_url($url, PHP_URL_HOST) ?: '');
+    // YouTube: watch?v=ID, youtu.be/ID, /shorts/ID, /embed/ID, /live/ID
+    if (strpos($host, 'youtube.com') !== false || strpos($host, 'youtu.be') !== false) {
+        $id = '';
+        if (strpos($host, 'youtu.be') !== false) {
+            $id = trim(parse_url($url, PHP_URL_PATH) ?: '', '/');
+        } else {
+            // Case-insensitive "v" param extraction (handles both ?v= and ?V=)
+            foreach (explode('&', (string)parse_url($url, PHP_URL_QUERY)) as $pair) {
+                $kv = explode('=', $pair, 2);
+                if (strtolower($kv[0]) === 'v' && isset($kv[1])) { $id = $kv[1]; break; }
+            }
+            if ($id === '' && preg_match('#/(?:embed|shorts|live)/([A-Za-z0-9_-]{6,})#', parse_url($url, PHP_URL_PATH) ?: '', $m)) {
+                $id = $m[1];
+            }
+        }
+        $id = preg_replace('/[^A-Za-z0-9_-]/', '', $id);
+        if ($id !== '') {
+            return [
+                'type'  => 'youtube',
+                'id'    => $id,
+                'embed' => 'https://www.youtube-nocookie.com/embed/' . $id . '?rel=0',
+                'thumb' => 'https://i.ytimg.com/vi/' . $id . '/hqdefault.jpg',
+            ];
+        }
+    }
+    // Vimeo: vimeo.com/ID or vimeo.com/video/ID
+    if (strpos($host, 'vimeo.com') !== false) {
+        if (preg_match('#vimeo\.com/(?:video/)?(\d+)#', $url, $m)) {
+            return [
+                'type'  => 'vimeo',
+                'id'    => $m[1],
+                'embed' => 'https://player.vimeo.com/video/' . $m[1],
+                'thumb' => '', // Vimeo thumbnails need an API call; fall back to product photo
+            ];
+        }
+        return ['type' => 'external', 'src' => $url];
+    }
+    // A YouTube URL we couldn't parse should never fall through to the native player.
+    if (strpos($host, 'youtube.com') !== false || strpos($host, 'youtu.be') !== false) {
+        return ['type' => 'external', 'src' => $url];
+    }
+    // Only treat remote URLs as native video files when they actually end in a
+    // video extension; anything else (Twitch, Drive links, unknown hosts) opens
+    // in a new tab rather than rendering a broken player.
+    $path = strtolower((string)parse_url($url, PHP_URL_PATH));
+    if (preg_match('/\.(mp4|webm|mov|m4v|ogv|ogg)$/', $path)) {
+        return ['type' => 'file', 'src' => $url];
+    }
+    return ['type' => 'external', 'src' => $url];
+}
+
 // Mail Settings (Static .env Configuration) - OVERRIDES DATABASE FOR RELIABILITY
 if (!defined('MAIL_MAILER'))     define('MAIL_MAILER',     trim(getenv('MAIL_MAILER'))     ?: 'smtp');
 if (!defined('MAIL_HOST'))       define('MAIL_HOST',       trim(getenv('MAIL_HOST'))       ?: 'localhost');

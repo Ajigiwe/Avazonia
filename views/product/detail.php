@@ -97,7 +97,7 @@ if (Session::get('user_id')) {
                 <?php endif; ?>
             </div>
             <?php if ($hasVideo):
-                $vidUrl = filter_var($product['video_url'], FILTER_VALIDATE_URL) ? $product['video_url'] : APP_PATH . '/' . ltrim($product['video_url'], '/');
+                $vid = video_embed_info($product['video_url']);
             ?>
             <!-- Dedicated video showcase — deliberately separate from the image slider -->
             <div class="product-video-block" id="product-video-block">
@@ -108,7 +108,16 @@ if (Session::get('user_id')) {
                     </span>
                     <span class="product-video-title">Watch it in action</span>
                 </div>
-                <video class="product-video-player" src="<?= $vidUrl ?>" controls playsinline preload="metadata" poster="<?= $primaryImgUrl ?>"></video>
+                <?php if ($vid['type'] === 'youtube' || $vid['type'] === 'vimeo'): ?>
+                    <div class="product-video-frame">
+                        <iframe src="<?= htmlspecialchars($vid['embed']) ?>" title="<?= htmlspecialchars($product['name']) ?> video" frameborder="0" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                    </div>
+                <?php elseif ($vid['type'] === 'external'): ?>
+                    <!-- Unrecognised video link — open it rather than render a broken player -->
+                    <a class="product-video-player product-video-ext" href="<?= htmlspecialchars($vid['src']) ?>" target="_blank" rel="noopener">▶ Open video in a new tab</a>
+                <?php else: ?>
+                    <video class="product-video-player" src="<?= htmlspecialchars($vid['src']) ?>" controls playsinline preload="metadata" poster="<?= $primaryImgUrl ?>"></video>
+                <?php endif; ?>
             </div>
             <?php endif; ?>
         </div>

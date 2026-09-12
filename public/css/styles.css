@@ -4910,6 +4910,32 @@ form button[type="submit"]:hover {
     border-radius: 10px;
     outline: none;
 }
+/* Responsive 16:9 wrapper for YouTube/Vimeo embeds */
+.product-video-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.product-video-frame iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+.product-video-ext {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-family: var(--f-semi);
+    font-size: 13px;
+    text-decoration: none;
+    letter-spacing: .04em;
+}
 @media (max-width: 768px) {
     .product-video-block { padding: 12px; border-radius: 14px; }
     .product-video-head { margin-bottom: 10px; }

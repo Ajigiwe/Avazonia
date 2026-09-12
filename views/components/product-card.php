@@ -54,11 +54,15 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
                 <?php foreach ($processedCardImages as $idx => $src): ?>
                     <img src="<?= $src ?>" alt="<?= htmlspecialchars($p['name']) ?>" loading="lazy" class="slide-img" style="<?= $idx === 0 ? 'transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1); opacity: 1; transform: scale(1) translateY(0);' : 'position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0; transform: scale(1.05) translateY(8px); transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);' ?>">
                 <?php endforeach; ?>
-                <?php if (!empty($p['video_url'])): 
-                    $vidUrl = filter_var($p['video_url'], FILTER_VALIDATE_URL) ? $p['video_url'] : APP_PATH . '/' . ltrim($p['video_url'], '/');
+                <?php if (!empty($p['video_url'])):
+                    // Only native video files can hover-play inside the card; YouTube/Vimeo
+                    // links can't be played by a <video> element, so they're skipped here
+                    // (the detail page shows them as a proper embed).
+                    $cardVid = video_embed_info($p['video_url']);
+                    if ($cardVid['type'] === 'file'):
                 ?>
-                    <video src="<?= $vidUrl ?>" muted loop playsinline style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0; transition: opacity 0.3s; z-index: 2; pointer-events:none;"></video>
-                <?php endif; ?>
+                    <video src="<?= htmlspecialchars($cardVid['src']) ?>" muted loop playsinline style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0; transition: opacity 0.3s; z-index: 2; pointer-events:none;"></video>
+                <?php endif; endif; ?>
             </div>
 
             <div class="card-actions">
