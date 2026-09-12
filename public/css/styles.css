@@ -4926,6 +4926,14 @@ form button[type="submit"]:hover {
     height: 100%;
     border: 0;
 }
+/* TikTok videos are vertical (9:16) — a 16:9 frame letterboxes them badly,
+   so give them their own centered portrait frame with rounded player chrome. */
+.product-video-frame-tiktok {
+    aspect-ratio: 9 / 16;
+    max-width: min(100%, 420px);
+    margin: 0 auto;
+    background: #000;
+}
 .product-video-ext {
     display: flex;
     align-items: center;

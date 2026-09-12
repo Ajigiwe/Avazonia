@@ -108,8 +108,8 @@ if (Session::get('user_id')) {
                     </span>
                     <span class="product-video-title">Watch it in action</span>
                 </div>
-                <?php if ($vid['type'] === 'youtube' || $vid['type'] === 'vimeo'): ?>
-                    <div class="product-video-frame">
+                <?php if ($vid['type'] === 'youtube' || $vid['type'] === 'vimeo' || $vid['type'] === 'tiktok'): ?>
+                    <div class="product-video-frame<?= $vid['type'] === 'tiktok' ? ' product-video-frame-tiktok' : '' ?>">
                         <iframe src="<?= htmlspecialchars($vid['embed']) ?>" title="<?= htmlspecialchars($product['name']) ?> video" frameborder="0" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
                     </div>
                 <?php elseif ($vid['type'] === 'external'): ?>

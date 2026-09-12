@@ -207,6 +207,20 @@ function video_embed_info(?string $url): array {
             ];
         }
     }
+    // TikTok: tiktok.com/@user/video/ID or m.tiktok.com/v/ID — Ghanaian sellers
+    // often film product clips here. Short vm.tiktok.com share links hide the ID
+    // behind a redirect, so they can't embed and fall through to 'external'.
+    if (strpos($host, 'tiktok.com') !== false) {
+        if (preg_match('#tiktok\.com/(?:[^/]+/)?(?:video|v|photo)/(\d+)#', $url, $m)) {
+            return [
+                'type'  => 'tiktok',
+                'id'    => $m[1],
+                'embed' => 'https://www.tiktok.com/embed/v2/' . $m[1],
+                'thumb' => '',
+            ];
+        }
+        return ['type' => 'external', 'src' => $url];
+    }
     // Vimeo: vimeo.com/ID or vimeo.com/video/ID
     if (strpos($host, 'vimeo.com') !== false) {
         if (preg_match('#vimeo\.com/(?:video/)?(\d+)#', $url, $m)) {
