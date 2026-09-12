@@ -432,6 +432,9 @@ class SellerController extends Controller {
                         }
                     }
                 }
+                // Stamp the shop logo on uploaded images (anti-theft watermark).
+                require_once __DIR__.'/../core/Watermark.php';
+                Watermark::applyToPaths($uploadedImages);
             }
 
             // Verified sellers skip the moderation queue — their products go live immediately.

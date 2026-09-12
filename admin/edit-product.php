@@ -82,6 +82,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = $_POST['name'] ?? '';
         $category_id = $_POST['category_id'] ?? null;
         $brand_id = $_POST['brand_id'] ?? null;
+        // Inline brand creation — mirrors add-product.php so editing a product can also
+        // introduce a brand that isn't on the list yet.
+        if ($brand_id === '_new') {
+            $customBrandName = trim($_POST['custom_brand_name'] ?? '');
+            if ($customBrandName !== '') {
+                $existingBrand = $db->prepare("SELECT id FROM brands WHERE LOWER(name) = LOWER(?) LIMIT 1");
+                $existingBrand->execute([$customBrandName]);
+                $foundBrand = $existingBrand->fetchColumn();
+                if ($foundBrand) {
+                    $brand_id = (int)$foundBrand;
+                } else {
+                    $brandSlug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $customBrandName), '-'));
+                    $db->prepare("INSERT INTO brands (name, slug, is_active, sort_order) VALUES (?, ?, 1, 99)")
+                       ->execute([$customBrandName, $brandSlug]);
+                    $brand_id = (int)$db->lastInsertId();
+                }
+            } else {
+                $brand_id = null;
+            }
+        } elseif ($brand_id !== null && $brand_id !== '') {
+            $brand_id = (int)$brand_id ?: null;
+        } else {
+            $brand_id = null;
+        }
         $currency = $_POST['currency'] ?? 'GHS';
         $price = ($currency === 'GHS') ? (float)($_POST['price'] ?? 0) : 0;
         $compare_price = ($currency === 'GHS' && !empty($_POST['compare_price'])) ? (float)$_POST['compare_price'] : null;
@@ -143,6 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // File upload handling
     $uploaded_images = [];
+    require_once __DIR__ . '/../core/Watermark.php';
     if (isset($_FILES['images']) && is_array($_FILES['images']['name'])) {
         $uploadDir = '../public/uploads/products/';
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
@@ -164,6 +189,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
+    }
+
+    // Stamp the shop logo on newly uploaded images (anti-theft watermark).
+    if (!empty($uploaded_images)) {
+        Watermark::applyToPaths($uploaded_images);
     }
 
     // Single video upload handling
@@ -321,12 +351,14 @@ include 'layout/header.php';
                 </div>
                 <div>
                     <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Brand</label>
-                    <select name="brand_id" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;">
+                    <select name="brand_id" id="brand-select" onchange="toggleCustomBrand()" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit; background: #fff;">
                         <option value="">Select Brand</option>
                         <?php foreach ($brands as $brand): ?>
-                            <option value="<?= $brand['id'] ?>" <?= $product['brand_id'] == $brand['id'] ? 'selected' : '' ?>><?= $brand['name'] ?></option>
+                            <option value="<?= $brand['id'] ?>" <?= $product['brand_id'] == $brand['id'] ? 'selected' : '' ?>><?= htmlspecialchars($brand['name']) ?></option>
                         <?php endforeach; ?>
+                        <option value="_new">✍️ Other (add new brand)</option>
                     </select>
+                    <input type="text" name="custom_brand_name" id="custom-brand-input" placeholder="Type the new brand name..." style="display:none; width: 100%; padding: 12px; margin-top: 8px; border: 1px solid var(--light-gray); font-family: inherit;">
                 </div>
             </div>
 
@@ -599,6 +631,13 @@ function toggleCurrency() {
     const sel = document.getElementById('currency-select').value;
     document.getElementById('price-ghs-fields').style.display = sel === 'GHS' ? '' : 'none';
     document.getElementById('price-usd-fields').style.display = sel === 'USD' ? '' : 'none';
+}
+function toggleCustomBrand() {
+    const sel = document.getElementById('brand-select');
+    const inp = document.getElementById('custom-brand-input');
+    if (!sel || !inp) return;
+    inp.style.display = sel.value === '_new' ? 'block' : 'none';
+    if (sel.value === '_new') inp.focus();
 }
 </script>
 <?php include 'layout/footer.php'; ?>

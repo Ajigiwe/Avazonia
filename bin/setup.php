@@ -107,6 +107,7 @@ if ($driver === 'sqlite') {
     run_sql_file($db, __DIR__ . '/../migrations/013_community_popups.sql');
     run_sql_file($db, __DIR__ . '/../migrations/014_configure_community_links.sql');
     run_sql_file($db, __DIR__ . '/../migrations/015_seller_phone_number.sql');
+    run_sql_file($db, __DIR__ . '/../migrations/016_product_watermark.sql');
     // Seed Avazonia Owned seller for existing products
     try {
         $hasSeller = $db->query("SELECT id FROM sellers LIMIT 1")->fetch();

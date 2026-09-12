@@ -285,6 +285,21 @@ include 'layout/header.php';
                     </div>
                 </div>
             </div>
+
+            <!-- PRODUCTS & MEDIA -->
+            <div style="background: var(--off); padding: 32px; border-radius: 12px; margin-top: 24px;">
+                <h3 style="font-size: 13px; text-transform: uppercase; margin-bottom: 8px;">Products &amp; Media</h3>
+                <p style="font-size: 12px; color: var(--mid-gray); margin: 0 0 24px;">Newly uploaded product images are stamped with the Avazonia logo to deter image theft. Existing uploads are never modified.</p>
+                <div class="field-grid">
+                    <div class="field-group">
+                        <label class="field-label">Watermark Product Images with Shop Logo</label>
+                        <select id="set-product_watermark_enabled" class="field-input">
+                            <option value="1" <?= getSet('product_watermark_enabled', '1') == '1' ? 'selected' : '' ?>>YES — stamp logo on new uploads</option>
+                            <option value="0" <?= getSet('product_watermark_enabled') == '0' ? 'selected' : '' ?>>NO — keep images clean</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- 02: STOREFRONT -->

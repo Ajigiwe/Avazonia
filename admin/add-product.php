@@ -13,6 +13,8 @@ if (Session::get('user_role') !== 'admin') {
 // CSRF Check for POST requests
 require_once __DIR__ . '/_csrf_check.php';
 
+require_once __DIR__ . '/../core/Watermark.php';
+
 $db = db();
 $error = '';
 $success = '';
@@ -39,6 +41,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'] ?? '';
     $category_id = $_POST['category_id'] ?? null;
     $brand_id = $_POST['brand_id'] ?? null;
+    // Inline brand creation: "Other (add new brand)" + a typed name creates the brand row
+    // right here, so admins never have to leave this form. Reuses an existing brand if the
+    // name matches case-insensitively (same behaviour as the seller flow).
+    if ($brand_id === '_new') {
+        $customBrandName = trim($_POST['custom_brand_name'] ?? '');
+        if ($customBrandName !== '') {
+            $existingBrand = $db->prepare("SELECT id FROM brands WHERE LOWER(name) = LOWER(?) LIMIT 1");
+            $existingBrand->execute([$customBrandName]);
+            $foundBrand = $existingBrand->fetchColumn();
+            if ($foundBrand) {
+                $brand_id = (int)$foundBrand;
+            } else {
+                $brandSlug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $customBrandName), '-'));
+                $db->prepare("INSERT INTO brands (name, slug, is_active, sort_order) VALUES (?, ?, 1, 99)")
+                   ->execute([$customBrandName, $brandSlug]);
+                $brand_id = (int)$db->lastInsertId();
+            }
+        } else {
+            $brand_id = null;
+        }
+    } elseif ($brand_id !== null && $brand_id !== '') {
+        $brand_id = (int)$brand_id ?: null;
+    } else {
+        $brand_id = null;
+    }
     $currency = $_POST['currency'] ?? 'GHS';
     $price = ($currency === 'GHS') ? (float)($_POST['price'] ?? 0) : 0;
     $compare_price = ($currency === 'GHS' && !empty($_POST['compare_price'])) ? (float)$_POST['compare_price'] : null;
@@ -119,6 +146,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+
+    // Stamp the shop logo on uploaded product images (anti-theft watermark).
+    Watermark::applyToPaths($uploaded_images);
 
     // Single video upload handling
     $uploaded_video = $video_url_manual;
@@ -277,12 +307,14 @@ include 'layout/header.php';
                 </div>
                 <div>
                     <label style="display: block; font-family: var(--f-semi); font-size: 10px; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px;">Brand</label>
-                    <select name="brand_id" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit;">
+                    <select name="brand_id" id="brand-select" onchange="toggleCustomBrand()" style="width: 100%; padding: 12px; border: 1px solid var(--light-gray); font-family: inherit; background: #fff;">
                         <option value="">Select Brand</option>
                         <?php foreach ($brands as $brand): ?>
-                            <option value="<?= $brand['id'] ?>"><?= $brand['name'] ?></option>
+                            <option value="<?= $brand['id'] ?>"><?= htmlspecialchars($brand['name']) ?></option>
                         <?php endforeach; ?>
+                        <option value="_new">✍️ Other (add new brand)</option>
                     </select>
+                    <input type="text" name="custom_brand_name" id="custom-brand-input" placeholder="Type the new brand name..." style="display:none; width: 100%; padding: 12px; margin-top: 8px; border: 1px solid var(--light-gray); font-family: inherit;">
                 </div>
             </div>
 
@@ -468,6 +500,13 @@ const productForm = document.getElementById('add-product-form');
 if (productForm) productForm.addEventListener('submit', function(event) {
     if (!validateProductUpload()) event.preventDefault();
 });
+function toggleCustomBrand() {
+    const sel = document.getElementById('brand-select');
+    const inp = document.getElementById('custom-brand-input');
+    if (!sel || !inp) return;
+    inp.style.display = sel.value === '_new' ? 'block' : 'none';
+    if (sel.value === '_new') inp.focus();
+}
 function toggleCurrency() {
     const sel = document.getElementById('currency-select').value;
     document.getElementById('price-ghs-fields').style.display = sel === 'GHS' ? '' : 'none';
