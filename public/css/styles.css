@@ -5861,6 +5861,33 @@ form button[type="submit"]:hover {
 .view-btn.active { background: var(--ink); color: #fff; }
 .view-btn svg { width: 16px; height: 16px; }
 
+/* Toggle inside centered homepage rail headers */
+.rail-head .view-toggle { margin-top: 8px; }
+
+/* Homepage rails in list view: one card per row, full width.
+   High specificity (.rail-scroller prefix) so these beat the page's
+   inline !important rail-grid rules on mobile too. */
+.rail-scroller .slider-viewport.list-view {
+    display: block !important;
+    overflow-x: hidden !important;
+    scroll-snap-type: none !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    grid-template-columns: none !important;
+}
+.rail-scroller .slider-viewport.list-view .slider-track {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+    gap: 0 !important;
+}
+.rail-scroller .slider-viewport.list-view .slider-track .card {
+    width: 100% !important;
+    flex: none !important;
+    min-width: 0 !important;
+    margin-bottom: 12px;
+}
+
 /* List view — desktop only: 2 images left evenly, details right like Toyota Highlander */
 @media (min-width: 769px) {
     .products-grid.list-view,

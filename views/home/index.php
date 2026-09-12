@@ -88,6 +88,14 @@ if (!empty($launchCats)):
                 <div class="rail-eyebrow">JUST IN</div>
                 <h2>New Drops</h2>
                 <a class="rail-link" href="<?= APP_URL ?>/shop">See all products →</a>
+                <div class="view-toggle" role="group" aria-label="View toggle">
+                    <button id="view-grid" class="view-btn active" data-view-mode="grid" aria-pressed="true" onclick="setProductView('grid')" title="Grid view">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    </button>
+                    <button id="view-list" class="view-btn" data-view-mode="list" aria-pressed="false" onclick="setProductView('list')" title="List view">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                    </button>
+                </div>
             </div>
             <div class="slider-container">
                 <button type="button" class="rail-arrow rail-prev-arr" data-rail-prev aria-label="Previous">
@@ -141,6 +149,14 @@ if (!empty($launchCats)):
                         <div class="rail-eyebrow">EXPLORE CATEGORY</div>
                         <h2><?= !empty($drop['category']['icon']) ? htmlspecialchars($drop['category']['icon']) . ' ' : '' ?><?= htmlspecialchars($drop['category']['name']) ?></h2>
                         <a class="rail-link" href="<?= APP_URL ?>/shop?cat=<?= htmlspecialchars($drop['category']['slug']) ?>">Shop all <?= htmlspecialchars($drop['category']['name']) ?> →</a>
+                        <div class="view-toggle" role="group" aria-label="View toggle">
+                            <button class="view-btn active" data-view-mode="grid" aria-pressed="true" onclick="setProductView('grid')" title="Grid view">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                            </button>
+                            <button class="view-btn" data-view-mode="list" aria-pressed="false" onclick="setProductView('list')" title="List view">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="slider-container">
                         <button type="button" class="rail-arrow rail-prev-arr" data-rail-prev aria-label="Previous">

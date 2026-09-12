@@ -72,11 +72,13 @@ $_t = Translator::getInstance();
             -webkit-appearance: none; -moz-appearance: none; appearance: none;
             cursor: pointer; outline: none; color: #1a1a1a;
         }
-        /* Desktop: sit the combo in the nav bar (top-right) — body-level, so position:fixed works */
+        /* Desktop: sit the combo just below the nav bar, at the right edge.
+           z-index stays BELOW the nav (2000) so the category/account dropdowns
+           always paint above the language picker instead of being hidden by it. */
         @media (min-width: 769px) {
             #google_translate_element {
-                position: fixed !important; top: 16px !important; right: 240px !important;
-                z-index: 2001 !important; display: inline-flex !important; align-items: center;
+                position: fixed !important; top: 84px !important; right: 20px !important;
+                z-index: 1500 !important; display: inline-flex !important; align-items: center;
             }
             .gt-float { display: none !important; }
         }

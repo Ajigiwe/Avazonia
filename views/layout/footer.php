@@ -407,13 +407,17 @@ async function quickAddToCart(pid, event) {
     }
 }
 
-// Product view toggle (grid/list) — HOME + SHOP
+// Product view toggle (grid/list) — SHOP + HOME
 window.setProductView = function(mode) {
     document.querySelectorAll('.products-grid, .product-grid').forEach(function(el){
         el.classList.toggle('list-view', mode === 'list');
     });
+    document.querySelectorAll('.rail-scroller .slider-viewport').forEach(function(el){
+        el.classList.toggle('list-view', mode === 'list');
+    });
     document.querySelectorAll('.view-btn').forEach(function(btn){
-        var isActive = btn.id === 'view-' + mode;
+        var m = btn.getAttribute('data-view-mode') || (btn.id === 'view-grid' ? 'grid' : (btn.id === 'view-list' ? 'list' : ''));
+        var isActive = m === mode;
         btn.classList.toggle('active', isActive);
         btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
