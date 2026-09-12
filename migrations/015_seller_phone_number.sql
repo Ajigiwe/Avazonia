@@ -16,6 +16,7 @@ SET @ddl = IF(
   'SELECT 1'
 );
 PREPARE stmt FROM @ddl;
+EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 -- Seed existing sellers: phone starts as their WhatsApp number (editable later)
