@@ -5893,7 +5893,7 @@ form button[type="submit"]:hover {
     .products-grid.list-view,
     .product-grid.list-view {
         grid-template-columns: 1fr !important;
-        gap: 16px !important;
+        gap: 20px !important;
     }
     .list-view .card {
         display: flex !important;
@@ -5998,6 +5998,48 @@ form button[type="submit"]:hover {
         height: 0 !important;
         padding: 0 !important;
     }
+
+    /* Desktop list view switches to the same 3-image trio layout as phones:
+       3 images side-by-side on top, details below. Cards stack as columns. */
+    .list-view .card {
+        flex-direction: column !important;
+    }
+    .list-view .card .card-link-block {
+        flex-direction: column !important;
+    }
+    .list-view .card-img-wrap {
+        display: none !important;
+    }
+    .list-view .card-trio {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 10px !important;
+        padding: 12px 12px 0 !important;
+        background: #fff !important;
+    }
+    .list-view .trio-slot {
+        aspect-ratio: 4 / 3 !important;
+        border-radius: 8px !important;
+    }
+    .list-view .card-trio.trio-count-1 {
+        grid-template-columns: 1fr !important;
+    }
+    .list-view .card-trio.trio-count-1 .trio-slot {
+        aspect-ratio: 16 / 7 !important;
+    }
+    .list-view .card-trio.trio-count-2 {
+        grid-template-columns: 1fr 1fr !important;
+    }
+    .list-view .trio-price-overlay {
+        font-size: 14px !important;
+        top: 22px !important;
+        left: 22px !important;
+    }
+    .list-view .card-body {
+        padding: 14px 18px 18px !important;
+        row-gap: 8px !important;
+    }
+    .list-view .card-action-arrow { display: none !important; }
 }
 /* Mobile list view — slider restored (same as desktop) */
 @media (max-width: 768px) {
