@@ -219,6 +219,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$productId, $image_url, $isPrimary]);
             }
             
+            require_once __DIR__ . '/../core/Cache.php';
+            Cache::flushTags(['products']);
             $success = "Product added successfully!";
             header('Refresh: 2; URL=products.php');
         } catch (PDOException $e) {

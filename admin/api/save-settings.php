@@ -58,6 +58,11 @@ try {
         }
     }
 
+    // Settings like seller_verification_required / product_card_slider_enabled
+    // change which products (and card images) the home rails show.
+    require_once __DIR__ . '/../../core/Cache.php';
+    Cache::flushTags(['products']);
+
     $changedCount = count($input);
     Logger::log('SETTING_UPDATE', "Administrative update to $changedCount system configuration keys.", ['keys' => array_keys($input)]);
 

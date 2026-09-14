@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../core/Session.php';
+require_once __DIR__ . '/../core/Cache.php';
 require_once __DIR__ . '/../models/Product.php';
 
 Session::start();
@@ -41,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'moder
     $pid=(int)($_POST['product_id']??0); $act=$_POST['moderate']??'';
     if ($pid && in_array($act,['active','rejected','draft'])) {
         $db->prepare("UPDATE products SET status_market=? WHERE id=?")->execute([$act,$pid]);
+        Cache::flushTags(['products']);
         $success="Product #$pid → ".strtoupper($act);
     }
 }

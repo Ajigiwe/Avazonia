@@ -1,6 +1,7 @@
 <?php
 // models/Product.php
 require_once __DIR__ . '/../core/Model.php';
+require_once __DIR__ . '/../core/Cache.php';
 
 class Product extends Model {
     public function __construct() {
@@ -65,6 +66,47 @@ class Product extends Model {
     private function getStockSql() {
         return " AND (:min_stock = :min_stock)";
     }
+
+    /**
+     * Batched card-image hydration.
+     * Views used to run one "SELECT url FROM product_images" per rendered card
+     * (N+1 on every rails page). This fetches the top N images for a whole set
+     * of products in a single query and attaches them as $row['card_images'].
+     * @param array $rows Product rows; keyed access used: id.
+     * @param int   $per  Max images per product (matches the card slider cap).
+     * @return array The same rows, each with a 'card_images' array of URLs.
+     */
+    public function attachCardImages(array $rows, int $per = 5): array {
+        $ids = [];
+        foreach ($rows as $row) {
+            if (!empty($row['id'])) $ids[] = (int)$row['id'];
+        }
+        if (empty($ids)) return $rows;
+        $ids = array_values(array_unique($ids));
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "SELECT product_id, url FROM product_images WHERE product_id IN ($placeholders)
+                ORDER BY product_id ASC, is_primary DESC, sort_order ASC, id ASC";
+        try {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($ids);
+        } catch (Throwable $e) {
+            // Table missing on legacy installs — cards fall back to primary_image.
+            return $rows;
+        }
+        $byProduct = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $pid = (int)$row['product_id'];
+            if (!isset($byProduct[$pid])) $byProduct[$pid] = [];
+            if (count($byProduct[$pid]) < $per) $byProduct[$pid][] = $row['url'];
+        }
+        foreach ($rows as &$r) {
+            $pid = (int)($r['id'] ?? 0);
+            $r['card_images'] = $byProduct[$pid] ?? [];
+        }
+        unset($r);
+        return $rows;
+    }
+
     private function sellerSelect(): string {
         return ", s.business_name as seller_name, s.seller_type, s.verification_level, s.is_verified, s.whatsapp_number as seller_whatsapp, s.wechat_id as seller_wechat, s.phone_number as seller_phone, st.slug as store_slug, st.name as store_name ";
     }
@@ -447,11 +489,15 @@ class Product extends Model {
         $params[]=(int)$id; $params[]=(int)$sellerId;
         $sql="UPDATE products SET ".implode(', ',$fields)." WHERE id=? AND seller_id=?";
         $stmt=$this->db->prepare($sql);
-        return $stmt->execute($params);
+        $ok = $stmt->execute($params);
+        Cache::flushTags(['products']);
+        return $ok;
     }
     public function deleteBySeller(int $id, int $sellerId): bool {
         $stmt=$this->db->prepare("UPDATE products SET is_active=0 WHERE id=? AND seller_id=?");
-        return $stmt->execute([$id, $sellerId]);
+        $ok = $stmt->execute([$id, $sellerId]);
+        Cache::flushTags(['products']);
+        return $ok;
     }
     public function getExportListings(int $limit=8): array {
         $sql="SELECT p.*, pi.url as primary_image ".$this->sellerSelect()." FROM products p LEFT JOIN product_images pi ON p.id=pi.product_id AND pi.is_primary=1 ".$this->sellerJoins()." WHERE p.vehicle_origin='international_export' AND p.is_active=1 AND (p.status_market IS NULL OR p.status_market='active') ".$this->getStockSql()." ORDER BY p.created_at DESC LIMIT :limit";
@@ -493,6 +539,7 @@ class Product extends Model {
             $deleteProduct->execute([(int)$id]);
 
             $this->db->commit();
+            Cache::flushTags(['products']);
 
             $message = 'Product deleted successfully.';
             if ($ordersUsingProduct > 0) {

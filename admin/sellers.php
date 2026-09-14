@@ -31,6 +31,8 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
             // no need for a separate approve action per product.
             if ($verified) {
                 $db->prepare("UPDATE products SET status_market='active' WHERE seller_id=? AND status_market='pending_review'")->execute([(int)$seller['id']]);
+                require_once __DIR__ . '/../core/Cache.php';
+                Cache::flushTags(['products']);
             }
             header('Location: sellers.php?success=1'); exit;
     }

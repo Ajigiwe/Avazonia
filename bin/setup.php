@@ -9,6 +9,7 @@ $fresh = ($action === '--fresh' || $action === '--reset');
 
 require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../core/Cache.php';
 
 function run_sql_file(PDO $db, string $path): void {
     if (!file_exists($path)) {
@@ -251,6 +252,11 @@ foreach ($dirs as $d) {
     $full = __DIR__ . '/../' . $d;
     if (!is_dir($full)) { mkdir($full, 0775, true); echo "  created $d\n"; }
     else echo "  OK      $d\n";
+}
+
+// Clear cached homepage rails so seeded data appears immediately.
+if (class_exists('Cache')) {
+    Cache::flushAll();
 }
 
 echo "\nDone. Next:\n";

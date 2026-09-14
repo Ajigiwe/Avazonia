@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../core/Controller.php';
+require_once __DIR__ . '/../core/Cache.php';
 if (!class_exists('Csrf')) require_once __DIR__ . '/../core/Csrf.php';
 require_once __DIR__ . '/../models/Seller.php';
 require_once __DIR__ . '/../models/Store.php';
@@ -510,6 +511,7 @@ class SellerController extends Controller {
                 $isPrimary = empty($uploadedImages) ? 1 : 0;
                 $db->prepare("INSERT INTO product_images (product_id,url,is_primary) VALUES (?,?,?)")->execute([$pid, trim($_POST['image_url']), $isPrimary]);
             }
+            Cache::flushTags(['products']);
             $this->redirect((defined('APP_PATH') ? APP_PATH : '') . '/seller/products?success=1');
             return;
         } catch (\Throwable $e) {

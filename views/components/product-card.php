@@ -16,7 +16,14 @@ global $dbSettings;
 $sliderEnabled = !isset($dbSettings['product_card_slider_enabled']) || $dbSettings['product_card_slider_enabled'] == '1';
 
 $processedCardImages = [];
-if ($sliderEnabled) {
+if ($sliderEnabled && !empty($p['card_images']) && is_array($p['card_images'])) {
+    // Preloaded by Product::attachCardImages() (batched, no per-card query)
+    foreach ($p['card_images'] as $url) {
+        $processedCardImages[] = filter_var($url, FILTER_VALIDATE_URL) ? $url : APP_PATH . '/' . ltrim($url, '/');
+    }
+} elseif ($sliderEnabled) {
+    // Fallback for cards rendered outside batched controllers (shop, store, etc.):
+    // keep the legacy single-card query.
     $db = db();
     $stmt = $db->prepare("SELECT url FROM product_images WHERE product_id = ? ORDER BY is_primary DESC, sort_order ASC, id ASC LIMIT 5");
     $stmt->execute([$p['id']]);
@@ -30,7 +37,7 @@ if ($sliderEnabled) {
 if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
 ?>
 
-<div class="card">
+<div class="card<?= !empty($homeGhost) ? ' card-ghost is-hidden-ghost' : '' ?>">
     <!-- Action Arrow (Top Right) -->
     <a href="<?= APP_URL ?>/product/<?= $p['slug'] ?>" class="card-action-arrow" aria-label="View Product">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
