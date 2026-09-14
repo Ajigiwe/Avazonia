@@ -4,6 +4,84 @@ require_once __DIR__ . '/../layout/head.php';
 require_once __DIR__ . '/../layout/nav.php';
 ?>
 
+<?php
+// ── "VIEW MORE" footer for product sections ─────────────────
+// $homeMore = ['label' => string, 'url' => string]; $homeCount = items shown.
+// Desktop: reveals the preloaded hidden cards in place (no reload).
+// Mobile: the rail renders as a 2-col grid, so we deep-link instead of expanding.
+$homeMore = $homeMore ?? null;
+function home_view_more_footer(?array $homeMore, ?int $homeCount, string $pos = 'post'): string {
+    if (!$homeMore) return '';
+    $desktopCount = $homeCount !== null ? ($homeCount - 10) : null;
+    $reveal = $desktopCount !== null && $desktopCount > 0
+        ? '<span class="rail-more-expand">View ' . (int)$desktopCount . ' more</span>'
+        : '<span class="rail-more-expand">View more</span>';
+    return '<div class="rail-more">'
+        . '<a class="rail-more-btn js-rail-more" href="' . htmlspecialchars($homeMore['url']) . '" data-pos="' . $pos . '">'
+        . $reveal . '<span class="rail-more-arrow">→</span></a>'
+        . '</div>';
+}
+?>
+
+<style>
+.rail-more { display: flex; justify-content: center; margin-top: 18px; }
+.rail-more-btn {
+    display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
+    font-family: var(--f-mono); font-size: 11px; font-weight: 800;
+    letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink); border: 2px solid var(--ink); padding: 12px 26px;
+    background: #fff; transition: all .25s ease;
+}
+.rail-more-btn:hover { background: var(--ink); color: #fff; }
+.rail-more-btn:hover .rail-more-arrow { transform: translateX(4px); }
+.rail-more-arrow { display: inline-block; transition: transform .25s ease; }
+.rail-more.hidden { display: none; }
+
+/* Desktop expand: viewport grows from single rail height to show all cards; */
+/* hidden cards come out of display:none and join the wrap grid.            */
+@media (min-width: 901px) {
+    .rail-expanded .slider-viewport { height: auto !important; overflow: visible !important; }
+    .rail-expanded .slider-track { flex-wrap: wrap; row-gap: 20px; }
+    .rail-expanded .slider-track .card.card-ghost { display: block; }
+}
+</style>
+
+<script>
+(function () {
+    function bindRailMore() {
+        document.querySelectorAll('.js-rail-more').forEach(function (btn) {
+            if (btn.dataset.bound) return;
+            btn.dataset.bound = '1';
+            btn.addEventListener('click', function (e) {
+                if (window.matchMedia('(max-width: 900px)').matches) return; // mobile: deep-link out
+                e.preventDefault();
+                var sec = btn.closest('.products-sec');
+                var ghost = sec ? sec.querySelectorAll('.slider-track .card-ghost') : [];
+                var hidden = sec ? sec.querySelectorAll('.slider-track .card.is-hidden-ghost') : [];
+                // Grid sections (pre-orders): flip card display in place.
+                for (var i = 0; i < hidden.length; i++) hidden[i].classList.remove('is-hidden-ghost');
+                // Rails: flip the whole container into expanded (wrap) mode.
+                if (sec) sec.classList.add('rail-expanded');
+                if (ghost.length || hidden.length) {
+                    btn.closest('.rail-more').classList.add('hidden');
+                    // Remove the injected desktop height cap so the wrap grid shows fully.
+                    var vp = sec ? sec.querySelector('.slider-viewport') : null;
+                    if (vp) vp.style.height = '';
+                } else {
+                    window.location.href = btn.href; // nothing extra preloaded — deep-link out
+                }
+        });
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindRailMore);
+    } else {
+        bindRailMore();
+    }
+})();
+</script>
+
+
 <div class="home-hero-band">
 <?php require_once __DIR__ . '/../layout/hero.php'; ?>
 </div>
@@ -106,13 +184,24 @@ if (!empty($launchCats)):
                 </button>
                 <div class="slider-viewport">
                     <div class="slider-track">
-                        <?php if (!empty($newDrops)): foreach ($newDrops as $p): ?>
-                            <?php require __DIR__ . '/../components/product-card.php'; ?>
-                        <?php endforeach; else: ?>
+                        <?php if (!empty($newDrops)): 
+                            $newDropsShown = array_slice($newDrops, 0, 10);
+                            $newDropsExtra = array_slice($newDrops, 10);
+                            foreach ($newDropsShown as $p): ?>
+                                <?php require __DIR__ . '/../components/product-card.php'; ?>
+                            <?php endforeach; ?>
+                            <?php foreach ($newDropsExtra as $p): $homeGhost = true; ?>
+                                <?php require __DIR__ . '/../components/product-card.php'; ?>
+                            <?php endforeach; $homeGhost = false;
+                        else: ?>
                             <p style="color: var(--mid-gray); padding: 20px 0;">No products yet — check back soon.</p>
                         <?php endif; ?>
                     </div>
                 </div>
+                <?php
+                $homeMore = !empty($newDrops) ? ['label' => 'view_all_products', 'url' => APP_URL . '/shop'] : null;
+                echo home_view_more_footer($homeMore, count($newDrops));
+                ?>
             </div>
         </div>
     </div>
@@ -174,6 +263,10 @@ if (!empty($launchCats)):
                         </div>
                     </div>
                 </div>
+                <?php
+                $homeMore = ['label' => 'category_view_more', 'url' => APP_URL . '/shop?cat=' . urlencode($drop['category']['slug'])];
+                echo home_view_more_footer($homeMore, count($drop['products']), 'post');
+                ?>
             </div>
         </section>
     <?php endforeach; ?>
@@ -200,6 +293,10 @@ if (!empty($launchCats)):
                 <?php require __DIR__ . '/../components/product-card.php'; ?>
             <?php endforeach; ?>
         </div>
+        <?php
+        $homeMore = ['label' => 'view_all_preorders', 'url' => APP_URL . '/deals'];
+        echo home_view_more_footer($homeMore, count($preorders), 'grid');
+        ?>
     </div>
 </section>
 <?php endif; ?>
@@ -218,6 +315,10 @@ if (!empty($launchCats)):
     <div class="product-grid">
       <?php foreach($wholesaleDeals as $p): ?><?php require __DIR__ . '/../components/product-card.php'; ?><?php endforeach; ?>
     </div>
+    <?php
+    $homeMore = ['label' => 'wholesale_view_more', 'url' => APP_URL . '/shop?listing_type=wholesale'];
+    echo home_view_more_footer($homeMore, count($wholesaleDeals), 'grid');
+    ?>
   </div>
 </section>
 <?php endif; ?>

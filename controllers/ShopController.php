@@ -101,11 +101,21 @@ class ShopController extends Controller {
             'hasNext'   => $page < $totalPages,
         ];
 
+        // Category filter (dropdown). Resolved for every branch so the filter
+        // chips + title stay correct even on special slugs / search results.
+        $activeCategory = null;
+        if ($catSlug) {
+            $activeCategory = $categoryModel->findBySlug($catSlug) ?: null;
+        } elseif ($catId ?? null) {
+            $activeCategory = $categoryModel->findById((int)$catId) ?: null;
+        }
+
         $this->view('shop/index', [
             'products'   => $products,
             'categories' => $categories,
             'title'      => $title,
             'currentCat' => $catSlug,
+            'activeCategory' => $activeCategory,
             'wishlistIds' => $wishlistIds,
             'pagination' => $pagination,
         ]);

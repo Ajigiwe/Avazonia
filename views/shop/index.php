@@ -6,6 +6,25 @@ require_once __DIR__ . '/../layout/nav.php';
 
 <?php require_once __DIR__ . '/../layout/hero.php'; ?>
 
+<?php
+// Category filter state must be resolved BEFORE the page header renders,
+// since the <h2> title reflects the active category.
+$qsCat = $_GET;
+$mkCat = function ($v) use ($qsCat) {
+    $n = $qsCat;
+    if ($v === null) unset($n['cat']); else $n['cat'] = $v;
+    unset($n['page']);
+    $q = http_build_query($n);
+    return APP_URL . '/shop' . ($q ? "?$q" : '');
+};
+$currentCatName = $activeCategory['name'] ?? null;
+$topLevel = array_values(array_filter($categories, fn($c) => empty($c['parent_id'])));
+$subByParent = [];
+foreach ($categories as $c) {
+    if (!empty($c['parent_id'])) $subByParent[(int)$c['parent_id']][] = $c;
+}
+?>
+
 <section class="shop-content" style="padding: 120px 0 80px;">
     <div class="container">
         <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:48px; border-bottom:1px solid var(--extra-light-gray); padding-bottom:16px;">
@@ -13,7 +32,7 @@ require_once __DIR__ . '/../layout/nav.php';
                 <div>
                     <div class="sec-over">THE DROP</div>
                     <h2 class="hero-heading" style="color: var(--ink); margin-bottom: 0; line-height: 0.85;">
-                        <?= $currentCat ? strtoupper($currentCat) : 'ALL PRODUCTS' ?>
+                        <?= $currentCatName ? strtoupper(htmlspecialchars($currentCatName)) : 'ALL PRODUCTS' ?>
                     </h2>
                 </div>
             </div>
@@ -30,6 +49,36 @@ require_once __DIR__ . '/../layout/nav.php';
                     Showing <?= $pagination['total'] ?> items
                 </div>
             </div>
+        </div>
+
+        <!-- Category filter -->
+        <div class="shop-cat-filter" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <label for="shop-cat-select" style="font-family:var(--f-mono);font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mid-gray);">Category</label>
+            <div style="position:relative;">
+                <select id="shop-cat-select"
+                        onchange="if(this.value){window.location.href=this.value;}"
+                        style="appearance:none;-webkit-appearance:none;font-family:var(--f-semi);font-size:12px;font-weight:700;padding:9px 34px 9px 14px;border:2px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer;min-width:220px;">
+                    <option value="<?= $mkCat(null) ?>" <?= !$currentCatName ? 'selected' : '' ?>>All Categories</option>
+                    <?php foreach ($topLevel as $t):
+                        $subs = $subByParent[(int)$t['id']] ?? [];
+                        $isCurTop = $currentCatName && (int)($activeCategory['id'] ?? 0) === (int)$t['id'];
+                        $isCurChild = $currentCatName && (int)($activeCategory['parent_id'] ?? 0) === (int)$t['id'];
+                    ?>
+                        <option value="<?= $mkCat($t['slug']) ?>" <?= $isCurTop ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($t['icon'] ? $t['icon'] . ' ' : '') . htmlspecialchars($t['name']) ?>
+                        </option>
+                        <?php foreach ($subs as $s): ?>
+                            <option value="<?= $mkCat($s['slug']) ?>" <?= $currentCatName && (int)($activeCategory['id'] ?? 0) === (int)$s['id'] ? 'selected' : '' ?>>
+                                &nbsp;&nbsp;– <?= htmlspecialchars($s['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </select>
+                <span aria-hidden="true" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:10px;color:var(--ink);">▼</span>
+            </div>
+            <?php if ($currentCatName): ?>
+                <a href="<?= $mkCat(null) ?>" style="font-family:var(--f-mono);font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--red);text-decoration:none;border-bottom:1px solid var(--red);padding-bottom:2px;">Clear ×</a>
+            <?php endif; ?>
         </div>
 
         <!-- Marketplace Filters -->
