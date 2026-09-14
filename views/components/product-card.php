@@ -44,18 +44,26 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
     </a>
 
     <a href="<?= APP_URL ?>/product/<?= $p['slug'] ?>" class="card-link-block">
+        <?php
+        // Card image state (tag + badges), computed once for both image blocks.
+        // Tags + wishlist/cart render inside the trio block so they stay visible
+        // in grid view, which now uses the horizontal image trio by default.
+        if ($p['stock_qty'] <= 0 && empty($p['is_preorder']) && empty($p['is_dropshipping'])) {
+            $cardTagClass = 'outofstock'; $cardTagText = 'OUT OF STOCK';
+        } elseif (!empty($p['is_preorder'])) {
+            $cardTagClass = 'preorder'; $cardTagText = 'PRE-ORDER';
+        } elseif ($p['stock_qty'] > 0 && $p['stock_qty'] <= 5 && empty($p['is_preorder']) && empty($p['is_dropshipping'])) {
+            $cardTagClass = 'lowstock'; $cardTagText = 'ONLY ' . (int)$p['stock_qty'] . ' LEFT';
+        } elseif ($p['compare_at_price_ghs'] > $p['price_ghs']) {
+            $cardTagClass = 'discount'; $cardTagText = 'HOT';
+        } elseif (!empty($p['is_new_arrival'])) {
+            $cardTagClass = 'new'; $cardTagText = 'NEW';
+        } else {
+            $cardTagClass = 'ghost'; $cardTagText = '';
+        }
+        ?>
         <div class="card-img-wrap" onmouseenter="const v = this.querySelector('video'); if(v){v.style.opacity=1; v.play();}" onmouseleave="const v = this.querySelector('video'); if(v){v.style.opacity=0; v.pause();}">
-            <?php if ($p['stock_qty'] <= 0 && empty($p['is_preorder']) && empty($p['is_dropshipping'])): ?>
-                <span class="card-tag outofstock">OUT OF STOCK</span>
-            <?php elseif (!empty($p['is_preorder'])): ?>
-                <span class="card-tag preorder">PRE-ORDER</span>
-            <?php elseif ($p['stock_qty'] > 0 && $p['stock_qty'] <= 5 && empty($p['is_preorder']) && empty($p['is_dropshipping'])): ?>
-                <span class="card-tag lowstock">ONLY <?= (int)$p['stock_qty'] ?> LEFT</span>
-            <?php elseif ($p['compare_at_price_ghs'] > $p['price_ghs']): ?>
-                <span class="card-tag discount">HOT</span>
-            <?php elseif (!empty($p['is_new_arrival'])): ?>
-                <span class="card-tag new">NEW</span>
-            <?php endif; ?>
+            <span class="card-tag <?= $cardTagClass ?>"><?= $cardTagText ?></span>
             
             <div class="card-img <?= $sliderEnabled && count($processedCardImages) > 1 ? 'card-auto-slider' : '' ?>" style="position: relative;">
                 <?php foreach ($processedCardImages as $idx => $src): ?>
@@ -110,15 +118,53 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
             </div>
         </div>
 
-        <!-- Trio images for mobile list view (3 side-by-side) -->
+        <!-- Horizontal image trio — now the DEFAULT (grid view) product imagery.
+             Tag, price overlay, and wishlist/cart actions live here so they
+             stay visible in grid view. List view keeps its own layout. -->
         <?php $trioImages = array_slice($processedCardImages, 0, 3); ?>
         <div class="card-trio trio-count-<?= count($trioImages) ?>" data-images='<?= htmlspecialchars(json_encode($processedCardImages), ENT_QUOTES) ?>'>
+            <span class="card-tag <?= $cardTagClass ?>"><?= $cardTagText ?></span>
             <?php foreach ($trioImages as $trioIdx => $src): ?>
             <div class="trio-slot">
                 <img src="<?= $src ?>" alt="<?= htmlspecialchars($p['name']) ?>" loading="lazy">
             </div>
             <?php endforeach; ?>
             <div class="trio-price-overlay"><?= format_price($p) ?></div>
+            <div class="card-actions">
+                <!-- Add to Wishlist -->
+                <button type="button"
+                        class="card-wish-btn wish-btn-<?= $p['id'] ?> <?= in_array($p['id'], $wishlistIds ?? []) ? 'active' : '' ?>"
+                        onclick="toggleWishlist(<?= $p['id'] ?>, event)"
+                        aria-label="Add to Wishlist">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="<?= in_array($p['id'], $wishlistIds ?? []) ? 'var(--red)' : 'none' ?>" stroke="<?= in_array($p['id'], $wishlistIds ?? []) ? 'var(--red)' : 'var(--ink)' ?>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                </button>
+
+                <?php if ($p['stock_qty'] <= 0 && empty($p['is_preorder']) && empty($p['is_dropshipping'])): ?>
+                    <button type="button"
+                            class="card-cart-btn disabled"
+                            disabled
+                            aria-label="Out of Stock">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                            <path d="M3 6h18"></path>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                    </button>
+                <?php else: ?>
+                    <button type="button"
+                            class="card-cart-btn"
+                            onclick="quickAddToCart(<?= $p['id'] ?>, event)"
+                            aria-label="Add to Bag">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                            <path d="M3 6h18"></path>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                    </button>
+                <?php endif; ?>
+            </div>
         </div>
 
         <div class="card-body">
