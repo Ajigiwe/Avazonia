@@ -37,13 +37,9 @@ function home_view_more_footer(?array $homeMore, ?int $homeCount, string $pos = 
 .rail-more-arrow { display: inline-block; transition: transform .25s ease; }
 .rail-more.hidden { display: none; }
 
-/* Desktop expand: viewport grows from single rail height to show all cards; */
-/* hidden cards come out of display:none and join the wrap grid.            */
-@media (min-width: 901px) {
-    .rail-expanded .slider-viewport { height: auto !important; overflow: visible !important; }
-    .rail-expanded .slider-track { flex-wrap: wrap; row-gap: 20px; }
-    .rail-expanded .slider-track .card.card-ghost { display: block; }
-}
+/* Desktop expand: hidden ghost cards join the grid when View More is clicked. */
+.card.card-ghost.is-hidden-ghost { display: none !important; }
+.rail-expanded .slider-track .card.card-ghost.is-hidden-ghost { display: block !important; }
 </style>
 
 <script>
@@ -148,17 +144,19 @@ if (!empty($launchCats)):
             .rail-head h2 { font-weight: 800; font-size: clamp(20px, 3vw, 30px); margin: 0; line-height: 1.1; text-transform: uppercase; letter-spacing: -0.01em; }
             .rail-head a.rail-link { font-size: 11px; text-transform: uppercase; color: var(--mid-gray); font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--light-gray); padding-bottom: 3px; margin-top: 3px; }
             .rail-head a.rail-link:hover { color: var(--red); border-color: var(--red); }
-            /* Arrows centered on the rail (side overlay), hidden on touch sizes */
-            .rail-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 6; width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.08); background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: center; cursor: pointer; color: #000; padding: 0; }
-            .rail-arrow:hover { background: #000; color: #fff; }
-            .rail-arrow.rail-prev-arr { left: -10px; }
-            .rail-arrow.rail-next-arr { right: -10px; }
-            @media (max-width: 900px) { .rail-arrow { display: none; } }
-            /* Mobile: product rails become 2-column grids instead of horizontal scroll */
-            @media (max-width: 900px) {
-                .rail-scroller .slider-viewport { display: grid !important; grid-template-columns: repeat(2, 1fr); gap: 14px 10px; overflow-x: visible !important; padding-bottom: 0 !important; margin-bottom: 0 !important; }
-                .rail-scroller .slider-track { display: contents !important; width: auto !important; padding: 0 !important; }
-                .rail-scroller .slider-track .card { flex: none !important; width: auto !important; min-width: 0 !important; }
+            /* Product rails are wrapped grids, not horizontal scrollers:
+               5 per row on desktop, stepping down on smaller screens. */
+            .rail-scroller .slider-viewport { display: block !important; overflow: visible !important; padding-bottom: 0 !important; margin-bottom: 0 !important; scroll-snap-type: none !important; }
+            .rail-scroller .slider-track { display: grid !important; width: 100% !important; padding: 0 !important; grid-template-columns: repeat(5, 1fr) !important; gap: 20px 14px !important; }
+            .rail-scroller .slider-track .card { flex: none !important; width: auto !important; min-width: 0 !important; max-width: none !important; }
+            @media (max-width: 1200px) {
+                .rail-scroller .slider-track { grid-template-columns: repeat(4, 1fr) !important; }
+            }
+            @media (max-width: 1024px) {
+                .rail-scroller .slider-track { grid-template-columns: repeat(3, 1fr) !important; gap: 16px 12px !important; }
+            }
+            @media (max-width: 640px) {
+                .rail-scroller .slider-track { grid-template-columns: repeat(2, 1fr) !important; gap: 14px 10px !important; }
             }
         </style>
         <div class="rail-scroller">
@@ -176,12 +174,6 @@ if (!empty($launchCats)):
                 </div>
             </div>
             <div class="slider-container">
-                <button type="button" class="rail-arrow rail-prev-arr" data-rail-prev aria-label="Previous">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                </button>
-                <button type="button" class="rail-arrow rail-next-arr" data-rail-next aria-label="Next">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                </button>
                 <div class="slider-viewport">
                     <div class="slider-track">
                         <?php if (!empty($newDrops)): 
@@ -248,12 +240,6 @@ if (!empty($launchCats)):
                         </div>
                     </div>
                     <div class="slider-container">
-                        <button type="button" class="rail-arrow rail-prev-arr" data-rail-prev aria-label="Previous">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                        </button>
-                        <button type="button" class="rail-arrow rail-next-arr" data-rail-next aria-label="Next">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                        </button>
                         <div class="slider-viewport">
                             <div class="slider-track">
                                 <?php foreach ($drop['products'] as $p): ?>
@@ -559,27 +545,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── BESTSELLERS SLIDER ────────────────────────────
 });
 </script>
-</script>
 <?php endif; ?>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    // Generic prev/next scrolling for every homepage product rail.
-    // Works for New Drops and each per-category row: arrows + swipe both scroll the rail.
-    document.querySelectorAll('.rail-scroller').forEach((rail) => {
-        const vp = rail.querySelector('.slider-viewport');
-        const prev = rail.querySelector('[data-rail-prev]');
-        const next = rail.querySelector('[data-rail-next]');
-        if (!vp || !prev || !next) return;
-        const step = () => {
-            const card = vp.querySelector('.card');
-            return card ? card.getBoundingClientRect().width + 12 : 320;
-        };
-        next.addEventListener('click', () => vp.scrollBy({ left: step(), behavior: 'smooth' }));
-        prev.addEventListener('click', () => vp.scrollBy({ left: -step(), behavior: 'smooth' }));
-    });
-});
-</script>
 
 <!-- SUPPORT BANNER section -->
 <?php require __DIR__ . '/../components/support-card.php'; ?>
