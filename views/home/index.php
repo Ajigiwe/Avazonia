@@ -5,6 +5,27 @@ require_once __DIR__ . '/../layout/nav.php';
 ?>
 
 <?php
+// ── Interstitial promo banners: one admin-managed banner per call, between sections ──
+// $homeBanners comes from the controller; $homeBannerIdx advances across calls so
+// each section gap gets the next banner instead of stacking them all in one block.
+$homeBannerIdx = 0;
+function home_next_banner(array $banners, int &$idx): string {
+    while ($idx < count($banners)) {
+        $banner = $banners[$idx++];
+        $bSrc = $banner['image_url'] ?? '';
+        if (!$bSrc) continue;
+        if (!filter_var($bSrc, FILTER_VALIDATE_URL)) $bSrc = APP_URL . '/' . ltrim($bSrc, '/');
+        $bLink = trim($banner['link_url'] ?? '/shop');
+        if (preg_match('~^https?://~i', $bLink)) { $bHref = $bLink; $bExternal = true; }
+        else { $bHref = APP_URL . ($bLink !== '' && $bLink[0] !== '/' ? '/' : '') . $bLink; $bExternal = false; }
+        return '<div class="container home-banner-slot">'
+            . '<a class="banner-link" href="' . htmlspecialchars($bHref) . '"' . (!empty($bExternal) ? ' target="_blank" rel="noopener"' : '') . '>'
+            . '<img src="' . htmlspecialchars($bSrc) . '" alt="' . htmlspecialchars($banner['title'] ?? 'Promotion') . '" loading="lazy">'
+            . '</a></div>';
+    }
+    return '';
+}
+
 // ── "VIEW MORE" footer for product sections ─────────────────
 // $homeMore = ['label' => string, 'url' => string]; $homeCount = items shown.
 // Desktop: reveals the preloaded hidden cards in place (no reload).
@@ -40,6 +61,12 @@ function home_view_more_footer(?array $homeMore, ?int $homeCount, string $pos = 
 /* Desktop expand: hidden ghost cards join the grid when View More is clicked. */
 .card.card-ghost.is-hidden-ghost { display: none !important; }
 .rail-expanded .slider-track .card.card-ghost.is-hidden-ghost { display: block !important; }
+
+/* Interstitial promo banners between product sections. */
+.home-banner-slot { margin: 2px auto 30px; }
+.home-banner-slot a.banner-link { display: block; border-radius: 14px; overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,0.08); transition: transform .25s ease, box-shadow .25s ease; }
+.home-banner-slot a.banner-link:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.14); }
+.home-banner-slot img { display: block; width: 100%; height: auto; max-height: 320px; object-fit: cover; }
 </style>
 
 <script>
@@ -198,27 +225,7 @@ if (!empty($launchCats)):
         </div>
     </div>
 </section>
-
-<!-- HOMEPAGE PROMO BANNERS (admin-managed) — between New Drops and the category rows -->
-<?php if (!empty($homeBanners)): ?>
-<section class="products-sec" style="padding: 8px 0 40px;">
-    <div class="container">
-        <style>
-            .home-banners-list { display: flex; flex-direction: column; gap: 16px; }
-            .home-banners-list a.banner-link { display: block; border-radius: 14px; overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,0.08); transition: transform .25s ease, box-shadow .25s ease; }
-            .home-banners-list a.banner-link:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.14); }
-            .home-banners-list img { display: block; width: 100%; height: auto; max-height: 320px; object-fit: cover; }
-        </style>
-        <div class="home-banners-list">
-            <?php foreach ($homeBanners as $banner): $bSrc = $banner['image_url'] ?? ''; if (!$bSrc) continue; if (!filter_var($bSrc, FILTER_VALIDATE_URL)) $bSrc = APP_URL . '/' . ltrim($bSrc, '/'); $bLink = trim($banner['link_url'] ?? '/shop'); if (preg_match('~^https?://~i', $bLink)) { $bHref = $bLink; $bExternal = true; } else { $bHref = APP_URL . ($bLink !== '' && $bLink[0] !== '/' ? '/' : '') . $bLink; $bExternal = false; } ?>
-                <a class="banner-link" href="<?= htmlspecialchars($bHref) ?>"<?= !empty($bExternal) ? ' target="_blank" rel="noopener"' : '' ?>>
-                    <img src="<?= htmlspecialchars($bSrc) ?>" alt="<?= htmlspecialchars($banner['title'] ?? 'Promotion') ?>" loading="lazy">
-                </a>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</section>
-<?php endif; ?>
+<?php if (!empty($newDrops)): ?><?= home_next_banner($homeBanners ?? [], $homeBannerIdx) ?><?php endif; ?>
 
 <!-- TOP 10 PER MAJOR CATEGORY (seller listings included) -->
 <?php if (!empty($categoryDrops)): ?>
@@ -255,6 +262,7 @@ if (!empty($launchCats)):
                 ?>
             </div>
         </section>
+        <?php if (!empty($drop['products'])): ?><?= home_next_banner($homeBanners ?? [], $homeBannerIdx) ?><?php endif; ?>
     <?php endforeach; ?>
 <?php endif; ?>
 
@@ -286,6 +294,7 @@ if (!empty($launchCats)):
     </div>
 </section>
 <?php endif; ?>
+<?php if (!empty($preorders)): ?><?= home_next_banner($homeBanners ?? [], $homeBannerIdx) ?><?php endif; ?>
 
 
  <!-- MARKETPLACE: Wholesale + Intl Suppliers + Featured Businesses -->
@@ -308,6 +317,7 @@ if (!empty($launchCats)):
   </div>
 </section>
 <?php endif; ?>
+<?php if (!empty($wholesaleDeals)): ?><?= home_next_banner($homeBanners ?? [], $homeBannerIdx) ?><?php endif; ?>
 
 <?php if (!empty($featuredBusinesses) || !empty($intlSuppliers)): ?>
 <section style="padding:28px 0 32px;border-top:1px solid var(--light-gray);background:#fff;">
