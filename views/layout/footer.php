@@ -421,9 +421,6 @@ window.setProductView = function(mode) {
         url.searchParams.set('view', mode);
         history.replaceState(null, '', url);
     } catch(e) {}
-    // Visibility of slider vs trio changes with the mode — restart their cycles.
-    if (window.initCardSliders) window.initCardSliders();
-    if (window.initTrioSliders) window.initTrioSliders();
 };
 window.initProductView = function() {
     var urlMode = null;
@@ -454,10 +451,6 @@ window.initCardSliders = function() {
     document.querySelectorAll('.card-auto-slider').forEach(slider => {
         const images = slider.querySelectorAll('img.slide-img');
         if(images.length <= 1) return;
-        // Grid view hides the legacy single-image slider (the horizontal trio
-        // is the default imagery) — don't burn intervals on hidden blocks.
-        const wrap = slider.closest('.card-img-wrap');
-        if (wrap && wrap.offsetParent === null) return;
         let idx = 0;
         // Ensure first visible, rest hidden
         images.forEach((img,i)=>{ img.style.opacity = i===0?'1':'0'; img.style.transform = i===0?'scale(1) translateY(0)':'scale(1.05) translateY(8px)'; });
@@ -487,7 +480,6 @@ window.initTrioSliders = function() {
         var allImages;
         try { allImages = JSON.parse(trio.dataset.images || '[]'); } catch(e) { return; }
         if (allImages.length <= 3) return; // no cycling needed
-        if (trio.offsetParent === null) return; // trio hidden (list view desktop shows the slider)
         
         var slots = trio.querySelectorAll('.trio-slot');
         if (slots.length < 3) return;

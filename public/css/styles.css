@@ -6091,8 +6091,6 @@ form button[type="submit"]:hover {
     .list-view .card-img-wrap {
         display: none !important;
     }
-    /* Desktop list view uses the horizontal trio strip, with breathing room
-       (overrides the base grid's tight 4px gaps). */
     .list-view .card-trio {
         display: grid !important;
         grid-template-columns: repeat(3, 1fr) !important;
@@ -6112,9 +6110,6 @@ form button[type="submit"]:hover {
     }
     .list-view .card-trio.trio-count-2 {
         grid-template-columns: 1fr 1fr !important;
-    }
-    .list-view .card-trio .card-actions {
-        display: none !important;
     }
     .list-view .trio-price-overlay {
         font-size: 14px !important;
@@ -6175,24 +6170,16 @@ form button[type="submit"]:hover {
     .view-toggle { margin-left: auto; }
 }
  /* --- TRIO IMAGES (Mobile List View - 3 side-by-side) --- */
-/* Horizontal image trio — DEFAULT product imagery (grid view).
-   Tag, price overlay and card actions live inside this block. */
 .card-trio {
-    display: grid;
+    display: none;
     position: relative;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
-    border-radius: 10px 10px 0 0;
-    overflow: hidden;
-    background: #fff;
 }
 
 .trio-slot {
     overflow: hidden;
-    border-radius: 0;
+    border-radius: 6px;
     background: #fafafa;
     position: relative;
-    aspect-ratio: 1 / 1;
 }
 
 .trio-slot img {
@@ -6203,43 +6190,10 @@ form button[type="submit"]:hover {
     transition: opacity 0.4s ease;
 }
 
-/* Card hover zooms every visible trio image */
-.card:hover .trio-slot img {
-    transform: scale(1.06);
-}
-
-/* Tag pinned top-left over the trio */
-.card-trio .card-tag {
-    position: absolute;
-    top: 6px;
-    left: 6px;
-    z-index: 5;
-}
-.card-trio .card-tag.ghost { display: none; }
-
-/* Actions row pinned bottom over the trio (hover reveal like before) */
-.card-trio .card-actions {
-    position: absolute;
-    bottom: 6px;
-    left: 6px;
-    right: 6px;
-    display: flex;
-    gap: 4px;
-    z-index: 10;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: all .3s ease;
-}
-.card-trio:hover .card-actions,
-.card:hover .card-trio .card-actions {
-    opacity: 1;
-    transform: translateY(0);
-}
-
 .trio-price-overlay {
     position: absolute;
-    bottom: 6px;
-    right: 6px;
+    top: 8px;
+    left: 8px;
     background: rgba(255, 255, 255, 0.92);
     color: #16a34a;
     font-family: var(--f-display);
@@ -6254,13 +6208,7 @@ form button[type="submit"]:hover {
     line-height: 1.2;
 }
 
-/* Legacy slider is hidden by default now; list view re-shows it */
-.default-grid .card-img-wrap { display: none !important; }
-
-/* List view re-privatizes the trio: slider (desktop) / trio (mobile) as before */
-.list-view .card-trio {
-    display: none;
-}
+/* Mobile list-view: show trio, hide single-image slider */
 @media (max-width: 768px) {
     .list-view .card-trio {
         display: grid !important;
