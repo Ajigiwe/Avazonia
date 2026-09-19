@@ -205,6 +205,9 @@
                             <label style="display:flex;align-items:center;gap:8px;padding:12px;font-size:13px;cursor:pointer;">
                                 <input type="checkbox" name="oem_odm" value="1"> OEM/ODM Available
                             </label>
+                            <label style="display:flex;align-items:center;gap:8px;padding:12px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" name="available_in_ghana" value="1"> 🇬🇭 Available in Ghana
+                            </label>
                         </div>
                     </div>
                 </div>

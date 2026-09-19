@@ -43,6 +43,7 @@ $files = [
     __DIR__ . '/migrations/014_configure_community_links.sql',
     __DIR__ . '/migrations/015_seller_phone_number.sql',
     __DIR__ . '/migrations/016_product_watermark.sql',
+    __DIR__ . '/migrations/017_product_ghana.sql',
 ];
 
 foreach ($files as $f) {

@@ -45,17 +45,20 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
 
     <a href="<?= APP_URL ?>/product/<?= $p['slug'] ?>" class="card-link-block">
         <div class="card-img-wrap" onmouseenter="const v = this.querySelector('video'); if(v){v.style.opacity=1; v.play();}" onmouseleave="const v = this.querySelector('video'); if(v){v.style.opacity=0; v.pause();}">
+            <div class="card-tags">
             <?php if ($p['stock_qty'] <= 0 && empty($p['is_preorder']) && empty($p['is_dropshipping'])): ?>
                 <span class="card-tag outofstock">OUT OF STOCK</span>
             <?php elseif (!empty($p['is_preorder'])): ?>
                 <span class="card-tag preorder">PRE-ORDER</span>
-            <?php elseif ($p['stock_qty'] > 0 && $p['stock_qty'] <= 5 && empty($p['is_preorder']) && empty($p['is_dropshipping'])): ?>
-                <span class="card-tag lowstock">ONLY <?= (int)$p['stock_qty'] ?> LEFT</span>
             <?php elseif ($p['compare_at_price_ghs'] > $p['price_ghs']): ?>
                 <span class="card-tag discount">HOT</span>
             <?php elseif (!empty($p['is_new_arrival'])): ?>
                 <span class="card-tag new">NEW</span>
             <?php endif; ?>
+            <?php if (!empty($p['available_in_ghana'])): ?>
+                <span class="card-tag ghana">🇬🇭 IN GHANA</span>
+            <?php endif; ?>
+            </div>
             
             <div class="card-img <?= $sliderEnabled && count($processedCardImages) > 1 ? 'card-auto-slider' : '' ?>" style="position: relative;">
                 <?php foreach ($processedCardImages as $idx => $src): ?>

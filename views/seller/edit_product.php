@@ -26,6 +26,13 @@
         </div>
     </div>
 
+    <div style="margin-bottom:20px;">
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;font-weight:600;color:var(--ink);">
+            <input type="checkbox" name="available_in_ghana" value="1" <?= !empty($product['available_in_ghana']) ? 'checked' : '' ?>>
+            🇬🇭 Available in Ghana (shows a green "IN GHANA" tag on the product card)
+        </label>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
         <div>
             <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">Category</label>

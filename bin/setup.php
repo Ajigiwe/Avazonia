@@ -163,6 +163,7 @@ try {
         $ensureCol('products','location_country',"TEXT DEFAULT 'GH'");
         $ensureCol('products','vehicle_origin',"TEXT");
         $ensureCol('products','status_market',"TEXT DEFAULT 'active'");
+        $ensureCol('products','available_in_ghana',"INTEGER DEFAULT 0");
         $ensureCol('order_items','seller_id',"INTEGER");
         $ensureCol('order_items','store_id',"INTEGER");
         // Categories expansion

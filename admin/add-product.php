@@ -79,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $is_bestseller = isset($_POST['is_bestseller']) ? 1 : 0;
     $is_featured = isset($_POST['is_featured']) ? 1 : 0;
     $is_dropshipping = isset($_POST['is_dropshipping']) ? 1 : 0;
+    $available_in_ghana = isset($_POST['available_in_ghana']) ? 1 : 0;
     $lead_time = !empty($_POST['lead_time']) ? (int)$_POST['lead_time'] : null;
     // Marketplace
     $seller_id = !empty($_POST['seller_id']) ? (int)$_POST['seller_id'] : null;
@@ -197,9 +198,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $compare_price_usd, $currency, $stock, $description, $features_json,
                 $specs_json, $tags, $meta_title, $meta_description, $meta_keywords,
                 $is_preorder, $is_bestseller, $is_featured, $is_dropshipping,
-                $lead_time, $uploaded_video
+                $available_in_ghana, $lead_time, $uploaded_video
             ];
-            $productColumns = 'name, slug, category_id, brand_id, seller_id, store_id, listing_type, visibility, condition_type, moq, wholesale_price_ghs, fob_price_usd, incoterms, production_capacity, oem_odm, location_country, vehicle_origin, status_market, price_ghs, compare_at_price_ghs, price_usd, compare_at_price_usd, currency, stock_qty, description, features, specs, tags, meta_title, meta_description, meta_keywords, is_preorder, is_bestseller, is_featured, is_dropshipping, lead_time_days, video_url';
+            $productColumns = 'name, slug, category_id, brand_id, seller_id, store_id, listing_type, visibility, condition_type, moq, wholesale_price_ghs, fob_price_usd, incoterms, production_capacity, oem_odm, location_country, vehicle_origin, status_market, price_ghs, compare_at_price_ghs, price_usd, compare_at_price_usd, currency, stock_qty, description, features, specs, tags, meta_title, meta_description, meta_keywords, is_preorder, is_bestseller, is_featured, is_dropshipping, available_in_ghana, lead_time_days, video_url';
             $placeholders = implode(', ', array_fill(0, count($productValues), '?'));
             $stmt = $db->prepare("INSERT INTO products ($productColumns) VALUES ($placeholders)");
             $stmt->execute($productValues);
@@ -453,6 +454,10 @@ include 'layout/header.php';
                     <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer;">
                         <input type="checkbox" name="is_dropshipping" value="1">
                         <span>Global Direct (Drop Shipping)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer;">
+                        <input type="checkbox" name="available_in_ghana" value="1">
+                        <span>🇬🇭 Available in Ghana</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer; color: var(--red); font-weight: 800;">
                         <input type="checkbox" name="is_bestseller" value="1">

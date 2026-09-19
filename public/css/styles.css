@@ -2866,12 +2866,20 @@ form button[type="submit"]:hover {
     }
 }
 
-/* Tags */
-.card-tag {
+/* Tags — stacked in a column so a status tag and the Ghana tag never overlap */
+.card-tags {
     position: absolute;
     top: 6px;
     left: 6px;
     z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    pointer-events: none;
+}
+
+.card-tag {
     font-family: var(--f-mono);
     font-size: 8px;
     font-weight: 900;
@@ -2903,6 +2911,11 @@ form button[type="submit"]:hover {
 
 .card-tag.lowstock {
     background: #D97706;
+    color: #fff;
+}
+
+.card-tag.ghana {
+    background: #006B3F;
     color: #fff;
 }
 

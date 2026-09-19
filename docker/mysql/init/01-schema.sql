@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS products (
   updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   is_preorder         TINYINT(1) DEFAULT 0,
   is_dropshipping     TINYINT(1) DEFAULT 0,
+  available_in_ghana  TINYINT(1) DEFAULT 0,
   lead_time_days      INT DEFAULT NULL,
   CONSTRAINT chk_compare_price CHECK (
     (currency = 'GHS' AND (compare_at_price_ghs IS NULL OR compare_at_price_ghs > price_ghs))

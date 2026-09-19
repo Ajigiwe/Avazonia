@@ -101,6 +101,7 @@ class SellerController extends Controller {
                 'visibility' => $_POST['visibility']??'public',
                 'wholesale_price_ghs' => !empty($_POST['wholesale_price_ghs'])?(float)$_POST['wholesale_price_ghs']:null,
                 'category_id' => (int)($_POST['category_id']??0) ?: null,
+                'available_in_ghana' => isset($_POST['available_in_ghana'])?1:0,
             ];
             if (!$data['name'] || !$data['price_ghs']) {
                 $this->view('seller/edit_product', ['seller'=>$seller,'product'=>$product,'categories'=>(new Category())->getSubcategories(),'error'=>'Name and price required','page'=>'products']);
@@ -470,6 +471,7 @@ class SellerController extends Controller {
                 'incoterms'=>$incoterms,
                 'production_capacity'=>$productionCapacity,
                 'oem_odm'=>$oemOdm,
+                'available_in_ghana'=>isset($_POST['available_in_ghana'])?1:0,
                 'price_ghs'=>$price,
                 'compare_at_price_ghs'=>$comparePrice,
                 'currency'=>'GHS',

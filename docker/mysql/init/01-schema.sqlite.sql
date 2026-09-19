@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS products (
   updated_at          TEXT DEFAULT (datetime('now')),
   is_preorder         INTEGER DEFAULT 0,
   is_dropshipping     INTEGER DEFAULT 0,
+  available_in_ghana  INTEGER DEFAULT 0,
   lead_time_days      INTEGER,
   listing_type        TEXT DEFAULT 'retail',
   visibility          TEXT DEFAULT 'public',

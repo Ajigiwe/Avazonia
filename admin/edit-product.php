@@ -120,6 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $is_featured = isset($_POST['is_featured']) ? 1 : 0;
         $is_preorder = isset($_POST['is_preorder']) ? 1 : 0;
         $is_dropshipping = isset($_POST['is_dropshipping']) ? 1 : 0;
+        $available_in_ghana = isset($_POST['available_in_ghana']) ? 1 : 0;
         $lead_time = !empty($_POST['lead_time']) ? (int)$_POST['lead_time'] : null;
         $seller_id = !empty($_POST['seller_id']) ? (int)$_POST['seller_id'] : null;
         $store_id=null; if($seller_id){ $r=$db->prepare("SELECT id FROM stores WHERE seller_id=? LIMIT 1"); $r->execute([$seller_id]); $store_id=$r->fetchColumn()?:null; }
@@ -233,8 +234,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$error) {
         try {
-            $stmt = $db->prepare("UPDATE products SET name = ?, category_id = ?, brand_id = ?, seller_id=?, store_id=?, listing_type=?, visibility=?, condition_type=?, moq=?, wholesale_price_ghs=?, fob_price_usd=?, incoterms=?, production_capacity=?, oem_odm=?, location_country=?, vehicle_origin=?, price_ghs = ?, compare_at_price_ghs = ?, price_usd = ?, compare_at_price_usd = ?, currency = ?, stock_qty = ?, description = ?, features = ?, specs = ?, tags = ?, meta_title = ?, meta_description = ?, meta_keywords = ?, is_active = ?, is_bestseller = ?, is_featured = ?, is_preorder = ?, is_dropshipping = ?, lead_time_days = ? WHERE id = ?");
-            $stmt->execute([$name, $category_id, $brand_id, $seller_id, $store_id, $listing_type, $visibility, $condition_type, $moq, $wholesale_price, $fob_price, $incoterms, $production_capacity, $oem_odm, $location_country, $vehicle_origin, $price, $compare_price, $price_usd, $compare_price_usd, $currency, $stock, $description, $features_json, $specs_json, $tags, $meta_title, $meta_description, $meta_keywords, $is_active, $is_bestseller, $is_featured, $is_preorder, $is_dropshipping, $lead_time, $productId]);
+            $stmt = $db->prepare("UPDATE products SET name = ?, category_id = ?, brand_id = ?, seller_id=?, store_id=?, listing_type=?, visibility=?, condition_type=?, moq=?, wholesale_price_ghs=?, fob_price_usd=?, incoterms=?, production_capacity=?, oem_odm=?, location_country=?, vehicle_origin=?, price_ghs = ?, compare_at_price_ghs = ?, price_usd = ?, compare_at_price_usd = ?, currency = ?, stock_qty = ?, description = ?, features = ?, specs = ?, tags = ?, meta_title = ?, meta_description = ?, meta_keywords = ?, is_active = ?, is_bestseller = ?, is_featured = ?, is_preorder = ?, is_dropshipping = ?, available_in_ghana = ?, lead_time_days = ? WHERE id = ?");
+            $stmt->execute([$name, $category_id, $brand_id, $seller_id, $store_id, $listing_type, $visibility, $condition_type, $moq, $wholesale_price, $fob_price, $incoterms, $production_capacity, $oem_odm, $location_country, $vehicle_origin, $price, $compare_price, $price_usd, $compare_price_usd, $currency, $stock, $description, $features_json, $specs_json, $tags, $meta_title, $meta_description, $meta_keywords, $is_active, $is_bestseller, $is_featured, $is_preorder, $is_dropshipping, $available_in_ghana, $lead_time, $productId]);
             
             if ($video_updated) {
                 $stmt = $db->prepare("UPDATE products SET video_url = ? WHERE id = ?");
@@ -606,6 +607,10 @@ include 'layout/header.php';
                     <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer;">
                         <input type="checkbox" name="is_dropshipping" value="1" <?= $product['is_dropshipping'] ? 'checked' : '' ?>>
                         <span>Global Direct (Drop Shipping)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer;">
+                        <input type="checkbox" name="available_in_ghana" value="1" <?= !empty($product['available_in_ghana']) ? 'checked' : '' ?>>
+                        <span>🇬🇭 Available in Ghana</span>
                     </label>
                 </div>
 
