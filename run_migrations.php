@@ -22,7 +22,10 @@ function run_sql_file_ignore_errors($db, $file) {
     foreach (array_filter(array_map('trim', explode(';', implode("\n", $lines)))) as $stmt) {
         if ($stmt === '') continue;
         try {
-            $db->exec($stmt);
+            // query() + closeCursor() instead of exec(): drains any result set the
+            // statement returns so it can't poison the next statement (error 2014).
+            $st = $db->query($stmt);
+            if ($st instanceof PDOStatement) $st->closeCursor();
             echo "  ✓ " . substr(preg_replace('/\s+/', ' ', $stmt), 0, 60) . "...\n";
         } catch (PDOException $e) {
             $msg = $e->getMessage();
@@ -45,6 +48,15 @@ $files = [
     __DIR__ . '/migrations/016_product_watermark.sql',
     __DIR__ . '/migrations/017_product_ghana.sql',
 ];
+
+// MySQL only: force buffered results. Migrations like 015 execute server-side
+// prepared statements whose result sets (e.g. the IF(...)'s "SELECT 1" branch)
+// would otherwise stay open and make every later statement fail with error 2014.
+try {
+    if (db()->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
+        db()->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
+    }
+} catch (Throwable $e) { /* non-fatal */ }
 
 foreach ($files as $f) {
     if (file_exists($f)) run_sql_file_ignore_errors(db(), $f);
