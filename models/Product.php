@@ -113,6 +113,13 @@ class Product extends Model {
     private function sellerJoins(): string {
         return " LEFT JOIN sellers s ON p.seller_id=s.id LEFT JOIN stores st ON p.store_id=st.id ";
     }
+    // Region filter: products by sellers located in the given region name.
+    // Returns SQL fragment + params (null when no region requested).
+    private function regionFilter(?string $regionName): array {
+        if (!$regionName) return ['', []];
+        return [" AND s.region = :sregion ", [':sregion' => $regionName]];
+    }
+
     private function marketplaceWhere(): string {
         $extra = " AND (p.status_market IS NULL OR p.status_market='active') ";
         // Gate: until sellers are verified, their products are not sellable → hide unverified sellers' products
@@ -294,6 +301,8 @@ class Product extends Model {
         if (!empty($filters['condition_type'])) { $mpFilter.=" AND p.condition_type=:ct "; $mpParams[':ct']=$filters['condition_type']; }
         if (!empty($filters['vehicle_origin'])) { $mpFilter.=" AND p.vehicle_origin=:vo "; $mpParams[':vo']=$filters['vehicle_origin']; }
         if (!empty($filters['location_country'])) { $mpFilter.=" AND p.location_country=:lc "; $mpParams[':lc']=$filters['location_country']; }
+        [$regFilter, $regParams] = $this->regionFilter($filters['region'] ?? null);
+        $mpFilter .= $regFilter; $mpParams = array_merge($mpParams, $regParams);
         $sql = "SELECT p.*, b.name as brand_name, c.name as category_name, pi.url as primary_image, (SELECT AVG(rating) FROM reviews WHERE product_id = p.id AND is_approved = 1) as avg_rating ".$this->sellerSelect()."
                 FROM products p
                 LEFT JOIN brands b ON p.brand_id = b.id
@@ -321,6 +330,8 @@ class Product extends Model {
         if (!empty($filters['condition_type'])) { $mpFilter.=" AND p.condition_type=:ct "; $mpParams[':ct']=$filters['condition_type']; }
         if (!empty($filters['vehicle_origin'])) { $mpFilter.=" AND p.vehicle_origin=:vo "; $mpParams[':vo']=$filters['vehicle_origin']; }
         if (!empty($filters['location_country'])) { $mpFilter.=" AND p.location_country=:lc "; $mpParams[':lc']=$filters['location_country']; }
+        [$regFilter, $regParams] = $this->regionFilter($filters['region'] ?? null);
+        $mpFilter .= $regFilter; $mpParams = array_merge($mpParams, $regParams);
         $sql = "SELECT COUNT(*) FROM products p ".$this->sellerJoins()."
                 WHERE (p.name LIKE :q1 OR p.description LIKE :q2) AND p.is_active = 1 " . $this->getStockSql() . $catFilter . $mpFilter;
         $stmt = $this->db->prepare($sql);

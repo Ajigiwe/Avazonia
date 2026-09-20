@@ -79,6 +79,26 @@ foreach ($categories as $c) {
             <?php if ($currentCatName): ?>
                 <a href="<?= $mkCat(null) ?>" style="font-family:var(--f-mono);font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--red);text-decoration:none;border-bottom:1px solid var(--red);padding-bottom:2px;">Clear ×</a>
             <?php endif; ?>
+
+            <?php $shopRegions = $regions ?? []; if (!empty($shopRegions)): $qs=$_GET; $mkReg=function($v) use($qs){ $n=$qs; if($v===null){ unset($n['region']); } else { $n['region']=$v; } unset($n['page']); $q=http_build_query($n); return APP_URL.'/shop'.($q?"?$q":""); }; $curReg=$_GET['region']??''; ?>
+            <label for="shop-region-select" style="font-family:var(--f-mono);font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mid-gray);margin-left:12px;">Region</label>
+            <div style="position:relative;">
+                <select id="shop-region-select"
+                        onchange="if(this.value){window.location.href=this.value;}"
+                        style="appearance:none;-webkit-appearance:none;font-family:var(--f-semi);font-size:12px;font-weight:700;padding:9px 34px 9px 14px;border:2px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer;min-width:200px;">
+                    <option value="<?= $mkReg(null) ?>" <?= $curReg==='' ? 'selected' : '' ?>>All Regions</option>
+                    <?php foreach ($shopRegions as $rg): $rSlug=$rg['slug']; $rSel=($curReg===$rSlug || ($activeRegion['id'] ?? 0)===(int)$rg['id']) ? 'selected' : ''; ?>
+                        <option value="<?= $mkReg($rSlug) ?>" <?= $rSel ?>>
+                            <?= htmlspecialchars($rg['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <span aria-hidden="true" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:10px;color:var(--ink);">▼</span>
+            </div>
+            <?php if ($curReg!==''): ?>
+                <a href="<?= $mkReg(null) ?>" style="font-family:var(--f-mono);font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--red);text-decoration:none;border-bottom:1px solid var(--red);padding-bottom:2px;">Clear ×</a>
+            <?php endif; ?>
+            <?php endif; ?>
         </div>
 
         <!-- Marketplace Filters -->

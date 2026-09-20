@@ -26,6 +26,22 @@
         <input type="text" name="city" value="<?= htmlspecialchars($store['city'] ?? $seller['city'] ?? '') ?>" style="width:100%;height:44px;background:var(--off);border:1px solid var(--light-gray);border-radius:8px;padding:0 14px;font-size:13px;color:var(--ink);box-sizing:border-box;">
     </div>
 
+    <div style="margin-bottom:20px;">
+        <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">Region (Ghana)</label>
+        <select name="region" style="width:100%;height:44px;background:var(--off);border:1px solid var(--light-gray);border-radius:8px;padding:0 14px;font-size:13px;color:var(--ink);box-sizing:border-box;appearance:none;-webkit-appearance:none;">
+            <option value="">— Select your region —</option>
+            <?php foreach (($regions ?? []) as $rg): ?>
+                <option value="<?= htmlspecialchars($rg['name']) ?>" <?= (($seller['region'] ?? '') === $rg['name']) ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($rg['name']) ?>
+                </option>
+            <?php endforeach; ?>
+            <?php $curReg = $seller['region'] ?? ''; if ($curReg !== '' && !in_array($curReg, array_column($regions ?? [], 'name'))): ?>
+                <option value="<?= htmlspecialchars($curReg) ?>" selected><?= htmlspecialchars($curReg) ?></option>
+            <?php endif; ?>
+        </select>
+        <div style="margin-top:6px;font-size:11px;color:var(--mid-gray);">Buyers can filter the shop by this region.</div>
+    </div>
+
 
     <div style="margin-bottom:20px;">
         <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">Store Description</label>

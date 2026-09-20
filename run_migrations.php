@@ -47,6 +47,7 @@ $files = [
     __DIR__ . '/migrations/015_seller_phone_number.sql',
     __DIR__ . '/migrations/016_product_watermark.sql',
     __DIR__ . '/migrations/017_product_ghana.sql',
+    __DIR__ . '/migrations/018_regions.sql',
 ];
 
 // MySQL only: force buffered results. Migrations like 015 execute server-side

@@ -4,6 +4,7 @@ require_once __DIR__ . '/../core/Controller.php';
 require_once __DIR__ . '/../models/Product.php';
 require_once __DIR__ . '/../models/Category.php';
 require_once __DIR__ . '/../models/Wishlist.php';
+require_once __DIR__ . '/../models/Region.php';
 
 class ShopController extends Controller {
     public function index() {
@@ -14,6 +15,7 @@ class ShopController extends Controller {
         $catSlug = $_GET['cat'] ?? null;
         $search = $_GET['q'] ?? null;
         $listingType = $_GET['listing_type'] ?? null; // retail/wholesale/rfq/export
+        $region = trim($_GET['region'] ?? '');
         $page = max(1, (int)($_GET['page'] ?? 1));
         $perPage = 24;
         $offset = ($page - 1) * $perPage;
@@ -70,12 +72,14 @@ class ShopController extends Controller {
         } elseif ($search) {
             $catId = $_GET['cat_id'] ?? null;
             $mpFilters=array_filter(['listing_type'=>$_GET['listing_type']??null,'condition_type'=>$_GET['condition']??null,'vehicle_origin'=>$_GET['origin']??null,'location_country'=>$_GET['country']??null]);
+            if ($region !== '') { $mpFilters['region'] = $region; }
             $products = $productModel->search($search, $catId, $perPage, $offset, $mpFilters);
             $total = $productModel->countSearch($search, $catId, $mpFilters);
             $title = "Search results for '$search' — Avazonia";
         } else {
             // Support marketplace filters on plain shop (no search/cat) via filtered search
             $mpFilters=array_filter(['listing_type'=>$_GET['listing_type']??null,'condition_type'=>$_GET['condition']??null,'vehicle_origin'=>$_GET['origin']??null,'location_country'=>$_GET['country']??null]);
+            if ($region !== '') { $mpFilters['region'] = $region; }
             if (!empty($mpFilters)) {
                 // Use wildcard search to apply filters
                 $products = $productModel->search('', null, $perPage, $offset, $mpFilters);
@@ -101,6 +105,13 @@ class ShopController extends Controller {
             'hasNext'   => $page < $totalPages,
         ];
 
+        // Region filter resolution (for the dropdown selected state + clear chip)
+        $regionModel = new Region();
+        $activeRegion = null;
+        if ($region !== '') {
+            $activeRegion = $regionModel->findBySlug($region) ?: null;
+        }
+
         // Category filter (dropdown). Resolved for every branch so the filter
         // chips + title stay correct even on special slugs / search results.
         $activeCategory = null;
@@ -116,6 +127,8 @@ class ShopController extends Controller {
             'title'      => $title,
             'currentCat' => $catSlug,
             'activeCategory' => $activeCategory,
+            'activeRegion' => $activeRegion,
+            'regions' => $regionModel->getAll(true),
             'wishlistIds' => $wishlistIds,
             'pagination' => $pagination,
         ]);

@@ -181,6 +181,7 @@ class SellerController extends Controller {
             $tagline=trim($_POST['tagline']??'');
             $description=trim($_POST['description']??'');
             $city=trim($_POST['city']??'');
+            $region=trim($_POST['region']??'');
             if (!$name) {
                 $stats=$this->getSellerStats((int)$seller['id']);
                 $this->view('seller/settings', ['seller'=>$seller,'store'=>$store,'error'=>'Store name required','stats'=>$stats,'page'=>'settings']);
@@ -218,13 +219,15 @@ class SellerController extends Controller {
                 $st=new Store();
                 $st->create((int)$seller['id'],['name'=>$name,'tagline'=>$tagline,'city'=>$city,'country_code'=>'GH']);
             }
-            $stmt=$db->prepare("UPDATE sellers SET description=? WHERE id=?");
-            $stmt->execute([$description,(int)$seller['id']]);
+            $stmt=$db->prepare("UPDATE sellers SET description=?, region=? WHERE id=?");
+            $stmt->execute([$description,$region,(int)$seller['id']]);
             $this->redirect(APP_URL.'/seller/settings?success=1');
             return;
         }
         $stats=$this->getSellerStats((int)$seller['id']);
-        $this->view('seller/settings', ['seller'=>$seller,'store'=>$store,'stats'=>$stats,'page'=>'settings']);
+        require_once __DIR__ . '/../models/Region.php';
+        $regions=(new Region())->getAll(true);
+        $this->view('seller/settings', ['seller'=>$seller,'store'=>$store,'stats'=>$stats,'page'=>'settings','regions'=>$regions]);
     }
 
     public function rfqs() {
