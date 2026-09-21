@@ -588,7 +588,7 @@ include 'layout/header.php';
                         </div>
                         <div style="display: flex; gap: 10px;">
                             <a href="edit-slide.php?id=<?= $s['id'] ?>" class="btn-ink" style="height: 38px; padding: 0 16px; font-size: 9px; text-decoration: none; display: flex; align-items: center; justify-content: center;">Edit</a>
-                            <a href="sliders.php?delete=<?= $s['id'] ?>" class="btn-red" style="height: 38px; padding: 0 16px; font-size: 9px; background: #fff; color: var(--red); border: 1px solid var(--red); text-decoration: none; display: flex; align-items: center; justify-content: center;" onclick="return confirm('Archive this slide?')">Delete</a>
+                            <a href="sliders.php?delete=<?= $s['id'] ?>" class="btn-red" style="height: 38px; padding: 0 16px; font-size: 9px; background: #fff; color: var(--red); border: 1px solid var(--red); text-decoration: none; display: flex; align-items: center; justify-content: center;" data-confirm="Archive this slide? It will disappear from the homepage carousel." data-confirm-title="Archive Slide">Delete</a>
                         </div>
                     </div>
                 <?php endforeach; ?>

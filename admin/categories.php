@@ -147,7 +147,7 @@ include 'layout/header.php';
                 <td>
                     <div style="display: flex; gap: 16px;">
                         <button onclick='editCategory(<?= json_encode($c) ?>)' style="background: none; border: none; font-size: 10px; color: var(--ink); font-weight: 700; text-transform: uppercase; cursor: pointer; padding: 0;">Edit</button>
-                        <form method="POST" onsubmit="return confirm('Really delete this category?')" style="display: inline;">
+                        <form method="POST" data-confirm="Really delete this category?" data-confirm-title="Delete Category" style="display: inline;">
                             <?= Csrf::field() ?>
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="id" value="<?= $c['id'] ?>">

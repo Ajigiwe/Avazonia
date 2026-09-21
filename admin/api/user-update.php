@@ -37,9 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(['success' => true, 'new_status' => $value]);
         } 
         elseif ($action === 'update_role') {
-            if (!in_array($value, ['admin', 'user'])) {
+            // users.role is ENUM('customer','admin') — 'user' would cause
+            // SQLSTATE[01000] Warning 1265 "Data truncated for column 'role'".
+            if (!in_array($value, ['admin', 'user', 'customer'], true)) {
                 throw new Exception("Invalid role.");
             }
+            $value = $value === 'user' ? 'customer' : $value; // normalize legacy client value
             $stmt = $db->prepare("UPDATE users SET role = ? WHERE id = ?");
             $stmt->execute([$value, $userId]);
             echo json_encode(['success' => true, 'new_role' => $value]);

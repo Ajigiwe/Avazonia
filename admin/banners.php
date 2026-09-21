@@ -219,7 +219,7 @@ include 'layout/header.php';
                         </form>
                     </td>
                     <td>
-                        <form method="POST" onsubmit="return confirm('Delete this banner?');">
+                        <form method="POST" data-confirm="Delete this banner? This cannot be undone." data-confirm-title="Delete Banner">
                             <?= Csrf::field() ?>
                             <input type="hidden" name="action" value="delete_banner">
                             <input type="hidden" name="id" value="<?= htmlspecialchars($b['id']) ?>">

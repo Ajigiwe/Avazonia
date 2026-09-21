@@ -90,7 +90,7 @@ include 'layout/header.php';
                     <td>
                         <div style="display: flex; gap: 16px;">
                             <a href="edit-slide.php?id=<?= $s['id'] ?>" class="nav-link" style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Edit</a>
-                            <a href="?delete=<?= $s['id'] ?>" class="nav-link" style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--red);" onclick="return confirm('Archive this slide?')">Delete</a>
+                            <a href="?delete=<?= $s['id'] ?>" class="nav-link" style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--red);" data-confirm="Archive this slide? It will disappear from the homepage carousel." data-confirm-title="Archive Slide">Delete</a>
                         </div>
                     </td>
                 </tr>

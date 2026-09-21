@@ -498,7 +498,7 @@ function validateProductUpload() {
     });
     const maxBytes = 120 * 1024 * 1024;
     if (totalBytes > maxBytes) {
-        alert('Please keep the combined product upload below 120 MB.');
+        AdminUI.error('Please keep the combined product upload below 120 MB.');
         return false;
     }
     return true;

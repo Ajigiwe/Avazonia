@@ -26,6 +26,7 @@ if (!headers_sent()) {
     <style>
         :root {
             --sidebar-w: 260px;
+            --sidebar-w-collapsed: 76px;
             --admin-bg: #F9FAFB;
         }
         body { background: var(--admin-bg); min-height: 100vh; font-weight: 400; overflow-x: hidden; }
@@ -34,8 +35,8 @@ if (!headers_sent()) {
         .admin-sidebar {
             width: var(--sidebar-w); background: var(--ink); border-right: 1px solid rgba(255,255,255,0.05);
             display: flex; flex-direction: column; position: fixed !important; top: 0; bottom: 0; left: 0; z-index: 1000;
-            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-            overflow-y: auto; /* Enable scrolling */
+            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1), width 0.35s cubic-bezier(0.19, 1, 0.22, 1);
+            overflow-y: auto; overflow-x: hidden; /* Enable scrolling */
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.1) transparent;
         }
@@ -47,6 +48,43 @@ if (!headers_sent()) {
             .admin-sidebar { transform: translateX(-100%); width: 280px; }
             .admin-sidebar.active { transform: translateX(0); box-shadow: 20px 0 60px rgba(0,0,0,0.5); }
         }
+
+        /* ── Desktop collapse state (labels hidden, icons only) ── */
+        html.sidebar-is-collapsed .admin-sidebar { width: var(--sidebar-w-collapsed); }
+        html.sidebar-is-collapsed .sidebar-brand span { opacity: 0; width: 0; overflow: hidden; }
+        html.sidebar-is-collapsed .nav-item { justify-content: center; padding: 12px 0; gap: 0; position: relative; }
+        html.sidebar-is-collapsed .nav-item > svg,
+        html.sidebar-is-collapsed .nav-icon { flex-shrink: 0; }
+        html.sidebar-is-collapsed .nav-label,
+        html.sidebar-is-collapsed .nav-label-lock { opacity: 0; width: 0; overflow: hidden; white-space: nowrap; pointer-events: none; }
+        html.sidebar-is-collapsed .nav-badge {
+            position: absolute; top: 4px; right: 10px; margin-left: 0; min-width: 16px; height: 16px; font-size: 9px;
+        }
+        html.sidebar-is-collapsed .sidebar-brand { justify-content: center; padding-left: 0; padding-right: 0; }
+        html.sidebar-is-collapsed .sidebar-brand .logo-img.admin { margin-bottom: 0 !important; }
+        html.sidebar-is-collapsed .sidebar-footer .nav-item { justify-content: center; }
+        html.sidebar-is-collapsed .nav-item:hover::after { display: none; } /* tooltips are JS-driven (body-level, unclipped) */
+        .nav-tooltip {
+            position: fixed; z-index: 3000; background: var(--ink); color: #fff; pointer-events: none;
+            font-family: var(--f-semi); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+            padding: 8px 12px; border-radius: 8px; white-space: nowrap; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            opacity: 0; transition: opacity 0.15s;
+        }
+        .nav-tooltip.visible { opacity: 1; }
+
+        /* Collapse toggle button — fixed sibling so it never gets clipped by the sidebar's scroll area */
+        .sidebar-collapse-btn {
+            position: fixed; top: 34px; left: var(--sidebar-w); width: 28px; height: 28px; border-radius: 50%;
+            background: var(--red); color: #fff; border: 2px solid var(--admin-bg); cursor: pointer;
+            display: flex; align-items: center; justify-content: center; z-index: 1001;
+            box-shadow: 0 4px 14px rgba(232,0,45,0.35); transition: left 0.35s cubic-bezier(0.19, 1, 0.22, 1), transform 0.35s cubic-bezier(0.19, 1, 0.22, 1), background 0.2s;
+            padding: 0;
+        }
+        html.sidebar-is-collapsed .sidebar-collapse-btn { left: var(--sidebar-w-collapsed); }
+        .sidebar-collapse-btn:hover { background: var(--red-deep, #b8001f); }
+        .sidebar-collapse-btn svg { transition: transform 0.35s; }
+        html.sidebar-is-collapsed .sidebar-collapse-btn svg { transform: rotate(180deg); }
+        @media (max-width: 900px) { .sidebar-collapse-btn { display: none !important; } }
 
         .sidebar-brand {
             padding: 32px 24px; font-family: var(--f-display); font-weight: 900; font-size: 20px; color: #fff;
@@ -81,8 +119,8 @@ if (!headers_sent()) {
         }
 
         /* Main Content */
-        .admin-main { margin-left: var(--sidebar-w); padding: 40px; box-sizing: border-box; }
-        
+        .admin-main { margin-left: var(--sidebar-w); padding: 40px; box-sizing: border-box; transition: margin-left 0.35s cubic-bezier(0.19, 1, 0.22, 1); }
+        html.sidebar-is-collapsed body .admin-main, body.sidebar-is-collapsed .admin-main { margin-left: var(--sidebar-w-collapsed); }        
         .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
         .admin-header h1 { font-family: var(--f-display); font-weight: 800; font-size: 32px; text-transform: uppercase; letter-spacing: -0.01em; }
         
@@ -139,7 +177,8 @@ if (!headers_sent()) {
         /* --- NUCLEAR MOBILE REFRESH --- */
         @media (max-width: 900px) {
             body { display: block !important; overflow-x: hidden; width: 100vw; position: relative; }
-            .admin-sidebar { transform: translateX(-102%); width: 280px; visibility: hidden; }
+            body.sidebar-is-collapsed .admin-main, html.sidebar-is-collapsed .admin-main { margin-left: 0; }
+            .admin-sidebar { transform: translateX(-102%); width: 280px !important; visibility: hidden; }
             .admin-sidebar.active { transform: translateX(0); box-shadow: 20px 0 60px rgba(0,0,0,0.5); visibility: visible; }
             
             .admin-main { 
@@ -209,26 +248,82 @@ if (!headers_sent()) {
 </button>
 
 <script>
-    const toggle = document.getElementById('admin-toggle');
-    const sidebar = document.querySelector('.admin-sidebar');
-    const overlay = document.querySelector('.admin-overlay');
-    
-    if (toggle && sidebar && overlay) {
-        const toggleSidebar = () => {
-            sidebar.classList.toggle('active');
-            toggle.classList.toggle('active');
-            overlay.classList.toggle('active');
-            document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+    (function() {
+        const toggle = document.getElementById('admin-toggle');
+        const sidebar = document.querySelector('.admin-sidebar');
+        const overlay = document.querySelector('.admin-overlay');
+
+        /* ── Mobile drawer ── */
+        if (toggle && sidebar && overlay) {
+            const toggleSidebar = () => {
+                sidebar.classList.toggle('active');
+                toggle.classList.toggle('active');
+                overlay.classList.toggle('active');
+                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+            };
+
+            toggle.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', toggleSidebar);
+
+            // Close on escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && sidebar.classList.contains('active')) toggleSidebar();
+            });
+        }
+
+        /* ── Desktop collapse/expand ── */
+        const collapseBtn = document.getElementById('sidebar-collapse-btn');
+        if (collapseBtn && sidebar) {
+            const mq = window.matchMedia('(min-width: 901px)');
+            const isMobile = () => !mq.matches;
+
+            const applyState = (collapsed) => {
+                document.documentElement.classList.toggle('sidebar-is-collapsed', collapsed);
+                collapseBtn.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+                collapseBtn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+                try { localStorage.setItem('avz_admin_sidebar', collapsed ? 'collapsed' : 'expanded'); } catch (e) {}
+            };
+
+            // Sync class from the pre-paint script in sidebar.php
+            applyState(document.documentElement.classList.contains('sidebar-is-collapsed'));
+
+            collapseBtn.addEventListener('click', () => {
+                if (isMobile()) return; // collapse is desktop-only; mobile uses the drawer
+                applyState(!document.documentElement.classList.contains('sidebar-is-collapsed'));
+            });
+
+            // Leaving the desktop breakpoint: drop the collapsed state so the mobile drawer behaves normally.
+            mq.addEventListener('change', (e) => { if (!e.matches) applyState(false); });
+        }
+
+        /* ── Collapsed-mode tooltips (body-level so they are never clipped) ── */
+        let tipEl = null, tipTimer = null;
+        const showTip = (item) => {
+            if (!document.documentElement.classList.contains('sidebar-is-collapsed')) return;
+            const label = item.querySelector('.nav-label');
+            const text = (label ? label.textContent : item.getAttribute('data-tip') || item.getAttribute('aria-label') || '').trim();
+            if (!text) return;
+            hideTip();
+            tipEl = document.createElement('div');
+            tipEl.className = 'nav-tooltip';
+            tipEl.textContent = text;
+            document.body.appendChild(tipEl);
+            const r = item.getBoundingClientRect();
+            const tr = tipEl.getBoundingClientRect();
+            tipEl.style.top = Math.round(r.top + r.height / 2 - tr.height / 2) + 'px';
+            tipEl.style.left = Math.min(Math.round(r.right + 12), window.innerWidth - tr.width - 8) + 'px';
+            requestAnimationFrame(() => tipEl && tipEl.classList.add('visible'));
         };
-
-        toggle.addEventListener('click', toggleSidebar);
-        overlay.addEventListener('click', toggleSidebar);
-
-        // Close on escape
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && sidebar.classList.contains('active')) toggleSidebar();
+        const hideTip = () => {
+            if (tipTimer) { clearTimeout(tipTimer); tipTimer = null; }
+            if (tipEl) { tipEl.remove(); tipEl = null; }
+        };
+        document.querySelectorAll('.admin-sidebar .nav-item').forEach((item) => {
+            item.addEventListener('mouseenter', () => { tipTimer = setTimeout(() => showTip(item), 350); });
+            item.addEventListener('mouseleave', hideTip);
+            item.addEventListener('click', hideTip);
         });
-    }
+    })();
 </script>
 
 <main class="admin-main">

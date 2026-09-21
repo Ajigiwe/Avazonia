@@ -205,9 +205,9 @@ include 'layout/header.php';
                                 <?= Csrf::field() ?>
                                 <input type="hidden" name="toggle_active_id" value="<?= (int)$s['id'] ?>">
                                 <?php if(!empty($s['is_active'])): ?>
-                                    <button type="submit" onclick="return confirm('Suspend this seller? Their products will be hidden from the marketplace.')" style="background:#fff;color:#dc2626;border:1px solid #fca5a5;padding:4px 10px;cursor:pointer;font-size:9px;font-weight:700;text-transform:uppercase;width:100%;border-radius:3px;transition:all 0.2s;">Suspend</button>
+                                    <button type="submit" data-confirm="Suspend this seller? Their products will be hidden from the marketplace." data-confirm-title="Suspend Seller" style="background:#fff;color:#dc2626;border:1px solid #fca5a5;padding:4px 10px;cursor:pointer;font-size:9px;font-weight:700;text-transform:uppercase;width:100%;border-radius:3px;transition:all 0.2s;">Suspend</button>
                                 <?php else: ?>
-                                    <button type="submit" onclick="return confirm('Reactivate this seller?')" style="background:#fff;color:#16a34a;border:1px solid #86efac;padding:4px 10px;cursor:pointer;font-size:9px;font-weight:700;text-transform:uppercase;width:100%;border-radius:3px;transition:all 0.2s;">Reactivate</button>
+                                    <button type="submit" data-confirm="Reactivate this seller?" data-confirm-title="Reactivate Seller" style="background:#fff;color:#16a34a;border:1px solid #86efac;padding:4px 10px;cursor:pointer;font-size:9px;font-weight:700;text-transform:uppercase;width:100%;border-radius:3px;transition:all 0.2s;">Reactivate</button>
                                 <?php endif; ?>
                             </form>
                         </div>

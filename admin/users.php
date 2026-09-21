@@ -40,7 +40,7 @@ include 'layout/header.php';
     .status-active { background: #e6f7ec; color: #00a854; }
     .status-suspended { background: #fff1f0; color: #f5222d; }
     .role-admin { background: #f0f5ff; color: #1d39c4; border: 1px solid #adc6ff; }
-    .role-user { background: #fafafa; color: #8c8c8c; border: 1px solid #d9d9d9; }
+    .role-user, .role-customer { background: #fafafa; color: #8c8c8c; border: 1px solid #d9d9d9; }
     
     .search-bar { width: 100%; max-width: 400px; height: 48px; border: 1px solid var(--light-gray); padding: 0 16px; border-radius: 4px; font-family: var(--f-mono); font-size: 11px; margin-bottom: 24px; }
     .action-btn { 
@@ -132,16 +132,38 @@ include 'layout/header.php';
 
 <script>
 async function manualReset(userId) {
-    const newPass = prompt("Enter new password (min 6 chars):");
-    if (!newPass || newPass.length < 6) {
-        if (newPass) alert("Password too short.");
-        return;
-    }
+    const newPass = await AdminUI.prompt('Enter a new password for this account (minimum 6 characters):', {
+        title: 'Set Password Manually',
+        placeholder: 'New password (min 6 chars)',
+        type: 'password',
+        validate: (v) => v && v.length >= 6,
+        confirmText: 'Update Password'
+    });
+    if (newPass === null) return; // cancelled
     updateUser(userId, 'manual_reset_password', newPass);
 }
 
 async function updateUser(userId, action, value) {
-    if (!confirm(`Are you sure you want to perform this action (${action}: ${value})?`)) return;
+    // Friendlier confirmation copy for role changes
+    if (action === 'update_role') {
+        const promoting = value === 'admin';
+        const ok = await AdminUI.confirm(
+            promoting
+                ? 'Grant this account full administrator access? They will be able to manage users, orders, and all store settings.'
+                : 'Remove administrator access from this account? They will keep their data and order history as a regular customer.',
+            { title: promoting ? 'Promote to Admin' : 'Demote Admin to Customer', confirmText: promoting ? 'Yes, Promote' : 'Yes, Demote' }
+        );
+        if (!ok) return;
+    } else if (action === 'toggle_status') {
+        const suspending = value === 'suspended';
+        const ok = await AdminUI.confirm(
+            suspending
+                ? 'Suspend this account? The user will no longer be able to sign in or place orders.'
+                : 'Reactivate this account? The user will be able to sign in again.',
+            { title: suspending ? 'Suspend Account' : 'Reactivate Account', confirmText: suspending ? 'Yes, Suspend' : 'Yes, Reactivate' }
+        );
+        if (!ok) return;
+    } else if (!confirm(`Are you sure you want to perform this action (${action}: ${value})?`)) return;
 
     const formData = new FormData();
     formData.append('user_id', userId);
@@ -156,13 +178,14 @@ async function updateUser(userId, action, value) {
         const res = await response.json();
         
         if (res.success) {
-            window.location.reload();
+            AdminUI.success(res.message || 'Action completed successfully.');
+            setTimeout(() => window.location.reload(), 700);
         } else {
-            alert('Error: ' + res.message);
+            await AdminUI.alert('Error: ' + res.message, { title: 'Action Failed', tone: 'danger', confirmText: 'OK' });
         }
     } catch (err) {
         console.error(err);
-        alert('An unexpected error occurred.');
+        await AdminUI.alert('An unexpected error occurred. Please try again.', { title: 'Connection Error' });
     }
 }
 </script>

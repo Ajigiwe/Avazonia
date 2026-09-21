@@ -113,7 +113,7 @@ include 'layout/header.php';
                 <td>
                     <div style="display: flex; gap: 16px;">
                         <button onclick='editRegion(<?= json_encode($r, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)' style="background: none; border: none; font-size: 10px; color: var(--ink); font-weight: 700; text-transform: uppercase; cursor: pointer; padding: 0;">Edit</button>
-                        <form method="POST" onsubmit="return confirm('Really delete this region? Sellers assigned to it will keep the name but it will no longer be selectable.')" style="display: inline;">
+                        <form method="POST" data-confirm="Really delete this region? Sellers assigned to it will keep the name but it will no longer be selectable." data-confirm-title="Delete Region" style="display: inline;">
                             <?= Csrf::field() ?>
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">

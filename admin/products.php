@@ -154,7 +154,7 @@ include 'layout/header.php';
                     <td>
                         <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 92px;">
                             <a href="edit-product.php?id=<?= $p['id'] ?>" class="nav-link" style="font-size: 10px; color: var(--ink); text-decoration: none; font-weight: 700; text-transform: uppercase; line-height: 1;">Edit</a>
-                            <form method="POST" onsubmit="return confirm(<?= json_encode($confirmMessage, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>);" style="margin: 0;">
+                            <form method="POST" data-confirm="<?= htmlspecialchars($confirmMessage, ENT_QUOTES, 'UTF-8') ?>" data-confirm-title="Delete Product" style="margin: 0;">
                                 <?= Csrf::field() ?>
                                 <input type="hidden" name="action" value="delete_product">
                                 <input type="hidden" name="product_id" value="<?= $p['id'] ?>">

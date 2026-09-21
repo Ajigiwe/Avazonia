@@ -438,7 +438,7 @@ include 'layout/header.php';
                                         SKU: <?= $v['sku'] ?: 'N/A' ?> | Stock: <?= $v['stock_qty'] ?> | Price: <?= $v['price_override_ghs'] ? '₵'.number_format((float)$v['price_override_ghs'], 2) : 'Base' ?>
                                     </div>
                                 </div>
-                                <button type="button" onclick="if(confirm('Delete variant?')){ const f = document.createElement('form'); f.method='POST'; const a = document.createElement('input'); a.type='hidden'; a.name='action'; a.value='del_variant'; const i = document.createElement('input'); i.type='hidden'; i.name='variant_id'; i.value='<?= $v['id'] ?>'; const c = document.createElement('input'); c.type='hidden'; c.name='_csrf_token'; c.value='<?= htmlspecialchars($_SESSION['_csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') ?>'; f.appendChild(a); f.appendChild(i); f.appendChild(c); document.body.appendChild(f); f.submit(); }" style="background: none; border: none; color: var(--red); font-size: 11px; font-family: var(--f-semi); cursor: pointer; text-transform: uppercase;">Delete</button>
+                                <button type="button" onclick="deleteVariant(<?= $v['id'] ?>)" style="background: none; border: none; color: var(--red); font-size: 11px; font-family: var(--f-semi); cursor: pointer; text-transform: uppercase;">Delete</button>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -626,6 +626,17 @@ include 'layout/header.php';
 </div>
 
 <script>
+async function deleteVariant(variantId) {
+    if (!(await AdminUI.confirm('Delete this variant? Customers will no longer be able to buy this color/size combination.', { title: 'Delete Variant', confirmText: 'Delete Variant' }))) return;
+    const f = document.createElement('form');
+    f.method = 'POST';
+    const mk = (name, value) => { const i = document.createElement('input'); i.type = 'hidden'; i.name = name; i.value = value; f.appendChild(i); };
+    mk('action', 'del_variant');
+    mk('variant_id', variantId);
+    mk('_csrf_token', document.querySelector('meta[name="csrf-token"]').content);
+    document.body.appendChild(f);
+    f.submit();
+}
 function addTag(tag) {
     const input = document.getElementById('tags-input');
     let currentTags = input.value.split(',').map(t => t.trim()).filter(t => t !== "");

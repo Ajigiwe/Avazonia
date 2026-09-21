@@ -172,7 +172,7 @@ include 'layout/header.php';
 
     async function executeMaintenance() {
         const password = passwordInput.value;
-        if (!password) return alert('Password required');
+        if (!password) { AdminUI.error('Password required to confirm this action.'); return; }
 
         const confirmBtn = document.getElementById('modal-confirm');
         const originalText = confirmBtn.innerText;
@@ -192,15 +192,15 @@ include 'layout/header.php';
             const data = await res.json();
             
             if (data.success) {
-                alert(data.message);
+                await AdminUI.alert(data.message, { title: 'Success', tone: 'success', confirmText: 'Continue' });
                 location.reload();
             } else {
-                alert(data.message);
+                await AdminUI.alert(data.message, { title: 'Action Failed', tone: 'danger' });
                 confirmBtn.innerText = originalText;
                 confirmBtn.disabled = false;
             }
         } catch (err) {
-            alert('Connection failure');
+            await AdminUI.alert('Connection failure — please check your network and try again.', { title: 'Connection Error' });
             confirmBtn.disabled = false;
         }
     }
@@ -223,13 +223,13 @@ include 'layout/header.php';
                 setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 2000);
             }
         } catch (err) {
-            alert('Failed to trigger background engine.');
+            AdminUI.error('Failed to trigger background engine.');
             btn.disabled = false;
         }
     }
 
     async function deleteBackup(filename) {
-        if (!confirm('Confirm permanent deletion of this snapshot?')) return;
+        if (!(await AdminUI.confirm('Permanently delete this backup snapshot? This cannot be undone.', { title: 'Delete Backup', confirmText: 'Delete Forever' }))) return;
         
         const res = await fetch('api/maintenance.php', {
             method: 'POST',
