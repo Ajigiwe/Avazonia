@@ -111,7 +111,7 @@ global $dbSettings;
 
         <div class="footer-bottom">
         <div class="footer-copy">
-            <?= FOOTER_NOTICE ?> • built by D.V INSTALLATIONS LTD
+            <?= FOOTER_NOTICE ?> • built by <a href="https://wa.me/233550009475" target="_blank" rel="noopener noreferrer" class="footer-credit-link">DanTech Solutions</a>
         </div>
         <div class="footer-legal">
             <a href="#">Privacy</a>
