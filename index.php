@@ -6,6 +6,11 @@ require_once 'core/Session.php';
 
 Session::start();
 
+// Server-side visit tracking — cookies must be set before any output.
+if (class_exists('PageViewTracker') || (require_once __DIR__ . '/core/PageViewTracker.php')) {
+    PageViewTracker::boot();
+}
+
 $router = new Router();
 
 // Routes
@@ -107,3 +112,6 @@ if ($basePath && strpos($uri, $basePath) === 0) {
 if (!$uri) $uri = '/';
 
 $router->dispatch($uri, $method);
+
+// Log the page view after dispatch (analytics is best-effort, never blocking).
+PageViewTracker::track();

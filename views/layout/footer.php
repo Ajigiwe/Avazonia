@@ -545,5 +545,6 @@ document.addEventListener('visibilitychange', function() { if(!document.hidden) 
 <?php endif; // end !isSellerDash ?>
 
 <?php require_once __DIR__ . '/../components/share-modal.php'; ?>
+<?php if (class_exists('PageViewTracker')) PageViewTracker::track(); ?>
 </body>
 </html>

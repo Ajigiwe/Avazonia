@@ -275,6 +275,24 @@ CREATE TABLE IF NOT EXISTS regions (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+-- Server-side page-view tracking (migration 019)
+CREATE TABLE IF NOT EXISTS page_views (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  path TEXT NOT NULL,
+  query_string TEXT,
+  visitor_id TEXT,
+  session_id TEXT,
+  referrer_host TEXT,
+  referrer_path TEXT,
+  referrer TEXT,
+  user_agent TEXT,
+  is_new_visitor INTEGER DEFAULT 0,
+  viewed_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_pv_viewed ON page_views (viewed_at);
+CREATE INDEX IF NOT EXISTS idx_pv_visitor ON page_views (visitor_id, viewed_at);
+CREATE INDEX IF NOT EXISTS idx_pv_path ON page_views (path, viewed_at);
+
 CREATE TABLE IF NOT EXISTS sellers (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL UNIQUE,

@@ -50,7 +50,8 @@ try {
         'footer_address', 'home_deals_title', 'home_deals_eyebrow', 'home_mobile_category_grid',
         'product_card_slider_enabled', 'seller_verification_required',
         'product_watermark_enabled',
-        'ga4_property_id', 'ga4_service_json'
+        'ga4_property_id', 'ga4_service_json',
+        'page_view_tracking_enabled'
     ];
 
     foreach ($input as $key => $value) {

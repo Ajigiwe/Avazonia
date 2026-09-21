@@ -128,6 +128,15 @@ function ga4Pct(float $cur, float $prev): array
     return [round($p, 1), $p >= 0 ? 'trend-up' : 'trend-down'];
 }
 
+// 9. TRAFFIC (BUILT-IN SERVER-SIDE TRACKER)
+$pv = null;
+try {
+    if (!class_exists('PageViewTracker')) require_once __DIR__ . '/../core/PageViewTracker.php';
+    if (PageViewTracker::enabled()) {
+        $pv = PageViewTracker::widgetData();
+    }
+} catch (Throwable $e) { $pv = null; }
+
 $title = "Dashboard Insights — Avazonia";
 include 'layout/header.php';
 ?>
@@ -306,6 +315,73 @@ include 'layout/header.php';
         <?php endif; ?>
     </div>
 </div>
+
+<!-- TRAFFIC (BUILT-IN SERVER-SIDE TRACKER) -->
+<?php if ($pv !== null): $pvS = $pv['summary']; ?>
+<div style="margin-bottom: 40px;">
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">Built-in Traffic (Last 7 Days)</div>
+            <span style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);">first-party server log &middot; no Google scripts &middot; bots &amp; staff excluded</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;padding:28px 32px 8px;">
+            <div class="mini-card">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">VISITORS TODAY</div>
+                <div style="font-weight:900;font-size:26px;margin-top:6px;"><?= number_format($pvS['today_visitors']) ?></div>
+            </div>
+            <div class="mini-card">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">VIEWS TODAY</div>
+                <div style="font-weight:900;font-size:26px;margin-top:6px;"><?= number_format($pvS['today_views']) ?></div>
+            </div>
+            <div class="mini-card">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">VISITORS 7D</div>
+                <div style="font-weight:900;font-size:26px;margin-top:6px;"><?= number_format($pvS['visitors_7d']) ?></div>
+            </div>
+            <div class="mini-card">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">VIEWS 7D</div>
+                <div style="font-weight:900;font-size:26px;margin-top:6px;"><?= number_format($pvS['views_7d']) ?></div>
+            </div>
+            <div class="mini-card">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">VIEWS / VISITOR</div>
+                <div style="font-weight:900;font-size:26px;margin-top:6px;"><?= $pvS['visitors_7d'] > 0 ? round($pvS['views_7d'] / $pvS['visitors_7d'], 1) : '0' ?></div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:0;align-items:start;">
+            <div style="padding:12px 32px 28px;">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;margin-bottom:14px;">DAILY VISITORS</div>
+                <div style="height:220px;"><canvas id="pvDailyChart"></canvas></div>
+            </div>
+            <div style="padding:12px 32px 28px;">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;margin-bottom:14px;">TOP PAGES (7 DAYS)</div>
+                <table class="admin-table" style="font-size:12px;">
+                    <thead><tr><th>Page</th><th style="text-align:right;">Views</th><th style="text-align:right;">Visitors</th></tr></thead>
+                    <tbody>
+                        <?php if (empty($pv['pages'])): ?>
+                        <tr><td colspan="3" style="opacity:.6;">No visits logged yet.</td></tr>
+                        <?php else: foreach ($pv['pages'] as $pg): ?>
+                        <tr>
+                            <td style="font-family:var(--f-mono);font-size:11px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= htmlspecialchars($pg['path']) ?></td>
+                            <td style="text-align:right;font-weight:700;"><?= number_format($pg['views']) ?></td>
+                            <td style="text-align:right;opacity:.7;"><?= number_format($pg['visitors']) ?></td>
+                        </tr>
+                        <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;margin:20px 0 10px;">TOP REFERRERS (7 DAYS)</div>
+                <?php if (empty($pv['refs'])): ?>
+                <div style="font-size:12px;opacity:.6;">No external referrers yet.</div>
+                <?php else: $pvMax = max(1, max(array_column($pv['refs'], 'visits'))); foreach ($pv['refs'] as $ref): ?>
+                <div class="bar-row" style="grid-template-columns:110px 1fr 60px;margin-bottom:8px;">
+                    <span style="font-family:var(--f-mono);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= htmlspecialchars($ref['source']) ?></span>
+                    <div class="bar-bg"><div class="bar-fill" style="width:<?= round(($ref['visits'] / $pvMax) * 100) ?>%;"></div></div>
+                    <span style="font-family:var(--f-mono);font-size:10px;text-align:right;"><?= number_format($ref['visits']) ?></span>
+                </div>
+                <?php endforeach; endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <div style="margin-bottom: 40px;">
     <div class="panel">
@@ -571,6 +647,51 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // 4. BUILT-IN TRAFFIC DAILY CHART (only rendered when tracking is enabled)
+<?php if ($pv !== null): ?>
+    const pvCanvas = document.getElementById('pvDailyChart');
+    if (pvCanvas) {
+        const pvDaily = <?= json_encode($pv['daily']) ?>;
+        new Chart(pvCanvas, {
+            type: 'line',
+            data: {
+                labels: pvDaily.map(d => d.day.slice(5)),
+                datasets: [
+                    {
+                        label: 'Visitors',
+                        data: pvDaily.map(d => d.visitors),
+                        borderColor: '#E8002D',
+                        backgroundColor: 'rgba(232,0,45,0.06)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 2,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Page Views',
+                        data: pvDaily.map(d => d.views),
+                        borderColor: '#0d0d0d',
+                        backgroundColor: 'transparent',
+                        tension: 0.35,
+                        pointRadius: 0,
+                        borderWidth: 2,
+                        borderDash: [4, 3]
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { font: { family: fontStack, size: 10, weight: '700' }, boxWidth: 12 } } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { family: fontStack, size: 10 }, precision: 0 } },
+                    x: { grid: { display: false }, ticks: { font: { family: fontStack, size: 9 }, maxTicksLimit: 10 } }
+                }
+            }
+        });
+    }
+<?php endif; ?>
 
 });
 </script>

@@ -512,6 +512,9 @@ include 'layout/header.php';
             <div class="setting-card">
                 <h3><span class="card-icon">📊</span> Google Analytics (Traffic Widget)</h3>
                 <p class="card-desc">Connect the existing GA4 property (<?= htmlspecialchars(APP_URL) ?> tracks with ID <strong>G-G3GWGCPMPP</strong>) so the admin dashboard shows visitors, sessions, and top pages without leaving the site.</p>
+                <div class="field-group">
+                    <?php toggleSelect('page_view_tracking_enabled', 'Built-in Visit Tracker', 'On — log page views server-side (no Google scripts)', 'Off — stop logging visits', '1', 'A first-party page_views log that works even when visitors block Google. Feeds the dashboard\'s Built-in Traffic card and keeps 180 days of history. Turn Off to pause logging; existing history stays.'); ?>
+                </div>
                 <div class="field-grid">
                     <div class="field-group">
                         <label class="field-label" for="set-ga4_property_id">GA4 Property ID</label>
