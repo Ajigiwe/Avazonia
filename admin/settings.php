@@ -508,6 +508,23 @@ include 'layout/header.php';
                     <input type="text" id="set-meta_keywords" value="<?= getSet('meta_keywords') ?>" class="field-input" placeholder="gadgets, phones, accra, ghana...">
                 </div>
             </div>
+
+            <div class="setting-card">
+                <h3><span class="card-icon">📊</span> Google Analytics (Traffic Widget)</h3>
+                <p class="card-desc">Connect the existing GA4 property (<?= htmlspecialchars(APP_URL) ?> tracks with ID <strong>G-G3GWGCPMPP</strong>) so the admin dashboard shows visitors, sessions, and top pages without leaving the site.</p>
+                <div class="field-grid">
+                    <div class="field-group">
+                        <label class="field-label" for="set-ga4_property_id">GA4 Property ID</label>
+                        <input type="text" id="set-ga4_property_id" value="<?= getSet('ga4_property_id') ?>" class="field-input" style="font-family: var(--f-mono);" placeholder="e.g. 480123456">
+                        <span class="field-sub">The numeric property ID (not the G- measurement ID) — GA4 Admin → Property Settings.</span>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="set-ga4_service_json">Service Account JSON Key</label>
+                        <textarea id="set-ga4_service_json" class="field-input" style="height: 110px; font-family: var(--f-mono); font-size: 11px;" placeholder="<?= getSet('ga4_service_json') !== '' ? '•••••• saved — paste a new key file to replace it' : 'Paste the full contents of the downloaded JSON key file' ?>"></textarea>
+                        <span class="field-sub">In Google Cloud Console: create a service account → download its JSON key → paste it here. Then in GA4 Admin → Property Access Management, add the service account's email as <strong>Viewer</strong>. Stored write-only; leave blank to keep the saved key.</span>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- ═══════════ POLICIES ═══════════ -->
@@ -742,7 +759,7 @@ include 'layout/header.php';
                     Object.keys(data).forEach(k => {
                         const el = document.getElementById('set-' + k);
                         if (!el) return;
-                        if (k === 'paystack_secret_key') { el.value = ''; }
+                        if (k === 'paystack_secret_key' || k === 'ga4_service_json') { el.value = ''; }
                         originalValues.set(el.id, el.value);
                         el.classList.remove('is-dirty');
                     });

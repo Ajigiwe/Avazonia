@@ -101,6 +101,33 @@ try {
   $marketStats['export']=$db->query("SELECT COUNT(*) FROM products WHERE listing_type='export' OR vehicle_origin='international_export'")->fetchColumn();
   $marketStats['pending_sellers']=$db->query("SELECT COUNT(*) FROM sellers WHERE verification_level='phone_verified' AND is_verified=0")->fetchColumn();
 } catch(Throwable $e) {}
+// 8. TRAFFIC (GOOGLE ANALYTICS 4)
+require_once __DIR__ . '/../core/Ga4Client.php';
+$ga4Data = null;
+$ga4Error = '';
+try {
+    $ga4 = Ga4Client::fromSettings();
+    if ($ga4->isConfigured()) {
+        $ga4Data = $ga4->fetchOverview(28);
+        if (empty($ga4Data['ok'])) {
+            $ga4Error = (string)($ga4Data['error'] ?? 'Unknown analytics error.');
+            $ga4Data = null;
+        } else {
+            $ga4Error = '';
+        }
+    }
+} catch (Throwable $e) {
+    $ga4Error = $e->getMessage();
+}
+$ga4Unconfigured = ($ga4Data === null && $ga4Error === '');
+
+function ga4Pct(float $cur, float $prev): array
+{
+    if ($prev <= 0) return [null, ''];
+    $p = (($cur - $prev) / $prev) * 100;
+    return [round($p, 1), $p >= 0 ? 'trend-up' : 'trend-down'];
+}
+
 $title = "Dashboard Insights — Avazonia";
 include 'layout/header.php';
 ?>
@@ -188,6 +215,96 @@ include 'layout/header.php';
   <div class="mini-card"><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">PENDING PRODUCTS</div><div style="font-weight:900;font-size:24px;margin-top:6px;"><?= (int)($marketStats['pending_products']??0) ?></div><a href="approvals.php" style="font-size:10px;color:var(--red);font-weight:700;text-decoration:none;">Approve →</a></div>
   <div class="mini-card"><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">RFQs</div><div style="font-weight:900;font-size:24px;margin-top:6px;"><?= (int)($marketStats['rfqs']??0) ?></div><a href="rfqs.php" style="font-size:10px;color:var(--red);font-weight:700;text-decoration:none;">View →</a></div>
   <div class="mini-card"><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">WHOLESALE / EXPORT</div><div style="font-weight:900;font-size:24px;margin-top:6px;"><?= (int)($marketStats['wholesale']??0) ?> / <?= (int)($marketStats['export']??0) ?></div><a href="sellers.php" style="font-size:10px;color:var(--red);font-weight:700;text-decoration:none;">Sellers →</a></div>
+</div>
+
+<!-- TRAFFIC (GA4) -->
+<div style="margin-bottom: 40px;">
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">Website Traffic (Last 28 Days)</div>
+            <?php if ($ga4Data !== null): ?><span style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);">via Google Analytics · cached 15 min</span><?php endif; ?>
+        </div>
+
+        <?php if ($ga4Data !== null): ?>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;padding:28px 32px 8px;">
+            <div class="mini-card">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">VISITORS</div>
+                <div style="font-weight:900;font-size:26px;margin-top:6px;"><?= number_format($ga4Data['totals']['visitors']) ?></div>
+                <?php [$gp, $gc] = ga4Pct($ga4Data['totals']['visitors'], $ga4Data['prev']['visitors']); if ($gp !== null): ?><div class="trend-indicator <?= $gc ?>"><?= $gp >= 0 ? '▲' : '▼' ?> <?= abs($gp) ?>% <span style="opacity:.5;color:var(--ink);">vs prev 28d</span></div><?php else: ?><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);">no previous data</div><?php endif; ?>
+            </div>
+            <div class="mini-card">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">SESSIONS</div>
+                <div style="font-weight:900;font-size:26px;margin-top:6px;"><?= number_format($ga4Data['totals']['sessions']) ?></div>
+                <?php [$gp, $gc] = ga4Pct($ga4Data['totals']['sessions'], $ga4Data['prev']['sessions']); if ($gp !== null): ?><div class="trend-indicator <?= $gc ?>"><?= $gp >= 0 ? '▲' : '▼' ?> <?= abs($gp) ?>% <span style="opacity:.5;color:var(--ink);">vs prev 28d</span></div><?php else: ?><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);">no previous data</div><?php endif; ?>
+            </div>
+            <div class="mini-card">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">PAGE VIEWS</div>
+                <div style="font-weight:900;font-size:26px;margin-top:6px;"><?= number_format($ga4Data['totals']['pageviews']) ?></div>
+                <?php [$gp, $gc] = ga4Pct($ga4Data['totals']['pageviews'], $ga4Data['prev']['pageviews']); if ($gp !== null): ?><div class="trend-indicator <?= $gc ?>"><?= $gp >= 0 ? '▲' : '▼' ?> <?= abs($gp) ?>% <span style="opacity:.5;color:var(--ink);">vs prev 28d</span></div><?php else: ?><div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);">no previous data</div><?php endif; ?>
+            </div>
+            <div class="mini-card">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">NEW VISITORS</div>
+                <div style="font-weight:900;font-size:26px;margin-top:6px;"><?= number_format($ga4Data['totals']['new_visitors']) ?></div>
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);margin-top:4px;"><?= $ga4Data['totals']['visitors'] > 0 ? round(($ga4Data['totals']['new_visitors'] / $ga4Data['totals']['visitors']) * 100) : 0 ?>% of all visitors</div>
+            </div>
+            <div class="mini-card">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;">ENGAGED SESSIONS</div>
+                <div style="font-weight:900;font-size:26px;margin-top:6px;"><?= number_format($ga4Data['totals']['engaged']) ?></div>
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);margin-top:4px;">avg <?= Ga4Client::formatDuration($ga4Data['totals']['avg_duration']) ?> per session</div>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:0;align-items:start;">
+            <div style="padding:12px 32px 28px;">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;margin-bottom:14px;">DAILY VISITORS</div>
+                <div style="height:220px;"><canvas id="ga4DailyChart"></canvas></div>
+            </div>
+            <div style="padding:12px 32px 28px;">
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;margin-bottom:14px;">TOP PAGES</div>
+                <table class="admin-table" style="font-size:12px;">
+                    <thead><tr><th>Page</th><th style="text-align:right;">Views</th><th style="text-align:right;">Visitors</th></tr></thead>
+                    <tbody>
+                        <?php foreach ($ga4Data['pages'] as $pg): ?>
+                        <tr>
+                            <td style="font-family:var(--f-mono);font-size:11px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= htmlspecialchars($pg['path']) ?></td>
+                            <td style="text-align:right;font-weight:700;"><?= number_format($pg['views']) ?></td>
+                            <td style="text-align:right;opacity:.7;"><?= number_format($pg['visitors']) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <?php if (!empty($ga4Data['sources'])): ?>
+                <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);letter-spacing:.08em;margin:20px 0 10px;">TRAFFIC SOURCES</div>
+                <?php $maxSessions = max(1, max(array_column($ga4Data['sources'], 'sessions'))); foreach (array_slice($ga4Data['sources'], 0, 4) as $src): ?>
+                <div class="bar-row" style="grid-template-columns:110px 1fr 60px;margin-bottom:8px;">
+                    <span style="font-family:var(--f-mono);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= htmlspecialchars($src['source']) ?></span>
+                    <div class="bar-bg"><div class="bar-fill" style="width:<?= round(($src['sessions'] / $maxSessions) * 100) ?>%;"></div></div>
+                    <span style="font-family:var(--f-mono);font-size:10px;text-align:right;"><?= number_format($src['sessions']) ?></span>
+                </div>
+                <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php elseif ($ga4Error !== ''): ?>
+        <div style="padding:28px 32px 32px;">
+            <div style="background:#fff6f7;border:1px solid rgba(232,0,45,.25);border-radius:12px;padding:18px 22px;font-size:13px;color:var(--ink);">
+                <strong style="font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;color:var(--red);">ANALYTICS ERROR</strong><br>
+                <?= htmlspecialchars($ga4Error) ?>
+            </div>
+        </div>
+        <?php else: ?>
+        <div style="padding:28px 32px 32px;">
+            <div style="border:1px dashed var(--light-gray);border-radius:12px;padding:24px 28px;font-size:13px;color:var(--mid-gray);line-height:1.7;">
+                <strong style="color:var(--ink);">Not connected yet.</strong> The site already tracks visitors with Google Analytics (<span style="font-family:var(--f-mono);">G-G3GWGCPMPP</span>) — connect the property here to see traffic in the dashboard:
+                <ol style="margin:10px 0 0;padding-left:20px;">
+                    <li>Open <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a> → create a service account → download its <strong>JSON key</strong>.</li>
+                    <li>In <a href="admin/settings.php#social" style="color:var(--red);">Settings → Social &amp; SEO → Google Analytics</a>, enter the GA4 <strong>Property ID</strong> and paste the JSON key.</li>
+                    <li>In GA4 Admin → <strong>Property Access Management</strong>, add the service account's email as <strong>Viewer</strong>.</li>
+                </ol>
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
 </div>
 
 <div style="margin-bottom: 40px;">
@@ -411,6 +528,49 @@ document.addEventListener('DOMContentLoaded', function() {
             cutout: '70%'
         }
     });
+
+    // 3. GA4 DAILY VISITORS CHART (only rendered when analytics is connected)
+    const ga4Canvas = document.getElementById('ga4DailyChart');
+    if (ga4Canvas) {
+        const ga4Daily = <?= json_encode($ga4Data['daily'] ?? []) ?>;
+        new Chart(ga4Canvas, {
+            type: 'line',
+            data: {
+                labels: ga4Daily.map(d => d.date.slice(5)),
+                datasets: [
+                    {
+                        label: 'Visitors',
+                        data: ga4Daily.map(d => d.visitors),
+                        borderColor: '#E8002D',
+                        backgroundColor: 'rgba(232,0,45,0.06)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 2,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Sessions',
+                        data: ga4Daily.map(d => d.sessions),
+                        borderColor: '#0d0d0d',
+                        backgroundColor: 'transparent',
+                        tension: 0.35,
+                        pointRadius: 0,
+                        borderWidth: 2,
+                        borderDash: [4, 3]
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { font: { family: fontStack, size: 10, weight: '700' }, boxWidth: 12 } } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { family: fontStack, size: 10 }, precision: 0 } },
+                    x: { grid: { display: false }, ticks: { font: { family: fontStack, size: 9 }, maxTicksLimit: 10 } }
+                }
+            }
+        });
+    }
 
 });
 </script>
