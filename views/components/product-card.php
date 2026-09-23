@@ -93,13 +93,13 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
 
                 <?php if ($isSellerProduct): ?>
                     <?php if ($cardWhatsApp !== ''): ?>
-                        <a href="https://wa.me/<?= htmlspecialchars($cardWhatsApp) ?>?text=<?= $cardWhatsAppMessage ?>" target="_blank" rel="noopener" class="card-cart-btn" onclick="event.stopPropagation()" aria-label="Contact seller on WhatsApp" title="Contact seller on WhatsApp">
+                        <button type="button" class="card-cart-btn" onclick="event.preventDefault(); event.stopPropagation(); window.open('https://wa.me/<?= htmlspecialchars($cardWhatsApp) ?>?text=<?= $cardWhatsAppMessage ?>', '_blank', 'noopener')" aria-label="Contact seller on WhatsApp" title="Contact seller on WhatsApp">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.03 2C6.5 2 2 6.48 2 12c0 1.76.46 3.42 1.32 4.87L2 22l5.27-1.38A9.96 9.96 0 0 0 12.03 22C17.55 22 22 17.52 22 12S17.55 2 12.03 2Zm0 18.2c-1.53 0-3.02-.41-4.34-1.18l-.31-.18-3.13.82.84-3.05-.2-.31A8.2 8.2 0 1 1 12.03 20.2Z"/></svg>
-                        </a>
+                        </button>
                     <?php else: ?>
-                        <a href="<?= htmlspecialchars($cardProductUrl) ?>" class="card-cart-btn" onclick="event.stopPropagation()" aria-label="View seller contact options" title="View seller contact options">
+                        <button type="button" class="card-cart-btn" onclick="event.preventDefault(); event.stopPropagation(); window.location.href='<?= htmlspecialchars($cardProductUrl, ENT_QUOTES) ?>'" aria-label="View seller contact options" title="View seller contact options">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                        </a>
+                        </button>
                     <?php endif; ?>
                 <?php elseif ($p['stock_qty'] <= 0 && empty($p['is_preorder']) && empty($p['is_dropshipping'])): ?>
                     <button type="button" 
