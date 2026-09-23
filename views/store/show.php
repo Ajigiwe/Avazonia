@@ -58,7 +58,7 @@ $isIntl = ($store['seller_type'] ?? '') === 'international_supplier';
   <?php else: ?>
   <div style="margin-top:18px;">
     <h2 style="font-family:var(--f-display);font-weight:800;font-size:20px;">Products — <?= (int)($pagination['total'] ?? count($products)) ?> items</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:16px;">
+    <div class="vendor-product-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:16px;">
       <?php foreach ($products as $p): ?>
         <?php include __DIR__ . '/../components/product-card.php'; ?>
       <?php endforeach; ?>
