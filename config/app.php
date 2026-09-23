@@ -167,7 +167,6 @@ function listing_type_badge(array $product): string {
     $bg=$colors[$type] ?? '#f3f4f6';
     $extra='';
     if ($type==='wholesale' && !empty($product['moq'])) $extra=' · MOQ '.$product['moq'];
-    if ($type==='export' && !empty($product['incoterms'])) $extra=' · '.$product['incoterms'];
     return '<span style="font-family:var(--f-mono);font-size:9px;background:'.$bg.';padding:4px 8px;border-radius:999px;">'.$label.$extra.'</span>';
 }
 
