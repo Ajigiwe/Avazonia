@@ -492,7 +492,7 @@ class Product extends Model {
     }
     public function updateBySeller(int $id, int $sellerId, array $data): bool {
         $fields=[]; $params=[];
-        $allowed=['name','category_id','price_ghs','stock_qty','description','listing_type','condition_type','moq','visibility','wholesale_price_ghs','fob_price_ghs','incoterms','capacity','oem','vehicle_origin','available_in_ghana'];
+        $allowed=['name','category_id','price_ghs','stock_qty','description','listing_type','condition_type','moq','visibility','wholesale_price_ghs','capacity','oem','vehicle_origin','available_in_ghana'];
         foreach($allowed as $f) {
             if (array_key_exists($f,$data)) { $fields[]="$f=?"; $params[]=$data[$f]; }
         }

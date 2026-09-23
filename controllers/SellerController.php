@@ -395,9 +395,6 @@ class SellerController extends Controller {
             $visibility=$_POST['visibility']??'public'; if(!in_array($visibility,['public','b2b_only','retail_only'])) $visibility='public';
             $moq=!empty($_POST['moq'])?(int)$_POST['moq']:null;
             $wholesalePrice=!empty($_POST['wholesale_price_ghs'])?(float)$_POST['wholesale_price_ghs']:null;
-            $fobPrice=!empty($_POST['fob_price_usd'])?(float)$_POST['fob_price_usd']:null;
-            $incoterms=trim((string)($_POST['incoterms']??''));
-            if ($incoterms === '' || !in_array($incoterms,['EXW','FOB','CIF'],true)) $incoterms=null;
             $productionCapacity=$_POST['production_capacity']??null;
             $oemOdm=isset($_POST['oem_odm'])?1:0;
             $description=trim($_POST['description']??'');
@@ -470,8 +467,6 @@ class SellerController extends Controller {
                 'condition_type'=>$cond,
                 'moq'=>$moq,
                 'wholesale_price_ghs'=>$wholesalePrice,
-                'fob_price_usd'=>$fobPrice,
-                'incoterms'=>$incoterms,
                 'production_capacity'=>$productionCapacity,
                 'oem_odm'=>$oemOdm,
                 'available_in_ghana'=>isset($_POST['available_in_ghana'])?1:0,

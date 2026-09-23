@@ -91,12 +91,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $condition_type = $_POST['condition_type'] ?? 'new'; if(!in_array($condition_type,['new','used'])) $condition_type='new';
     $moq = !empty($_POST['moq']) ? (int)$_POST['moq'] : null;
     $wholesale_price = !empty($_POST['wholesale_price_ghs']) ? (float)$_POST['wholesale_price_ghs'] : null;
-    $fob_price = !empty($_POST['fob_price_usd']) ? (float)$_POST['fob_price_usd'] : null;
-    // ENUM columns are nullable: an empty form value must become NULL or MariaDB
-    // strict mode rejects the row with "Data truncated for column".
-    $incoterms = in_array((string)($_POST['incoterms'] ?? ''), ['EXW','FOB','CIF'], true) ? $_POST['incoterms'] : null;
     $production_capacity = $_POST['production_capacity'] ?? null;
     $oem_odm = isset($_POST['oem_odm']) ? 1 : 0;
+    // ENUM columns are nullable: an empty form value must become NULL or MariaDB
+    // strict mode rejects the row with "Data truncated for column".
     $vehicle_origin = in_array((string)($_POST['vehicle_origin'] ?? ''), ['local','international_export'], true) ? $_POST['vehicle_origin'] : null;
     $location_country = $_POST['location_country'] ?? 'GH';
     $status_market = 'active';
@@ -193,14 +191,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $productValues = [
                 $name, $slug, $category_id, $brand_id, $seller_id, $store_id,
                 $listing_type, $visibility, $condition_type, $moq, $wholesale_price,
-                $fob_price, $incoterms, $production_capacity, $oem_odm, $location_country,
+                $production_capacity, $oem_odm, $location_country,
                 $vehicle_origin, $status_market, $price, $compare_price, $price_usd,
                 $compare_price_usd, $currency, $stock, $description, $features_json,
                 $specs_json, $tags, $meta_title, $meta_description, $meta_keywords,
                 $is_preorder, $is_bestseller, $is_featured, $is_dropshipping,
                 $available_in_ghana, $lead_time, $uploaded_video
             ];
-            $productColumns = 'name, slug, category_id, brand_id, seller_id, store_id, listing_type, visibility, condition_type, moq, wholesale_price_ghs, fob_price_usd, incoterms, production_capacity, oem_odm, location_country, vehicle_origin, status_market, price_ghs, compare_at_price_ghs, price_usd, compare_at_price_usd, currency, stock_qty, description, features, specs, tags, meta_title, meta_description, meta_keywords, is_preorder, is_bestseller, is_featured, is_dropshipping, available_in_ghana, lead_time_days, video_url';
+            $productColumns = 'name, slug, category_id, brand_id, seller_id, store_id, listing_type, visibility, condition_type, moq, wholesale_price_ghs, production_capacity, oem_odm, location_country, vehicle_origin, status_market, price_ghs, compare_at_price_ghs, price_usd, compare_at_price_usd, currency, stock_qty, description, features, specs, tags, meta_title, meta_description, meta_keywords, is_preorder, is_bestseller, is_featured, is_dropshipping, available_in_ghana, lead_time_days, video_url';
             $placeholders = implode(', ', array_fill(0, count($productValues), '?'));
             $stmt = $db->prepare("INSERT INTO products ($productColumns) VALUES ($placeholders)");
             $stmt->execute($productValues);
@@ -414,7 +412,7 @@ include 'layout/header.php';
                             <option value="retail">Retail — single price</option>
                             <option value="wholesale">Wholesale — MOQ / bulk</option>
                             <option value="rfq">Request for Quote — price on enquiry</option>
-                            <option value="export">International Export — FOB/CIF</option>
+                            <option value="export">International Export</option>
                         </select>
                     </div>
                     <div>
@@ -431,14 +429,12 @@ include 'layout/header.php';
                     <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Wholesale Price (GHS)</label><input type="number" step="0.01" name="wholesale_price_ghs" placeholder="e.g. 120.00" style="width:100%;padding:10px;border:1px solid var(--light-gray);"></div>
                 </div>
                 <div id="export-fields" style="display:none;margin-top:14px;grid-template-columns:1fr 1fr 1fr;gap:14px;">
-                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">FOB Price (USD)</label><input type="number" step="0.01" name="fob_price_usd" placeholder="e.g. 1500" style="width:100%;padding:10px;border:1px solid var(--light-gray);"></div>
-                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Incoterms</label><select name="incoterms" style="width:100%;padding:10px;border:1px solid var(--light-gray);"><option value="">—</option><option value="EXW">EXW</option><option value="FOB">FOB</option><option value="CIF">CIF</option></select></div>
                     <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Production Capacity</label><input type="text" name="production_capacity" placeholder="e.g. 500 units/month" style="width:100%;padding:10px;border:1px solid var(--light-gray);"></div>
                 </div>
                 <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
                     <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" name="oem_odm" value="1"> OEM/ODM Available</label>
                     <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Location Country</label><select name="location_country" style="width:100%;padding:10px;border:1px solid var(--light-gray);"><option value="GH">🇬🇭 Ghana — Local</option><option value="CN">🇨🇳 China — Export</option><option value="OTHER">Other</option></select></div>
-                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Vehicle Origin (if Vehicles)</label><select name="vehicle_origin" style="width:100%;padding:10px;border:1px solid var(--light-gray);"><option value="">— Not a vehicle</option><option value="local">Local — Available in Ghana</option><option value="international_export">International Export — FOB China</option></select></div>
+                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Vehicle Origin (if Vehicles)</label><select name="vehicle_origin" style="width:100%;padding:10px;border:1px solid var(--light-gray);"><option value="">— Not a vehicle</option><option value="local">Local — Available in Ghana</option><option value="international_export">International Export</option></select></div>
                 </div>
                 <script>function toggleMarketplace(){var v=document.getElementById('listing_type').value;document.getElementById('wholesale-fields').style.display=(v==='wholesale'||v==='export')?'grid':'none';document.getElementById('export-fields').style.display=(v==='export')?'grid':'none';}</script>
             </div>

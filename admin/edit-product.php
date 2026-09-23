@@ -129,10 +129,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $condition_type=$_POST['condition_type']??'new';
         $moq=!empty($_POST['moq'])?(int)$_POST['moq']:null;
         $wholesale_price=!empty($_POST['wholesale_price_ghs'])?(float)$_POST['wholesale_price_ghs']:null;
-        $fob_price=!empty($_POST['fob_price_usd'])?(float)$_POST['fob_price_usd']:null;
-        // ENUM columns are nullable: an empty form value must become NULL or MariaDB
-        // strict mode rejects the row with "Data truncated for column".
-        $incoterms=in_array((string)($_POST['incoterms']??''),['EXW','FOB','CIF'],true)?$_POST['incoterms']:null;
         $production_capacity=$_POST['production_capacity']??null;
         $oem_odm=isset($_POST['oem_odm'])?1:0;
         $location_country=$_POST['location_country']??'GH';
@@ -234,8 +230,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$error) {
         try {
-            $stmt = $db->prepare("UPDATE products SET name = ?, category_id = ?, brand_id = ?, seller_id=?, store_id=?, listing_type=?, visibility=?, condition_type=?, moq=?, wholesale_price_ghs=?, fob_price_usd=?, incoterms=?, production_capacity=?, oem_odm=?, location_country=?, vehicle_origin=?, price_ghs = ?, compare_at_price_ghs = ?, price_usd = ?, compare_at_price_usd = ?, currency = ?, stock_qty = ?, description = ?, features = ?, specs = ?, tags = ?, meta_title = ?, meta_description = ?, meta_keywords = ?, is_active = ?, is_bestseller = ?, is_featured = ?, is_preorder = ?, is_dropshipping = ?, available_in_ghana = ?, lead_time_days = ? WHERE id = ?");
-            $stmt->execute([$name, $category_id, $brand_id, $seller_id, $store_id, $listing_type, $visibility, $condition_type, $moq, $wholesale_price, $fob_price, $incoterms, $production_capacity, $oem_odm, $location_country, $vehicle_origin, $price, $compare_price, $price_usd, $compare_price_usd, $currency, $stock, $description, $features_json, $specs_json, $tags, $meta_title, $meta_description, $meta_keywords, $is_active, $is_bestseller, $is_featured, $is_preorder, $is_dropshipping, $available_in_ghana, $lead_time, $productId]);
+            $stmt = $db->prepare("UPDATE products SET name = ?, category_id = ?, brand_id = ?, seller_id=?, store_id=?, listing_type=?, visibility=?, condition_type=?, moq=?, wholesale_price_ghs=?, production_capacity=?, oem_odm=?, location_country=?, vehicle_origin=?, price_ghs = ?, compare_at_price_ghs = ?, price_usd = ?, compare_at_price_usd = ?, currency = ?, stock_qty = ?, description = ?, features = ?, specs = ?, tags = ?, meta_title = ?, meta_description = ?, meta_keywords = ?, is_active = ?, is_bestseller = ?, is_featured = ?, is_preorder = ?, is_dropshipping = ?, available_in_ghana = ?, lead_time_days = ? WHERE id = ?");
+            $stmt->execute([$name, $category_id, $brand_id, $seller_id, $store_id, $listing_type, $visibility, $condition_type, $moq, $wholesale_price, $production_capacity, $oem_odm, $location_country, $vehicle_origin, $price, $compare_price, $price_usd, $compare_price_usd, $currency, $stock, $description, $features_json, $specs_json, $tags, $meta_title, $meta_description, $meta_keywords, $is_active, $is_bestseller, $is_featured, $is_preorder, $is_dropshipping, $available_in_ghana, $lead_time, $productId]);
             
             if ($video_updated) {
                 $stmt = $db->prepare("UPDATE products SET video_url = ? WHERE id = ?");
@@ -584,8 +580,6 @@ include 'layout/header.php';
                     <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Wholesale Price GHS</label><input type="number" step="0.01" name="wholesale_price_ghs" value="<?= htmlspecialchars($product['wholesale_price_ghs']??'') ?>" style="width:100%;padding:10px;border:1px solid var(--light-gray);"></div>
                 </div>
                 <div id="export-fields-edit" style="display:none;margin-top:14px;grid-template-columns:1fr 1fr 1fr;gap:14px;">
-                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">FOB USD</label><input type="number" step="0.01" name="fob_price_usd" value="<?= htmlspecialchars($product['fob_price_usd']??'') ?>" style="width:100%;padding:10px;border:1px solid var(--light-gray);"></div>
-                    <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Incoterms</label><select name="incoterms" style="width:100%;padding:10px;border:1px solid var(--light-gray);"><option value="">—</option><option value="EXW" <?= ($product['incoterms']??'')==='EXW'?'selected':'' ?>>EXW</option><option value="FOB" <?= ($product['incoterms']??'')==='FOB'?'selected':'' ?>>FOB</option><option value="CIF" <?= ($product['incoterms']??'')==='CIF'?'selected':'' ?>>CIF</option></select></div>
                     <div><label style="display:block;font-family:var(--f-semi);font-size:10px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:6px;">Capacity</label><input type="text" name="production_capacity" value="<?= htmlspecialchars($product['production_capacity']??'') ?>" style="width:100%;padding:10px;border:1px solid var(--light-gray);"></div>
                 </div>
                 <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">

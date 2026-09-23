@@ -142,7 +142,7 @@
                                 <option value="retail">Retail — single price</option>
                                 <option value="wholesale">Wholesale — MOQ / bulk</option>
                                 <option value="rfq">Request for Quote — price on enquiry</option>
-                                <option value="export">International Export — FOB/CIF</option>
+                                <option value="export">International Export</option>
                             </select>
                         </div>
                         <div>
@@ -171,19 +171,6 @@
                     <!-- Export fields -->
                     <div id="export-fields" style="display:none;margin-top:20px;">
                         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;">
-                            <div>
-                                <label class="form-label">FOB Price (USD)</label>
-                                <input type="number" step="0.01" name="fob_price_usd" placeholder="e.g. 1500" class="form-input">
-                            </div>
-                            <div>
-                                <label class="form-label">Incoterms</label>
-                                <select name="incoterms" class="form-select">
-                                    <option value="">—</option>
-                                    <option value="EXW">EXW</option>
-                                    <option value="FOB">FOB</option>
-                                    <option value="CIF">CIF</option>
-                                </select>
-                            </div>
                             <div>
                                 <label class="form-label">Production Capacity</label>
                                 <input type="text" name="production_capacity" placeholder="e.g. 500 units/month" class="form-input">
