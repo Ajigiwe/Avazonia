@@ -140,7 +140,8 @@ if (Session::get('user_id')) {
             <?php
                 $detailWhatsApp = preg_replace('/[^0-9]/', '', (string)($product['seller_whatsapp'] ?? ''));
                 $detailPhone = preg_replace('/[^0-9]/', '', (string)($product['seller_phone'] ?? ''));
-                if ($detailWhatsApp === '' && $detailPhone === '') {
+                $isSellerProduct = !empty($product['seller_id']);
+                if (!$isSellerProduct && $detailWhatsApp === '' && $detailPhone === '') {
                     // Avazonia Official products (no seller row) use the site contact number
                     $officialContact = '';
                     try {
@@ -155,15 +156,16 @@ if (Session::get('user_id')) {
                     }
                 }
                 if ($detailPhone === '' && $detailWhatsApp !== '') $detailPhone = $detailWhatsApp; // WhatsApp numbers are callable
-                $detailWeChat = trim((string)($product['seller_wechat'] ?? ''));
-                $detailMessage = rawurlencode("Hi, I'm interested in {$product['name']} on Avazonia: " . APP_URL . '/product/' . $product['slug']);
+                $detailWeChat = $isSellerProduct ? '' : trim((string)($product['seller_wechat'] ?? ''));
+                if ($isSellerProduct) $detailPhone = '';
+                $detailMessage = rawurlencode("Hi, I'm interested in {$product['name']} listed on Avazonia. Is it available? " . APP_URL . '/product/' . $product['slug']);
             ?>
             <?php if ($detailWhatsApp !== '' || $detailWeChat !== '' || $detailPhone !== ''): ?>
                 <div class="seller-contact-actions" aria-label="Contact seller">
                     <?php if ($detailWhatsApp !== ''): ?>
                         <a href="https://wa.me/<?= htmlspecialchars($detailWhatsApp) ?>?text=<?= $detailMessage ?>" class="seller-contact-btn whatsapp" target="_blank" rel="noopener">
                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.03 2C6.5 2 2 6.48 2 12c0 1.76.46 3.42 1.32 4.87L2 22l5.27-1.38A9.96 9.96 0 0 0 12.03 22C17.55 22 22 17.52 22 12S17.55 2 12.03 2Zm0 18.2c-1.53 0-3.02-.41-4.34-1.18l-.31-.18-3.13.82.84-3.05-.2-.31A8.2 8.2 0 1 1 12.03 20.2Zm4.5-6.15c-.25-.13-1.48-.73-1.71-.81-.23-.08-.4-.13-.57.13-.17.25-.65.81-.79.98-.15.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.49-1.41-1.74-.15-.25-.02-.39.11-.51.12-.12.25-.29.38-.44.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.57-1.37-.78-1.88-.2-.49-.41-.42-.57-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.43 1.02 2.6c.13.17 1.76 2.68 4.27 3.76.6.26 1.07.42 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.48-.61 1.69-1.2.21-.59.21-1.1.15-1.2-.06-.11-.23-.17-.48-.3Z"/></svg>
-                            Enquire on WhatsApp
+                            <?= $isSellerProduct ? 'Contact Seller on WhatsApp' : 'Enquire on WhatsApp' ?>
                         </a>
                         <?php if ($detailPhone !== ''): ?>
                             <a href="tel:+<?= htmlspecialchars($detailPhone) ?>" class="seller-contact-btn call">
@@ -183,6 +185,8 @@ if (Session::get('user_id')) {
                         </a>
                     <?php endif; ?>
                 </div>
+            <?php elseif ($isSellerProduct): ?>
+                <p style="font-size:13px;color:var(--mid-gray);margin:8px 0 16px;">The seller has not added a WhatsApp contact number yet.</p>
             <?php endif; ?>
             <?php if(!empty($product['moq'])): ?><div style="font-family:var(--f-mono);font-size:11px;color:var(--ink);margin-bottom:8px;">MOQ: <strong><?= (int)$product['moq'] ?> units</strong><?php if(!empty($product['wholesale_price_ghs'])): ?> · Wholesale <?= '₵'.number_format($product['wholesale_price_ghs'],2) ?><?php endif; ?></div><?php endif; ?>
             <?php if(!empty($product['seller_type']) && $product['seller_type']==='international_supplier'): ?><div style="font-family:var(--f-mono);font-size:10px;background:#fef3c7;color:#92400e;padding:6px 10px;border-radius:6px;margin-bottom:10px;">B2B / Wholesale / Export — for Business Buyers</div><?php endif; ?>
@@ -283,6 +287,7 @@ if (Session::get('user_id')) {
             </script>
             <?php endif; ?>
 
+            <?php if (!$isSellerProduct): ?>
             <form class="ajax-cart-form" action="<?= APP_URL ?>/api/cart-add" method="POST">
                 <?= Csrf::field() ?>
                 <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
@@ -416,7 +421,8 @@ if (Session::get('user_id')) {
                     }
                 </style>
             </form>
-            <?php if(in_array($product['listing_type'] ?? 'retail',['wholesale','rfq','export']) || ($product['seller_type'] ?? '')==='international_supplier'): ?>
+            <?php endif; ?>
+            <?php if(!$isSellerProduct && (in_array($product['listing_type'] ?? 'retail',['wholesale','rfq','export']) || ($product['seller_type'] ?? '')==='international_supplier')): ?>
             <button onclick="document.getElementById('detail-rfq').style.display='block'" style="width:100%;margin-top:10px;height:44px;background:#fff;border:2px solid var(--ink);font-weight:800;text-transform:uppercase;cursor:pointer;">Request Quote / Contact Supplier</button>
             <div id="detail-rfq" style="display:none;margin-top:12px;border:2px solid var(--ink);padding:14px;">
               <form id="detail-rfq-form" style="display:flex;flex-direction:column;gap:8px;">
@@ -430,6 +436,7 @@ if (Session::get('user_id')) {
 
             <!-- Premium Trust & Help Section -->
             <div class="product-trust-group">
+                <?php if (!$isSellerProduct): ?>
                 <!-- Payment Support -->
                 <div class="payment-trust-box">
                     <span class="payment-label">Supported payment types:</span>
@@ -438,11 +445,17 @@ if (Session::get('user_id')) {
                     </div>
                 </div>
 
+                <?php endif; ?>
+
                 <!-- Shipping & Social -->
                 <div class="trust-meta-row">
                     <div class="shipping-promise">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--mid-gray);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><path d="M9 16l2 2 4-4"></path></svg>
-                        <span>Order now and your order ships by <span class="ship-date-highlight"><?= date('D, M d', strtotime('+3 days')) ?></span></span>
+                        <?php if ($isSellerProduct): ?>
+                            <span>Contact the seller to arrange payment and delivery.</span>
+                        <?php else: ?>
+                            <span>Order now and your order ships by <span class="ship-date-highlight"><?= date('D, M d', strtotime('+3 days')) ?></span></span>
+                        <?php endif; ?>
                     </div>
 
                     <div class="social-sharing-circles">
@@ -488,7 +501,7 @@ if (Session::get('user_id')) {
                             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                         </div>
                         <div class="tbadge-content">
-                            <h4>Secure Payment</h4>
+                            <h4><?= $isSellerProduct ? 'Contact Seller Directly' : 'Secure Payment' ?></h4>
                         </div>
                     </div>
                 </div>

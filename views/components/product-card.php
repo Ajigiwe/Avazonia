@@ -6,6 +6,10 @@
  */
 
 $avg_rating = round($p['avg_rating'] ?? 0);
+$isSellerProduct = !empty($p['seller_id']);
+$cardWhatsApp = preg_replace('/[^0-9]/', '', (string)($p['seller_whatsapp'] ?? ''));
+$cardProductUrl = APP_URL . '/product/' . rawurlencode((string)$p['slug']);
+$cardWhatsAppMessage = rawurlencode("Hi, I'm interested in {$p['name']} listed on Avazonia. Is it available? " . $cardProductUrl);
 $category = htmlspecialchars($p['category_name'] ?? 'Gadget');
 $imgUrl = $p['primary_image'] ?: 'https://via.placeholder.com/400x400';
 if (!filter_var($imgUrl, FILTER_VALIDATE_URL)) {
@@ -39,11 +43,11 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
 
 <div class="card<?= !empty($homeGhost) ? ' card-ghost is-hidden-ghost' : '' ?>">
     <!-- Action Arrow (Top Right) -->
-    <a href="<?= APP_URL ?>/product/<?= $p['slug'] ?>" class="card-action-arrow" aria-label="View Product">
+    <a href="<?= htmlspecialchars($cardProductUrl) ?>" class="card-action-arrow" aria-label="View Product">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
     </a>
 
-    <a href="<?= APP_URL ?>/product/<?= $p['slug'] ?>" class="card-link-block">
+    <a href="<?= htmlspecialchars($cardProductUrl) ?>" class="card-link-block">
         <div class="card-img-wrap" onmouseenter="const v = this.querySelector('video'); if(v){v.style.opacity=1; v.play();}" onmouseleave="const v = this.querySelector('video'); if(v){v.style.opacity=0; v.pause();}">
             <div class="card-tags">
             <?php if ($p['stock_qty'] <= 0 && empty($p['is_preorder']) && empty($p['is_dropshipping'])): ?>
@@ -87,7 +91,17 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
                 </button>
 
 
-                <?php if ($p['stock_qty'] <= 0 && empty($p['is_preorder']) && empty($p['is_dropshipping'])): ?>
+                <?php if ($isSellerProduct): ?>
+                    <?php if ($cardWhatsApp !== ''): ?>
+                        <a href="https://wa.me/<?= htmlspecialchars($cardWhatsApp) ?>?text=<?= $cardWhatsAppMessage ?>" target="_blank" rel="noopener" class="card-cart-btn" onclick="event.stopPropagation()" aria-label="Contact seller on WhatsApp" title="Contact seller on WhatsApp">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.03 2C6.5 2 2 6.48 2 12c0 1.76.46 3.42 1.32 4.87L2 22l5.27-1.38A9.96 9.96 0 0 0 12.03 22C17.55 22 22 17.52 22 12S17.55 2 12.03 2Zm0 18.2c-1.53 0-3.02-.41-4.34-1.18l-.31-.18-3.13.82.84-3.05-.2-.31A8.2 8.2 0 1 1 12.03 20.2Z"/></svg>
+                        </a>
+                    <?php else: ?>
+                        <a href="<?= htmlspecialchars($cardProductUrl) ?>" class="card-cart-btn" onclick="event.stopPropagation()" aria-label="View seller contact options" title="View seller contact options">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        </a>
+                    <?php endif; ?>
+                <?php elseif ($p['stock_qty'] <= 0 && empty($p['is_preorder']) && empty($p['is_dropshipping'])): ?>
                     <button type="button" 
                             class="card-cart-btn disabled"
                             disabled

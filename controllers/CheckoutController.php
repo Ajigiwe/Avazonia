@@ -14,13 +14,31 @@ class CheckoutController extends Controller {
             $this->redirect(APP_URL . '/cart');
         }
 
+        $productModel = new Product();
+        $removedSellerItems = false;
+        foreach ($cart as $key => $item) {
+            $product = $productModel->findById((int)($item['product_id'] ?? 0));
+            if (!$product || !empty($product['seller_id'])) {
+                unset($cart[$key]);
+                $removedSellerItems = $removedSellerItems || ($product && !empty($product['seller_id']));
+            }
+        }
+        Session::set('cart', $cart);
+        if ($removedSellerItems) {
+            $this->redirect(APP_URL . '/cart?seller_removed=1');
+            return;
+        }
+        if (empty($cart)) {
+            $this->redirect(APP_URL . '/cart');
+            return;
+        }
+
         $subtotal = 0;
         $total_to_pay_now = 0;
         $has_preorder = false;
         
         $settings = new Settings();
         $deposit_pct = (float)$settings->get('preorder_deposit_pct', 5);
-        $productModel = new Product();
 
         foreach ($cart as $key => $item) {
             $item_total = $item['price_ghs'] * $item['qty'];
@@ -98,6 +116,16 @@ class CheckoutController extends Controller {
             $dbProduct = $productModel->findById($item['product_id']);
             if (!$dbProduct) {
                 return $this->json(['success' => false, 'message' => "Product '{$item['name']}' is no longer available."]);
+            }
+            if (!empty($dbProduct['seller_id'])) {
+                foreach ($cart as $cartKey => $cartItem) {
+                    $sellerProduct = $productModel->findById((int)($cartItem['product_id'] ?? 0));
+                    if (!$sellerProduct || !empty($sellerProduct['seller_id'])) {
+                        unset($cart[$cartKey]);
+                    }
+                }
+                Session::set('cart', $cart);
+                return $this->json(['success' => false, 'message' => "'{$dbProduct['name']}' is sold directly by its seller. Seller products have been removed from your cart; contact the seller on WhatsApp."]);
             }
             
             $productCurrency = $dbProduct['currency'] ?? 'GHS';

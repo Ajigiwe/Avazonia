@@ -9,6 +9,7 @@
 
 <div style="margin-bottom:28px;">
     <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.1em;"><?= date('d M Y') ?> &middot; Overview</div>
+    <div style="margin-top:10px;padding:12px 16px;background:#eaf7ee;border:1px solid #b7e4c7;border-radius:8px;font-size:13px;color:#246b3b;">New seller sales are arranged directly with buyers through WhatsApp. Avazonia checkout, commissions, and payouts do not apply to seller products; any order and earnings figures below are historical records.</div>
 </div>
 
 <?php if (!empty($error)): ?><div style="background:#fef3c7;border:1.5px solid #f59e0b;padding:12px 14px;font-family:var(--f-mono);font-size:11px;color:#92400e;margin-bottom:14px;">&#9888; <?= htmlspecialchars($error) ?></div><?php endif; ?>
@@ -31,20 +32,20 @@
         <div class="stat-sub"><?= (int)($stats['active_products']??0) ?> active &middot; <?= (int)($stats['pending_products']??0) ?> pending</div>
     </div>
     <div class="seller-stat-card">
-        <div class="stat-label">Total Orders</div>
+        <div class="stat-label">Historical Orders</div>
         <div class="stat-value"><?= (int)($stats['total_orders']??0) ?></div>
     </div>
     <div class="seller-stat-card">
-        <div class="stat-label">Gross Sales</div>
+        <div class="stat-label">Historical Gross Sales</div>
         <div class="stat-value">&#8373;<?= number_format($stats['gross_sales']??0, 2) ?></div>
     </div>
     <div class="seller-stat-card">
-        <div class="stat-label">Commission (<?= (int)($stats['commission_pct']??5) ?>%)</div>
+        <div class="stat-label">Historical Commission (<?= (int)($stats['commission_pct']??5) ?>%)</div>
         <div class="stat-value" style="color:var(--red);">&#8373;<?= number_format($stats['commission']??0, 2) ?></div>
         <div class="stat-sub">Net: &#8373;<?= number_format($stats['net_earnings']??0, 2) ?></div>
     </div>
     <div class="seller-stat-card">
-        <div class="stat-label">Pending Payout</div>
+        <div class="stat-label">Historical Pending Payout</div>
         <div class="stat-value">&#8373;<?= number_format($stats['pending_payout']??0, 2) ?></div>
     </div>
 </div>

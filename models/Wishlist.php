@@ -23,10 +23,11 @@ class Wishlist extends Model {
     public function findByUserId($userId) {
         $db = db();
         $stmt = $db->prepare("
-            SELECT w.*, p.name, p.price_ghs, p.compare_at_price_ghs, p.price_usd, p.compare_at_price_usd, p.currency, p.slug, p.is_preorder, p.is_dropshipping, pi.url as primary_image 
-            FROM wishlist w 
-            JOIN products p ON w.product_id = p.id 
+            SELECT w.*, p.name, p.price_ghs, p.compare_at_price_ghs, p.price_usd, p.compare_at_price_usd, p.currency, p.slug, p.is_preorder, p.is_dropshipping, p.seller_id, pi.url as primary_image, s.whatsapp_number as seller_whatsapp
+            FROM wishlist w
+            JOIN products p ON w.product_id = p.id
             LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
+            LEFT JOIN sellers s ON p.seller_id = s.id
             WHERE w.user_id = ?
             ORDER BY w.created_at DESC
         ");

@@ -87,12 +87,22 @@ $user_name = Session::get('user_name') ?: 'Member';
                                 </div>
 
                                 <div class="wish-actions">
-                                    <form class="ajax-cart-form" action="<?= APP_URL ?>/api/cart-add" method="POST">
-                                        <?= Csrf::field() ?>
-                                        <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
-                                        <input type="hidden" name="qty" value="1">
-                                        <button type="submit" style="padding: 10px 20px; background: var(--ink); color: #fff; border: none; border-radius: 100px; cursor: pointer; font-weight: 700; font-size: 12px; text-transform: uppercase;">Add to Cart</button>
-                                    </form>
+                                    <?php if (!empty($item['seller_id'])): ?>
+                                        <?php $wishWhatsApp = preg_replace('/[^0-9]/', '', (string)($item['seller_whatsapp'] ?? '')); ?>
+                                        <?php if ($wishWhatsApp !== ''): ?>
+                                            <?php $wishMessage = rawurlencode("Hi, I'm interested in {$item['name']} listed on Avazonia. Is it available? " . APP_URL . '/product/' . $item['slug']); ?>
+                                            <a href="https://wa.me/<?= htmlspecialchars($wishWhatsApp) ?>?text=<?= $wishMessage ?>" target="_blank" rel="noopener" style="padding: 10px 20px; background: #25D366; color: #fff; text-decoration: none; border-radius: 100px; font-weight: 700; font-size: 12px; text-transform: uppercase;">Contact on WhatsApp</a>
+                                        <?php else: ?>
+                                            <a href="<?= APP_URL ?>/product/<?= htmlspecialchars($item['slug']) ?>" style="padding: 10px 20px; background: var(--ink); color: #fff; text-decoration: none; border-radius: 100px; font-weight: 700; font-size: 12px; text-transform: uppercase;">View Contact Options</a>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <form class="ajax-cart-form" action="<?= APP_URL ?>/api/cart-add" method="POST">
+                                            <?= Csrf::field() ?>
+                                            <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
+                                            <input type="hidden" name="qty" value="1">
+                                            <button type="submit" style="padding: 10px 20px; background: var(--ink); color: #fff; border: none; border-radius: 100px; cursor: pointer; font-weight: 700; font-size: 12px; text-transform: uppercase;">Add to Cart</button>
+                                        </form>
+                                    <?php endif; ?>
                                     <button onclick="toggleWishlist(<?= $item['product_id'] ?>, true)" style="background: none; border: none; color: #ff4d4f; cursor: pointer; padding: 8px;" title="Remove">
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 6L5 18M5 6l14 14"></path></svg>
                                     </button>

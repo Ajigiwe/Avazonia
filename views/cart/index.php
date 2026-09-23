@@ -156,6 +156,11 @@ $totalItems = array_sum(array_column($cart, 'qty'));
   </div>
 
   <div class="container">
+    <?php if (!empty($removedSellerItems)): ?>
+      <div style="margin:24px auto 0;padding:14px 18px;max-width:1200px;background:#fff7e6;border:1px solid #ffd591;border-radius:8px;color:#874d00;font-size:14px;">
+        Seller products have been removed from your cart. Contact the seller directly on WhatsApp from the product page.
+      </div>
+    <?php endif; ?>
     <?php if (empty($cart)): ?>
         <div style="padding: 240px 0; text-align: center; background: #fff;">
             <p style="font-family: var(--f-mono); font-size: 14px; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.45em; margin-bottom: 56px; font-weight: 500;">Your bag is currently empty.</p>
@@ -164,8 +169,8 @@ $totalItems = array_sum(array_column($cart, 'qty'));
             </div>
         </div>
     <?php else: ?>
-        <div class="cart-layout">
-          <!-- ITEMS -->
+      <div class="cart-layout">
+      <!-- ITEMS -->
           <div>
             <div class="cart-card">
               <div class="cart-card-head">

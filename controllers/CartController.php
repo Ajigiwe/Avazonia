@@ -7,11 +7,27 @@ require_once __DIR__ . '/../core/Session.php';
 class CartController extends Controller {
     public function index() {
         $cart = Session::get('cart', []);
+        $productModel = new Product();
+        $removedSellerItems = !empty($_GET['seller_removed']);
+
+        foreach ($cart as $key => $item) {
+            $product = $productModel->findById((int)($item['product_id'] ?? 0));
+            if ($product && !empty($product['seller_id'])) {
+                unset($cart[$key]);
+                $removedSellerItems = true;
+            }
+        }
+
+        if ($removedSellerItems) {
+            Session::set('cart', $cart);
+        }
+
         $total = array_sum(array_map(fn($i) => $i['price_ghs'] * $i['qty'], $cart));
 
         $this->view('cart/index', [
             'cart' => $cart,
-            'total' => $total
+            'total' => $total,
+            'removedSellerItems' => $removedSellerItems
         ]);
     }
 
@@ -24,6 +40,7 @@ class CartController extends Controller {
                 ]);
             }
             $this->redirect(APP_URL . '/login?error=' . urlencode('Please login to add items to your cart.'));
+            return;
         }
 
         $productId = (int)($_POST['product_id'] ?? 0);
@@ -35,6 +52,7 @@ class CartController extends Controller {
                 return $this->json(['success' => false, 'message' => 'Invalid product.']);
             }
             $this->redirect(APP_URL . '/shop');
+            return;
         }
 
         $productModel = new Product();
@@ -45,6 +63,16 @@ class CartController extends Controller {
                 return $this->json(['success' => false, 'message' => 'Product not found.']);
             }
             $this->redirect(APP_URL . '/shop');
+            return;
+        }
+
+        if (!empty($product['seller_id'])) {
+            $message = 'Seller products are purchased directly from the seller on WhatsApp.';
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                return $this->json(['success' => false, 'message' => $message]);
+            }
+            $this->redirect(APP_URL . '/product/' . ($product['slug'] ?? $productId) . '?error=' . urlencode($message));
+            return;
         }
 
         // MOQ enforcement: wholesale/rfq/export listings carry a minimum order quantity

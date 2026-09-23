@@ -3,13 +3,13 @@
 
 <div style="margin-bottom:32px;">
     <h1 style="font-family:var(--f-display);font-weight:900;font-size:clamp(22px,4vw,32px);margin:0;">Orders</h1>
-    <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px;">Orders containing your products</div>
+    <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px;">Historical orders from Avazonia checkout; new buyers contact you directly on WhatsApp</div>
 </div>
 
 <div class="seller-stats-bar">
-    <div class="seller-stat-card"><div class="stat-label">Total Orders</div><div class="stat-value"><?= (int)($stats['total_orders']??0) ?></div></div>
-    <div class="seller-stat-card"><div class="stat-label">Gross Sales</div><div class="stat-value">&#8373;<?= number_format($stats['gross_sales']??0,2) ?></div></div>
-    <div class="seller-stat-card"><div class="stat-label">Pending Payout</div><div class="stat-value">&#8373;<?= number_format($stats['pending_payout']??0,2) ?></div></div>
+    <div class="seller-stat-card"><div class="stat-label">Historical Orders</div><div class="stat-value"><?= (int)($stats['total_orders']??0) ?></div></div>
+    <div class="seller-stat-card"><div class="stat-label">Historical Gross Sales</div><div class="stat-value">&#8373;<?= number_format($stats['gross_sales']??0,2) ?></div></div>
+    <div class="seller-stat-card"><div class="stat-label">Historical Pending Payout</div><div class="stat-value">&#8373;<?= number_format($stats['pending_payout']??0,2) ?></div></div>
 </div>
 
 <div class="seller-panel" style="overflow-x:auto;">

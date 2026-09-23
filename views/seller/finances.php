@@ -4,39 +4,35 @@
 <div style="margin-bottom:32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
     <div>
         <h1 style="font-family:var(--f-display);font-weight:900;font-size:clamp(22px,4vw,32px);margin:0;">Finances</h1>
-        <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px;">Earnings &amp; commission breakdown</div>
+        <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px;">Historical Avazonia order records</div>
     </div>
     <a href="<?= APP_URL ?>/seller/finances/csv" class="seller-btn-secondary" style="padding:10px 20px;font-size:10px;">Export CSV</a>
 </div>
 
 <div class="seller-stats-bar">
     <div class="seller-stat-card">
-        <div class="stat-label">Gross Sales</div>
+        <div class="stat-label">Historical Gross Sales</div>
         <div class="stat-value">&#8373;<?= number_format($earnings['gross_sales'] ?? 0, 2) ?></div>
     </div>
     <div class="seller-stat-card">
-        <div class="stat-label">Platform Commission (<?= (int)($stats['commission_pct']??5) ?>%)</div>
+        <div class="stat-label">Historical Commission (<?= (int)($stats['commission_pct']??5) ?>%)</div>
         <div class="stat-value" style="color:var(--red);">&#8373;<?= number_format($stats['commission']??0, 2) ?></div>
     </div>
     <div class="seller-stat-card">
-        <div class="stat-label">Net Earnings</div>
+        <div class="stat-label">Historical Net Earnings</div>
         <div class="stat-value" style="color:#00a854;">&#8373;<?= number_format($stats['net_earnings']??0, 2) ?></div>
     </div>
     <div class="seller-stat-card">
-        <div class="stat-label">Pending Payout</div>
+        <div class="stat-label">Historical Pending Payout</div>
         <div class="stat-value">&#8373;<?= number_format($earnings['pending_payout'] ?? 0, 2) ?></div>
         <div class="stat-sub">Released on delivery</div>
     </div>
 </div>
 
-<!-- How It Works -->
 <div style="background:var(--off);padding:20px 24px;border-radius:0;margin-bottom:24px;border:1px solid var(--light-gray);">
-    <div style="font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:8px;">How Payouts Work</div>
+    <div style="font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:8px;">Seller sales now happen directly</div>
     <div style="font-family:var(--f-mono);font-size:11px;color:var(--mid-gray);line-height:1.6;">
-        1. Buyer pays &rarr; Order status = <strong>paid</strong> &rarr; your items show <strong>pending</strong>.<br>
-        2. You ship &rarr; mark items <strong>shipped</strong>.<br>
-        3. Buyer confirms delivery &rarr; order <strong>delivered</strong> &rarr; items <strong>delivered</strong> &rarr; your earnings are released.<br>
-        4. Platform commission (<?= (int)($stats['commission_pct']??5) ?>%) is deducted. Net amount = your payout.
+        Buyers contact you through WhatsApp to arrange payment and delivery. Avazonia does not collect payment, deduct commission, or issue payouts for new seller product enquiries. The figures and orders below are historical Avazonia checkout records only.
     </div>
 </div>
 
