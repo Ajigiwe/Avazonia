@@ -79,7 +79,7 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
                 <?php endif; endif; ?>
             </div>
 
-            <div class="card-actions">
+            <div class="card-actions<?= $isSellerProduct ? ' seller-product-actions' : '' ?>">
                 <!-- Add to Wishlist -->
                 <button type="button" 
                         class="card-wish-btn wish-btn-<?= $p['id'] ?> <?= in_array($p['id'], $wishlistIds ?? []) ? 'active' : '' ?>" 

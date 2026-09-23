@@ -2980,14 +2980,19 @@ form button[type="submit"]:hover {
     transition: all .3s ease;
 }
 
-.vendor-product-grid .card-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.card-actions.seller-product-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 4px !important;
 }
 
-.vendor-product-grid .card-actions > .card-wish-btn,
-.vendor-product-grid .card-actions > .card-cart-btn {
-    width: 100%;
-    min-width: 0;
+.card-actions.seller-product-actions > .card-wish-btn,
+.card-actions.seller-product-actions > .card-cart-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: initial !important;
+    margin: 0 !important;
+    box-sizing: border-box;
 }
 
 .card-img-wrap:hover .card-actions {
