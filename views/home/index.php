@@ -364,7 +364,7 @@ if (!empty($launchCats)):
     <?php endif; ?>
     <?php if (!empty($exportCars)): ?>
     <div style="margin-top:18px;">
-      <div style="font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;color:var(--mid-gray);"><?= t('home.vehicle_sourcing', 'INTERNATIONAL VEHICLE SOURCING') ?> — FOB / CIF</div>
+      <div style="font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;color:var(--mid-gray);"><?= t('home.vehicle_sourcing', 'INTERNATIONAL VEHICLE SOURCING') ?></div>
       <div class="product-grid" style="margin-top:10px;">
         <?php foreach($exportCars as $p): ?><?php require __DIR__ . '/../components/product-card.php'; ?><?php endforeach; ?>
       </div>

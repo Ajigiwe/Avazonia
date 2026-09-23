@@ -53,7 +53,7 @@ $isIntl = ($store['seller_type'] ?? '') === 'international_supplier';
     <div><strong>Verification</strong><br><?= verification_badge($store) ?></div>
     <div><strong>Country</strong><br><?= htmlspecialchars($store['country_code']) ?></div>
     <div><strong>City</strong><br><?= htmlspecialchars($store['city'] ?? '-') ?></div>
-    <div style="grid-column:1 / -1;"><strong>Note:</strong> For B2B export listings see product MOQ / FOB / Incoterms on each product card. Contact via Enquiry for RFQ.</div>
+    <div style="grid-column:1 / -1;"><strong>Note:</strong> For B2B export listings see product MOQ on each product card. Contact via Enquiry for RFQ.</div>
   </div>
   <?php else: ?>
   <div style="margin-top:18px;">

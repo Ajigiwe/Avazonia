@@ -184,7 +184,7 @@ if (Session::get('user_id')) {
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
-            <?php if(!empty($product['moq'])): ?><div style="font-family:var(--f-mono);font-size:11px;color:var(--ink);margin-bottom:8px;">MOQ: <strong><?= (int)$product['moq'] ?> units</strong><?php if(!empty($product['wholesale_price_ghs'])): ?> · Wholesale <?= '₵'.number_format($product['wholesale_price_ghs'],2) ?><?php endif; ?><?php if(!empty($product['incoterms'])): ?> · <?= htmlspecialchars($product['incoterms']) ?><?php endif; ?></div><?php endif; ?>
+            <?php if(!empty($product['moq'])): ?><div style="font-family:var(--f-mono);font-size:11px;color:var(--ink);margin-bottom:8px;">MOQ: <strong><?= (int)$product['moq'] ?> units</strong><?php if(!empty($product['wholesale_price_ghs'])): ?> · Wholesale <?= '₵'.number_format($product['wholesale_price_ghs'],2) ?><?php endif; ?></div><?php endif; ?>
             <?php if(!empty($product['seller_type']) && $product['seller_type']==='international_supplier'): ?><div style="font-family:var(--f-mono);font-size:10px;background:#fef3c7;color:#92400e;padding:6px 10px;border-radius:6px;margin-bottom:10px;">B2B / Wholesale / Export — for Business Buyers</div><?php endif; ?>
             <h1 style="font-family: var(--f-display); font-weight: 700; font-size: clamp(24px, 4vw, 38px); text-transform: uppercase; margin-bottom: 16px; line-height: 1.1; letter-spacing: -0.02em;"><?= $product['name'] ?></h1>
             
