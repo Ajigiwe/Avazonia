@@ -2929,6 +2929,12 @@ form button[type="submit"]:hover {
     color: #fff;
 }
 
+.card-tag.china {
+    background: #DE2910;
+    color: #fff;
+}
+
+
 /* Arrow link */
 .card-action-arrow {
     position: absolute;

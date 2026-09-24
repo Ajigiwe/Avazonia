@@ -5,7 +5,7 @@ class ProductCsvImporter {
     public const REQUIRED_HEADERS = ['name', 'price'];
     public const HEADERS = [
         'name', 'sku', 'price', 'currency', 'stock', 'category', 'sub_category', 'brand', 'description', 'tags',
-        'listing_type', 'condition', 'visibility', 'moq', 'wholesale_price',
+        'listing_type', 'condition', 'visibility', 'moq', 'wholesale_price', 'location_country',
     ];
 
     public static function sendTemplate(PDO $db, string $format = 'excel'): void {
@@ -391,6 +391,7 @@ class ProductCsvImporter {
             if ($key !== '') {
                 // Support both category and sub_category aliases
                 if ($key === 'sub_category' || $key === 'subcategory') $key = 'sub_category';
+                if ($key === 'origin_country' || $key === 'country' || $key === 'origin' || $key === 'location' || $key === 'location_country') $key = 'location_country';
                 $headerMap[$key] = $index;
             }
         }
@@ -464,6 +465,16 @@ class ProductCsvImporter {
                 else $wholesalePrice = (float)$row['wholesale_price'];
             }
 
+            $countryRaw = strtolower(trim((string)($row['location_country'] ?? '')));
+            $locationCountry = 'GH';
+            if (str_contains($countryRaw, 'china') || $countryRaw === 'cn') {
+                $locationCountry = 'CN';
+            } elseif (str_contains($countryRaw, 'ghana') || $countryRaw === 'gh') {
+                $locationCountry = 'GH';
+            } elseif ($countryRaw !== '') {
+                $locationCountry = strtoupper(substr($countryRaw, 0, 5));
+            }
+
             $values = [
                 'name' => $row['name'],
                 'sku' => $row['sku'] !== '' ? $row['sku'] : null,
@@ -480,6 +491,8 @@ class ProductCsvImporter {
                 'visibility' => $visibility,
                 'moq' => $moq,
                 'wholesale_price_ghs' => $wholesalePrice,
+                'location_country' => $locationCountry,
+                'available_in_ghana' => ($locationCountry === 'GH' ? 1 : 0),
             ];
             $preview[] = ['line' => $line, 'row' => $row, 'values' => $values, 'errors' => $errors];
         }

@@ -62,6 +62,14 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
             <?php if (!empty($p['available_in_ghana'])): ?>
                 <span class="card-tag ghana">🇬🇭 IN GHANA</span>
             <?php endif; ?>
+            <?php 
+            $isChinaProduct = (!empty($p['location_country']) && strtoupper($p['location_country']) === 'CN')
+                || (!empty($p['vehicle_origin']) && $p['vehicle_origin'] === 'international_export')
+                || (!empty($p['is_dropshipping']) && empty($p['available_in_ghana']));
+            ?>
+            <?php if ($isChinaProduct): ?>
+                <span class="card-tag china">🇨🇳 IN CHINA</span>
+            <?php endif; ?>
             </div>
             
             <div class="card-img <?= $sliderEnabled && count($processedCardImages) > 1 ? 'card-auto-slider' : '' ?>" style="position: relative;">
