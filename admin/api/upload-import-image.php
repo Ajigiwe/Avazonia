@@ -48,11 +48,16 @@ if (!$uploadDir) {
     $uploadDir = realpath(__DIR__ . '/../../public/uploads/products');
 }
 
+if (!$uploadDir) {
+    echo json_encode(['success' => false, 'error' => 'Server configuration error: Upload directory unavailable']);
+    exit;
+}
+
 $filename = 'p_' . time() . '_' . bin2hex(random_bytes(4)) . '_' . $line . '.' . $ext;
 $dest = $uploadDir . DIRECTORY_SEPARATOR . $filename;
 
-if (!move_uploaded_file($file['tmp_name'], $dest)) {
-    echo json_encode(['success' => false, 'error' => 'Failed to save file']);
+if (!@move_uploaded_file($file['tmp_name'], $dest)) {
+    echo json_encode(['success' => false, 'error' => 'Failed to save file on server']);
     exit;
 }
 

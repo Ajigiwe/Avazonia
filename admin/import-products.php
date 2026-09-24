@@ -691,10 +691,15 @@ async function uploadSingleImage(file, lineNum) {
     const res = await fetch('api/upload-import-image.php', { method: 'POST', body: fd });
     let data;
     try {
-      data = await res.json();
+      const text = await res.text();
+      try {
+        data = JSON.parse(text);
+      } catch(e) {
+        console.error('Non-JSON response:', text);
+        return { ok: false, error: 'Server error: ' + text.substring(0, 40) };
+      }
     } catch(e) {
-      console.error('Non-JSON response from upload endpoint');
-      return { ok: false, error: 'Server error (non-JSON)' };
+      return { ok: false, error: 'Server error (failed to read response)' };
     }
     
     if (data.success) {
