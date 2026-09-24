@@ -19,10 +19,12 @@ class ProductCsvImporter {
     public static function sendCsvTemplate(): void {
         header('Content-Description: File Transfer');
         header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="avazonia-products-template.csv"');
+        header('Content-Disposition: attachment; filename="avazonia-products-template-v2.csv"');
         header('Content-Transfer-Encoding: binary');
         header('X-Content-Type-Options: nosniff');
-        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0, post-check=0, pre-check=0');
         $out = fopen('php://output', 'w');
         fwrite($out, "\xEF\xBB\xBF"); // Keep the CSV UTF-8 clean in Excel and Sheets.
         fputcsv($out, self::HEADERS, ',', '"', '', "\r\n");
@@ -233,11 +235,13 @@ class ProductCsvImporter {
 
         header('Content-Description: File Transfer');
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="avazonia-products-template.xlsx"');
+        header('Content-Disposition: attachment; filename="avazonia-products-template-v2.xlsx"');
         header('Content-Transfer-Encoding: binary');
         header('Content-Length: ' . filesize($tmpFile));
         header('X-Content-Type-Options: nosniff');
-        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0, post-check=0, pre-check=0');
         readfile($tmpFile);
         @unlink($tmpFile);
         exit;
