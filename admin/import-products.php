@@ -116,186 +116,341 @@ if (!$preview && Session::get('product_csv_import')) $preview = Session::get('pr
 $title = 'Import Products';
 include 'layout/header.php';
 ?>
-<div class="admin-header"><h1>Import Products from CSV</h1><a href="products.php" class="nav-link">← Back to Products</a></div>
-<div class="panel" style="max-width:1100px;">
-  <div class="panel-header"><div class="panel-title">Template &amp; Upload</div><a class="admin-btn admin-btn-secondary" href="?template=1">Download CSV Template</a></div>
-  <div style="padding:24px;">
-    <p>Use the template headers exactly. Category and brand values must match active catalogue names (case-insensitive). Optional <strong>sku</strong> column is supported for exact matching.</p>
-    <?php if ($error): ?><div style="background:#fff1f0;color:#b91c1c;padding:12px;margin-bottom:16px;"><?= htmlspecialchars($error) ?></div><?php endif; ?>
-    <form method="post" enctype="multipart/form-data" style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;">
-      <?= Csrf::field() ?><input type="hidden" name="action" value="preview">
-      <label>CSV file <input type="file" name="csv_file" accept=".csv,text/csv" required></label>
-      <button class="admin-btn admin-btn-primary" type="submit">Upload &amp; Preview</button>
+<style>
+.admin-import-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.admin-import-title {
+  font-family: var(--f-display, 'Outfit', sans-serif);
+  font-weight: 900;
+  font-size: clamp(24px, 4vw, 32px);
+  margin: 0;
+  color: #0D0D0D;
+}
+.admin-back-btn {
+  font-family: var(--f-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  color: #55514E;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 16px;
+  background: #FFF;
+  border: 1px solid #E8E5DF;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.admin-back-btn:hover {
+  border-color: #0D0D0D;
+  color: #0D0D0D;
+  background: #F4F1EC;
+}
+
+.admin-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+.admin-step-card {
+  background: #FFFFFF;
+  border: 1px solid #E8E5DF;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+}
+.admin-step-card:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+.admin-step-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--f-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #E8002D;
+  background: rgba(232,0,45,0.08);
+  padding: 5px 12px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+  width: fit-content;
+}
+
+.admin-dropzone {
+  border: 2px dashed #D0D5DD;
+  border-radius: 12px;
+  background: #FAFAFC;
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.admin-dropzone:hover, .admin-dropzone.dragover {
+  border-color: #E8002D;
+  background: #FFF5F6;
+  box-shadow: 0 6px 20px rgba(232,0,45,0.08);
+}
+.admin-dropzone-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(232,0,45,0.08);
+  color: #E8002D;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  transition: transform 0.2s ease;
+}
+.admin-dropzone:hover .admin-dropzone-icon {
+  transform: translateY(-3px) scale(1.05);
+}
+
+.admin-file-selected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.admin-mode-card {
+  border: 2px solid #E8E5DF;
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #FFF;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.admin-mode-card:hover {
+  border-color: #0D0D0D;
+}
+.admin-mode-card.active {
+  border-color: #E8002D;
+  background: #FFF5F6;
+}
+.admin-mode-card input[type="radio"] {
+  accent-color: #E8002D;
+  margin-top: 2px;
+  width: 18px;
+  height: 18px;
+}
+</style>
+
+<div class="admin-import-header">
+  <div>
+    <div style="font-family:var(--f-mono, monospace);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#55514E;margin-bottom:4px;">Catalogue Management</div>
+    <h1 class="admin-import-title">Import Products from CSV</h1>
+  </div>
+  <a href="products.php" class="admin-back-btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to Products
+  </a>
+</div>
+
+<?php if ($error): ?>
+<div style="background:#FFF1F0;border:1px solid #FFA39E;border-radius:8px;padding:16px 20px;margin-bottom:24px;color:#CF1322;display:flex;align-items:center;gap:12px;">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <span style="font-weight:600;font-size:14px;"><?= htmlspecialchars($error) ?></span>
+</div>
+<?php endif; ?>
+
+<!-- Step 1 & Step 2 Setup Cards -->
+<div class="admin-steps-grid">
+  <!-- Step 1 Card -->
+  <div class="admin-step-card">
+    <div>
+      <div class="admin-step-badge">Step 1 · Template Setup</div>
+      <h3 style="font-family:var(--f-display, sans-serif);font-weight:800;font-size:18px;margin:0 0 10px;color:#0D0D0D;">Download CSV Template</h3>
+      <p style="font-size:14px;line-height:1.55;color:#55514E;margin-bottom:24px;">Use our pre-formatted UTF-8 CSV template containing standard columns: <code>name</code>, <code>sku</code>, <code>price</code>, <code>stock</code>, <code>category</code>, <code>brand</code>, <code>description</code>, etc.</p>
+    </div>
+    <a class="admin-btn admin-btn-secondary" href="?template=1" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;padding:12px 20px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download Template CSV
+    </a>
+  </div>
+
+  <!-- Step 2 Card -->
+  <div class="admin-step-card">
+    <form method="post" enctype="multipart/form-data" id="adminPreviewForm" style="display:flex;flex-direction:column;height:100%;justify-content:space-between;">
+      <?= Csrf::field() ?>
+      <input type="hidden" name="action" value="preview">
+
+      <div>
+        <div class="admin-step-badge">Step 2 · Upload &amp; Preview</div>
+        <h3 style="font-family:var(--f-display, sans-serif);font-weight:800;font-size:18px;margin:0 0 10px;color:#0D0D0D;">Upload Catalogue CSV File</h3>
+
+        <div class="admin-dropzone" id="adminDropzone" onclick="document.getElementById('adminCsvFileInput').click();">
+          <input type="file" name="csv_file" id="adminCsvFileInput" accept=".csv,text/csv" required style="display:none;" onchange="handleAdminFileSelected(this)">
+          <div id="adminDropzonePrompt">
+            <div class="admin-dropzone-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <div style="font-weight:700;font-size:15px;color:#0D0D0D;margin-bottom:4px;">Drag &amp; drop CSV file here</div>
+            <div style="font-size:13px;color:#55514E;">or <span style="color:#E8002D;font-weight:700;text-decoration:underline;">browse from computer</span></div>
+          </div>
+          <div id="adminFileSelectedArea" style="display:none;">
+            <div class="admin-file-selected">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:20px;">📊</span>
+                <div style="text-align:left;">
+                  <div style="font-weight:700;font-size:14px;color:#166534;" id="adminFileNameDisp">file.csv</div>
+                  <div style="font-size:12px;color:#15803D;" id="adminFileSizeDisp">0 KB</div>
+                </div>
+              </div>
+              <span style="font-size:12px;color:#E8002D;font-weight:700;">Change</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="admin-btn admin-btn-primary" type="submit" style="margin-top:20px;width:100%;justify-content:center;padding:14px;">
+        Upload &amp; Generate Preview →
+      </button>
     </form>
   </div>
 </div>
 <?php if ($preview !== null): $validCount = count(array_filter($preview, static fn($r) => empty($r['errors']))); ?>
-<div class="panel" style="max-width:1100px;">
-  <div class="panel-header"><div class="panel-title">Preview · <?= count($preview) ?> rows · <?= $validCount ?> ready · <?= count($preview)-$validCount ?> need correction</div></div>
-  <div style="padding:24px;">
+<div class="panel" style="max-width:1100px;margin-bottom:32px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.05);overflow:hidden;background:#FFF;border:1px solid #E8E5DF;">
+  <div style="padding:22px 28px;border-bottom:1px solid #E8E5DF;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:#FAFAFC;">
+    <div>
+      <div style="font-family:var(--f-mono, monospace);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#55514E;">Step 3 · Verification &amp; Execution</div>
+      <div style="font-family:var(--f-display, sans-serif);font-weight:900;font-size:20px;color:#0D0D0D;margin-top:2px;">
+        CSV Data Verification Preview
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <span style="background:#FFF;border:1px solid #E8E5DF;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#0D0D0D;"><?= count($preview) ?> Total Rows</span>
+      <span style="background:#E6F7ED;border:1px solid #B7EB8F;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#276749;"><?= $validCount ?> Ready</span>
+      <?php if(count($preview) - $validCount > 0): ?>
+      <span style="background:#FFF1F0;border:1px solid #FFA39E;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#CF1322;"><?= count($preview) - $validCount ?> Need Fix</span>
+      <?php endif; ?>
+    </div>
+  </div>
+
+  <div style="padding:28px;">
     <?php if (!$outcomes && $validCount > 0): ?>
     
-    <div id="asyncProgressContainer" style="display:none;margin-bottom:20px;background:#f9f9f9;border:1px solid #e0e0e0;padding:16px;border-radius:6px;">
-      <div style="font-weight:700;margin-bottom:8px;" id="asyncProgressTitle">Processing Batch Import...</div>
-      <div style="background:#e0e0e0;height:12px;border-radius:6px;overflow:hidden;">
-        <div id="asyncProgressBar" style="width:0%;height:100%;background:#e8002d;transition:width 0.2s;"></div>
+    <div id="asyncProgressContainer" style="display:none;margin-bottom:24px;background:#FAFAFC;border:1px solid #E8E5DF;padding:20px;border-radius:10px;">
+      <div style="font-family:var(--f-display, sans-serif);font-weight:800;font-size:16px;margin-bottom:10px;color:#0D0D0D;" id="asyncProgressTitle">Importing Product Chunks...</div>
+      <div style="background:#E8E5DF;height:12px;border-radius:6px;overflow:hidden;">
+        <div id="asyncProgressBar" style="width:0%;height:100%;background:#E8002D;transition:width 0.25s ease;"></div>
       </div>
-      <div style="font-size:12px;color:#55514e;margin-top:6px;" id="asyncProgressDetail">0 of <?= $validCount ?> items processed (0%)</div>
+      <div style="font-size:13px;color:#55514E;margin-top:8px;font-weight:600;" id="asyncProgressDetail">0 of <?= $validCount ?> items processed (0%)</div>
     </div>
 
-    <form id="adminImportForm" method="post" style="display:flex;flex-direction:column;gap:16px;margin-bottom:16px;">
+    <form id="adminImportForm" method="post" style="display:flex;flex-direction:column;gap:20px;margin-bottom:24px;">
       <?= Csrf::field() ?>
       <input type="hidden" name="import_key" value="<?= htmlspecialchars(Session::get('product_csv_import')['key'] ?? '') ?>">
       
-      <div style="display:flex;gap:20px;flex-wrap:wrap;">
-        <label style="flex:1;min-width:260px;">Assign imported products to seller
-          <select name="seller_id" style="width:100%;margin-top:4px;padding:8px;"><option value="">Avazonia Official (default)</option><?php foreach($sellers as $seller): ?><option value="<?= (int)$seller['id'] ?>"><?= htmlspecialchars($seller['business_name']) ?></option><?php endforeach; ?></select>
-        </label>
-        
-        <div style="flex:1;min-width:260px;">
-          <div style="font-weight:600;margin-bottom:4px;">Import Mode:</div>
-          <label style="display:inline-flex;align-items:center;gap:6px;margin-right:16px;cursor:pointer;">
-            <input type="radio" name="mode" value="insert" checked>
-            <span><strong>Insert Only</strong></span>
-          </label>
-          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
-            <input type="radio" name="mode" value="upsert">
-            <span><strong>Upsert</strong> (Update matching SKU/Name)</span>
-          </label>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;">
+        <div style="background:#FAFAFC;border:1px solid #E8E5DF;padding:18px;border-radius:10px;">
+          <label style="font-weight:700;font-size:14px;color:#0D0D0D;display:block;margin-bottom:6px;">Assign Products to Seller:</label>
+          <select name="seller_id" style="width:100%;padding:10px;border:1px solid #E8E5DF;border-radius:6px;font-size:14px;">
+            <option value="">Avazonia Official (default)</option>
+            <?php foreach($sellers as $seller): ?>
+              <option value="<?= (int)$seller['id'] ?>"><?= htmlspecialchars($seller['business_name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+
+        <div style="background:#FAFAFC;border:1px solid #E8E5DF;padding:18px;border-radius:10px;">
+          <div style="font-weight:700;font-size:14px;color:#0D0D0D;margin-bottom:8px;">Import Mode:</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <label class="admin-mode-card active" id="adminModeCardInsert" onclick="selectAdminModeCard('insert')" style="flex:1;min-width:180px;">
+              <input type="radio" name="mode" value="insert" checked onclick="selectAdminModeCard('insert')">
+              <div>
+                <div style="font-weight:800;font-size:13px;color:#0D0D0D;">Insert Only</div>
+                <div style="font-size:11px;color:#55514E;">Always create new catalog entries.</div>
+              </div>
+            </label>
+
+            <label class="admin-mode-card" id="adminModeCardUpsert" onclick="selectAdminModeCard('upsert')" style="flex:1;min-width:180px;">
+              <input type="radio" name="mode" value="upsert" onclick="selectAdminModeCard('upsert')">
+              <div>
+                <div style="font-weight:800;font-size:13px;color:#0D0D0D;">Smart Upsert</div>
+                <div style="font-size:11px;color:#55514E;">Update matching SKU/Name.</div>
+              </div>
+            </label>
+          </div>
         </div>
       </div>
 
-      <div style="display:flex;gap:10px;">
-        <button id="adminStartImportBtn" class="admin-btn admin-btn-primary" type="submit" name="action" value="import" <?= $validCount ? '' : 'disabled' ?>>Start Batch Import (<?= $validCount ?> valid rows)</button>
-        <button class="admin-btn admin-btn-secondary" name="action" value="cancel" type="submit">Cancel</button>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button id="adminStartImportBtn" class="admin-btn admin-btn-primary" type="submit" name="action" value="import" <?= $validCount ? '' : 'disabled' ?> style="padding:14px 28px;">
+          Execute Batch Import (<?= $validCount ?> Valid Rows)
+        </button>
+        <button class="admin-btn admin-btn-secondary" name="action" value="cancel" type="submit" style="padding:14px 24px;">Cancel</button>
       </div>
     </form>
-    <?php elseif (!$outcomes): ?><p>No rows are ready to import. Correct the CSV errors and upload it again.</p>
+    <?php elseif (!$outcomes): ?>
+    <div style="padding:16px;background:#FFF1F0;border:1px solid #FFA39E;border-radius:8px;color:#CF1322;font-weight:600;">No rows are ready to import. Correct the CSV errors and upload again.</div>
     <?php else: $successCount = count(array_filter($outcomes, static fn($o) => $o['success'])); ?>
-    <p style="padding:12px;background:#e6f7ec;margin-bottom:16px;">Import complete: <?= $successCount ?> processed, <?= count($preview)-$successCount-count(array_filter($preview, static fn($r) => !empty($r['errors']))) ?> failed during import, <?= count(array_filter($preview, static fn($r) => !empty($r['errors']))) ?> skipped for validation errors.</p>
+    <div id="finalSummaryBox" style="padding:16px 20px;background:#E6F7ED;border:1px solid #B7EB8F;border-radius:8px;margin-bottom:24px;color:#276749;font-weight:700;font-size:15px;display:flex;align-items:center;gap:12px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <span>Import Complete! Successfully processed <?= $successCount ?> items.</span>
+    </div>
     <?php endif; ?>
-    <div style="overflow:auto;margin-top:16px;"><table class="admin-table"><thead><tr><th>CSV row</th><th>Name</th><th>SKU</th><th>Price</th><th>Category / Brand</th><th>Result</th></tr></thead><tbody>
-    <?php foreach($preview as $item): $result = $outcomes[$item['line']] ?? null; $messages = $item['errors']; if ($result && !$result['success']) $messages[] = $result['error']; ?>
-      <tr id="admin-row-<?= (int)$item['line'] ?>">
-        <td><?= (int)$item['line'] ?></td>
-        <td><?= htmlspecialchars($item['row']['name']) ?></td>
-        <td><?= htmlspecialchars($item['row']['sku'] ?? '—') ?></td>
-        <td><?= htmlspecialchars($item['row']['currency'].' '.$item['row']['price']) ?></td>
-        <td><?= htmlspecialchars($item['row']['category'].' / '.$item['row']['brand']) ?></td>
-        <td class="admin-result-cell"><?php if ($result && $result['success']): ?><span style="color:#00a854;font-weight:700;"><?= $result['action'] === 'updated' ? 'Updated (#'.(int)$result['id'].')' : 'Imported (#'.(int)$result['id'].')' ?></span><?php elseif ($messages): ?><span style="color:#d32f2f;"><?= htmlspecialchars(implode(' ', $messages)) ?></span><?php else: ?><span style="color:#55514e;">Ready to import</span><?php endif; ?></td>
-      </tr>
-    <?php endforeach; ?></tbody></table></div>
+
+    <div style="overflow-x:auto;border:1px solid #E8E5DF;border-radius:8px;">
+      <table class="admin-table" style="width:100%;border-collapse:collapse;text-align:left;">
+        <thead>
+          <tr style="background:#FAFAFC;border-bottom:1px solid #E8E5DF;">
+            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Row</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Product Name</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">SKU</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Price</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Category / Brand</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Result</th>
+          </tr>
+        </thead>
+        <tbody>
+        <?php foreach($preview as $item): $result = $outcomes[$item['line']] ?? null; $messages = $item['errors']; if ($result && !$result['success']) $messages[] = $result['error']; ?>
+          <tr id="admin-row-<?= (int)$item['line'] ?>" style="border-bottom:1px solid #E8E5DF;">
+            <td style="padding:14px 16px;font-weight:700;color:#55514E;"><?= (int)$item['line'] ?></td>
+            <td style="padding:14px 16px;font-weight:700;color:#0D0D0D;"><?= htmlspecialchars($item['row']['name']) ?></td>
+            <td style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:12px;color:#55514E;"><?= htmlspecialchars($item['row']['sku'] ?? '—') ?></td>
+            <td style="padding:14px 16px;font-weight:700;"><?= htmlspecialchars($item['row']['currency'].' '.$item['row']['price']) ?></td>
+            <td style="padding:14px 16px;color:#55514E;font-size:13px;"><?= htmlspecialchars($item['row']['category'].' / '.$item['row']['brand']) ?></td>
+            <td class="admin-result-cell" style="padding:14px 16px;">
+              <?php if ($result && $result['success']): ?>
+                <span style="background:#E6F7ED;color:#276749;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:800;"><?= $result['action'] === 'updated' ? 'Updated (#'.(int)$result['id'].')' : 'Imported (#'.(int)$result['id'].')' ?></span>
+              <?php elseif ($messages): ?>
+                <span style="background:#FFF1F0;color:#CF1322;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;"><?= htmlspecialchars(implode(' ', $messages)) ?></span>
+              <?php else: ?>
+                <span style="background:#FAFAFC;color:#55514E;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;">Ready to import</span>
+              <?php endif; ?>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const form = document.getElementById('adminImportForm');
-  if (!form) return;
-
-  const totalValid = <?= (int)$validCount ?>;
-  const CHUNK_SIZE = 50;
-
-  form.addEventListener('submit', async function(e) {
-    const submitter = e.submitter;
-    if (submitter && submitter.value === 'cancel') return;
-    e.preventDefault();
-
-    const startBtn = document.getElementById('adminStartImportBtn');
-    startBtn.disabled = true;
-    startBtn.textContent = 'Importing...';
-
-    const mode = form.querySelector('input[name="mode"]:checked').value;
-    const sellerId = form.querySelector('select[name="seller_id"]').value;
-    const csrfToken = form.querySelector('input[name="csrf_token"]').value;
-    const importKey = form.querySelector('input[name="import_key"]').value;
-
-    const progressContainer = document.getElementById('asyncProgressContainer');
-    const progressBar = document.getElementById('asyncProgressBar');
-    const progressDetail = document.getElementById('asyncProgressDetail');
-    progressContainer.style.display = 'block';
-
-    let offset = 0;
-    let processedTotal = 0;
-    let updatedTotal = 0;
-    let createdTotal = 0;
-    let failedTotal = 0;
-
-    while (offset < totalValid) {
-      const formData = new FormData();
-      formData.append('csrf_token', csrfToken);
-      formData.append('action', 'import_chunk');
-      formData.append('import_key', importKey);
-      formData.append('seller_id', sellerId);
-      formData.append('mode', mode);
-      formData.append('offset', offset);
-      formData.append('limit', CHUNK_SIZE);
-      formData.append('ajax', '1');
-
-      try {
-        const response = await fetch(window.location.href, {
-          method: 'POST',
-          headers: { 'X-Requested-With': 'XMLHttpRequest' },
-          body: formData
-        });
-        const data = await response.json();
-
-        if (!data.success) {
-          alert('Import error: ' + (data.error || 'Unknown error occurred.'));
-          startBtn.disabled = false;
-          startBtn.textContent = 'Retry Batch Import';
-          return;
-        }
-
-        if (data.outcomes) {
-          for (const line in data.outcomes) {
-            const outcome = data.outcomes[line];
-            const rowElem = document.getElementById('admin-row-' + line);
-            if (rowElem) {
-              const resCell = rowElem.querySelector('.admin-result-cell');
-              if (resCell) {
-                if (outcome.success) {
-                  if (outcome.action === 'updated') {
-                    updatedTotal++;
-                    resCell.innerHTML = '<span style="color:#0288d1;font-weight:700;">Updated (#' + outcome.id + ')</span>';
-                  } else {
-                    createdTotal++;
-                    resCell.innerHTML = '<span style="color:#00a854;font-weight:700;">Imported (#' + outcome.id + ')</span>';
-                  }
-                } else {
-                  failedTotal++;
-                  resCell.innerHTML = '<span style="color:#d32f2f;">' + outcome.error + '</span>';
-                }
-              }
-            }
-          }
-        }
-
-        processedTotal += (data.processed || 0);
-        offset += CHUNK_SIZE;
-
-        const percent = Math.min(100, Math.round((processedTotal / totalValid) * 100));
-        progressBar.style.width = percent + '%';
-        progressDetail.textContent = processedTotal + ' of ' + totalValid + ' items processed (' + percent + '%)';
-
-        if (data.done || processedTotal >= totalValid) break;
-
-      } catch (err) {
-        console.error(err);
-        alert('Network error during import chunk. Please retry.');
-        startBtn.disabled = false;
-        startBtn.textContent = 'Retry Batch Import';
-        return;
-      }
-    }
-
-    form.style.display = 'none';
-    document.getElementById('asyncProgressTitle').textContent = 'Batch Import Complete!';
-    progressBar.style.background = '#00a854';
-    progressDetail.innerHTML = '<strong>Successfully processed ' + processedTotal + ' items:</strong> ' + createdTotal + ' created, ' + updatedTotal + ' updated' + (failedTotal ? ', ' + failedTotal + ' failed' : '') + '.';
-  });
-});
-</script>
 <?php endif; ?>
+
 <?php include 'layout/footer.php'; ?>
+
 
