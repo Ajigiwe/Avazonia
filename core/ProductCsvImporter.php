@@ -192,7 +192,7 @@ class ProductCsvImporter {
       <c r="O2"><v></v></c>
       <c r="P2" t="inlineStr"><is><t>GH</t></is></c>
       <c r="Q2" t="inlineStr"><is><t>Fast Charging | Waterproof | 2-Year Warranty</t></is></c>
-      <c r="R2" t="inlineStr"><is><t>Battery: 5000mAh | RAM: 12GB | Screen: 6.7" AMOLED</t></is></c>
+      <c r="R2" t="inlineStr"><is><t>Battery: 5000mAh | RAM: 12GB | Screen: 6.7 inch AMOLED</t></is></c>
     </row>
   </sheetData>
   <dataValidations count="7">
