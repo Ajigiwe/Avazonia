@@ -689,35 +689,65 @@ async function uploadSingleImage(file, lineNum) {
   fd.append('csrf_token', csrfTokenGlobal);
   try {
     const res = await fetch('api/upload-import-image.php', { method: 'POST', body: fd });
-    const data = await res.json();
+    let data;
+    try {
+      data = await res.json();
+    } catch(e) {
+      console.error('Non-JSON response from upload endpoint');
+      return { ok: false, error: 'Server error (non-JSON)' };
+    }
+    
     if (data.success) {
       if (!importImagesByLine[lineNum]) importImagesByLine[lineNum] = [];
       importImagesByLine[lineNum].push(data.path);
       renderImportImagePreviews(lineNum);
-      return true;
+      return { ok: true };
     } else {
       console.error('Upload error:', data.error);
-      return false;
+      return { ok: false, error: data.error || 'Upload failed' };
     }
   } catch(e) {
     console.error('Upload failed:', e);
-    return false;
+    return { ok: false, error: 'Network error' };
   }
 }
 
 async function handleImportImageFiles(files, lineNum) {
   const statusEl = document.getElementById('img-status-' + lineNum);
   let uploaded = 0;
-  statusEl.textContent = 'Uploading ' + files.length + ' image(s)...';
-  statusEl.style.color = '#6D28D9';
-  for (const file of files) {
-    if (!file.type.startsWith('image/')) continue;
-    const ok = await uploadSingleImage(file, lineNum);
-    if (ok) uploaded++;
+  let failed = 0;
+  let lastError = '';
+  
+  const imageFiles = files.filter(f => f.type.startsWith('image/'));
+  if (imageFiles.length === 0) {
+      statusEl.textContent = 'No valid images selected.';
+      statusEl.style.color = '#dc2626';
+      setTimeout(() => { statusEl.textContent = ''; }, 3000);
+      return;
   }
-  statusEl.textContent = uploaded + ' image(s) uploaded successfully';
-  statusEl.style.color = '#16a34a';
-  setTimeout(() => { statusEl.textContent = ''; }, 3000);
+  
+  statusEl.style.color = '#6D28D9';
+  
+  for (let i = 0; i < imageFiles.length; i++) {
+    statusEl.textContent = 'Uploading image ' + (i + 1) + ' of ' + imageFiles.length + '...';
+    const result = await uploadSingleImage(imageFiles[i], lineNum);
+    if (result.ok) {
+        uploaded++;
+    } else {
+        failed++;
+        lastError = result.error;
+    }
+  }
+  
+  if (failed > 0) {
+      statusEl.textContent = uploaded + ' uploaded, ' + failed + ' failed (' + lastError + ')';
+      statusEl.style.color = '#dc2626';
+  } else {
+      statusEl.textContent = uploaded + ' image(s) uploaded successfully';
+      statusEl.style.color = '#16a34a';
+  }
+  
+  setTimeout(() => { statusEl.textContent = ''; }, 5000);
 }
 
 function handleImportImageSelect(input, lineNum) {
