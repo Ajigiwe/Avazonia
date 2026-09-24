@@ -665,6 +665,15 @@ class ProductCsvImporter {
                     $stmt->execute($params);
                     $db->commit();
                     $outcomes[$item['line']] = ['success' => true, 'id' => (int)$existingId, 'action' => 'updated', 'error' => ''];
+
+                    // Link uploaded images to the updated product
+                    $line = (string)$item['line'];
+                    if (!empty($overrides[$line]['images']) && is_array($overrides[$line]['images'])) {
+                        foreach ($overrides[$line]['images'] as $idx => $imgPath) {
+                            $isPrimary = ($idx === 0) ? 1 : 0;
+                            $db->prepare('INSERT INTO product_images (product_id, url, is_primary) VALUES (?, ?, ?)')->execute([(int)$existingId, $imgPath, $isPrimary]);
+                        }
+                    }
                 } else {
                     $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $values['name']), '-'));
                     if ($slug === '') $slug = 'product';
@@ -690,6 +699,15 @@ class ProductCsvImporter {
                     $id = (int)$db->lastInsertId();
                     $db->commit();
                     $outcomes[$item['line']] = ['success' => true, 'id' => $id, 'action' => 'created', 'error' => ''];
+
+                    // Link uploaded images to the new product
+                    $line = (string)$item['line'];
+                    if (!empty($overrides[$line]['images']) && is_array($overrides[$line]['images'])) {
+                        foreach ($overrides[$line]['images'] as $idx => $imgPath) {
+                            $isPrimary = ($idx === 0) ? 1 : 0;
+                            $db->prepare('INSERT INTO product_images (product_id, url, is_primary) VALUES (?, ?, ?)')->execute([$id, $imgPath, $isPrimary]);
+                        }
+                    }
                 }
             } catch (Throwable $e) {
                 if ($db->inTransaction()) $db->rollBack();

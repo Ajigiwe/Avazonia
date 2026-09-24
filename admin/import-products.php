@@ -449,13 +449,15 @@ include 'layout/header.php';
       <table class="admin-table" style="width:100%;border-collapse:collapse;text-align:left;">
         <thead>
           <tr style="background:#FAFAFC;border-bottom:1px solid #E8E5DF;">
-            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;width:50px;">Row</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Product Name</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;width:120px;">SKU</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;width:100px;">Price</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;min-width:220px;">Category Search</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;min-width:180px;">Brand Search</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Result</th>
+            <th style="padding:14px 12px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;width:36px;"></th>
+            <th style="padding:14px 12px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;width:40px;">Row</th>
+            <th style="padding:14px 12px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Product Name</th>
+            <th style="padding:14px 12px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;width:110px;">SKU</th>
+            <th style="padding:14px 12px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;width:100px;">Price</th>
+            <th style="padding:14px 12px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;min-width:180px;">Category</th>
+            <th style="padding:14px 12px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;min-width:150px;">Brand</th>
+            <th style="padding:14px 12px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;width:70px;">Images</th>
+            <th style="padding:14px 12px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Result</th>
           </tr>
         </thead>
         <tbody>
@@ -466,47 +468,187 @@ include 'layout/header.php';
           if ($result && !$result['success']) $messages[] = $result['error']; 
           $matchedCat = $item['row']['sub_category'] !== '' ? $item['row']['sub_category'] : $item['row']['category'];
           $matchedBrand = $item['row']['brand'];
+          $rowDesc = htmlspecialchars($item['row']['description'] ?? '');
+          $rowFeatures = htmlspecialchars($item['row']['features'] ?? '');
+          $rowSpecs = htmlspecialchars($item['row']['specs'] ?? '');
+          $rowListingType = htmlspecialchars($item['values']['listing_type'] ?? 'retail');
+          $rowCondition = htmlspecialchars($item['values']['condition_type'] ?? 'new');
+          $rowVisibility = htmlspecialchars($item['values']['visibility'] ?? 'public');
+          $rowCountry = htmlspecialchars($item['values']['location_country'] ?? 'GH');
+          $rowStock = htmlspecialchars($item['values']['stock_qty'] ?? '0');
+          $rowMoq = htmlspecialchars($item['values']['moq'] ?? '');
+          $rowWholesale = htmlspecialchars($item['values']['wholesale_price_ghs'] ?? '');
+          $rowTags = htmlspecialchars($item['row']['tags'] ?? '');
         ?>
-          <tr id="admin-row-<?= $lineNum ?>" style="border-bottom:1px solid #E8E5DF;">
-            <td style="padding:12px 16px;font-weight:700;color:#55514E;"><?= $lineNum ?></td>
-            <td style="padding:12px 16px;font-weight:700;color:#0D0D0D;"><?= htmlspecialchars($item['row']['name']) ?></td>
-            <td style="padding:12px 16px;font-family:var(--f-mono, monospace);font-size:12px;color:#55514E;"><?= htmlspecialchars($item['row']['sku'] ?? '—') ?></td>
-            <td style="padding:12px 16px;font-weight:700;"><?= htmlspecialchars($item['row']['currency'].' '.$item['row']['price']) ?></td>
+          <!-- Main summary row -->
+          <tr id="admin-row-<?= $lineNum ?>" class="import-main-row" style="border-bottom:1px solid #F0EDE8;cursor:pointer;" onclick="toggleDetailRow(<?= $lineNum ?>)">
+            <td style="padding:10px 12px;text-align:center;">
+              <span id="expand-icon-<?= $lineNum ?>" style="display:inline-block;transition:transform .2s;font-size:14px;color:#55514E;">▶</span>
+            </td>
+            <td style="padding:10px 12px;font-weight:700;color:#55514E;font-size:13px;"><?= $lineNum ?></td>
+            <td style="padding:10px 12px;font-weight:700;color:#0D0D0D;font-size:13px;"><?= htmlspecialchars($item['row']['name']) ?></td>
+            <td style="padding:10px 12px;font-family:var(--f-mono, monospace);font-size:11px;color:#55514E;"><?= htmlspecialchars($item['row']['sku'] ?? '—') ?></td>
+            <td style="padding:10px 12px;font-weight:700;font-size:13px;"><?= htmlspecialchars($item['row']['currency'].' '.$item['row']['price']) ?></td>
             
-            <td style="padding:10px 14px;">
+            <td style="padding:8px 10px;" onclick="event.stopPropagation()">
               <input type="text" 
                      class="admin-cat-input" 
                      data-line="<?= $lineNum ?>" 
                      list="adminCategoryDatalist" 
                      value="<?= htmlspecialchars($matchedCat) ?>" 
-                     placeholder="Type e.g. 'c' for Cameras..." 
+                     placeholder="Search category..." 
                      autocomplete="off"
                      oninput="onAdminGridInput(this, 'category')"
                      onfocus="this.select()"
-                     style="width:100%;padding:8px 12px;border-radius:6px;border:1.5px solid <?= empty($item['values']['category_id']) ? '#EAB308' : '#D1D5DB' ?>;font-size:13px;background:<?= empty($item['values']['category_id']) ? '#FEFCE8' : '#FFFFFF' ?>;font-weight:600;color:#0D0D0D;">
+                     style="width:100%;padding:7px 10px;border-radius:6px;border:1.5px solid <?= empty($item['values']['category_id']) ? '#EAB308' : '#D1D5DB' ?>;font-size:12px;background:<?= empty($item['values']['category_id']) ? '#FEFCE8' : '#FFF' ?>;font-weight:600;color:#0D0D0D;">
             </td>
 
-            <td style="padding:10px 14px;">
+            <td style="padding:8px 10px;" onclick="event.stopPropagation()">
               <input type="text" 
                      class="admin-brand-input" 
                      data-line="<?= $lineNum ?>" 
                      list="adminBrandDatalist" 
                      value="<?= htmlspecialchars($matchedBrand) ?>" 
-                     placeholder="Type e.g. 's' for Samsung..." 
+                     placeholder="Search brand..." 
                      autocomplete="off"
                      oninput="onAdminGridInput(this, 'brand')"
                      onfocus="this.select()"
-                     style="width:100%;padding:8px 12px;border-radius:6px;border:1.5px solid <?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#EAB308' : '#D1D5DB' ?>;font-size:13px;background:<?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#FEFCE8' : '#FFFFFF' ?>;font-weight:600;color:#0D0D0D;">
+                     style="width:100%;padding:7px 10px;border-radius:6px;border:1.5px solid <?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#EAB308' : '#D1D5DB' ?>;font-size:12px;background:<?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#FEFCE8' : '#FFF' ?>;font-weight:600;color:#0D0D0D;">
             </td>
 
-            <td class="admin-result-cell" style="padding:12px 16px;">
+            <td style="padding:10px 12px;" onclick="event.stopPropagation()">
+              <span id="img-count-<?= $lineNum ?>" style="background:#F0EAFF;color:#6D28D9;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:800;">0</span>
+            </td>
+
+            <td class="admin-result-cell" style="padding:10px 12px;">
               <?php if ($result && $result['success']): ?>
-                <span style="background:#E6F7ED;color:#276749;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:800;"><?= $result['action'] === 'updated' ? 'Updated (#' . (int)$result['id'] . ')' : 'Imported (#' . (int)$result['id'] . ')' ?></span>
+                <span style="background:#E6F7ED;color:#276749;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:800;"><?= $result['action'] === 'updated' ? 'Updated (#' . (int)$result['id'] . ')' : 'Imported (#' . (int)$result['id'] . ')' ?></span>
               <?php elseif ($messages): ?>
-                <span style="background:#FFF1F0;color:#CF1322;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;" class="msg-span"><?= htmlspecialchars(implode(' ', $messages)) ?></span>
+                <span style="background:#FFF1F0;color:#CF1322;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;" class="msg-span"><?= htmlspecialchars(implode(' ', $messages)) ?></span>
               <?php else: ?>
-                <span style="background:#FAFAFC;color:#55514E;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;" class="msg-span">Ready to import</span>
+                <span style="background:#FAFAFC;color:#55514E;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;" class="msg-span">Ready</span>
               <?php endif; ?>
+            </td>
+          </tr>
+
+          <!-- Expandable detail row -->
+          <tr id="detail-row-<?= $lineNum ?>" style="display:none;border-bottom:2px solid #E8E5DF;">
+            <td colspan="9" style="padding:0;">
+              <div style="background:#FAFAFC;padding:20px 24px;border-top:1px dashed #D0D5DD;">
+                <div style="display:grid;grid-template-columns:1fr 280px;gap:24px;">
+                  <!-- Left: All fields -->
+                  <div>
+                    <div style="font-family:var(--f-mono,monospace);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#E8002D;font-weight:700;margin-bottom:12px;">Full Field Inspection — Row <?= $lineNum ?></div>
+                    
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(200px,1fr));gap:10px;margin-bottom:16px;">
+                      <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:10px 14px;">
+                        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:3px;">Listing Type</div>
+                        <div style="font-weight:700;font-size:13px;color:#0D0D0D;"><?= $rowListingType ?></div>
+                      </div>
+                      <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:10px 14px;">
+                        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:3px;">Condition</div>
+                        <div style="font-weight:700;font-size:13px;color:#0D0D0D;"><?= $rowCondition ?></div>
+                      </div>
+                      <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:10px 14px;">
+                        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:3px;">Visibility</div>
+                        <div style="font-weight:700;font-size:13px;color:#0D0D0D;"><?= $rowVisibility ?></div>
+                      </div>
+                      <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:10px 14px;">
+                        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:3px;">Country</div>
+                        <div style="font-weight:700;font-size:13px;color:#0D0D0D;"><?= $rowCountry === 'CN' ? '🇨🇳 China' : ($rowCountry === 'GH' ? '🇬🇭 Ghana' : $rowCountry) ?></div>
+                      </div>
+                      <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:10px 14px;">
+                        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:3px;">Stock</div>
+                        <div style="font-weight:700;font-size:13px;color:#0D0D0D;"><?= $rowStock ?></div>
+                      </div>
+                      <?php if ($rowMoq): ?>
+                      <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:10px 14px;">
+                        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:3px;">MOQ</div>
+                        <div style="font-weight:700;font-size:13px;color:#0D0D0D;"><?= $rowMoq ?></div>
+                      </div>
+                      <?php endif; ?>
+                      <?php if ($rowWholesale): ?>
+                      <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:10px 14px;">
+                        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:3px;">Wholesale Price</div>
+                        <div style="font-weight:700;font-size:13px;color:#0D0D0D;"><?= $rowWholesale ?></div>
+                      </div>
+                      <?php endif; ?>
+                    </div>
+
+                    <?php if ($rowTags): ?>
+                    <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
+                      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Tags</div>
+                      <div style="font-size:13px;color:#0D0D0D;"><?= $rowTags ?></div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ($rowDesc): ?>
+                    <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
+                      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Description</div>
+                      <div style="font-size:13px;color:#333;line-height:1.5;max-height:120px;overflow-y:auto;"><?= nl2br($rowDesc) ?></div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ($rowFeatures): ?>
+                    <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
+                      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Features</div>
+                      <div style="font-size:13px;color:#333;line-height:1.6;">
+                        <?php foreach(preg_split('/[|;]+/', $rowFeatures) as $feat):
+                          $feat = trim($feat); if(!$feat) continue;
+                        ?>
+                          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+                            <span style="color:#16a34a;font-size:14px;">✓</span>
+                            <span><?= htmlspecialchars($feat) ?></span>
+                          </div>
+                        <?php endforeach; ?>
+                      </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ($rowSpecs): ?>
+                    <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
+                      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Specifications</div>
+                      <div style="font-size:13px;color:#333;">
+                        <?php foreach(preg_split('/[|;]+/', $rowSpecs) as $spec):
+                          $spec = trim($spec); if(!$spec) continue;
+                          $parts = explode(':', $spec, 2);
+                        ?>
+                          <div style="display:flex;gap:8px;margin-bottom:3px;padding:3px 0;border-bottom:1px dotted #eee;">
+                            <span style="font-weight:700;min-width:100px;color:#555;"><?= htmlspecialchars(trim($parts[0])) ?></span>
+                            <span><?= htmlspecialchars(trim($parts[1] ?? '')) ?></span>
+                          </div>
+                        <?php endforeach; ?>
+                      </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if (!$rowDesc && !$rowFeatures && !$rowSpecs && !$rowTags): ?>
+                    <div style="padding:20px;text-align:center;color:#888;font-size:13px;font-style:italic;">No description, features, specs or tags provided for this product.</div>
+                    <?php endif; ?>
+                  </div>
+
+                  <!-- Right: Image upload -->
+                  <div>
+                    <div style="font-family:var(--f-mono,monospace);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6D28D9;font-weight:700;margin-bottom:10px;">Product Images</div>
+                    
+                    <div id="img-preview-<?= $lineNum ?>" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
+                    
+                    <div class="import-img-dropzone" 
+                         id="img-dropzone-<?= $lineNum ?>"
+                         onclick="document.getElementById('img-input-<?= $lineNum ?>').click()"
+                         ondragover="event.preventDefault();this.style.borderColor='#6D28D9';this.style.background='#F5F3FF'"
+                         ondragleave="this.style.borderColor='#D0D5DD';this.style.background='#FAFAFC'"
+                         ondrop="event.preventDefault();this.style.borderColor='#D0D5DD';this.style.background='#FAFAFC';handleImportImageDrop(event,<?= $lineNum ?>)"
+                         style="border:2px dashed #D0D5DD;border-radius:10px;background:#FAFAFC;padding:20px;text-align:center;cursor:pointer;transition:all .2s;">
+                      <input type="file" id="img-input-<?= $lineNum ?>" accept="image/*" multiple style="display:none" onchange="handleImportImageSelect(this,<?= $lineNum ?>)">
+                      <div style="font-size:24px;margin-bottom:4px;">📸</div>
+                      <div style="font-size:12px;font-weight:700;color:#555;">Drop images or click to upload</div>
+                      <div style="font-size:10px;color:#888;margin-top:2px;">JPEG, PNG, WebP · Multiple allowed</div>
+                    </div>
+                    <div id="img-status-<?= $lineNum ?>" style="font-size:11px;color:#888;margin-top:6px;text-align:center;"></div>
+                  </div>
+                </div>
+              </div>
             </td>
           </tr>
         <?php endforeach; ?>
@@ -517,9 +659,101 @@ include 'layout/header.php';
 </div>
 <?php endif; ?>
 
+<style>
+.import-main-row:hover { background: #FAFAFC; }
+.import-main-row td { vertical-align: middle; }
+.import-img-dropzone:hover { border-color: #6D28D9 !important; background: #F5F3FF !important; }
+</style>
+
 <script>
 const validAdminCatsLower = <?= json_encode(array_values(array_map('strtolower', $allCats ?? []))) ?>;
 const validAdminBrandsLower = <?= json_encode(array_values(array_map('strtolower', $allBrands ?? []))) ?>;
+const csrfTokenGlobal = '<?= htmlspecialchars(Session::get('csrf_token') ?? ($_SESSION['csrf_token'] ?? '')) ?>';
+
+/* Track uploaded images per line */
+const importImagesByLine = {};
+
+function toggleDetailRow(lineNum) {
+  const detail = document.getElementById('detail-row-' + lineNum);
+  const icon = document.getElementById('expand-icon-' + lineNum);
+  if (!detail) return;
+  const isOpen = detail.style.display !== 'none';
+  detail.style.display = isOpen ? 'none' : 'table-row';
+  icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+}
+
+async function uploadSingleImage(file, lineNum) {
+  const fd = new FormData();
+  fd.append('image', file);
+  fd.append('line', lineNum);
+  fd.append('csrf_token', csrfTokenGlobal);
+  try {
+    const res = await fetch('api/upload-import-image.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      if (!importImagesByLine[lineNum]) importImagesByLine[lineNum] = [];
+      importImagesByLine[lineNum].push(data.path);
+      renderImportImagePreviews(lineNum);
+      return true;
+    } else {
+      console.error('Upload error:', data.error);
+      return false;
+    }
+  } catch(e) {
+    console.error('Upload failed:', e);
+    return false;
+  }
+}
+
+async function handleImportImageFiles(files, lineNum) {
+  const statusEl = document.getElementById('img-status-' + lineNum);
+  let uploaded = 0;
+  statusEl.textContent = 'Uploading ' + files.length + ' image(s)...';
+  statusEl.style.color = '#6D28D9';
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) continue;
+    const ok = await uploadSingleImage(file, lineNum);
+    if (ok) uploaded++;
+  }
+  statusEl.textContent = uploaded + ' image(s) uploaded successfully';
+  statusEl.style.color = '#16a34a';
+  setTimeout(() => { statusEl.textContent = ''; }, 3000);
+}
+
+function handleImportImageSelect(input, lineNum) {
+  if (input.files && input.files.length) handleImportImageFiles(Array.from(input.files), lineNum);
+  input.value = ''; // reset for re-upload
+}
+
+function handleImportImageDrop(e, lineNum) {
+  const files = e.dataTransfer.files;
+  if (files.length) handleImportImageFiles(Array.from(files), lineNum);
+}
+
+function renderImportImagePreviews(lineNum) {
+  const container = document.getElementById('img-preview-' + lineNum);
+  const countBadge = document.getElementById('img-count-' + lineNum);
+  const imgs = importImagesByLine[lineNum] || [];
+  countBadge.textContent = imgs.length;
+  if (imgs.length > 0) {
+    countBadge.style.background = '#DCFCE7';
+    countBadge.style.color = '#16a34a';
+  }
+  container.innerHTML = imgs.map((path, i) => 
+    '<div style="position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid #E8E5DF;">' +
+    '<img src="' + (path.startsWith('/') ? path : path) + '" style="width:100%;height:100%;object-fit:cover;">' +
+    '<button onclick="removeImportImage(' + lineNum + ',' + i + ');event.stopPropagation()" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:18px;text-align:center;">✕</button>' +
+    (i === 0 ? '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:8px;text-align:center;padding:1px;font-weight:700;">PRIMARY</div>' : '') +
+    '</div>'
+  ).join('');
+}
+
+function removeImportImage(lineNum, index) {
+  if (importImagesByLine[lineNum]) {
+    importImagesByLine[lineNum].splice(index, 1);
+    renderImportImagePreviews(lineNum);
+  }
+}
 
 function onAdminGridInput(input, type) {
   const val = input.value.trim().toLowerCase();
@@ -534,7 +768,7 @@ function onAdminGridInput(input, type) {
     if (badge && !badge.textContent.includes('Imported') && !badge.textContent.includes('Updated')) {
       badge.style.background = '#E6F7ED';
       badge.style.color = '#276749';
-      badge.textContent = 'Ready to import';
+      badge.textContent = 'Ready';
     }
   } else if (val !== '' && !isMatch) {
     input.style.borderColor = '#EAB308';
@@ -591,7 +825,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const startBtn = document.getElementById('adminStartImportBtn');
     startBtn.disabled = true;
-    startBtn.innerHTML = 'Processing Batch...';
+    startBtn.innerHTML = 'Processing Batch…';
 
     const mode = form.querySelector('input[name="mode"]:checked').value;
     const sellerId = form.querySelector('select[name="seller_id"]').value;
@@ -611,12 +845,19 @@ document.addEventListener('DOMContentLoaded', function() {
       if (inp.classList.contains('admin-brand-input')) overrides[line].brand = inp.value;
     });
 
+    /* Include uploaded images in overrides so the server can link them */
+    for (const line in importImagesByLine) {
+      if (!overrides[line]) overrides[line] = {};
+      overrides[line].images = importImagesByLine[line];
+    }
+
     let offset = 0;
     let processedTotal = 0;
     let updatedTotal = 0;
     let createdTotal = 0;
     let failedTotal = 0;
     const totalValid = document.querySelectorAll('.admin-cat-input').length;
+    let retries = 0;
 
     while (true) {
       const formData = new FormData();
@@ -631,12 +872,31 @@ document.addEventListener('DOMContentLoaded', function() {
       formData.append('ajax', '1');
 
       try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000);
+        
         const response = await fetch(window.location.href, {
           method: 'POST',
           headers: { 'X-Requested-With': 'XMLHttpRequest' },
-          body: formData
+          body: formData,
+          signal: controller.signal
         });
-        const data = await response.json();
+        clearTimeout(timeout);
+
+        if (!response.ok) {
+          throw new Error('Server returned status ' + response.status);
+        }
+
+        const text = await response.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch(parseErr) {
+          console.error('Non-JSON response:', text.substring(0, 500));
+          throw new Error('Server returned invalid response. Check error logs.');
+        }
+
+        retries = 0; // reset retries on success
 
         if (!data.success) {
           alert('Import error: ' + (data.error || 'Unknown error occurred.'));
@@ -655,14 +915,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (outcome.success) {
                   if (outcome.action === 'updated') {
                     updatedTotal++;
-                    resCell.innerHTML = '<span style="background:#E0F2FE;color:#0369A1;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:800;">Updated (#' + outcome.id + ')</span>';
+                    resCell.innerHTML = '<span style="background:#E0F2FE;color:#0369A1;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:800;">Updated (#' + outcome.id + ')</span>';
                   } else {
                     createdTotal++;
-                    resCell.innerHTML = '<span style="background:#E6F7ED;color:#276749;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:800;">Imported (#' + outcome.id + ')</span>';
+                    resCell.innerHTML = '<span style="background:#E6F7ED;color:#276749;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:800;">Imported (#' + outcome.id + ')</span>';
                   }
                 } else {
                   failedTotal++;
-                  resCell.innerHTML = '<span style="background:#FFF1F0;color:#CF1322;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;">' + outcome.error + '</span>';
+                  resCell.innerHTML = '<span style="background:#FFF1F0;color:#CF1322;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;">' + (outcome.error || 'Failed') + '</span>';
                 }
               }
             }
@@ -679,11 +939,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.done || processedTotal >= totalValid || (data.processed || 0) === 0) break;
 
       } catch (err) {
-        console.error(err);
-        alert('Network error during import chunk. Please retry.');
-        startBtn.disabled = false;
-        startBtn.textContent = 'Retry Batch Import';
-        return;
+        console.error('Chunk error:', err);
+        retries++;
+        if (retries >= 3) {
+          alert('Import failed after 3 retries: ' + err.message);
+          startBtn.disabled = false;
+          startBtn.textContent = 'Retry Batch Import';
+          return;
+        }
+        progressDetail.textContent = 'Retry ' + retries + '/3 — ' + err.message;
+        await new Promise(r => setTimeout(r, 2000));
       }
     }
 
@@ -696,5 +961,3 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include 'layout/footer.php'; ?>
-
-
