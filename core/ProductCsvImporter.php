@@ -8,11 +8,21 @@ class ProductCsvImporter {
     ];
 
     public static function sendTemplate(): void {
-        header('Content-Type: text/csv; charset=UTF-8');
-        header('Content-Disposition: attachment; filename=avazonia-products-template.csv');
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="avazonia-products-template.csv"');
+        header('Content-Transfer-Encoding: binary');
+        header('X-Content-Type-Options: nosniff');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
         $out = fopen('php://output', 'w');
-        fputcsv($out, self::HEADERS);
+        fwrite($out, "\xEF\xBB\xBF"); // Keep the CSV UTF-8 clean in Excel and Sheets.
+        fputcsv($out, self::HEADERS, ',', '"', '', "\r\n");
+        fputcsv($out, [
+            'Example Product Name', '99.99', 'GHS', '10', '', '',
+            'Add a clear product description.', 'example, new', 'retail', 'new', 'public', '', '',
+        ], ',', '"', '', "\r\n");
         fclose($out);
+        exit;
     }
 
     /** Validate the uploaded CSV and return one preview record per data row. */
