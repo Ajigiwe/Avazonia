@@ -9,6 +9,9 @@ class ProductCsvImporter {
     ];
 
     public static function sendTemplate(PDO $db, string $format = 'excel'): void {
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
         if ($format === 'csv') {
             self::sendCsvTemplate();
         } else {

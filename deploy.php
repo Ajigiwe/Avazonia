@@ -27,6 +27,11 @@ run_git_cmd("git reset --hard origin/main");
 // 3. Optional: Verify current status
 run_git_cmd("git status");
 
+if (function_exists('opcache_reset')) {
+    @opcache_reset();
+    echo "⚡ PHP OPcache cleared!\n";
+}
+
 echo "------------------------------------------\n";
 echo "✅ Deployment Sync Complete! Please check your site now.\n";
 echo "⚠️ IMPORTANT: Delete this deploy.php file from your server immediately for security.\n";
