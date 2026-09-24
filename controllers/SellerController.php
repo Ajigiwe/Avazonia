@@ -85,8 +85,17 @@ class SellerController extends Controller {
         $store=(new Store())->findBySellerId((int)$seller['id']);
         $error=''; $preview=null; $outcomes=[];
         if ($_SERVER['REQUEST_METHOD']==='POST') {
+            $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+                || !empty($_POST['ajax'])
+                || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
             if (!Csrf::validateRequest()) {
                 $error='Security token expired. Please refresh the page and try again.';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'error' => $error]);
+                    exit;
+                }
             } elseif (($_POST['action']??'')==='preview') {
                 $file=$_FILES['csv_file']??null;
                 if (!$file || ($file['error']??UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_OK || strtolower(pathinfo($file['name']??'',PATHINFO_EXTENSION))!=='csv') {
@@ -98,21 +107,61 @@ class SellerController extends Controller {
                         Session::set('seller_product_csv_import',['key'=>$key,'seller_id'=>(int)$seller['id'],'preview'=>$preview]);
                     } catch (\Throwable $e) { $error=$e->getMessage(); }
                 }
-            } elseif (($_POST['action']??'')==='import') {
+            } elseif (($_POST['action']??'')==='import' || ($_POST['action']??'')==='import_chunk') {
                 $saved=Session::get('seller_product_csv_import');
                 if (!$saved || (int)$saved['seller_id']!==(int)$seller['id'] || !hash_equals((string)$saved['key'],(string)($_POST['import_key']??''))) {
                     $error='This preview has expired. Upload the CSV again.';
+                    if ($isAjax) {
+                        header('Content-Type: application/json');
+                        echo json_encode(['success' => false, 'error' => $error]);
+                        exit;
+                    }
                 } else {
                     $preview=$saved['preview'];
+                    $mode=in_array($_POST['mode']??'insert', ['insert', 'upsert'], true) ? $_POST['mode'] : 'insert';
+                    $offset=max(0, (int)($_POST['offset']??0));
+                    $limit=max(0, (int)($_POST['limit']??0));
                     try {
-                        $outcomes=ProductCsvImporter::import($db,$preview,(int)$seller['id'],!empty($store['id'])?(int)$store['id']:null,'active');
-                        Session::remove('seller_product_csv_import');
+                        $storeId=!empty($store['id'])?(int)$store['id']:null;
+                        $outcomes=ProductCsvImporter::import($db, $preview, (int)$seller['id'], $storeId, 'active', $mode, $offset, $limit);
+                        
+                        $validCount=count(array_filter($preview, static fn($r) => empty($r['errors'])));
+                        $processedCount = $offset + count($outcomes);
+                        $isDone = ($limit === 0 || $processedCount >= $validCount);
+                        
+                        if ($isDone && !$isAjax) {
+                            Session::remove('seller_product_csv_import');
+                        }
+
+                        if ($isAjax) {
+                            header('Content-Type: application/json');
+                            echo json_encode([
+                                'success' => true,
+                                'offset' => $offset,
+                                'limit' => $limit,
+                                'processed' => count($outcomes),
+                                'total_valid' => $validCount,
+                                'done' => $isDone,
+                                'outcomes' => $outcomes
+                            ]);
+                            exit;
+                        }
                     } catch (\Throwable $e) {
                         $error=$e->getMessage();
+                        if ($isAjax) {
+                            header('Content-Type: application/json');
+                            echo json_encode(['success' => false, 'error' => $error]);
+                            exit;
+                        }
                     }
                 }
             } elseif (($_POST['action']??'')==='cancel') {
                 Session::remove('seller_product_csv_import');
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => true, 'cancelled' => true]);
+                    exit;
+                }
             }
         }
         if (!$preview && Session::get('seller_product_csv_import')) $preview=Session::get('seller_product_csv_import')['preview'];
