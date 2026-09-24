@@ -74,6 +74,7 @@ class ProductCsvImporter {
         $subEndRow = count($subCats) + 1;
         $brandEndRow = count($brands) + 1;
 
+        $countries = ['GH', 'CN', 'OTHER'];
         $zip->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <sheets>
@@ -88,6 +89,7 @@ class ProductCsvImporter {
     <definedName name="ListingTypesList">Lookups!$E$2:$E$5</definedName>
     <definedName name="ConditionsList">Lookups!$F$2:$F$3</definedName>
     <definedName name="VisibilitiesList">Lookups!$G$2:$G$4</definedName>
+    <definedName name="CountriesList">Lookups!$H$2:$H$4</definedName>
   </definedNames>
 </workbook>');
 
@@ -118,6 +120,7 @@ class ProductCsvImporter {
           <c r="E1" t="inlineStr"><is><t>ListingTypes</t></is></c>
           <c r="F1" t="inlineStr"><is><t>Conditions</t></is></c>
           <c r="G1" t="inlineStr"><is><t>Visibilities</t></is></c>
+          <c r="H1" t="inlineStr"><is><t>Countries</t></is></c>
         </row>';
 
         for ($i = 0; $i < $maxLookupRows; $i++) {
@@ -129,6 +132,7 @@ class ProductCsvImporter {
             $listVal = isset($listingTypes[$i]) ? htmlspecialchars($listingTypes[$i], ENT_QUOTES | ENT_XML1, 'UTF-8') : '';
             $condVal = isset($conditions[$i]) ? htmlspecialchars($conditions[$i], ENT_QUOTES | ENT_XML1, 'UTF-8') : '';
             $visVal = isset($visibilities[$i]) ? htmlspecialchars($visibilities[$i], ENT_QUOTES | ENT_XML1, 'UTF-8') : '';
+            $cntVal = isset($countries[$i]) ? htmlspecialchars($countries[$i], ENT_QUOTES | ENT_XML1, 'UTF-8') : '';
 
             $cells = '';
             if ($catVal !== '') $cells .= '<c r="A' . $rNum . '" t="inlineStr"><is><t>' . $catVal . '</t></is></c>';
@@ -138,6 +142,7 @@ class ProductCsvImporter {
             if ($listVal !== '') $cells .= '<c r="E' . $rNum . '" t="inlineStr"><is><t>' . $listVal . '</t></is></c>';
             if ($condVal !== '') $cells .= '<c r="F' . $rNum . '" t="inlineStr"><is><t>' . $condVal . '</t></is></c>';
             if ($visVal !== '') $cells .= '<c r="G' . $rNum . '" t="inlineStr"><is><t>' . $visVal . '</t></is></c>';
+            if ($cntVal !== '') $cells .= '<c r="H' . $rNum . '" t="inlineStr"><is><t>' . $cntVal . '</t></is></c>';
 
             if ($cells !== '') {
                 $s2Rows[] = '<row r="' . $rNum . '">' . $cells . '</row>';
@@ -153,6 +158,7 @@ class ProductCsvImporter {
         // Sheet 1: Products
         $sheet1Xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <dimension ref="A1:R2"/>
   <sheetData>
     <row r="1">
       <c r="A1" t="inlineStr"><is><t>name</t></is></c>
@@ -195,7 +201,7 @@ class ProductCsvImporter {
       <c r="R2" t="inlineStr"><is><t>Battery: 5000mAh | RAM: 12GB | Screen: 6.7 inch AMOLED</t></is></c>
     </row>
   </sheetData>
-  <dataValidations count="7">
+  <dataValidations count="8">
     <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="0" sqref="D2:D1000">
       <formula1>CurrenciesList</formula1>
     </dataValidation>
@@ -216,6 +222,9 @@ class ProductCsvImporter {
     </dataValidation>
     <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="0" sqref="M2:M1000">
       <formula1>VisibilitiesList</formula1>
+    </dataValidation>
+    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="0" sqref="P2:P1000">
+      <formula1>CountriesList</formula1>
     </dataValidation>
   </dataValidations>
 </worksheet>';
