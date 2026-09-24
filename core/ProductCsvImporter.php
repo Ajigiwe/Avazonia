@@ -28,7 +28,8 @@ class ProductCsvImporter {
         fputcsv($out, self::HEADERS, ',', '"', '', "\r\n");
         fputcsv($out, [
             'Example Product Name', 'PROD-SKU-001', '99.99', 'GHS', '10', 'Electronics', 'Audio & Headphones', 'Apple',
-            'Add a clear product description.', 'example, new', 'retail', 'new', 'public', '', '',
+            'Add a clear product description.', 'example, new', 'retail', 'new', 'public', '', '', 'GH',
+            'Fast Charging | Waterproof | 2-Year Warranty', 'Battery: 5000mAh | RAM: 12GB | Screen: 6.7" AMOLED',
         ], ',', '"', '', "\r\n");
         fclose($out);
         exit;
@@ -169,6 +170,9 @@ class ProductCsvImporter {
       <c r="M1" t="inlineStr"><is><t>visibility</t></is></c>
       <c r="N1" t="inlineStr"><is><t>moq</t></is></c>
       <c r="O1" t="inlineStr"><is><t>wholesale_price</t></is></c>
+      <c r="P1" t="inlineStr"><is><t>location_country</t></is></c>
+      <c r="Q1" t="inlineStr"><is><t>features</t></is></c>
+      <c r="R1" t="inlineStr"><is><t>specs</t></is></c>
     </row>
     <row r="2">
       <c r="A2" t="inlineStr"><is><t>Example Product Name</t></is></c>
@@ -186,6 +190,9 @@ class ProductCsvImporter {
       <c r="M2" t="inlineStr"><is><t>public</t></is></c>
       <c r="N2"><v></v></c>
       <c r="O2"><v></v></c>
+      <c r="P2" t="inlineStr"><is><t>GH</t></is></c>
+      <c r="Q2" t="inlineStr"><is><t>Fast Charging | Waterproof | 2-Year Warranty</t></is></c>
+      <c r="R2" t="inlineStr"><is><t>Battery: 5000mAh | RAM: 12GB | Screen: 6.7" AMOLED</t></is></c>
     </row>
   </sheetData>
   <dataValidations count="7">
