@@ -483,7 +483,7 @@ include 'layout/header.php';
           <!-- Main summary row -->
           <tr id="admin-row-<?= $lineNum ?>" class="import-main-row" style="border-bottom:1px solid #F0EDE8;cursor:pointer;" onclick="toggleDetailRow(<?= $lineNum ?>)">
             <td style="padding:10px 12px;text-align:center;">
-              <span id="expand-icon-<?= $lineNum ?>" style="display:inline-block;transition:transform .2s;font-size:14px;color:#55514E;">▶</span>
+              <button type="button" id="expand-icon-<?= $lineNum ?>" onclick="toggleDetailRow(<?= $lineNum ?>); event.stopPropagation();" style="background:none;border:none;cursor:pointer;display:inline-block;transition:transform .2s;font-size:14px;color:#55514E;padding:4px;outline:none;">▶</button>
             </td>
             <td style="padding:10px 12px;font-weight:700;color:#55514E;font-size:13px;"><?= $lineNum ?></td>
             <td style="padding:10px 12px;font-weight:700;color:#0D0D0D;font-size:13px;"><?= htmlspecialchars($item['row']['name']) ?></td>
@@ -699,7 +699,9 @@ function toggleDetailRow(lineNum) {
   if (!detail) return;
   const isOpen = detail.style.display !== 'none';
   detail.style.display = isOpen ? 'none' : 'table-row';
-  icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+  if (icon) {
+    icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+  }
 }
 
 async function uploadSingleImage(file, lineNum) {
