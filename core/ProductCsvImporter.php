@@ -5,7 +5,7 @@ class ProductCsvImporter {
     public const REQUIRED_HEADERS = ['name', 'price'];
     public const HEADERS = [
         'name', 'sku', 'price', 'currency', 'stock', 'category', 'sub_category', 'brand', 'description', 'tags',
-        'listing_type', 'condition', 'visibility', 'moq', 'wholesale_price', 'location_country',
+        'listing_type', 'condition', 'visibility', 'moq', 'wholesale_price', 'location_country', 'features', 'specs',
     ];
 
     public static function sendTemplate(PDO $db, string $format = 'excel'): void {
@@ -392,6 +392,8 @@ class ProductCsvImporter {
                 // Support both category and sub_category aliases
                 if ($key === 'sub_category' || $key === 'subcategory') $key = 'sub_category';
                 if ($key === 'origin_country' || $key === 'country' || $key === 'origin' || $key === 'location' || $key === 'location_country') $key = 'location_country';
+                if ($key === 'key_features' || $key === 'feature_list' || $key === 'feature') $key = 'features';
+                if ($key === 'specifications' || $key === 'spec_list' || $key === 'spec') $key = 'specs';
                 $headerMap[$key] = $index;
             }
         }
@@ -475,6 +477,28 @@ class ProductCsvImporter {
                 $locationCountry = strtoupper(substr($countryRaw, 0, 5));
             }
 
+            $featRaw = trim((string)($row['features'] ?? ''));
+            $featuresJson = null;
+            if ($featRaw !== '') {
+                $featArr = array_values(array_filter(array_map('trim', preg_split('/[\r\n|;]+/', $featRaw))));
+                if (!empty($featArr)) $featuresJson = json_encode($featArr);
+            }
+
+            $specsRaw = trim((string)($row['specs'] ?? ''));
+            $specsJson = null;
+            if ($specsRaw !== '') {
+                $specsArr = [];
+                foreach (preg_split('/[\r\n|;]+/', $specsRaw) as $specLine) {
+                    if (strpos($specLine, ':') !== false) {
+                        list($k, $v) = explode(':', $specLine, 2);
+                        if (trim($k) !== '') {
+                            $specsArr[trim($k)] = trim($v);
+                        }
+                    }
+                }
+                if (!empty($specsArr)) $specsJson = json_encode($specsArr);
+            }
+
             $values = [
                 'name' => $row['name'],
                 'sku' => $row['sku'] !== '' ? $row['sku'] : null,
@@ -493,6 +517,8 @@ class ProductCsvImporter {
                 'wholesale_price_ghs' => $wholesalePrice,
                 'location_country' => $locationCountry,
                 'available_in_ghana' => ($locationCountry === 'GH' ? 1 : 0),
+                'features' => $featuresJson,
+                'specs' => $specsJson,
             ];
             $preview[] = ['line' => $line, 'row' => $row, 'values' => $values, 'errors' => $errors];
         }
