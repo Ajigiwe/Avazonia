@@ -34,8 +34,16 @@ if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
 }
 
 $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-$finfo = new finfo(FILEINFO_MIME_TYPE);
-$mime = $finfo->file($file['tmp_name']);
+$mime = '';
+if (class_exists('finfo')) {
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mime = $finfo->file($file['tmp_name']);
+} elseif (function_exists('mime_content_type')) {
+    $mime = mime_content_type($file['tmp_name']);
+} else {
+    $mime = $file['type'];
+}
+
 if (!in_array($mime, $allowed, true)) {
     echo json_encode(['success' => false, 'error' => 'Invalid image type. Use JPEG, PNG, WebP or GIF.']);
     exit;

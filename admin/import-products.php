@@ -695,8 +695,8 @@ async function uploadSingleImage(file, lineNum) {
       try {
         data = JSON.parse(text);
       } catch(e) {
-        console.error('Non-JSON response:', text);
-        return { ok: false, error: 'Server error: ' + text.substring(0, 40) };
+        console.error('Non-JSON response (Status ' + res.status + '):', text);
+        return { ok: false, error: 'HTTP ' + res.status + ' ' + res.statusText + (text ? ': ' + text.substring(0, 40) : ' (empty body)') };
       }
     } catch(e) {
       return { ok: false, error: 'Server error (failed to read response)' };
