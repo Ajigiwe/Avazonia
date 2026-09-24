@@ -595,6 +595,9 @@ class ProductCsvImporter {
                             $item['values']['price_ghs'] = 0;
                         }
                     }
+                    if (isset($ov['video_url'])) {
+                        $item['values']['video_url'] = trim($ov['video_url']);
+                    }
                     // Clear category/brand errors if newly selected
                     $item['errors'] = array_values(array_filter($item['errors'], static function($err) {
                         return !str_contains($err, 'Category') && !str_contains($err, 'Brand');
@@ -648,12 +651,12 @@ class ProductCsvImporter {
                         price_ghs = ?, price_usd = ?, currency = ?, stock_qty = ?,
                         category_id = ?, brand_id = ?, description = ?, tags = ?,
                         listing_type = ?, condition_type = ?, visibility = ?, moq = ?,
-                        wholesale_price_ghs = ?, updated_at = NOW()';
+                        wholesale_price_ghs = ?, video_url = ?, updated_at = NOW()';
                     $params = [
                         $values['price_ghs'], $values['price_usd'], $values['currency'], $values['stock_qty'],
                         $values['category_id'], $values['brand_id'], $values['description'], $values['tags'],
                         $values['listing_type'], $values['condition_type'], $values['visibility'], $values['moq'],
-                        $values['wholesale_price_ghs']
+                        $values['wholesale_price_ghs'], $values['video_url'] ?? null
                     ];
                     if (!empty($values['sku']) && in_array('sku', $columns, true)) {
                         $updateSql .= ', sku = ?';

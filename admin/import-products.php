@@ -627,8 +627,9 @@ include 'layout/header.php';
                     <?php endif; ?>
                   </div>
 
-                  <!-- Right: Image upload -->
+                  <!-- Right: Media upload -->
                   <div>
+                    <!-- Images -->
                     <div style="font-family:var(--f-mono,monospace);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6D28D9;font-weight:700;margin-bottom:10px;">Product Images</div>
                     
                     <div id="img-preview-<?= $lineNum ?>" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
@@ -639,13 +640,32 @@ include 'layout/header.php';
                          ondragover="event.preventDefault();this.style.borderColor='#6D28D9';this.style.background='#F5F3FF'"
                          ondragleave="this.style.borderColor='#D0D5DD';this.style.background='#FAFAFC'"
                          ondrop="event.preventDefault();this.style.borderColor='#D0D5DD';this.style.background='#FAFAFC';handleImportImageDrop(event,<?= $lineNum ?>)"
-                         style="border:2px dashed #D0D5DD;border-radius:10px;background:#FAFAFC;padding:20px;text-align:center;cursor:pointer;transition:all .2s;">
+                         style="border:2px dashed #D0D5DD;border-radius:10px;background:#FAFAFC;padding:16px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:6px;">
                       <input type="file" id="img-input-<?= $lineNum ?>" accept="image/*" multiple style="display:none" onchange="handleImportImageSelect(this,<?= $lineNum ?>)">
-                      <div style="font-size:24px;margin-bottom:4px;">📸</div>
-                      <div style="font-size:12px;font-weight:700;color:#555;">Drop images or click to upload</div>
-                      <div style="font-size:10px;color:#888;margin-top:2px;">JPEG, PNG, WebP · Multiple allowed</div>
+                      <div style="font-size:20px;margin-bottom:4px;">📸</div>
+                      <div style="font-size:11px;font-weight:700;color:#555;">Drop images or click</div>
+                      <div style="font-size:9px;color:#888;margin-top:2px;">JPEG, PNG, WebP</div>
                     </div>
-                    <div id="img-status-<?= $lineNum ?>" style="font-size:11px;color:#888;margin-top:6px;text-align:center;"></div>
+                    <div id="img-status-<?= $lineNum ?>" style="font-size:11px;color:#888;margin-bottom:14px;text-align:center;min-height:16px;"></div>
+
+                    <!-- Video -->
+                    <div style="font-family:var(--f-mono,monospace);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6D28D9;font-weight:700;margin-bottom:6px;">Product Video</div>
+                    
+                    <input type="text" class="override-input override-video" data-line="<?= $lineNum ?>" id="video-url-<?= $lineNum ?>" placeholder="Or paste YouTube/Vimeo link here" style="width:100%;font-size:11px;padding:6px;border:1px solid #D0D5DD;border-radius:6px;margin-bottom:6px;">
+
+                    <div class="import-img-dropzone" 
+                         id="vid-dropzone-<?= $lineNum ?>"
+                         onclick="document.getElementById('vid-input-<?= $lineNum ?>').click()"
+                         ondragover="event.preventDefault();this.style.borderColor='#6D28D9';this.style.background='#F5F3FF'"
+                         ondragleave="this.style.borderColor='#D0D5DD';this.style.background='#FAFAFC'"
+                         ondrop="event.preventDefault();this.style.borderColor='#D0D5DD';this.style.background='#FAFAFC';handleImportVideoDrop(event,<?= $lineNum ?>)"
+                         style="border:2px dashed #D0D5DD;border-radius:10px;background:#FAFAFC;padding:12px;text-align:center;cursor:pointer;transition:all .2s;">
+                      <input type="file" id="vid-input-<?= $lineNum ?>" accept="video/*" style="display:none" onchange="handleImportVideoSelect(this,<?= $lineNum ?>)">
+                      <div style="font-size:18px;margin-bottom:2px;">🎥</div>
+                      <div style="font-size:11px;font-weight:700;color:#555;">Upload Video</div>
+                      <div style="font-size:9px;color:#888;margin-top:2px;">MP4, WebM (1 allowed)</div>
+                    </div>
+                    <div id="vid-status-<?= $lineNum ?>" style="font-size:11px;color:#888;margin-top:6px;text-align:center;min-height:16px;"></div>
                   </div>
                 </div>
               </div>
@@ -765,6 +785,71 @@ function handleImportImageDrop(e, lineNum) {
   if (files.length) handleImportImageFiles(Array.from(files), lineNum);
 }
 
+// VIDEO UPLOAD
+async function handleImportVideoFiles(files, lineNum) {
+  const statusEl = document.getElementById('vid-status-' + lineNum);
+  const inputEl = document.getElementById('video-url-' + lineNum);
+  
+  const videoFile = files.find(f => f.type.startsWith('video/'));
+  if (!videoFile) {
+      statusEl.textContent = 'No valid video selected.';
+      statusEl.style.color = '#dc2626';
+      setTimeout(() => { statusEl.textContent = ''; }, 3000);
+      return;
+  }
+  
+  statusEl.textContent = 'Uploading video...';
+  statusEl.style.color = '#6D28D9';
+  
+  const fd = new FormData();
+  fd.append('video', videoFile);
+  fd.append('line', lineNum);
+  fd.append('csrf_token', csrfTokenGlobal);
+  
+  try {
+    const res = await fetch('api/upload-import-video.php', { method: 'POST', body: fd });
+    let data;
+    try {
+      const text = await res.text();
+      try {
+        data = JSON.parse(text);
+      } catch(e) {
+        statusEl.textContent = 'HTTP ' + res.status + ' (Server error)';
+        statusEl.style.color = '#dc2626';
+        return;
+      }
+    } catch(e) {
+      statusEl.textContent = 'Network error reading response';
+      statusEl.style.color = '#dc2626';
+      return;
+    }
+    
+    if (data.success) {
+      inputEl.value = data.path; // Set input field to path
+      statusEl.textContent = 'Video uploaded successfully';
+      statusEl.style.color = '#16a34a';
+    } else {
+      statusEl.textContent = data.error || 'Upload failed';
+      statusEl.style.color = '#dc2626';
+    }
+  } catch(e) {
+    statusEl.textContent = 'Network error';
+    statusEl.style.color = '#dc2626';
+  }
+  
+  setTimeout(() => { statusEl.textContent = ''; }, 5000);
+}
+
+function handleImportVideoSelect(input, lineNum) {
+  if (input.files && input.files.length) handleImportVideoFiles(Array.from(input.files), lineNum);
+  input.value = '';
+}
+
+function handleImportVideoDrop(e, lineNum) {
+  const files = e.dataTransfer.files;
+  if (files.length) handleImportVideoFiles(Array.from(files), lineNum);
+}
+
 function renderImportImagePreviews(lineNum) {
   const container = document.getElementById('img-preview-' + lineNum);
   const countBadge = document.getElementById('img-count-' + lineNum);
@@ -878,6 +963,14 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!overrides[line]) overrides[line] = {};
       if (inp.classList.contains('admin-cat-input')) overrides[line].category = inp.value;
       if (inp.classList.contains('admin-brand-input')) overrides[line].brand = inp.value;
+    });
+
+    document.querySelectorAll('.override-video').forEach(inp => {
+      const line = inp.dataset.line;
+      if (inp.value.trim() !== '') {
+        if (!overrides[line]) overrides[line] = {};
+        overrides[line].video_url = inp.value.trim();
+      }
     });
 
     /* Include uploaded images in overrides so the server can link them */
