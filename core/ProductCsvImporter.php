@@ -504,12 +504,14 @@ class ProductCsvImporter {
                 $line = (string)$item['line'];
                 if (isset($overrides[$line])) {
                     $ov = $overrides[$line];
-                    if (isset($ov['category']) && $ov['category'] !== '') {
-                        $item['values']['category_id'] = $catMap[strtolower($ov['category'])] ?? $item['values']['category_id'];
+                    if (isset($ov['category']) && trim($ov['category']) !== '') {
+                        $catKey = strtolower(trim($ov['category']));
+                        $item['values']['category_id'] = $catMap[$catKey] ?? $item['values']['category_id'];
                         $item['row']['category'] = $ov['category'];
                     }
-                    if (isset($ov['brand']) && $ov['brand'] !== '') {
-                        $item['values']['brand_id'] = $brandMap[strtolower($ov['brand'])] ?? $item['values']['brand_id'];
+                    if (isset($ov['brand']) && trim($ov['brand']) !== '') {
+                        $brandKey = strtolower(trim($ov['brand']));
+                        $item['values']['brand_id'] = $brandMap[$brandKey] ?? $item['values']['brand_id'];
                         $item['row']['brand'] = $ov['brand'];
                     }
                     if (isset($ov['currency'])) {

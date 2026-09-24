@@ -356,12 +356,25 @@ include 'layout/header.php';
   $allBrands = $lookups['brands'] ?? [];
   $validCount = count(array_filter($preview, static fn($r) => empty($r['errors'])));
 ?>
+
+<datalist id="adminCategoryDatalist">
+  <?php foreach($allCats as $catName): ?>
+    <option value="<?= htmlspecialchars($catName) ?>">
+  <?php endforeach; ?>
+</datalist>
+
+<datalist id="adminBrandDatalist">
+  <?php foreach($allBrands as $brandName): ?>
+    <option value="<?= htmlspecialchars($brandName) ?>">
+  <?php endforeach; ?>
+</datalist>
+
 <div class="panel" style="max-width:1100px;margin-bottom:32px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.05);overflow:hidden;background:#FFF;border:1px solid #E8E5DF;">
   <div style="padding:22px 28px;border-bottom:1px solid #E8E5DF;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:#FAFAFC;">
     <div>
       <div style="font-family:var(--f-mono, monospace);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#55514E;">Step 3 · Verification &amp; Web Grid Editor</div>
       <div style="font-family:var(--f-display, sans-serif);font-weight:900;font-size:20px;color:#0D0D0D;margin-top:2px;">
-        Spreadsheet Data Preview &amp; Field Selector
+        Spreadsheet Data Preview &amp; Search Autocomplete
       </div>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -440,8 +453,8 @@ include 'layout/header.php';
             <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Product Name</th>
             <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;width:120px;">SKU</th>
             <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;width:100px;">Price</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;min-width:200px;">Category Selector</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;min-width:160px;">Brand Selector</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;min-width:220px;">Category Search</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;min-width:180px;">Brand Search</th>
             <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Result</th>
           </tr>
         </thead>
@@ -461,34 +474,38 @@ include 'layout/header.php';
             <td style="padding:12px 16px;font-weight:700;"><?= htmlspecialchars($item['row']['currency'].' '.$item['row']['price']) ?></td>
             
             <td style="padding:10px 14px;">
-              <select class="admin-cat-select" data-line="<?= $lineNum ?>" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid <?= empty($item['values']['category_id']) ? '#EAB308' : '#D1D5DB' ?>;font-size:13px;background:<?= empty($item['values']['category_id']) ? '#FEFCE8' : '#FFFFFF' ?>;">
-                <option value="">-- Select Category --</option>
-                <?php foreach($allCats as $catName): ?>
-                  <option value="<?= htmlspecialchars($catName) ?>" <?= strcasecmp($matchedCat, $catName) === 0 ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($catName) ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
+              <input type="text" 
+                     class="admin-cat-input" 
+                     data-line="<?= $lineNum ?>" 
+                     list="adminCategoryDatalist" 
+                     value="<?= htmlspecialchars($matchedCat) ?>" 
+                     placeholder="Type e.g. 'c' for Cameras..." 
+                     autocomplete="off"
+                     oninput="onAdminGridInput(this, 'category')"
+                     onfocus="this.select()"
+                     style="width:100%;padding:8px 12px;border-radius:6px;border:1.5px solid <?= empty($item['values']['category_id']) ? '#EAB308' : '#D1D5DB' ?>;font-size:13px;background:<?= empty($item['values']['category_id']) ? '#FEFCE8' : '#FFFFFF' ?>;font-weight:600;color:#0D0D0D;">
             </td>
 
             <td style="padding:10px 14px;">
-              <select class="admin-brand-select" data-line="<?= $lineNum ?>" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid <?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#EAB308' : '#D1D5DB' ?>;font-size:13px;background:<?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#FEFCE8' : '#FFFFFF' ?>;">
-                <option value="">-- Optional Brand --</option>
-                <?php foreach($allBrands as $brandName): ?>
-                  <option value="<?= htmlspecialchars($brandName) ?>" <?= strcasecmp($matchedBrand, $brandName) === 0 ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($brandName) ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
+              <input type="text" 
+                     class="admin-brand-input" 
+                     data-line="<?= $lineNum ?>" 
+                     list="adminBrandDatalist" 
+                     value="<?= htmlspecialchars($matchedBrand) ?>" 
+                     placeholder="Type e.g. 's' for Samsung..." 
+                     autocomplete="off"
+                     oninput="onAdminGridInput(this, 'brand')"
+                     onfocus="this.select()"
+                     style="width:100%;padding:8px 12px;border-radius:6px;border:1.5px solid <?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#EAB308' : '#D1D5DB' ?>;font-size:13px;background:<?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#FEFCE8' : '#FFFFFF' ?>;font-weight:600;color:#0D0D0D;">
             </td>
 
             <td class="admin-result-cell" style="padding:12px 16px;">
               <?php if ($result && $result['success']): ?>
                 <span style="background:#E6F7ED;color:#276749;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:800;"><?= $result['action'] === 'updated' ? 'Updated (#' . (int)$result['id'] . ')' : 'Imported (#' . (int)$result['id'] . ')' ?></span>
               <?php elseif ($messages): ?>
-                <span style="background:#FFF1F0;color:#CF1322;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;"><?= htmlspecialchars(implode(' ', $messages)) ?></span>
+                <span style="background:#FFF1F0;color:#CF1322;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;" class="msg-span"><?= htmlspecialchars(implode(' ', $messages)) ?></span>
               <?php else: ?>
-                <span style="background:#FAFAFC;color:#55514E;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;">Ready to import</span>
+                <span style="background:#FAFAFC;color:#55514E;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;" class="msg-span">Ready to import</span>
               <?php endif; ?>
             </td>
           </tr>
@@ -499,6 +516,184 @@ include 'layout/header.php';
   </div>
 </div>
 <?php endif; ?>
+
+<script>
+const validAdminCatsLower = <?= json_encode(array_values(array_map('strtolower', $allCats ?? []))) ?>;
+const validAdminBrandsLower = <?= json_encode(array_values(array_map('strtolower', $allBrands ?? []))) ?>;
+
+function onAdminGridInput(input, type) {
+  const val = input.value.trim().toLowerCase();
+  const validList = type === 'category' ? validAdminCatsLower : validAdminBrandsLower;
+  const isMatch = val === '' || validList.includes(val);
+
+  if (val !== '' && isMatch) {
+    input.style.borderColor = '#166534';
+    input.style.background = '#F0FDF4';
+    const row = input.closest('tr');
+    const badge = row.querySelector('.admin-result-cell .msg-span');
+    if (badge && !badge.textContent.includes('Imported') && !badge.textContent.includes('Updated')) {
+      badge.style.background = '#E6F7ED';
+      badge.style.color = '#276749';
+      badge.textContent = 'Ready to import';
+    }
+  } else if (val !== '' && !isMatch) {
+    input.style.borderColor = '#EAB308';
+    input.style.background = '#FEFCE8';
+  } else {
+    input.style.borderColor = '#D1D5DB';
+    input.style.background = '#FFFFFF';
+  }
+}
+
+function handleAdminFileSelected(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    document.getElementById('adminDropzonePrompt').style.display = 'none';
+    document.getElementById('adminFileSelectedArea').style.display = 'block';
+    document.getElementById('adminFileNameDisp').textContent = file.name;
+    document.getElementById('adminFileSizeDisp').textContent = (file.size / 1024).toFixed(1) + ' KB';
+  }
+}
+
+function selectAdminModeCard(mode) {
+  document.getElementById('adminModeCardInsert').classList.toggle('active', mode === 'insert');
+  document.getElementById('adminModeCardUpsert').classList.toggle('active', mode === 'upsert');
+}
+
+const adminDropzone = document.getElementById('adminDropzone');
+if (adminDropzone) {
+  ['dragenter', 'dragover'].forEach(eventName => {
+    adminDropzone.addEventListener(eventName, (e) => { e.preventDefault(); adminDropzone.classList.add('dragover'); }, false);
+  });
+  ['dragleave', 'drop'].forEach(eventName => {
+    adminDropzone.addEventListener(eventName, (e) => { e.preventDefault(); adminDropzone.classList.remove('dragover'); }, false);
+  });
+  adminDropzone.addEventListener('drop', (e) => {
+    const files = e.dataTransfer.files;
+    if (files.length) {
+      const fileInput = document.getElementById('adminCsvFileInput');
+      fileInput.files = files;
+      handleAdminFileSelected(fileInput);
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('adminImportForm');
+  if (!form) return;
+
+  const CHUNK_SIZE = 50;
+
+  form.addEventListener('submit', async function(e) {
+    const submitter = e.submitter;
+    if (submitter && submitter.value === 'cancel') return;
+    e.preventDefault();
+
+    const startBtn = document.getElementById('adminStartImportBtn');
+    startBtn.disabled = true;
+    startBtn.innerHTML = 'Processing Batch...';
+
+    const mode = form.querySelector('input[name="mode"]:checked').value;
+    const sellerId = form.querySelector('select[name="seller_id"]').value;
+    const csrfToken = form.querySelector('input[name="csrf_token"]').value;
+    const importKey = form.querySelector('input[name="import_key"]').value;
+
+    const progressContainer = document.getElementById('asyncProgressContainer');
+    const progressBar = document.getElementById('asyncProgressBar');
+    const progressDetail = document.getElementById('asyncProgressDetail');
+    progressContainer.style.display = 'block';
+
+    const overrides = {};
+    document.querySelectorAll('.admin-cat-input, .admin-brand-input').forEach(inp => {
+      const line = inp.dataset.line;
+      if (!overrides[line]) overrides[line] = {};
+      if (inp.classList.contains('admin-cat-input')) overrides[line].category = inp.value;
+      if (inp.classList.contains('admin-brand-input')) overrides[line].brand = inp.value;
+    });
+
+    let offset = 0;
+    let processedTotal = 0;
+    let updatedTotal = 0;
+    let createdTotal = 0;
+    let failedTotal = 0;
+    const totalValid = document.querySelectorAll('.admin-cat-input').length;
+
+    while (true) {
+      const formData = new FormData();
+      formData.append('csrf_token', csrfToken);
+      formData.append('action', 'import_chunk');
+      formData.append('import_key', importKey);
+      formData.append('mode', mode);
+      formData.append('seller_id', sellerId);
+      formData.append('offset', offset);
+      formData.append('limit', CHUNK_SIZE);
+      formData.append('overrides', JSON.stringify(overrides));
+      formData.append('ajax', '1');
+
+      try {
+        const response = await fetch(window.location.href, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          body: formData
+        });
+        const data = await response.json();
+
+        if (!data.success) {
+          alert('Import error: ' + (data.error || 'Unknown error occurred.'));
+          startBtn.disabled = false;
+          startBtn.textContent = 'Retry Batch Import';
+          return;
+        }
+
+        if (data.outcomes) {
+          for (const line in data.outcomes) {
+            const outcome = data.outcomes[line];
+            const rowElem = document.getElementById('admin-row-' + line);
+            if (rowElem) {
+              const resCell = rowElem.querySelector('.admin-result-cell');
+              if (resCell) {
+                if (outcome.success) {
+                  if (outcome.action === 'updated') {
+                    updatedTotal++;
+                    resCell.innerHTML = '<span style="background:#E0F2FE;color:#0369A1;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:800;">Updated (#' + outcome.id + ')</span>';
+                  } else {
+                    createdTotal++;
+                    resCell.innerHTML = '<span style="background:#E6F7ED;color:#276749;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:800;">Imported (#' + outcome.id + ')</span>';
+                  }
+                } else {
+                  failedTotal++;
+                  resCell.innerHTML = '<span style="background:#FFF1F0;color:#CF1322;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;">' + outcome.error + '</span>';
+                }
+              }
+            }
+          }
+        }
+
+        processedTotal += (data.processed || 0);
+        offset += CHUNK_SIZE;
+
+        const percent = Math.min(100, Math.round((processedTotal / (totalValid || 1)) * 100));
+        progressBar.style.width = percent + '%';
+        progressDetail.textContent = processedTotal + ' of ' + totalValid + ' items processed (' + percent + '%)';
+
+        if (data.done || processedTotal >= totalValid || (data.processed || 0) === 0) break;
+
+      } catch (err) {
+        console.error(err);
+        alert('Network error during import chunk. Please retry.');
+        startBtn.disabled = false;
+        startBtn.textContent = 'Retry Batch Import';
+        return;
+      }
+    }
+
+    form.style.display = 'none';
+    document.getElementById('asyncProgressTitle').textContent = '🎉 Batch Import Complete!';
+    progressBar.style.background = '#00a854';
+    progressDetail.innerHTML = '<strong>Successfully processed ' + processedTotal + ' items:</strong> ' + createdTotal + ' created, ' + updatedTotal + ' updated' + (failedTotal ? ', ' + failedTotal + ' failed' : '') + '.';
+  });
+});
+</script>
 
 <?php include 'layout/footer.php'; ?>
 

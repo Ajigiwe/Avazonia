@@ -346,12 +346,25 @@
   $allBrands = $lookups['brands'] ?? [];
   $validCount = count(array_filter($preview, static fn($r) => empty($r['errors'])));
 ?>
+
+<datalist id="categoryDatalist">
+  <?php foreach($allCats as $catName): ?>
+    <option value="<?= htmlspecialchars($catName) ?>">
+  <?php endforeach; ?>
+</datalist>
+
+<datalist id="brandDatalist">
+  <?php foreach($allBrands as $brandName): ?>
+    <option value="<?= htmlspecialchars($brandName) ?>">
+  <?php endforeach; ?>
+</datalist>
+
 <div class="seller-panel" style="max-width:1100px;margin-bottom:32px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.05);overflow:hidden;background:var(--paper);border:1px solid var(--light-gray);">
   <div style="padding:22px 28px;border-bottom:1px solid var(--light-gray);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:var(--off);">
     <div>
       <div style="font-family:var(--f-mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid-gray);">Step 3 · Verification &amp; Web Grid Editor</div>
       <div style="font-family:var(--f-display);font-weight:900;font-size:20px;color:var(--ink);margin-top:2px;">
-        Spreadsheet Data Preview &amp; Field Selector
+        Spreadsheet Data Preview &amp; Search Autocomplete
       </div>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -420,8 +433,8 @@
             <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;">Product Name</th>
             <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;width:120px;">SKU</th>
             <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;width:100px;">Price</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;min-width:200px;">Category Selector</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;min-width:160px;">Brand Selector</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;min-width:220px;">Category Search</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;min-width:180px;">Brand Search</th>
             <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;">Status / Result</th>
           </tr>
         </thead>
@@ -440,28 +453,32 @@
             <td style="padding:12px 16px;font-family:var(--f-mono);font-size:12px;color:var(--mid-gray);"><?= htmlspecialchars($item['row']['sku'] ?? '—') ?></td>
             <td style="padding:12px 16px;font-weight:700;"><?= htmlspecialchars($item['row']['currency'].' '.$item['row']['price']) ?></td>
             
-            <!-- Category Selector Dropdown -->
+            <!-- Category Search Autocomplete Input -->
             <td style="padding:10px 14px;">
-              <select class="grid-select cat-select" data-line="<?= $lineNum ?>" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid <?= empty($item['values']['category_id']) ? '#EAB308' : '#D1D5DB' ?>;font-size:13px;background:<?= empty($item['values']['category_id']) ? '#FEFCE8' : '#FFFFFF' ?>;">
-                <option value="">-- Select Category --</option>
-                <?php foreach($allCats as $catName): ?>
-                  <option value="<?= htmlspecialchars($catName) ?>" <?= strcasecmp($matchedCat, $catName) === 0 ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($catName) ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
+              <input type="text" 
+                     class="grid-input cat-input" 
+                     data-line="<?= $lineNum ?>" 
+                     list="categoryDatalist" 
+                     value="<?= htmlspecialchars($matchedCat) ?>" 
+                     placeholder="Type e.g. 'c' for Cameras..." 
+                     autocomplete="off"
+                     oninput="onGridInput(this, 'category')"
+                     onfocus="this.select()"
+                     style="width:100%;padding:8px 12px;border-radius:6px;border:1.5px solid <?= empty($item['values']['category_id']) ? '#EAB308' : '#D1D5DB' ?>;font-size:13px;background:<?= empty($item['values']['category_id']) ? '#FEFCE8' : '#FFFFFF' ?>;font-weight:600;color:var(--ink);">
             </td>
 
-            <!-- Brand Selector Dropdown -->
+            <!-- Brand Search Autocomplete Input -->
             <td style="padding:10px 14px;">
-              <select class="grid-select brand-select" data-line="<?= $lineNum ?>" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid <?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#EAB308' : '#D1D5DB' ?>;font-size:13px;background:<?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#FEFCE8' : '#FFFFFF' ?>;">
-                <option value="">-- Optional Brand --</option>
-                <?php foreach($allBrands as $brandName): ?>
-                  <option value="<?= htmlspecialchars($brandName) ?>" <?= strcasecmp($matchedBrand, $brandName) === 0 ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($brandName) ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
+              <input type="text" 
+                     class="grid-input brand-input" 
+                     data-line="<?= $lineNum ?>" 
+                     list="brandDatalist" 
+                     value="<?= htmlspecialchars($matchedBrand) ?>" 
+                     placeholder="Type e.g. 's' for Samsung..." 
+                     autocomplete="off"
+                     oninput="onGridInput(this, 'brand')"
+                     onfocus="this.select()"
+                     style="width:100%;padding:8px 12px;border-radius:6px;border:1.5px solid <?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#EAB308' : '#D1D5DB' ?>;font-size:13px;background:<?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#FEFCE8' : '#FFFFFF' ?>;font-weight:600;color:var(--ink);">
             </td>
 
             <td class="result-cell" style="padding:12px 16px;">
@@ -483,6 +500,33 @@
 <?php endif; ?>
 
 <script>
+const validCatsLower = <?= json_encode(array_values(array_map('strtolower', $allCats ?? []))) ?>;
+const validBrandsLower = <?= json_encode(array_values(array_map('strtolower', $allBrands ?? []))) ?>;
+
+function onGridInput(input, type) {
+  const val = input.value.trim().toLowerCase();
+  const validList = type === 'category' ? validCatsLower : validBrandsLower;
+  const isMatch = val === '' || validList.includes(val);
+
+  if (val !== '' && isMatch) {
+    input.style.borderColor = '#166534';
+    input.style.background = '#F0FDF4';
+    const row = input.closest('tr');
+    const badge = row.querySelector('.result-cell .msg-span');
+    if (badge && !badge.textContent.includes('Imported') && !badge.textContent.includes('Updated')) {
+      badge.style.background = '#E6F7ED';
+      badge.style.color = '#276749';
+      badge.textContent = 'Ready to import';
+    }
+  } else if (val !== '' && !isMatch) {
+    input.style.borderColor = '#EAB308';
+    input.style.background = '#FEFCE8';
+  } else {
+    input.style.borderColor = '#D1D5DB';
+    input.style.background = '#FFFFFF';
+  }
+}
+
 function handleFileSelected(input) {
   if (input.files && input.files[0]) {
     const file = input.files[0];
@@ -541,13 +585,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressDetail = document.getElementById('asyncProgressDetail');
     progressContainer.style.display = 'block';
 
-    // Collect grid overrides (category / brand selections made by user in web table)
+    // Collect grid overrides from search inputs
     const overrides = {};
-    document.querySelectorAll('.cat-select, .brand-select').forEach(sel => {
-      const line = sel.dataset.line;
+    document.querySelectorAll('.cat-input, .brand-input').forEach(inp => {
+      const line = inp.dataset.line;
       if (!overrides[line]) overrides[line] = {};
-      if (sel.classList.contains('cat-select')) overrides[line].category = sel.value;
-      if (sel.classList.contains('brand-select')) overrides[line].brand = sel.value;
+      if (inp.classList.contains('cat-input')) overrides[line].category = inp.value;
+      if (inp.classList.contains('brand-input')) overrides[line].brand = inp.value;
     });
 
     let offset = 0;
@@ -555,7 +599,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let updatedTotal = 0;
     let createdTotal = 0;
     let failedTotal = 0;
-    const totalValid = document.querySelectorAll('.cat-select').length;
+    const totalValid = document.querySelectorAll('.cat-input').length;
 
     while (true) {
       const formData = new FormData();
