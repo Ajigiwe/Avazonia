@@ -74,7 +74,9 @@ class SellerController extends Controller {
     public function importTemplate() {
         $seller=$this->requireVerified(); if (!$seller) return;
         require_once __DIR__.'/../core/ProductCsvImporter.php';
-        ProductCsvImporter::sendTemplate();
+        require_once __DIR__.'/../config/database.php';
+        $format = ($_GET['format'] ?? 'excel') === 'csv' ? 'csv' : 'excel';
+        ProductCsvImporter::sendTemplate(db(), $format);
     }
 
     public function importProducts() {
@@ -83,7 +85,7 @@ class SellerController extends Controller {
         require_once __DIR__.'/../config/database.php';
         $db=db();
         $store=(new Store())->findBySellerId((int)$seller['id']);
-        $error=''; $preview=null; $outcomes=[];
+        $error=''; $preview=null; $lookups=null; $outcomes=[];
         if ($_SERVER['REQUEST_METHOD']==='POST') {
             $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
                 || !empty($_POST['ajax'])
@@ -98,19 +100,22 @@ class SellerController extends Controller {
                 }
             } elseif (($_POST['action']??'')==='preview') {
                 $file=$_FILES['csv_file']??null;
-                if (!$file || ($file['error']??UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_OK || strtolower(pathinfo($file['name']??'',PATHINFO_EXTENSION))!=='csv') {
-                    $error='Choose a readable .csv file to preview.';
+                $ext=strtolower(pathinfo($file['name']??'', PATHINFO_EXTENSION));
+                if (!$file || ($file['error']??UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_OK || !in_array($ext, ['csv', 'xlsx'], true)) {
+                    $error='Choose a readable .csv or .xlsx spreadsheet file to preview.';
                 } else {
                     try {
-                        $preview=ProductCsvImporter::preview($file['tmp_name'],$db);
+                        $result=ProductCsvImporter::preview($file['tmp_name'], $db, $file['name'] ?? '');
+                        $preview=$result['preview'];
+                        $lookups=$result['lookups'];
                         $key=bin2hex(random_bytes(24));
-                        Session::set('seller_product_csv_import',['key'=>$key,'seller_id'=>(int)$seller['id'],'preview'=>$preview]);
+                        Session::set('seller_product_csv_import', ['key'=>$key, 'seller_id'=>(int)$seller['id'], 'preview'=>$preview, 'lookups'=>$lookups]);
                     } catch (\Throwable $e) { $error=$e->getMessage(); }
                 }
             } elseif (($_POST['action']??'')==='import' || ($_POST['action']??'')==='import_chunk') {
                 $saved=Session::get('seller_product_csv_import');
                 if (!$saved || (int)$saved['seller_id']!==(int)$seller['id'] || !hash_equals((string)$saved['key'],(string)($_POST['import_key']??''))) {
-                    $error='This preview has expired. Upload the CSV again.';
+                    $error='This preview has expired. Upload the spreadsheet again.';
                     if ($isAjax) {
                         header('Content-Type: application/json');
                         echo json_encode(['success' => false, 'error' => $error]);
@@ -118,12 +123,18 @@ class SellerController extends Controller {
                     }
                 } else {
                     $preview=$saved['preview'];
+                    $lookups=$saved['lookups'] ?? null;
                     $mode=in_array($_POST['mode']??'insert', ['insert', 'upsert'], true) ? $_POST['mode'] : 'insert';
                     $offset=max(0, (int)($_POST['offset']??0));
                     $limit=max(0, (int)($_POST['limit']??0));
+                    $overrides = [];
+                    if (!empty($_POST['overrides'])) {
+                        $rawOverrides = is_string($_POST['overrides']) ? json_decode($_POST['overrides'], true) : $_POST['overrides'];
+                        if (is_array($rawOverrides)) $overrides = $rawOverrides;
+                    }
                     try {
                         $storeId=!empty($store['id'])?(int)$store['id']:null;
-                        $outcomes=ProductCsvImporter::import($db, $preview, (int)$seller['id'], $storeId, 'active', $mode, $offset, $limit);
+                        $outcomes=ProductCsvImporter::import($db, $preview, (int)$seller['id'], $storeId, 'active', $mode, $offset, $limit, $overrides);
                         
                         $validCount=count(array_filter($preview, static fn($r) => empty($r['errors'])));
                         $processedCount = $offset + count($outcomes);
@@ -164,8 +175,11 @@ class SellerController extends Controller {
                 }
             }
         }
-        if (!$preview && Session::get('seller_product_csv_import')) $preview=Session::get('seller_product_csv_import')['preview'];
-        $this->view('seller/import_products',['seller'=>$seller,'store'=>$store,'error'=>$error,'preview'=>$preview,'outcomes'=>$outcomes,'page'=>'products']);
+        $saved = Session::get('seller_product_csv_import');
+        if (!$preview && $saved) $preview = $saved['preview'];
+        if (!$lookups && $saved && !empty($saved['lookups'])) $lookups = $saved['lookups'];
+        if (!$lookups) $lookups = ProductCsvImporter::getLookupOptions($db);
+        $this->view('seller/import_products', ['seller'=>$seller, 'store'=>$store, 'error'=>$error, 'preview'=>$preview, 'lookups'=>$lookups, 'outcomes'=>$outcomes, 'page'=>'products']);
     }
 
     public function products() {

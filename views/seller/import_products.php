@@ -283,13 +283,19 @@
   <div class="import-step-card">
     <div>
       <div class="step-number-badge">Step 1 · Template Setup</div>
-      <h3 class="step-card-title">Download CSV Template</h3>
-      <p class="step-card-desc">Download our pre-formatted UTF-8 template containing standard columns: <code>name</code>, <code>sku</code>, <code>price</code>, <code>stock</code>, <code>category</code>, <code>brand</code>, <code>description</code>, etc.</p>
+      <h3 class="step-card-title">Download Template Spreadsheet</h3>
+      <p class="step-card-desc">Download our official template. Choose the <strong>Excel (.xlsx) template</strong> for pre-loaded in-cell dropdown menus for categories, subcategories, and brands, or download plain CSV.</p>
     </div>
-    <a href="<?= APP_URL ?>/seller/products/import/template" class="seller-btn-secondary" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Download Template CSV
-    </a>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <a href="<?= APP_URL ?>/seller/products/import/template?format=excel" class="seller-btn-primary" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;background:#107C41;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Download Excel (.xlsx) with Dropdowns
+      </a>
+      <a href="<?= APP_URL ?>/seller/products/import/template?format=csv" class="seller-btn-secondary" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;font-size:13px;padding:10px 16px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download Standard CSV Template
+      </a>
+    </div>
   </div>
 
   <!-- Step 2: Upload Zone -->
@@ -303,12 +309,12 @@
         <h3 class="step-card-title">Upload Catalogue File</h3>
         
         <div class="dropzone-box" id="dropzoneBox" onclick="document.getElementById('csvFileInput').click();">
-          <input type="file" name="csv_file" id="csvFileInput" accept=".csv,text/csv" required style="display:none;" onchange="handleFileSelected(this)">
+          <input type="file" name="csv_file" id="csvFileInput" accept=".csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" required style="display:none;" onchange="handleFileSelected(this)">
           <div id="dropzonePrompt">
             <div class="dropzone-icon-wrap">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             </div>
-            <div class="dropzone-main-text">Drag &amp; drop your CSV file here</div>
+            <div class="dropzone-main-text">Drag &amp; drop Excel (.xlsx) or CSV file</div>
             <div class="dropzone-sub-text">or <span class="dropzone-browse-btn">browse from computer</span></div>
           </div>
           <div id="fileSelectedArea" style="display:none;">
@@ -316,7 +322,7 @@
               <div class="file-selected-info">
                 <span class="file-selected-icon">📊</span>
                 <div style="text-align:left;">
-                  <div class="file-selected-name" id="fileNameDisp">file.csv</div>
+                  <div class="file-selected-name" id="fileNameDisp">file.xlsx</div>
                   <div class="file-selected-size" id="fileSizeDisp">0 KB</div>
                 </div>
               </div>
@@ -334,32 +340,34 @@
 </div>
 
 <!-- Step 3: Interactive Preview & Mode Selection Grid -->
-<?php if ($preview !== null): $validCount=count(array_filter($preview,static fn($r)=>empty($r['errors']))); ?>
+<?php if ($preview !== null):
+  $allCats = array_unique(array_merge($lookups['main_categories'] ?? [], $lookups['sub_categories'] ?? []));
+  sort($allCats);
+  $allBrands = $lookups['brands'] ?? [];
+  $validCount = count(array_filter($preview, static fn($r) => empty($r['errors'])));
+?>
 <div class="seller-panel" style="max-width:1100px;margin-bottom:32px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.05);overflow:hidden;background:var(--paper);border:1px solid var(--light-gray);">
   <div style="padding:22px 28px;border-bottom:1px solid var(--light-gray);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:var(--off);">
     <div>
-      <div style="font-family:var(--f-mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid-gray);">Step 3 · Verification &amp; Execution</div>
+      <div style="font-family:var(--f-mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid-gray);">Step 3 · Verification &amp; Web Grid Editor</div>
       <div style="font-family:var(--f-display);font-weight:900;font-size:20px;color:var(--ink);margin-top:2px;">
-        CSV Data Preview
+        Spreadsheet Data Preview &amp; Field Selector
       </div>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <span style="background:var(--paper);border:1px solid var(--light-gray);padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;color:var(--ink);"><?= count($preview) ?> Total Rows</span>
-      <span style="background:#E6F7ED;border:1px solid #B7EB8F;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#276749;"><?= $validCount ?> Ready</span>
-      <?php if(count($preview) - $validCount > 0): ?>
-      <span style="background:#FFF1F0;border:1px solid #FFA39E;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#CF1322;"><?= count($preview) - $validCount ?> Need Fix</span>
-      <?php endif; ?>
+      <span style="background:#E6F7ED;border:1px solid #B7EB8F;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#276749;" id="validBadgeCount"><?= $validCount ?> Valid</span>
     </div>
   </div>
 
   <div style="padding:28px;">
-    <?php if (!$outcomes && $validCount > 0): ?>
+    <?php if (!$outcomes): ?>
     <div id="asyncProgressContainer" style="display:none;margin-bottom:24px;background:#FAFAFC;border:1px solid var(--light-gray);padding:20px;border-radius:10px;">
       <div style="font-family:var(--f-display);font-weight:800;font-size:16px;margin-bottom:10px;color:var(--ink);" id="asyncProgressTitle">Importing Product Chunks...</div>
       <div style="background:#E8E5DF;height:12px;border-radius:6px;overflow:hidden;">
         <div id="asyncProgressBar" style="width:0%;height:100%;background:var(--red);transition:width 0.25s var(--ease);"></div>
       </div>
-      <div style="font-size:13px;color:var(--mid-gray);margin-top:8px;font-weight:600;" id="asyncProgressDetail">0 of <?= $validCount ?> items processed (0%)</div>
+      <div style="font-size:13px;color:var(--mid-gray);margin-top:8px;font-weight:600;" id="asyncProgressDetail">0 items processed (0%)</div>
     </div>
 
     <form id="importForm" method="post">
@@ -374,7 +382,7 @@
             <input type="radio" name="mode" value="insert" checked onclick="selectModeCard('insert')">
             <div>
               <div class="mode-card-title">Insert Only (Create New)</div>
-              <div class="mode-card-desc">Always creates new product catalog entries for each valid row in the CSV.</div>
+              <div class="mode-card-desc">Always creates new product catalog entries for each row in the file.</div>
             </div>
           </label>
 
@@ -389,15 +397,13 @@
       </div>
 
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;">
-        <button id="startImportBtn" type="submit" class="seller-btn-primary" <?= $validCount?'':'disabled' ?>>
+        <button id="startImportBtn" type="submit" class="seller-btn-primary">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Execute Batch Import (<?= $validCount ?> Valid Rows)
+          Execute Batch Import
         </button>
         <button type="submit" name="action" value="cancel" class="seller-btn-secondary">Cancel</button>
       </div>
     </form>
-    <?php elseif (!$outcomes): ?>
-    <div style="padding:16px;background:#FFF1F0;border:1px solid #FFA39E;border-radius:8px;color:#CF1322;font-weight:600;">No rows are ready to import. Please correct the CSV errors and upload again.</div>
     <?php else: $succeeded=count(array_filter($outcomes,static fn($o)=>$o['success'])); $failed=count($outcomes)-$succeeded; ?>
     <div id="finalSummaryBox" style="padding:16px 20px;background:#E6F7ED;border:1px solid #B7EB8F;border-radius:8px;margin-bottom:24px;color:#276749;font-weight:700;font-size:15px;display:flex;align-items:center;gap:12px;">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -405,34 +411,66 @@
     </div>
     <?php endif; ?>
 
-    <!-- Table -->
+    <!-- Interactive Web Preview Grid Table -->
     <div style="overflow-x:auto;border:1px solid var(--light-gray);border-radius:8px;">
       <table class="admin-table" style="width:100%;border-collapse:collapse;text-align:left;">
         <thead>
           <tr style="background:var(--off);border-bottom:1px solid var(--light-gray);">
-            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;">Row</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;width:50px;">Row</th>
             <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;">Product Name</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;">SKU</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;">Price</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;">Category / Brand</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;">Validation Status / Result</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;width:120px;">SKU</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;width:100px;">Price</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;min-width:200px;">Category Selector</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;min-width:160px;">Brand Selector</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;">Status / Result</th>
           </tr>
         </thead>
         <tbody>
-        <?php foreach($preview as $item): $result=$outcomes[$item['line']]??null; $messages=$item['errors']; if($result && !$result['success']) $messages[]=$result['error']; ?>
-          <tr id="row-<?= (int)$item['line'] ?>" style="border-bottom:1px solid var(--light-gray);">
-            <td style="padding:14px 16px;font-weight:700;color:var(--mid-gray);"><?= (int)$item['line'] ?></td>
-            <td style="padding:14px 16px;font-weight:700;color:var(--ink);"><?= htmlspecialchars($item['row']['name']) ?></td>
-            <td style="padding:14px 16px;font-family:var(--f-mono);font-size:12px;color:var(--mid-gray);"><?= htmlspecialchars($item['row']['sku'] ?? '—') ?></td>
-            <td style="padding:14px 16px;font-weight:700;"><?= htmlspecialchars($item['row']['currency'].' '.$item['row']['price']) ?></td>
-            <td style="padding:14px 16px;color:var(--mid-gray);font-size:13px;"><?= htmlspecialchars($item['row']['category'].' / '.$item['row']['brand']) ?></td>
-            <td class="result-cell" style="padding:14px 16px;">
+        <?php foreach($preview as $item): 
+          $lineNum = (int)$item['line'];
+          $result = $outcomes[$lineNum] ?? null; 
+          $messages = $item['errors']; 
+          if ($result && !$result['success']) $messages[] = $result['error']; 
+          $matchedCat = $item['row']['sub_category'] !== '' ? $item['row']['sub_category'] : $item['row']['category'];
+          $matchedBrand = $item['row']['brand'];
+        ?>
+          <tr id="row-<?= $lineNum ?>" style="border-bottom:1px solid var(--light-gray);">
+            <td style="padding:12px 16px;font-weight:700;color:var(--mid-gray);"><?= $lineNum ?></td>
+            <td style="padding:12px 16px;font-weight:700;color:var(--ink);"><?= htmlspecialchars($item['row']['name']) ?></td>
+            <td style="padding:12px 16px;font-family:var(--f-mono);font-size:12px;color:var(--mid-gray);"><?= htmlspecialchars($item['row']['sku'] ?? '—') ?></td>
+            <td style="padding:12px 16px;font-weight:700;"><?= htmlspecialchars($item['row']['currency'].' '.$item['row']['price']) ?></td>
+            
+            <!-- Category Selector Dropdown -->
+            <td style="padding:10px 14px;">
+              <select class="grid-select cat-select" data-line="<?= $lineNum ?>" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid <?= empty($item['values']['category_id']) ? '#EAB308' : '#D1D5DB' ?>;font-size:13px;background:<?= empty($item['values']['category_id']) ? '#FEFCE8' : '#FFFFFF' ?>;">
+                <option value="">-- Select Category --</option>
+                <?php foreach($allCats as $catName): ?>
+                  <option value="<?= htmlspecialchars($catName) ?>" <?= strcasecmp($matchedCat, $catName) === 0 ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($catName) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </td>
+
+            <!-- Brand Selector Dropdown -->
+            <td style="padding:10px 14px;">
+              <select class="grid-select brand-select" data-line="<?= $lineNum ?>" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid <?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#EAB308' : '#D1D5DB' ?>;font-size:13px;background:<?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#FEFCE8' : '#FFFFFF' ?>;">
+                <option value="">-- Optional Brand --</option>
+                <?php foreach($allBrands as $brandName): ?>
+                  <option value="<?= htmlspecialchars($brandName) ?>" <?= strcasecmp($matchedBrand, $brandName) === 0 ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($brandName) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </td>
+
+            <td class="result-cell" style="padding:12px 16px;">
               <?php if($result && $result['success']): ?>
-                <span style="background:#E6F7ED;color:#276749;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:800;"><?= $result['action'] === 'updated' ? 'Updated (#'.(int)$result['id'].')' : 'Imported (#'.(int)$result['id'].')' ?></span>
+                <span style="background:#E6F7ED;color:#276749;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:800;"><?= $result['action'] === 'updated' ? 'Updated (#' . (int)$result['id'] . ')' : 'Imported (#' . (int)$result['id'] . ')' ?></span>
               <?php elseif($messages): ?>
-                <span style="background:#FFF1F0;color:#CF1322;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;"><?= htmlspecialchars(implode(' ',$messages)) ?></span>
+                <span style="background:#FFF1F0;color:#CF1322;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;" class="msg-span"><?= htmlspecialchars(implode(' ',$messages)) ?></span>
               <?php else: ?>
-                <span style="background:var(--off);color:var(--mid-gray);padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;">Ready to import</span>
+                <span style="background:var(--off);color:var(--mid-gray);padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;" class="msg-span">Ready to import</span>
               <?php endif; ?>
             </td>
           </tr>
@@ -483,7 +521,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('importForm');
   if (!form) return;
 
-  const totalValid = <?= (int)($validCount ?? 0) ?>;
   const CHUNK_SIZE = 50;
 
   form.addEventListener('submit', async function(e) {
@@ -504,13 +541,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressDetail = document.getElementById('asyncProgressDetail');
     progressContainer.style.display = 'block';
 
+    // Collect grid overrides (category / brand selections made by user in web table)
+    const overrides = {};
+    document.querySelectorAll('.cat-select, .brand-select').forEach(sel => {
+      const line = sel.dataset.line;
+      if (!overrides[line]) overrides[line] = {};
+      if (sel.classList.contains('cat-select')) overrides[line].category = sel.value;
+      if (sel.classList.contains('brand-select')) overrides[line].brand = sel.value;
+    });
+
     let offset = 0;
     let processedTotal = 0;
     let updatedTotal = 0;
     let createdTotal = 0;
     let failedTotal = 0;
+    const totalValid = document.querySelectorAll('.cat-select').length;
 
-    while (offset < totalValid) {
+    while (true) {
       const formData = new FormData();
       formData.append('csrf_token', csrfToken);
       formData.append('action', 'import_chunk');
@@ -518,6 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
       formData.append('mode', mode);
       formData.append('offset', offset);
       formData.append('limit', CHUNK_SIZE);
+      formData.append('overrides', JSON.stringify(overrides));
       formData.append('ajax', '1');
 
       try {
@@ -562,11 +610,11 @@ document.addEventListener('DOMContentLoaded', function() {
         processedTotal += (data.processed || 0);
         offset += CHUNK_SIZE;
 
-        const percent = Math.min(100, Math.round((processedTotal / totalValid) * 100));
+        const percent = Math.min(100, Math.round((processedTotal / (totalValid || 1)) * 100));
         progressBar.style.width = percent + '%';
         progressDetail.textContent = processedTotal + ' of ' + totalValid + ' items processed (' + percent + '%)';
 
-        if (data.done || processedTotal >= totalValid) break;
+        if (data.done || processedTotal >= totalValid || (data.processed || 0) === 0) break;
 
       } catch (err) {
         console.error(err);

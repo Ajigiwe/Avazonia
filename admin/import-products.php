@@ -17,7 +17,12 @@ $preview = null;
 $outcomes = [];
 $sellers = $db->query("SELECT id, business_name FROM sellers WHERE is_active = 1 ORDER BY business_name")->fetchAll();
 
-if (isset($_GET['template'])) ProductCsvImporter::sendTemplate();
+if (isset($_GET['template'])) {
+    $format = ($_GET['format'] ?? 'excel') === 'csv' ? 'csv' : 'excel';
+    ProductCsvImporter::sendTemplate($db, $format);
+}
+
+$lookups = ProductCsvImporter::getLookupOptions($db);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
@@ -27,13 +32,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     if ($action === 'preview') {
         $file = $_FILES['csv_file'] ?? null;
-        if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION)) !== 'csv') {
-            $error = 'Choose a readable .csv file to preview.';
+        $ext = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
+        if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !in_array($ext, ['csv', 'xlsx'], true)) {
+            $error = 'Choose a readable .csv or .xlsx spreadsheet file to preview.';
         } else {
             try {
-                $preview = ProductCsvImporter::preview($file['tmp_name'], $db);
+                $result = ProductCsvImporter::preview($file['tmp_name'], $db, $file['name'] ?? '');
+                $preview = $result['preview'];
+                $savedLookups = $result['lookups'];
                 $key = bin2hex(random_bytes(24));
-                Session::set('product_csv_import', ['key' => $key, 'preview' => $preview]);
+                Session::set('product_csv_import', ['key' => $key, 'preview' => $preview, 'lookups' => $savedLookups]);
             } catch (Throwable $e) {
                 $error = $e->getMessage();
             }
@@ -41,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'import' || $action === 'import_chunk') {
         $saved = Session::get('product_csv_import');
         if (!$saved || !hash_equals((string)$saved['key'], (string)($_POST['import_key'] ?? ''))) {
-            $error = 'This preview has expired. Upload the CSV again.';
+            $error = 'This preview has expired. Upload the spreadsheet again.';
             if ($isAjax) {
                 header('Content-Type: application/json');
                 echo json_encode(['success' => false, 'error' => $error]);
@@ -65,8 +73,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $mode = in_array($_POST['mode'] ?? 'insert', ['insert', 'upsert'], true) ? $_POST['mode'] : 'insert';
                 $offset = max(0, (int)($_POST['offset'] ?? 0));
                 $limit = max(0, (int)($_POST['limit'] ?? 0));
+                $overrides = [];
+                if (!empty($_POST['overrides'])) {
+                    $rawOverrides = is_string($_POST['overrides']) ? json_decode($_POST['overrides'], true) : $_POST['overrides'];
+                    if (is_array($rawOverrides)) $overrides = $rawOverrides;
+                }
                 try {
-                    $outcomes = ProductCsvImporter::import($db, $preview, $sellerId, $storeId, 'active', $mode, $offset, $limit);
+                    $outcomes = ProductCsvImporter::import($db, $preview, $sellerId, $storeId, 'active', $mode, $offset, $limit, $overrides);
                     $validCount = count(array_filter($preview, static fn($r) => empty($r['errors'])));
                     $processedCount = $offset + count($outcomes);
                     $isDone = ($limit === 0 || $processedCount >= $validCount);
@@ -282,13 +295,19 @@ include 'layout/header.php';
   <div class="admin-step-card">
     <div>
       <div class="admin-step-badge">Step 1 · Template Setup</div>
-      <h3 style="font-family:var(--f-display, sans-serif);font-weight:800;font-size:18px;margin:0 0 10px;color:#0D0D0D;">Download CSV Template</h3>
-      <p style="font-size:14px;line-height:1.55;color:#55514E;margin-bottom:24px;">Use our pre-formatted UTF-8 CSV template containing standard columns: <code>name</code>, <code>sku</code>, <code>price</code>, <code>stock</code>, <code>category</code>, <code>brand</code>, <code>description</code>, etc.</p>
+      <h3 style="font-family:var(--f-display, sans-serif);font-weight:800;font-size:18px;margin:0 0 10px;color:#0D0D0D;">Download Template Spreadsheet</h3>
+      <p style="font-size:14px;line-height:1.55;color:#55514E;margin-bottom:20px;">Download our official pre-formatted template. Choose <strong>Excel (.xlsx)</strong> to get native in-cell dropdown menus for categories, subcategories, and brands, or download plain CSV.</p>
     </div>
-    <a class="admin-btn admin-btn-secondary" href="?template=1" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;padding:12px 20px;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Download Template CSV
-    </a>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <a class="admin-btn admin-btn-primary" href="?template=1&format=excel" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;padding:12px 20px;background:#107C41;border-color:#107C41;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Download Excel (.xlsx) with Dropdowns
+      </a>
+      <a class="admin-btn admin-btn-secondary" href="?template=1&format=csv" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;padding:10px 16px;font-size:13px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download Standard CSV Template
+      </a>
+    </div>
   </div>
 
   <!-- Step 2 Card -->
@@ -299,15 +318,15 @@ include 'layout/header.php';
 
       <div>
         <div class="admin-step-badge">Step 2 · Upload &amp; Preview</div>
-        <h3 style="font-family:var(--f-display, sans-serif);font-weight:800;font-size:18px;margin:0 0 10px;color:#0D0D0D;">Upload Catalogue CSV File</h3>
+        <h3 style="font-family:var(--f-display, sans-serif);font-weight:800;font-size:18px;margin:0 0 10px;color:#0D0D0D;">Upload Catalogue File</h3>
 
         <div class="admin-dropzone" id="adminDropzone" onclick="document.getElementById('adminCsvFileInput').click();">
-          <input type="file" name="csv_file" id="adminCsvFileInput" accept=".csv,text/csv" required style="display:none;" onchange="handleAdminFileSelected(this)">
+          <input type="file" name="csv_file" id="adminCsvFileInput" accept=".csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" required style="display:none;" onchange="handleAdminFileSelected(this)">
           <div id="adminDropzonePrompt">
             <div class="admin-dropzone-icon">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             </div>
-            <div style="font-weight:700;font-size:15px;color:#0D0D0D;margin-bottom:4px;">Drag &amp; drop CSV file here</div>
+            <div style="font-weight:700;font-size:15px;color:#0D0D0D;margin-bottom:4px;">Drag &amp; drop Excel (.xlsx) or CSV file</div>
             <div style="font-size:13px;color:#55514E;">or <span style="color:#E8002D;font-weight:700;text-decoration:underline;">browse from computer</span></div>
           </div>
           <div id="adminFileSelectedArea" style="display:none;">
@@ -315,7 +334,7 @@ include 'layout/header.php';
               <div style="display:flex;align-items:center;gap:12px;">
                 <span style="font-size:20px;">📊</span>
                 <div style="text-align:left;">
-                  <div style="font-weight:700;font-size:14px;color:#166534;" id="adminFileNameDisp">file.csv</div>
+                  <div style="font-weight:700;font-size:14px;color:#166534;" id="adminFileNameDisp">file.xlsx</div>
                   <div style="font-size:12px;color:#15803D;" id="adminFileSizeDisp">0 KB</div>
                 </div>
               </div>
@@ -331,33 +350,35 @@ include 'layout/header.php';
     </form>
   </div>
 </div>
-<?php if ($preview !== null): $validCount = count(array_filter($preview, static fn($r) => empty($r['errors']))); ?>
+<?php if ($preview !== null):
+  $allCats = array_unique(array_merge($lookups['main_categories'] ?? [], $lookups['sub_categories'] ?? []));
+  sort($allCats);
+  $allBrands = $lookups['brands'] ?? [];
+  $validCount = count(array_filter($preview, static fn($r) => empty($r['errors'])));
+?>
 <div class="panel" style="max-width:1100px;margin-bottom:32px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.05);overflow:hidden;background:#FFF;border:1px solid #E8E5DF;">
   <div style="padding:22px 28px;border-bottom:1px solid #E8E5DF;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:#FAFAFC;">
     <div>
-      <div style="font-family:var(--f-mono, monospace);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#55514E;">Step 3 · Verification &amp; Execution</div>
+      <div style="font-family:var(--f-mono, monospace);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#55514E;">Step 3 · Verification &amp; Web Grid Editor</div>
       <div style="font-family:var(--f-display, sans-serif);font-weight:900;font-size:20px;color:#0D0D0D;margin-top:2px;">
-        CSV Data Verification Preview
+        Spreadsheet Data Preview &amp; Field Selector
       </div>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <span style="background:#FFF;border:1px solid #E8E5DF;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#0D0D0D;"><?= count($preview) ?> Total Rows</span>
-      <span style="background:#E6F7ED;border:1px solid #B7EB8F;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#276749;"><?= $validCount ?> Ready</span>
-      <?php if(count($preview) - $validCount > 0): ?>
-      <span style="background:#FFF1F0;border:1px solid #FFA39E;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#CF1322;"><?= count($preview) - $validCount ?> Need Fix</span>
-      <?php endif; ?>
+      <span style="background:#E6F7ED;border:1px solid #B7EB8F;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#276749;"><?= $validCount ?> Valid</span>
     </div>
   </div>
 
   <div style="padding:28px;">
-    <?php if (!$outcomes && $validCount > 0): ?>
+    <?php if (!$outcomes): ?>
     
     <div id="asyncProgressContainer" style="display:none;margin-bottom:24px;background:#FAFAFC;border:1px solid #E8E5DF;padding:20px;border-radius:10px;">
       <div style="font-family:var(--f-display, sans-serif);font-weight:800;font-size:16px;margin-bottom:10px;color:#0D0D0D;" id="asyncProgressTitle">Importing Product Chunks...</div>
       <div style="background:#E8E5DF;height:12px;border-radius:6px;overflow:hidden;">
         <div id="asyncProgressBar" style="width:0%;height:100%;background:#E8002D;transition:width 0.25s ease;"></div>
       </div>
-      <div style="font-size:13px;color:#55514E;margin-top:8px;font-weight:600;" id="asyncProgressDetail">0 of <?= $validCount ?> items processed (0%)</div>
+      <div style="font-size:13px;color:#55514E;margin-top:8px;font-weight:600;" id="asyncProgressDetail">0 items processed (0%)</div>
     </div>
 
     <form id="adminImportForm" method="post" style="display:flex;flex-direction:column;gap:20px;margin-bottom:24px;">
@@ -398,14 +419,12 @@ include 'layout/header.php';
       </div>
 
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <button id="adminStartImportBtn" class="admin-btn admin-btn-primary" type="submit" name="action" value="import" <?= $validCount ? '' : 'disabled' ?> style="padding:14px 28px;">
-          Execute Batch Import (<?= $validCount ?> Valid Rows)
+        <button id="adminStartImportBtn" class="admin-btn admin-btn-primary" type="submit" name="action" value="import" style="padding:14px 28px;">
+          Execute Batch Import
         </button>
         <button class="admin-btn admin-btn-secondary" name="action" value="cancel" type="submit" style="padding:14px 24px;">Cancel</button>
       </div>
     </form>
-    <?php elseif (!$outcomes): ?>
-    <div style="padding:16px;background:#FFF1F0;border:1px solid #FFA39E;border-radius:8px;color:#CF1322;font-weight:600;">No rows are ready to import. Correct the CSV errors and upload again.</div>
     <?php else: $successCount = count(array_filter($outcomes, static fn($o) => $o['success'])); ?>
     <div id="finalSummaryBox" style="padding:16px 20px;background:#E6F7ED;border:1px solid #B7EB8F;border-radius:8px;margin-bottom:24px;color:#276749;font-weight:700;font-size:15px;display:flex;align-items:center;gap:12px;">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -417,25 +436,55 @@ include 'layout/header.php';
       <table class="admin-table" style="width:100%;border-collapse:collapse;text-align:left;">
         <thead>
           <tr style="background:#FAFAFC;border-bottom:1px solid #E8E5DF;">
-            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Row</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;width:50px;">Row</th>
             <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Product Name</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">SKU</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Price</th>
-            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Category / Brand</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;width:120px;">SKU</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;width:100px;">Price</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;min-width:200px;">Category Selector</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;min-width:160px;">Brand Selector</th>
             <th style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:11px;text-transform:uppercase;">Result</th>
           </tr>
         </thead>
         <tbody>
-        <?php foreach($preview as $item): $result = $outcomes[$item['line']] ?? null; $messages = $item['errors']; if ($result && !$result['success']) $messages[] = $result['error']; ?>
-          <tr id="admin-row-<?= (int)$item['line'] ?>" style="border-bottom:1px solid #E8E5DF;">
-            <td style="padding:14px 16px;font-weight:700;color:#55514E;"><?= (int)$item['line'] ?></td>
-            <td style="padding:14px 16px;font-weight:700;color:#0D0D0D;"><?= htmlspecialchars($item['row']['name']) ?></td>
-            <td style="padding:14px 16px;font-family:var(--f-mono, monospace);font-size:12px;color:#55514E;"><?= htmlspecialchars($item['row']['sku'] ?? '—') ?></td>
-            <td style="padding:14px 16px;font-weight:700;"><?= htmlspecialchars($item['row']['currency'].' '.$item['row']['price']) ?></td>
-            <td style="padding:14px 16px;color:#55514E;font-size:13px;"><?= htmlspecialchars($item['row']['category'].' / '.$item['row']['brand']) ?></td>
-            <td class="admin-result-cell" style="padding:14px 16px;">
+        <?php foreach($preview as $item):
+          $lineNum = (int)$item['line'];
+          $result = $outcomes[$lineNum] ?? null; 
+          $messages = $item['errors']; 
+          if ($result && !$result['success']) $messages[] = $result['error']; 
+          $matchedCat = $item['row']['sub_category'] !== '' ? $item['row']['sub_category'] : $item['row']['category'];
+          $matchedBrand = $item['row']['brand'];
+        ?>
+          <tr id="admin-row-<?= $lineNum ?>" style="border-bottom:1px solid #E8E5DF;">
+            <td style="padding:12px 16px;font-weight:700;color:#55514E;"><?= $lineNum ?></td>
+            <td style="padding:12px 16px;font-weight:700;color:#0D0D0D;"><?= htmlspecialchars($item['row']['name']) ?></td>
+            <td style="padding:12px 16px;font-family:var(--f-mono, monospace);font-size:12px;color:#55514E;"><?= htmlspecialchars($item['row']['sku'] ?? '—') ?></td>
+            <td style="padding:12px 16px;font-weight:700;"><?= htmlspecialchars($item['row']['currency'].' '.$item['row']['price']) ?></td>
+            
+            <td style="padding:10px 14px;">
+              <select class="admin-cat-select" data-line="<?= $lineNum ?>" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid <?= empty($item['values']['category_id']) ? '#EAB308' : '#D1D5DB' ?>;font-size:13px;background:<?= empty($item['values']['category_id']) ? '#FEFCE8' : '#FFFFFF' ?>;">
+                <option value="">-- Select Category --</option>
+                <?php foreach($allCats as $catName): ?>
+                  <option value="<?= htmlspecialchars($catName) ?>" <?= strcasecmp($matchedCat, $catName) === 0 ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($catName) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </td>
+
+            <td style="padding:10px 14px;">
+              <select class="admin-brand-select" data-line="<?= $lineNum ?>" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid <?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#EAB308' : '#D1D5DB' ?>;font-size:13px;background:<?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#FEFCE8' : '#FFFFFF' ?>;">
+                <option value="">-- Optional Brand --</option>
+                <?php foreach($allBrands as $brandName): ?>
+                  <option value="<?= htmlspecialchars($brandName) ?>" <?= strcasecmp($matchedBrand, $brandName) === 0 ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($brandName) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </td>
+
+            <td class="admin-result-cell" style="padding:12px 16px;">
               <?php if ($result && $result['success']): ?>
-                <span style="background:#E6F7ED;color:#276749;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:800;"><?= $result['action'] === 'updated' ? 'Updated (#'.(int)$result['id'].')' : 'Imported (#'.(int)$result['id'].')' ?></span>
+                <span style="background:#E6F7ED;color:#276749;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:800;"><?= $result['action'] === 'updated' ? 'Updated (#' . (int)$result['id'] . ')' : 'Imported (#' . (int)$result['id'] . ')' ?></span>
               <?php elseif ($messages): ?>
                 <span style="background:#FFF1F0;color:#CF1322;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;"><?= htmlspecialchars(implode(' ', $messages)) ?></span>
               <?php else: ?>
