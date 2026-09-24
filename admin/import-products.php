@@ -688,7 +688,7 @@ include 'layout/header.php';
 <script>
 const validAdminCatsLower = <?= json_encode(array_values(array_map('strtolower', $allCats ?? []))) ?>;
 const validAdminBrandsLower = <?= json_encode(array_values(array_map('strtolower', $allBrands ?? []))) ?>;
-const csrfTokenGlobal = '<?= htmlspecialchars(Session::get('csrf_token') ?? ($_SESSION['csrf_token'] ?? '')) ?>';
+const csrfTokenGlobal = '<?= htmlspecialchars(Csrf::getToken()) ?>';
 
 /* Track uploaded images per line */
 const importImagesByLine = {};
@@ -949,7 +949,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const mode = form.querySelector('input[name="mode"]:checked').value;
     const sellerId = form.querySelector('select[name="seller_id"]').value;
-    const csrfToken = form.querySelector('input[name="csrf_token"]').value;
+    const csrfToken = form.querySelector('input[name="_csrf_token"]').value;
     const importKey = form.querySelector('input[name="import_key"]').value;
 
     const progressContainer = document.getElementById('asyncProgressContainer');

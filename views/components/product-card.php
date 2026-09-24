@@ -59,6 +59,9 @@ if (empty($processedCardImages)) $processedCardImages[] = $imgUrl;
             <?php elseif (!empty($p['is_new_arrival'])): ?>
                 <span class="card-tag new">NEW</span>
             <?php endif; ?>
+            <?php if (!empty($p['condition_type'])): ?>
+                <span class="card-tag condition" style="background:#55514E;color:#fff;"><?= htmlspecialchars(strtoupper($p['condition_type'])) ?></span>
+            <?php endif; ?>
             <?php if (!empty($p['available_in_ghana'])): ?>
                 <span class="card-tag ghana">🇬🇭 IN GHANA</span>
             <?php endif; ?>
