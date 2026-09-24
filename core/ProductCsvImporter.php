@@ -69,12 +69,25 @@ class ProductCsvImporter {
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
 </Relationships>');
 
+        $catEndRow = count($allCats) + 1;
+        $subEndRow = count($subCats) + 1;
+        $brandEndRow = count($brands) + 1;
+
         $zip->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <sheets>
     <sheet name="Products" sheetId="1" r:id="rId1"/>
     <sheet name="Lookups" sheetId="2" r:id="rId2"/>
   </sheets>
+  <definedNames>
+    <definedName name="CategoriesList">Lookups!$A$2:$A$' . $catEndRow . '</definedName>
+    <definedName name="SubcategoriesList">Lookups!$B$2:$B$' . $subEndRow . '</definedName>
+    <definedName name="BrandsList">Lookups!$C$2:$C$' . $brandEndRow . '</definedName>
+    <definedName name="CurrenciesList">Lookups!$D$2:$D$3</definedName>
+    <definedName name="ListingTypesList">Lookups!$E$2:$E$5</definedName>
+    <definedName name="ConditionsList">Lookups!$F$2:$F$3</definedName>
+    <definedName name="VisibilitiesList">Lookups!$G$2:$G$4</definedName>
+  </definedNames>
 </workbook>');
 
         $zip->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -137,10 +150,6 @@ class ProductCsvImporter {
         $zip->addFromString('xl/worksheets/sheet2.xml', $sheet2Xml);
 
         // Sheet 1: Products
-        $catEndRow = count($allCats) + 1;
-        $subEndRow = count($subCats) + 1;
-        $brandEndRow = count($brands) + 1;
-
         $sheet1Xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <sheetData>
@@ -180,26 +189,26 @@ class ProductCsvImporter {
     </row>
   </sheetData>
   <dataValidations count="7">
-    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="D2:D500">
-      <formula1>Lookups!$D$2:$D$3</formula1>
+    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="0" sqref="D2:D1000">
+      <formula1>CurrenciesList</formula1>
     </dataValidation>
-    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="F2:F500">
-      <formula1>Lookups!$A$2:$A$' . $catEndRow . '</formula1>
+    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="0" sqref="F2:F1000">
+      <formula1>CategoriesList</formula1>
     </dataValidation>
-    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="G2:G500">
-      <formula1>Lookups!$B$2:$B$' . $subEndRow . '</formula1>
+    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="0" sqref="G2:G1000">
+      <formula1>SubcategoriesList</formula1>
     </dataValidation>
-    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="H2:H500">
-      <formula1>Lookups!$C$2:$C$' . $brandEndRow . '</formula1>
+    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="0" sqref="H2:H1000">
+      <formula1>BrandsList</formula1>
     </dataValidation>
-    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="K2:K500">
-      <formula1>Lookups!$E$2:$E$5</formula1>
+    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="0" sqref="K2:K1000">
+      <formula1>ListingTypesList</formula1>
     </dataValidation>
-    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="L2:L500">
-      <formula1>Lookups!$F$2:$F$3</formula1>
+    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="0" sqref="L2:L1000">
+      <formula1>ConditionsList</formula1>
     </dataValidation>
-    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="M2:M500">
-      <formula1>Lookups!$G$2:$G$4</formula1>
+    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="0" sqref="M2:M1000">
+      <formula1>VisibilitiesList</formula1>
     </dataValidation>
   </dataValidations>
 </worksheet>';
