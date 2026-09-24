@@ -8,7 +8,7 @@
 
 <?php if(!empty($error)): ?><div style="background:#fef3c7;border:1.5px solid #f59e0b;padding:12px 14px;font-family:var(--f-mono);font-size:11px;color:#92400e;margin-bottom:14px;">&#9888; <?= htmlspecialchars($error) ?></div><?php endif; ?>
 
-<form method="POST" action="<?= APP_URL ?>/seller/products/edit/<?= (int)$product['id'] ?>" style="max-width:700px;">
+<form method="POST" enctype="multipart/form-data" action="<?= APP_URL ?>/seller/products/edit/<?= (int)$product['id'] ?>" style="max-width:700px;">
     <?= Csrf::field() ?>
     <div style="margin-bottom:20px;">
         <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">Product Name <span style="color:var(--red);">*</span></label>
@@ -81,6 +81,25 @@
         <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">Wholesale Price (GHS)</label>
         <input type="number" step="0.01" name="wholesale_price_ghs" value="<?= (float)($product['wholesale_price_ghs']??0) ?>" style="width:200px;height:44px;background:var(--off);border:1px solid var(--light-gray);border-radius:8px;padding:0 14px;font-size:13px;color:var(--ink);box-sizing:border-box;">
     </div>
+
+    <div style="margin-bottom:20px;">
+        <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">Upload Product Images</label>
+        <input type="file" name="images[]" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style="width:100%;background:var(--off);border:1px solid var(--light-gray);border-radius:8px;padding:10px;box-sizing:border-box;">
+        <div style="font-size:11px;color:var(--mid-gray);margin-top:6px;">JPG, PNG, or WEBP. Select multiple files to add more than one image.</div>
+    </div>
+    <?php if (!empty($images)): ?>
+    <div style="margin-bottom:20px;padding:16px;background:#fff;border:1px solid var(--light-gray);border-radius:8px;">
+        <strong style="display:block;margin-bottom:12px;">Current Images</strong>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <?php foreach ($images as $image): $src=filter_var($image['url'],FILTER_VALIDATE_URL)?$image['url']:APP_URL.'/'.ltrim($image['url'],'/'); ?>
+            <label style="width:112px;font-size:11px;">
+                <img src="<?= htmlspecialchars($src) ?>" alt="" style="width:100px;height:100px;object-fit:cover;border:1px solid var(--light-gray);display:block;margin-bottom:6px;">
+                <input type="checkbox" name="delete_images[]" value="<?= (int)$image['id'] ?>"> Remove<?= !empty($image['is_primary'])?' · Primary':'' ?>
+            </label>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <div style="margin-bottom:24px;">
         <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:8px;">Description</label>

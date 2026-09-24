@@ -6,7 +6,10 @@
         <h1 style="font-family:var(--f-display);font-weight:900;font-size:clamp(22px,4vw,32px);margin:0;">Products</h1>
         <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px;">Manage your product listings &middot; <?= (int)($total_products ?? count($products)) ?> total</div>
     </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <?php if (!empty($seller['is_verified'])): ?><a href="<?= APP_URL ?>/seller/products/import" class="seller-btn-secondary">Import CSV</a><?php endif; ?>
     <a href="<?= APP_URL ?>/seller/new-product" style="background:var(--red);color:#fff;padding:12px 24px;font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;text-decoration:none;letter-spacing:0.05em;">+ List Product</a>
+    </div>
 </div>
 
 <?php if(!empty($success)): ?><div style="background:#e6f7ec;border:1.5px solid #00a854;padding:12px 14px;font-family:var(--f-mono);font-size:11px;color:#00a854;margin-bottom:14px;">&#10003; <?= $success==='deleted'?'Product removed from listings.':'Product saved successfully.' ?></div><?php endif; ?>

@@ -71,6 +71,54 @@ class SellerController extends Controller {
         }
     }
 
+    public function importTemplate() {
+        $seller=$this->requireVerified(); if (!$seller) return;
+        require_once __DIR__.'/../core/ProductCsvImporter.php';
+        ProductCsvImporter::sendTemplate();
+    }
+
+    public function importProducts() {
+        $seller=$this->requireVerified(); if (!$seller) return;
+        require_once __DIR__.'/../core/ProductCsvImporter.php';
+        require_once __DIR__.'/../config/database.php';
+        $db=db();
+        $store=(new Store())->findBySellerId((int)$seller['id']);
+        $error=''; $preview=null; $outcomes=[];
+        if ($_SERVER['REQUEST_METHOD']==='POST') {
+            if (!Csrf::validateRequest()) {
+                $error='Security token expired. Please refresh the page and try again.';
+            } elseif (($_POST['action']??'')==='preview') {
+                $file=$_FILES['csv_file']??null;
+                if (!$file || ($file['error']??UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_OK || strtolower(pathinfo($file['name']??'',PATHINFO_EXTENSION))!=='csv') {
+                    $error='Choose a readable .csv file to preview.';
+                } else {
+                    try {
+                        $preview=ProductCsvImporter::preview($file['tmp_name'],$db);
+                        $key=bin2hex(random_bytes(24));
+                        Session::set('seller_product_csv_import',['key'=>$key,'seller_id'=>(int)$seller['id'],'preview'=>$preview]);
+                    } catch (\Throwable $e) { $error=$e->getMessage(); }
+                }
+            } elseif (($_POST['action']??'')==='import') {
+                $saved=Session::get('seller_product_csv_import');
+                if (!$saved || (int)$saved['seller_id']!==(int)$seller['id'] || !hash_equals((string)$saved['key'],(string)($_POST['import_key']??''))) {
+                    $error='This preview has expired. Upload the CSV again.';
+                } else {
+                    $preview=$saved['preview'];
+                    try {
+                        $outcomes=ProductCsvImporter::import($db,$preview,(int)$seller['id'],!empty($store['id'])?(int)$store['id']:null,'active');
+                        Session::remove('seller_product_csv_import');
+                    } catch (\Throwable $e) {
+                        $error=$e->getMessage();
+                    }
+                }
+            } elseif (($_POST['action']??'')==='cancel') {
+                Session::remove('seller_product_csv_import');
+            }
+        }
+        if (!$preview && Session::get('seller_product_csv_import')) $preview=Session::get('seller_product_csv_import')['preview'];
+        $this->view('seller/import_products',['seller'=>$seller,'store'=>$store,'error'=>$error,'preview'=>$preview,'outcomes'=>$outcomes,'page'=>'products']);
+    }
+
     public function products() {
         $seller=$this->requireSeller(); if (!$seller) return;
         $store=(new Store())->findBySellerId((int)$seller['id']);
@@ -89,7 +137,18 @@ class SellerController extends Controller {
         $seller=$this->requireVerified(); if (!$seller) return;
         $product=(new Product())->findByIdAndSeller((int)$id, (int)$seller['id']);
         if (!$product) { $this->redirect(APP_URL.'/seller/products'); return; }
+        require_once __DIR__.'/../config/database.php';
+        $db=db();
+        $imagesStmt=$db->prepare('SELECT * FROM product_images WHERE product_id=? ORDER BY is_primary DESC,id ASC');
+        $imagesStmt->execute([(int)$id]);
+        $existingImages=$imagesStmt->fetchAll();
+        $uploaded=[];
         if ($_SERVER['REQUEST_METHOD']==='POST') {
+            if (!Csrf::validateRequest()) {
+                $stats=$this->getSellerStats((int)$seller['id']);
+                $this->view('seller/edit_product',['seller'=>$seller,'product'=>$product,'images'=>$existingImages,'categories'=>(new Category())->getSubcategories(),'stats'=>$stats,'error'=>'Security token expired. Refresh the page and try again.','page'=>'products']);
+                return;
+            }
             $data=[
                 'name' => trim($_POST['name']??''),
                 'price_ghs' => (float)($_POST['price_ghs']??0),
@@ -104,15 +163,63 @@ class SellerController extends Controller {
                 'available_in_ghana' => isset($_POST['available_in_ghana'])?1:0,
             ];
             if (!$data['name'] || !$data['price_ghs']) {
-                $this->view('seller/edit_product', ['seller'=>$seller,'product'=>$product,'categories'=>(new Category())->getSubcategories(),'error'=>'Name and price required','page'=>'products']);
+                $this->view('seller/edit_product', ['seller'=>$seller,'product'=>$product,'images'=>$existingImages,'categories'=>(new Category())->getSubcategories(),'error'=>'Name and price required','page'=>'products']);
                 return;
             }
-            (new Product())->updateBySeller((int)$id, (int)$seller['id'], $data);
+            $uploaded=[];
+            $db->beginTransaction();
+            try {
+                (new Product())->updateBySeller((int)$id, (int)$seller['id'], $data);
+                if (isset($_POST['delete_images']) && is_array($_POST['delete_images'])) {
+                    $delete=$db->prepare('DELETE FROM product_images WHERE id=? AND product_id=?');
+                    foreach ($_POST['delete_images'] as $imageId) $delete->execute([(int)$imageId,(int)$id]);
+                }
+                if (isset($_FILES['images']['name']) && is_array($_FILES['images']['name'])) {
+                    $dir=__DIR__.'/../public/uploads/products/';
+                    if (!is_dir($dir) && !mkdir($dir,0775,true) && !is_dir($dir)) throw new RuntimeException('Image upload directory is unavailable.');
+                    foreach ($_FILES['images']['name'] as $i=>$originalName) {
+                        $uploadError=$_FILES['images']['error'][$i]??UPLOAD_ERR_NO_FILE;
+                        if ($uploadError===UPLOAD_ERR_NO_FILE) continue;
+                        if ($uploadError!==UPLOAD_ERR_OK) throw new RuntimeException('One or more images could not be uploaded.');
+                        $tmp=$_FILES['images']['tmp_name'][$i];
+                        $ext=strtolower(pathinfo($originalName,PATHINFO_EXTENSION));
+                        if (!in_array($ext,['jpg','jpeg','png','webp'],true) || @getimagesize($tmp)===false) throw new RuntimeException('Only valid JPG, PNG, or WEBP images are allowed.');
+                        $fileName='p_'.time().'_'.bin2hex(random_bytes(4)).'_'.$i.'.'.$ext;
+                        if (!move_uploaded_file($tmp,$dir.$fileName)) throw new RuntimeException('An image could not be saved.');
+                        $uploaded[]='public/uploads/products/'.$fileName;
+                    }
+                }
+                if ($uploaded) {
+                    require_once __DIR__.'/../core/Watermark.php';
+                    Watermark::applyToPaths($uploaded);
+                    $hasPrimary=(bool)$db->query('SELECT id FROM product_images WHERE product_id='.(int)$id.' AND is_primary=1 LIMIT 1')->fetchColumn();
+                    $insert=$db->prepare('INSERT INTO product_images (product_id,url,is_primary) VALUES (?,?,?)');
+                    foreach ($uploaded as $index=>$url) { $insert->execute([(int)$id,$url,(!$hasPrimary && $index===0)?1:0]); }
+                }
+                if (!$db->query('SELECT id FROM product_images WHERE product_id='.(int)$id.' AND is_primary=1 LIMIT 1')->fetchColumn()) {
+                    $first=$db->query('SELECT id FROM product_images WHERE product_id='.(int)$id.' ORDER BY id ASC LIMIT 1')->fetchColumn();
+                    if ($first) $db->prepare('UPDATE product_images SET is_primary=1 WHERE id=?')->execute([(int)$first]);
+                }
+                $db->commit();
+                Cache::flushTags(['products']);
+            } catch (\Throwable $e) {
+                if ($db->inTransaction()) $db->rollBack();
+                foreach ($uploaded as $relativePath) {
+                    $storedPath=__DIR__.'/../'.$relativePath;
+                    if (is_file($storedPath)) @unlink($storedPath);
+                }
+
+                $this->logError('editProduct image save failed: '.$e->getMessage());
+                $stats=$this->getSellerStats((int)$seller['id']);
+                $imagesStmt->execute([(int)$id]);
+                $this->view('seller/edit_product',['seller'=>$seller,'product'=>$product,'images'=>$imagesStmt->fetchAll(),'categories'=>(new Category())->getSubcategories(),'stats'=>$stats,'error'=>$e->getMessage(),'page'=>'products']);
+                return;
+            }
             $this->redirect((defined('APP_PATH') ? APP_PATH : '') . '/seller/products?success=1');
             return;
         }
         $stats=$this->getSellerStats((int)$seller['id']);
-        $this->view('seller/edit_product', ['seller'=>$seller,'product'=>$product,'categories'=>(new Category())->getSubcategories(),'stats'=>$stats,'page'=>'products']);
+        $this->view('seller/edit_product', ['seller'=>$seller,'product'=>$product,'images'=>$existingImages,'categories'=>(new Category())->getSubcategories(),'stats'=>$stats,'page'=>'products']);
     }
 
     public function deleteProduct($id) {
