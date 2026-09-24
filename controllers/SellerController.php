@@ -134,7 +134,7 @@ class SellerController extends Controller {
                     }
                     try {
                         $storeId=!empty($store['id'])?(int)$store['id']:null;
-                        $outcomes=ProductCsvImporter::import($db, $preview, (int)$seller['id'], $storeId, 'active', $mode, $offset, $limit, $overrides);
+                        $outcomes=ProductCsvImporter::import($db, $preview, (int)$seller['id'], $storeId, 'pending_review', $mode, $offset, $limit, $overrides);
                         
                         $validCount=count(array_filter($preview, static fn($r) => empty($r['errors'])));
                         $processedCount = $offset + count($outcomes);

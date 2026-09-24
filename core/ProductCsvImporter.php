@@ -506,7 +506,7 @@ class ProductCsvImporter {
     }
 
     /** Process import in chunks or full batch, supporting insert vs upsert mode and dynamic cell updates. */
-    public static function import(PDO $db, array $preview, ?int $sellerId, ?int $storeId, string $status = 'active', string $mode = 'insert', int $offset = 0, int $limit = 0, array $overrides = []): array {
+    public static function import(PDO $db, array $preview, ?int $sellerId, ?int $storeId, string $status = 'pending_review', string $mode = 'insert', int $offset = 0, int $limit = 0, array $overrides = []): array {
         $columns = self::productColumns($db);
         $required = ['name', 'slug', 'price_ghs', 'currency', 'stock_qty', 'is_active'];
         if (count(array_intersect($required, $columns)) !== count($required)) {

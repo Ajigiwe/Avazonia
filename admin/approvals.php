@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'moder
     $pid = (int)($_POST['product_id'] ?? 0);
     $act = $_POST['moderate'] ?? '';
     if ($pid && in_array($act, ['active', 'rejected', 'pending_review'], true)) {
-        $db->prepare("UPDATE products SET status_market=? WHERE id=? AND seller_id IS NOT NULL")->execute([$act, $pid]);
+        $db->prepare("UPDATE products SET status_market=? WHERE id=?")->execute([$act, $pid]);
         require_once __DIR__ . '/../core/Cache.php';
         Cache::flushTags(['products']);
         $success = 'Product #' . $pid . ' → ' . strtoupper($act);

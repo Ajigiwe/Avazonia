@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (is_array($rawOverrides)) $overrides = $rawOverrides;
                 }
                 try {
-                    $outcomes = ProductCsvImporter::import($db, $preview, $sellerId, $storeId, 'active', $mode, $offset, $limit, $overrides);
+                    $outcomes = ProductCsvImporter::import($db, $preview, $sellerId, $storeId, 'pending_review', $mode, $offset, $limit, $overrides);
                     $validCount = count(array_filter($preview, static fn($r) => empty($r['errors'])));
                     $processedCount = $offset + count($outcomes);
                     $isDone = ($limit === 0 || $processedCount >= $validCount);
@@ -690,7 +690,7 @@ document.addEventListener('DOMContentLoaded', function() {
     form.style.display = 'none';
     document.getElementById('asyncProgressTitle').textContent = '🎉 Batch Import Complete!';
     progressBar.style.background = '#00a854';
-    progressDetail.innerHTML = '<strong>Successfully processed ' + processedTotal + ' items:</strong> ' + createdTotal + ' created, ' + updatedTotal + ' updated' + (failedTotal ? ', ' + failedTotal + ' failed' : '') + '.';
+    progressDetail.innerHTML = '<strong>Successfully processed ' + processedTotal + ' items:</strong> ' + createdTotal + ' created (pending review), ' + updatedTotal + ' updated' + (failedTotal ? ', ' + failedTotal + ' failed' : '') + '.<br><div style="margin-top:10px;padding:10px 14px;background:#E0F2FE;border:1px solid #BAE6FD;border-radius:8px;color:#0369A1;font-size:12px;">📋 <strong>Next Step:</strong> Uploaded products are placed in <strong>Pending Review</strong>. Go to <a href="approvals.php" style="color:#0284C7;font-weight:700;text-decoration:underline;">Admin Approvals</a> to inspect and publish them live.</div>';
   });
 });
 </script>

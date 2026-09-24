@@ -672,7 +672,7 @@ document.addEventListener('DOMContentLoaded', function() {
     form.style.display = 'none';
     document.getElementById('asyncProgressTitle').textContent = '🎉 Batch Import Complete!';
     progressBar.style.background = '#00a854';
-    progressDetail.innerHTML = '<strong>Successfully processed ' + processedTotal + ' items:</strong> ' + createdTotal + ' created, ' + updatedTotal + ' updated' + (failedTotal ? ', ' + failedTotal + ' failed' : '') + '.';
+    progressDetail.innerHTML = '<strong>Successfully processed ' + processedTotal + ' items:</strong> ' + createdTotal + ' created (pending review), ' + updatedTotal + ' updated' + (failedTotal ? ', ' + failedTotal + ' failed' : '') + '.<br><div style="margin-top:10px;padding:10px 14px;background:#FFF7ED;border:1px solid #FFD8A8;border-radius:8px;color:#C05621;font-size:12px;">⏳ <strong>Note:</strong> Items uploaded via spreadsheet are held in <strong>Pending Review</strong> until an admin verifies and approves them.</div>';
   });
 });
 </script>
