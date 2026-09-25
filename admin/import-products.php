@@ -497,9 +497,7 @@ include 'layout/header.php';
                      list="adminCategoryDatalist" 
                      value="<?= htmlspecialchars($matchedCat) ?>" 
                      placeholder="Search category..." 
-                     autocomplete="off"
                      oninput="onAdminGridInput(this, 'category')"
-                     onfocus="this.select()"
                      style="width:100%;padding:7px 10px;border-radius:6px;border:1.5px solid <?= empty($item['values']['category_id']) ? '#EAB308' : '#D1D5DB' ?>;font-size:12px;background:<?= empty($item['values']['category_id']) ? '#FEFCE8' : '#FFF' ?>;font-weight:600;color:#0D0D0D;">
             </td>
 
@@ -510,9 +508,7 @@ include 'layout/header.php';
                      list="adminBrandDatalist" 
                      value="<?= htmlspecialchars($matchedBrand) ?>" 
                      placeholder="Search brand..." 
-                     autocomplete="off"
                      oninput="onAdminGridInput(this, 'brand')"
-                     onfocus="this.select()"
                      style="width:100%;padding:7px 10px;border-radius:6px;border:1.5px solid <?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#EAB308' : '#D1D5DB' ?>;font-size:12px;background:<?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#FEFCE8' : '#FFF' ?>;font-weight:600;color:#0D0D0D;">
             </td>
 
