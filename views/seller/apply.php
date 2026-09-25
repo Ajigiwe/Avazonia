@@ -15,7 +15,7 @@
     <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;margin:0;padding:0;font-family:var(--f-mono);font-size:11px;">
       <li style="display:flex;align-items:center;gap:8px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:#fff;color:var(--red);border-radius:50%;font-weight:900;font-size:10px;">1</span> Choose your vendor type</li>
       <li style="display:flex;align-items:center;gap:8px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:#fff;color:var(--red);border-radius:50%;font-weight:900;font-size:10px;">2</span> Add your store name &amp; city</li>
-      <li style="display:flex;align-items:center;gap:8px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:#fff;color:var(--red);border-radius:50%;font-weight:900;font-size:10px;">3</span> Verify your identity — get the badge</li>
+      <li style="display:flex;align-items:center;gap:8px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:#fff;color:var(--red);border-radius:50%;font-weight:900;font-size:10px;">3</span> Provide Ghana Card &amp; facial scan</li>
     </ul>
   </div>
 
@@ -64,13 +64,13 @@
       </label>
     </div>
 
-    <!-- Section: Verification -->
-    <div style="background:var(--paper);border:1px solid var(--light-gray);border-radius:16px;padding:20px;display:<?= $verifRequired ? 'block' : 'none' ?>;">
-      <div style="font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--ink);margin-bottom:6px;">Verify your identity</div>
-      <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);margin-bottom:14px;">Ghana Card + a quick face check earn you the <strong style="color:var(--ink);">✓ Verified Vendor</strong> badge — buyers trust verified stores more.</div>
+    <!-- Section: Identity Verification -->
+    <div style="background:var(--paper);border:1px solid var(--light-gray);border-radius:16px;padding:20px;">
+      <div style="font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--ink);margin-bottom:6px;">Identity Verification</div>
+      <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);margin-bottom:14px;">Ghana Card + facial scan are required to confirm your seller identity.</div>
 
       <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:16px;">Ghana Card (image, front) <span style="color:var(--red);">*</span>
-        <input type="file" name="ghana_card" accept="image/*" <?= $verifRequired ? 'required' : '' ?> style="display:block;width:100%;padding:12px;border:1px solid var(--light-gray);border-radius:12px;background:#fff;margin-top:8px;font-family:var(--f-mono);font-size:11px;">
+        <input type="file" name="ghana_card" accept="image/*" required style="display:block;width:100%;padding:12px;border:1px solid var(--light-gray);border-radius:12px;background:#fff;margin-top:8px;font-family:var(--f-mono);font-size:11px;">
       </label>
 
       <div style="font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);">Face check <span style="color:var(--red);">*</span> <span style="font-weight:400;text-transform:none;letter-spacing:0;">— allow camera, center your face, capture</span></div>

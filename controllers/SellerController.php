@@ -30,10 +30,7 @@ class SellerController extends Controller {
         return $seller;
     }
     private function requireVerified(): array|false {
-        $seller=$this->requireSeller(); if (!$seller) return false;
-        if (!seller_verification_required()) return $seller; // global switch OFF → verification bypassed
-        if (empty($seller['is_verified'])) { $this->redirect(APP_URL.'/seller/dashboard'); return false; }
-        return $seller;
+        return $this->requireSeller();
     }
     private function getSellerStats(int $sellerId): array {
         $productModel=new Product(); $orderModel=new Order();
@@ -461,8 +458,6 @@ class SellerController extends Controller {
             $s=new Seller(); $st=new Store();
             if ($s->findByUserId((int)Session::get('user_id'))) { $this->redirect(APP_URL.'/seller/dashboard'); return; }
             $docsArr=[];
-            $verifRequired = seller_verification_required();
-            if ($verifRequired) {
             $dir='public/uploads/sellers/'; if(!is_dir($dir)) mkdir($dir,0777,true);
             if (!empty($_FILES['ghana_card']['name']) && $_FILES['ghana_card']['error']===UPLOAD_ERR_OK) {
                 $ext=strtolower(pathinfo($_FILES['ghana_card']['name'],PATHINFO_EXTENSION));
@@ -491,14 +486,13 @@ class SellerController extends Controller {
                 }
             }
             if (empty($docsArr['ghana_card']) || empty($docsArr['face_id'])) {
-                $this->view('seller/apply', ['error'=>'Ghana Card + Face capture both required for verification','seller_type'=>$type,'business_name'=>$biz,'city'=>$city]);
+                $this->view('seller/apply', ['error'=>'Ghana Card + Face capture both required to activate your store','seller_type'=>$type,'business_name'=>$biz,'city'=>$city]);
                 return;
-            }
             }
             $docs=json_encode($docsArr);
             $sid=$s->create((int)Session::get('user_id'), ['seller_type'=>$type,'business_name'=>$biz?:Session::get('user_name'),'full_name'=>Session::get('user_name'),'country_code'=>'GH','city'=>$city,
-                'verification_level'=>$verifRequired ? 'phone_verified' : 'business_verified',
-                'is_verified'=>$verifRequired ? 0 : 1,
+                'verification_level'=>'business_verified',
+                'is_verified'=>1,
                 'docs'=>$docs,
                 'whatsapp_number'=>$whatsapp,
                 'wechat_id'=>$wechat]);

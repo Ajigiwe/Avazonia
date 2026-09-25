@@ -125,11 +125,7 @@ class Category extends Model {
     }
 
     public function getChildrenWithCounts(int $parentId): array {
-        $sellerFilter = " AND (p.seller_id IS NULL OR EXISTS (SELECT 1 FROM sellers s WHERE s.id = p.seller_id AND s.is_active = 1";
-        if (function_exists('seller_verification_required') && seller_verification_required()) {
-            $sellerFilter .= " AND s.is_verified = 1";
-        }
-        $sellerFilter .= ")) ";
+        $sellerFilter = " AND (p.seller_id IS NULL OR EXISTS (SELECT 1 FROM sellers s WHERE s.id = p.seller_id AND s.is_active = 1)) ";
         // Count only products that can actually appear in the marketplace.
         $sql = "SELECT c.*, 
                        (SELECT COUNT(*) FROM products p 
@@ -169,11 +165,7 @@ class Category extends Model {
 
     public function countProductsInSubtree(int $categoryId): int {
         $visibility = " AND p.visibility IN ('public', 'retail_only') ";
-        $sellerAccess = " AND (p.seller_id IS NULL OR EXISTS (SELECT 1 FROM sellers s WHERE s.id = p.seller_id AND s.is_active = 1";
-        if (function_exists('seller_verification_required') && seller_verification_required()) {
-            $sellerAccess .= " AND s.is_verified = 1";
-        }
-        $sellerAccess .= ")) ";
+        $sellerAccess = " AND (p.seller_id IS NULL OR EXISTS (SELECT 1 FROM sellers s WHERE s.id = p.seller_id AND s.is_active = 1)) ";
         $sql = "SELECT COUNT(*) FROM products p 
                 WHERE p.is_active = 1
                   AND (p.status_market IS NULL OR p.status_market = 'active')
