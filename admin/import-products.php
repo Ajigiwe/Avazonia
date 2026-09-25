@@ -680,20 +680,20 @@ include 'layout/header.php';
 </style>
 
 <script>
-const validAdminCatsLower = <?= json_encode(array_values(array_map('strtolower', $allCats ?? []))) ?>;
-const validAdminBrandsLower = <?= json_encode(array_values(array_map('strtolower', $allBrands ?? []))) ?>;
-const csrfTokenGlobal = '<?= htmlspecialchars(Csrf::getToken()) ?>';
+window.validAdminCatsLower = <?= json_encode(array_values(array_map('strtolower', $allCats ?? []))) ?>;
+window.validAdminBrandsLower = <?= json_encode(array_values(array_map('strtolower', $allBrands ?? []))) ?>;
+window.csrfTokenGlobal = '<?= htmlspecialchars(Csrf::getToken()) ?>';
 
 /* Track uploaded images per line */
-const importImagesByLine = {};
+window.importImagesByLine = window.importImagesByLine || {};
 
 // toggleDetailRow has been moved to inline JS for bulletproof reliability
 
-async function uploadSingleImage(file, lineNum) {
+window.uploadSingleImage = async function(file, lineNum) {
   const fd = new FormData();
   fd.append('image', file);
   fd.append('line', lineNum);
-  fd.append('csrf_token', csrfTokenGlobal);
+  fd.append('csrf_token', window.csrfTokenGlobal);
   try {
     const res = await fetch('api/upload-import-image.php', { method: 'POST', body: fd });
     let data;
@@ -710,9 +710,9 @@ async function uploadSingleImage(file, lineNum) {
     }
     
     if (data.success) {
-      if (!importImagesByLine[lineNum]) importImagesByLine[lineNum] = [];
-      importImagesByLine[lineNum].push(data.path);
-      renderImportImagePreviews(lineNum);
+      if (!window.importImagesByLine[lineNum]) window.importImagesByLine[lineNum] = [];
+      window.importImagesByLine[lineNum].push(data.path);
+      window.renderImportImagePreviews(lineNum);
       return { ok: true };
     } else {
       console.error('Upload error:', data.error);
@@ -724,7 +724,7 @@ async function uploadSingleImage(file, lineNum) {
   }
 }
 
-async function handleImportImageFiles(files, lineNum) {
+window.handleImportImageFiles = async function(files, lineNum) {
   const statusEl = document.getElementById('img-status-' + lineNum);
   let uploaded = 0;
   let failed = 0;
@@ -742,7 +742,7 @@ async function handleImportImageFiles(files, lineNum) {
   
   for (let i = 0; i < imageFiles.length; i++) {
     statusEl.textContent = 'Uploading image ' + (i + 1) + ' of ' + imageFiles.length + '...';
-    const result = await uploadSingleImage(imageFiles[i], lineNum);
+    const result = await window.uploadSingleImage(imageFiles[i], lineNum);
     if (result.ok) {
         uploaded++;
     } else {
@@ -762,18 +762,18 @@ async function handleImportImageFiles(files, lineNum) {
   setTimeout(() => { statusEl.textContent = ''; }, 5000);
 }
 
-function handleImportImageSelect(input, lineNum) {
-  if (input.files && input.files.length) handleImportImageFiles(Array.from(input.files), lineNum);
+window.handleImportImageSelect = function(input, lineNum) {
+  if (input.files && input.files.length) window.handleImportImageFiles(Array.from(input.files), lineNum);
   input.value = ''; // reset for re-upload
 }
 
-function handleImportImageDrop(e, lineNum) {
+window.handleImportImageDrop = function(e, lineNum) {
   const files = e.dataTransfer.files;
-  if (files.length) handleImportImageFiles(Array.from(files), lineNum);
+  if (files.length) window.handleImportImageFiles(Array.from(files), lineNum);
 }
 
 // VIDEO UPLOAD
-async function handleImportVideoFiles(files, lineNum) {
+window.handleImportVideoFiles = async function(files, lineNum) {
   const statusEl = document.getElementById('vid-status-' + lineNum);
   const inputEl = document.getElementById('video-url-' + lineNum);
   
@@ -791,7 +791,7 @@ async function handleImportVideoFiles(files, lineNum) {
   const fd = new FormData();
   fd.append('video', videoFile);
   fd.append('line', lineNum);
-  fd.append('csrf_token', csrfTokenGlobal);
+  fd.append('csrf_token', window.csrfTokenGlobal);
   
   try {
     const res = await fetch('api/upload-import-video.php', { method: 'POST', body: fd });
@@ -827,20 +827,20 @@ async function handleImportVideoFiles(files, lineNum) {
   setTimeout(() => { statusEl.textContent = ''; }, 5000);
 }
 
-function handleImportVideoSelect(input, lineNum) {
-  if (input.files && input.files.length) handleImportVideoFiles(Array.from(input.files), lineNum);
+window.handleImportVideoSelect = function(input, lineNum) {
+  if (input.files && input.files.length) window.handleImportVideoFiles(Array.from(input.files), lineNum);
   input.value = '';
 }
 
-function handleImportVideoDrop(e, lineNum) {
+window.handleImportVideoDrop = function(e, lineNum) {
   const files = e.dataTransfer.files;
-  if (files.length) handleImportVideoFiles(Array.from(files), lineNum);
+  if (files.length) window.handleImportVideoFiles(Array.from(files), lineNum);
 }
 
-function renderImportImagePreviews(lineNum) {
+window.renderImportImagePreviews = function(lineNum) {
   const container = document.getElementById('img-preview-' + lineNum);
   const countBadge = document.getElementById('img-count-' + lineNum);
-  const imgs = importImagesByLine[lineNum] || [];
+  const imgs = window.importImagesByLine[lineNum] || [];
   countBadge.textContent = imgs.length;
   if (imgs.length > 0) {
     countBadge.style.background = '#DCFCE7';
