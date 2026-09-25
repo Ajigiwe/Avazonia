@@ -634,9 +634,9 @@ include 'layout/header.php';
                          id="img-dropzone-<?= $lineNum ?>"
                          ondragover="event.preventDefault();this.style.borderColor='#6D28D9';this.style.background='#F5F3FF'"
                          ondragleave="this.style.borderColor='#D0D5DD';this.style.background='#FAFAFC'"
-                         ondrop="event.preventDefault();this.style.borderColor='#D0D5DD';this.style.background='#FAFAFC';handleImportImageDrop(event,<?= $lineNum ?>)"
+                         ondrop="event.preventDefault();this.style.borderColor='#D0D5DD';this.style.background='#FAFAFC';window.handleImportImageDrop(event,<?= $lineNum ?>)"
                          style="position:relative;border:2px dashed #D0D5DD;border-radius:10px;background:#FAFAFC;padding:16px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:6px;overflow:hidden;">
-                      <input type="file" id="img-input-<?= $lineNum ?>" accept="image/*" multiple style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;" onchange="handleImportImageSelect(this,<?= $lineNum ?>)">
+                      <input type="file" id="img-input-<?= $lineNum ?>" accept="image/*" multiple style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;" onchange="window.handleImportImageSelect(this,<?= $lineNum ?>)">
                       <div style="font-size:20px;margin-bottom:4px;position:relative;z-index:1;">📸</div>
                       <div style="font-size:11px;font-weight:700;color:#555;position:relative;z-index:1;">Drop images or click</div>
                       <div style="font-size:9px;color:#888;margin-top:2px;position:relative;z-index:1;">JPEG, PNG, WebP</div>
@@ -652,9 +652,9 @@ include 'layout/header.php';
                          id="vid-dropzone-<?= $lineNum ?>"
                          ondragover="event.preventDefault();this.style.borderColor='#6D28D9';this.style.background='#F5F3FF'"
                          ondragleave="this.style.borderColor='#D0D5DD';this.style.background='#FAFAFC'"
-                         ondrop="event.preventDefault();this.style.borderColor='#D0D5DD';this.style.background='#FAFAFC';handleImportVideoDrop(event,<?= $lineNum ?>)"
+                         ondrop="event.preventDefault();this.style.borderColor='#D0D5DD';this.style.background='#FAFAFC';window.handleImportVideoDrop(event,<?= $lineNum ?>)"
                          style="position:relative;border:2px dashed #D0D5DD;border-radius:10px;background:#FAFAFC;padding:12px;text-align:center;cursor:pointer;transition:all .2s;overflow:hidden;">
-                      <input type="file" id="vid-input-<?= $lineNum ?>" accept="video/*" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;" onchange="handleImportVideoSelect(this,<?= $lineNum ?>)">
+                      <input type="file" id="vid-input-<?= $lineNum ?>" accept="video/*" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;" onchange="window.handleImportVideoSelect(this,<?= $lineNum ?>)">
                       <div style="font-size:18px;margin-bottom:2px;position:relative;z-index:1;">🎥</div>
                       <div style="font-size:11px;font-weight:700;color:#555;position:relative;z-index:1;">Upload Video</div>
                       <div style="font-size:9px;color:#888;margin-top:2px;position:relative;z-index:1;">MP4, WebM (1 allowed)</div>
