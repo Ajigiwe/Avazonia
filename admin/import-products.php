@@ -135,7 +135,7 @@ include 'layout/header.php';
 <script>
 window.validAdminCatsLower = <?= json_encode(array_values(array_map('strtolower', $allCats ?? []))) ?>;
 window.validAdminBrandsLower = <?= json_encode(array_values(array_map('strtolower', $allBrands ?? []))) ?>;
-window.csrfTokenGlobal = '<?= htmlspecialchars(Csrf::getToken()) ?>';
+window.csrfTokenGlobal = '<?= htmlspecialchars(Csrf::token()) ?>';
 
 /* Global storage for uploaded images per row line */
 window.importImagesByLine = window.importImagesByLine || {};

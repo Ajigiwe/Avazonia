@@ -24,6 +24,10 @@ class Csrf {
         return self::ensure();
     }
 
+    public static function getToken(): string {
+        return self::ensure();
+    }
+
     /**
      * Validate a submitted token against the session token.
      * Clears the old token on success (one-time use) to prevent replay.
