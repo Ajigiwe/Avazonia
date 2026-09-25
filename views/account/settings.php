@@ -85,8 +85,8 @@ $user_name = Session::get('user_name') ?: 'Member';
                             <div style="font-size:12px;color:var(--mid-gray);margin-bottom:16px;">These details appear on your products so buyers can enquire directly.</div>
                             <div class="seller-contact-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
                                 <div>
-                                    <label style="display:block;font-family:var(--f-semi);font-size:11px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:8px;letter-spacing:.05em;">WhatsApp Number <span style="color:var(--red);">*</span></label>
-                                    <input type="tel" name="whatsapp_number" value="<?= htmlspecialchars($seller['whatsapp_number'] ?? '') ?>" placeholder="+233 24 000 0000" inputmode="tel" required style="width:100%;padding:14px 16px;border:1px solid #ddd;border-radius:8px;font-family:inherit;font-size:14px;">
+                                    <label style="display:block;font-family:var(--f-semi);font-size:11px;text-transform:uppercase;color:var(--mid-gray);margin-bottom:8px;letter-spacing:.05em;">WhatsApp Number <span style="font-weight:400;text-transform:none;">(optional)</span></label>
+                                    <input type="tel" name="whatsapp_number" value="<?= htmlspecialchars($seller['whatsapp_number'] ?? '') ?>" placeholder="+233 24 000 0000" inputmode="tel" style="width:100%;padding:14px 16px;border:1px solid #ddd;border-radius:8px;font-family:inherit;font-size:14px;">
                                     <div style="font-size:11px;color:var(--mid-gray);margin-top:6px;">Include your country code.</div>
                                 </div>
                                 <div>

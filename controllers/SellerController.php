@@ -458,10 +458,6 @@ class SellerController extends Controller {
             $city=trim($_POST['city']??'');
             $whatsapp = preg_replace('/[^0-9]/', '', trim((string)($_POST['whatsapp_number'] ?? '')));
             $wechat = trim((string)($_POST['wechat_id'] ?? ''));
-            if ($whatsapp === '') {
-                $this->view('seller/apply', ['error'=>'WhatsApp number is required for seller verification','seller_type'=>$type,'business_name'=>$biz,'city'=>$city]);
-                return;
-            }
             $s=new Seller(); $st=new Store();
             if ($s->findByUserId((int)Session::get('user_id'))) { $this->redirect(APP_URL.'/seller/dashboard'); return; }
             $docsArr=[];

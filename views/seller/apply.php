@@ -52,11 +52,11 @@
 
     <!-- Section: Contact details -->
     <div style="background:var(--off);border:1px solid var(--light-gray);border-radius:16px;padding:20px;">
-      <div style="font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--ink);margin-bottom:6px;">Store contact <span style="color:var(--red);">*</span></div>
-      <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);margin-bottom:14px;">Buyers use these to enquire about your products. Your WhatsApp is required.</div>
+      <div style="font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--ink);margin-bottom:6px;">Store contact</div>
+      <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);margin-bottom:14px;">Buyers use these to enquire about your products.</div>
 
-      <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:16px;">WhatsApp Number <span style="color:var(--red);">*</span>
-        <input type="tel" name="whatsapp_number" value="<?= htmlspecialchars($_POST['whatsapp_number'] ?? '') ?>" placeholder="+233 24 000 0000" inputmode="tel" required style="display:block;width:100%;height:48px;background:#fff;border:1px solid var(--light-gray);border-radius:12px;padding:0 14px;margin-top:8px;font-family:var(--f-mono);font-size:12px;outline:none;">
+      <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);margin-bottom:16px;">WhatsApp Number <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span>
+        <input type="tel" name="whatsapp_number" value="<?= htmlspecialchars($_POST['whatsapp_number'] ?? '') ?>" placeholder="+233 24 000 0000" inputmode="tel" style="display:block;width:100%;height:48px;background:#fff;border:1px solid var(--light-gray);border-radius:12px;padding:0 14px;margin-top:8px;font-family:var(--f-mono);font-size:12px;outline:none;">
       </label>
 
       <label style="display:block;font-family:var(--f-semi);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--mid-gray);">WeChat ID <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span>

@@ -272,11 +272,7 @@ class AccountController extends Controller {
                 $whatsapp = preg_replace('/[^0-9]/', '', trim((string)($_POST['whatsapp_number'] ?? '')));
                 $wechat = trim((string)($_POST['wechat_id'] ?? ''));
                 $callNumber = preg_replace('/[^0-9+]/', '', trim((string)($_POST['phone_number'] ?? '')));
-                if ($callNumber === '') $callNumber = $whatsapp; // default call number to WhatsApp
-                if ($whatsapp === '') {
-                    $this->view('account/settings', ['user' => $user, 'seller' => $seller, 'error' => 'WhatsApp number is required for seller accounts.']);
-                    return;
-                }
+                if ($callNumber === '') $callNumber = $whatsapp; // default call number to WhatsApp if provided
             }
             $stmt = $db->prepare("UPDATE users SET full_name = ?, phone = ? WHERE id = ?");
             if ($stmt->execute([$fullName, $phone, $user['id']])) {

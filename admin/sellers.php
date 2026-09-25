@@ -23,9 +23,6 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
         if (!$seller) { header('Location: sellers.php?error=seller_not_found'); exit; }
         $level=$_POST['verification_level'] ?? 'business_verified';
         $verified = ($level==='avazonia_verified' || $level==='company_verified' || $level==='business_verified') ? 1 : (int)($_POST['is_verified'] ?? 0);
-        if ($verified && empty(preg_replace('/[^0-9]/', '', (string)($seller['whatsapp_number'] ?? '')))) {
-            header('Location: sellers.php?error=contact_required'); exit;
-        }
         $s->updateVerification((int)$seller['id'],$level,$verified);
             // Once the seller is verified, their pending products go live automatically —
             // no need for a separate approve action per product.
