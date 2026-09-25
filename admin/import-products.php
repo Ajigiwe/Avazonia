@@ -23,6 +23,9 @@ if (isset($_GET['template'])) {
 }
 
 $lookups = ProductCsvImporter::getLookupOptions($db);
+$allCats = array_unique(array_merge($lookups['main_categories'] ?? [], $lookups['sub_categories'] ?? []));
+sort($allCats);
+$allBrands = $lookups['brands'] ?? [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
@@ -129,6 +132,456 @@ if (!$preview && Session::get('product_csv_import')) $preview = Session::get('pr
 $title = 'Import Products';
 include 'layout/header.php';
 ?>
+<script>
+window.validAdminCatsLower = <?= json_encode(array_values(array_map('strtolower', $allCats ?? []))) ?>;
+window.validAdminBrandsLower = <?= json_encode(array_values(array_map('strtolower', $allBrands ?? []))) ?>;
+window.csrfTokenGlobal = '<?= htmlspecialchars(Csrf::getToken()) ?>';
+
+/* Global storage for uploaded images per row line */
+window.importImagesByLine = window.importImagesByLine || {};
+
+window.uploadSingleImage = async function(file, lineNum) {
+  const fd = new FormData();
+  fd.append('image', file);
+  fd.append('line', lineNum);
+  fd.append('csrf_token', window.csrfTokenGlobal);
+  try {
+    const res = await fetch('api/upload-import-image.php', { method: 'POST', body: fd });
+    let data;
+    try {
+      const text = await res.text();
+      try {
+        data = JSON.parse(text);
+      } catch(e) {
+        console.error('Non-JSON response (Status ' + res.status + '):', text);
+        return { ok: false, error: 'HTTP ' + res.status + ' ' + res.statusText + (text ? ': ' + text.substring(0, 40) : ' (empty body)') };
+      }
+    } catch(e) {
+      return { ok: false, error: 'Server error (failed to read response)' };
+    }
+    
+    if (data.success) {
+      if (!window.importImagesByLine[lineNum]) window.importImagesByLine[lineNum] = [];
+      window.importImagesByLine[lineNum].push(data.path);
+      window.renderImportImagePreviews(lineNum);
+      return { ok: true };
+    } else {
+      console.error('Upload error:', data.error);
+      return { ok: false, error: data.error || 'Upload failed' };
+    }
+  } catch(e) {
+    console.error('Upload failed:', e);
+    return { ok: false, error: 'Network error' };
+  }
+};
+function uploadSingleImage(file, lineNum) { return window.uploadSingleImage(file, lineNum); }
+
+window.handleImportImageFiles = async function(files, lineNum) {
+  const statusEl = document.getElementById('img-status-' + lineNum);
+  let uploaded = 0;
+  let failed = 0;
+  let lastError = '';
+  
+  const imageFiles = files.filter(f => f.type.startsWith('image/'));
+  if (imageFiles.length === 0) {
+      if (statusEl) {
+        statusEl.textContent = 'No valid images selected.';
+        statusEl.style.color = '#dc2626';
+        setTimeout(() => { statusEl.textContent = ''; }, 3000);
+      }
+      return;
+  }
+  
+  if (statusEl) statusEl.style.color = '#6D28D9';
+  
+  for (let i = 0; i < imageFiles.length; i++) {
+    if (statusEl) statusEl.textContent = 'Uploading image ' + (i + 1) + ' of ' + imageFiles.length + '...';
+    const result = await window.uploadSingleImage(imageFiles[i], lineNum);
+    if (result.ok) {
+        uploaded++;
+    } else {
+        failed++;
+        lastError = result.error;
+    }
+  }
+  
+  if (statusEl) {
+    if (failed > 0) {
+        statusEl.textContent = uploaded + ' uploaded, ' + failed + ' failed (' + lastError + ')';
+        statusEl.style.color = '#dc2626';
+    } else {
+        statusEl.textContent = uploaded + ' image(s) uploaded successfully';
+        statusEl.style.color = '#16a34a';
+    }
+    setTimeout(() => { statusEl.textContent = ''; }, 5000);
+  }
+};
+function handleImportImageFiles(files, lineNum) { return window.handleImportImageFiles(files, lineNum); }
+
+window.handleImportImageSelect = function(input, lineNum) {
+  if (input.files && input.files.length) window.handleImportImageFiles(Array.from(input.files), lineNum);
+  input.value = ''; // reset for re-upload
+};
+function handleImportImageSelect(input, lineNum) { return window.handleImportImageSelect(input, lineNum); }
+
+window.handleImportImageDrop = function(e, lineNum) {
+  const files = e.dataTransfer.files;
+  if (files.length) window.handleImportImageFiles(Array.from(files), lineNum);
+};
+function handleImportImageDrop(e, lineNum) { return window.handleImportImageDrop(e, lineNum); }
+
+// VIDEO UPLOAD
+window.handleImportVideoFiles = async function(files, lineNum) {
+  const statusEl = document.getElementById('vid-status-' + lineNum);
+  const inputEl = document.getElementById('video-url-' + lineNum);
+  
+  const videoFile = files.find(f => f.type.startsWith('video/'));
+  if (!videoFile) {
+      if (statusEl) {
+        statusEl.textContent = 'No valid video selected.';
+        statusEl.style.color = '#dc2626';
+        setTimeout(() => { statusEl.textContent = ''; }, 3000);
+      }
+      return;
+  }
+  
+  if (statusEl) {
+    statusEl.textContent = 'Uploading video...';
+    statusEl.style.color = '#6D28D9';
+  }
+  
+  const fd = new FormData();
+  fd.append('video', videoFile);
+  fd.append('line', lineNum);
+  fd.append('csrf_token', window.csrfTokenGlobal);
+  
+  try {
+    const res = await fetch('api/upload-import-video.php', { method: 'POST', body: fd });
+    let data;
+    try {
+      const text = await res.text();
+      try {
+        data = JSON.parse(text);
+      } catch(e) {
+        if (statusEl) {
+          statusEl.textContent = 'HTTP ' + res.status + ' (Server error)';
+          statusEl.style.color = '#dc2626';
+        }
+        return;
+      }
+    } catch(e) {
+      if (statusEl) {
+        statusEl.textContent = 'Network error reading response';
+        statusEl.style.color = '#dc2626';
+      }
+      return;
+    }
+    
+    if (data.success) {
+      if (inputEl) inputEl.value = data.path; // Set input field to path
+      if (statusEl) {
+        statusEl.textContent = 'Video uploaded successfully';
+        statusEl.style.color = '#16a34a';
+      }
+    } else {
+      if (statusEl) {
+        statusEl.textContent = data.error || 'Upload failed';
+        statusEl.style.color = '#dc2626';
+      }
+    }
+  } catch(e) {
+    if (statusEl) {
+      statusEl.textContent = 'Network error';
+      statusEl.style.color = '#dc2626';
+    }
+  }
+  
+  if (statusEl) setTimeout(() => { statusEl.textContent = ''; }, 5000);
+};
+function handleImportVideoFiles(files, lineNum) { return window.handleImportVideoFiles(files, lineNum); }
+
+window.handleImportVideoSelect = function(input, lineNum) {
+  if (input.files && input.files.length) window.handleImportVideoFiles(Array.from(input.files), lineNum);
+  input.value = '';
+};
+function handleImportVideoSelect(input, lineNum) { return window.handleImportVideoSelect(input, lineNum); }
+
+window.handleImportVideoDrop = function(e, lineNum) {
+  const files = e.dataTransfer.files;
+  if (files.length) window.handleImportVideoFiles(Array.from(files), lineNum);
+};
+function handleImportVideoDrop(e, lineNum) { return window.handleImportVideoDrop(e, lineNum); }
+
+window.renderImportImagePreviews = function(lineNum) {
+  const container = document.getElementById('img-preview-' + lineNum);
+  const countBadge = document.getElementById('img-count-' + lineNum);
+  const imgs = window.importImagesByLine[lineNum] || [];
+  if (countBadge) {
+    countBadge.textContent = imgs.length;
+    if (imgs.length > 0) {
+      countBadge.style.background = '#DCFCE7';
+      countBadge.style.color = '#16a34a';
+    }
+  }
+  if (container) {
+    container.innerHTML = imgs.map((path, i) => 
+      '<div style="position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid #E8E5DF;">' +
+      '<img src="' + path + '" style="width:100%;height:100%;object-fit:cover;">' +
+      '<button onclick="window.removeImportImage(' + lineNum + ',' + i + ');event.stopPropagation()" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:18px;text-align:center;">✕</button>' +
+      (i === 0 ? '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:8px;text-align:center;padding:1px;font-weight:700;">PRIMARY</div>' : '') +
+      '</div>'
+    ).join('');
+  }
+};
+function renderImportImagePreviews(lineNum) { return window.renderImportImagePreviews(lineNum); }
+
+window.removeImportImage = function(lineNum, index) {
+  if (window.importImagesByLine && window.importImagesByLine[lineNum]) {
+    window.importImagesByLine[lineNum].splice(index, 1);
+    window.renderImportImagePreviews(lineNum);
+  }
+};
+function removeImportImage(lineNum, index) { return window.removeImportImage(lineNum, index); }
+
+window.onAdminGridInput = function(input, type) {
+  const val = input.value.trim().toLowerCase();
+  const validList = type === 'category' ? (window.validAdminCatsLower || []) : (window.validAdminBrandsLower || []);
+  const isMatch = val === '' || validList.includes(val);
+
+  if (val !== '' && isMatch) {
+    input.style.borderColor = '#166534';
+    input.style.background = '#F0FDF4';
+    const row = input.closest('tr');
+    if (row) {
+      const badge = row.querySelector('.admin-result-cell .msg-span');
+      if (badge && !badge.textContent.includes('Imported') && !badge.textContent.includes('Updated')) {
+        badge.style.background = '#E6F7ED';
+        badge.style.color = '#276749';
+        badge.textContent = 'Ready';
+      }
+    }
+  } else if (val !== '' && !isMatch) {
+    input.style.borderColor = '#EAB308';
+    input.style.background = '#FEFCE8';
+  } else {
+    input.style.borderColor = '#D1D5DB';
+    input.style.background = '#FFFFFF';
+  }
+};
+function onAdminGridInput(input, type) { return window.onAdminGridInput(input, type); }
+
+window.handleAdminFileSelected = function(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    const promptEl = document.getElementById('adminDropzonePrompt');
+    const selectedEl = document.getElementById('adminFileSelectedArea');
+    const nameEl = document.getElementById('adminFileNameDisp');
+    const sizeEl = document.getElementById('adminFileSizeDisp');
+    if (promptEl) promptEl.style.display = 'none';
+    if (selectedEl) selectedEl.style.display = 'block';
+    if (nameEl) nameEl.textContent = file.name;
+    if (sizeEl) sizeEl.textContent = (file.size / 1024).toFixed(1) + ' KB';
+  }
+};
+function handleAdminFileSelected(input) { return window.handleAdminFileSelected(input); }
+
+window.selectAdminModeCard = function(mode) {
+  const cardInsert = document.getElementById('adminModeCardInsert');
+  const cardUpsert = document.getElementById('adminModeCardUpsert');
+  if (cardInsert) cardInsert.classList.toggle('active', mode === 'insert');
+  if (cardUpsert) cardUpsert.classList.toggle('active', mode === 'upsert');
+};
+function selectAdminModeCard(mode) { return window.selectAdminModeCard(mode); }
+
+function initAdminImportPage() {
+  const adminDropzone = document.getElementById('adminDropzone');
+  if (adminDropzone) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      adminDropzone.addEventListener(eventName, (e) => { e.preventDefault(); adminDropzone.classList.add('dragover'); }, false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+      adminDropzone.addEventListener(eventName, (e) => { e.preventDefault(); adminDropzone.classList.remove('dragover'); }, false);
+    });
+    adminDropzone.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files.length) {
+        const fileInput = document.getElementById('adminCsvFileInput');
+        if (fileInput) {
+          fileInput.files = files;
+          window.handleAdminFileSelected(fileInput);
+        }
+      }
+    });
+  }
+
+  const form = document.getElementById('adminImportForm');
+  if (form) {
+    const CHUNK_SIZE = 50;
+
+    form.addEventListener('submit', async function(e) {
+      const submitter = e.submitter;
+      if (submitter && submitter.value === 'cancel') return;
+      e.preventDefault();
+
+      const startBtn = document.getElementById('adminStartImportBtn');
+      if (startBtn) {
+        startBtn.disabled = true;
+        startBtn.innerHTML = 'Processing Batch…';
+      }
+
+      const mode = form.querySelector('input[name="mode"]:checked').value;
+      const sellerId = form.querySelector('select[name="seller_id"]').value;
+      const csrfToken = form.querySelector('input[name="_csrf_token"]').value;
+      const importKey = form.querySelector('input[name="import_key"]').value;
+
+      const progressContainer = document.getElementById('asyncProgressContainer');
+      const progressBar = document.getElementById('asyncProgressBar');
+      const progressDetail = document.getElementById('asyncProgressDetail');
+      if (progressContainer) progressContainer.style.display = 'block';
+
+      const overrides = {};
+      document.querySelectorAll('.admin-cat-input, .admin-brand-input').forEach(inp => {
+        const line = inp.dataset.line;
+        if (!overrides[line]) overrides[line] = {};
+        if (inp.classList.contains('admin-cat-input')) overrides[line].category = inp.value;
+        if (inp.classList.contains('admin-brand-input')) overrides[line].brand = inp.value;
+      });
+
+      document.querySelectorAll('.override-video').forEach(inp => {
+        const line = inp.dataset.line;
+        if (inp.value.trim() !== '') {
+          if (!overrides[line]) overrides[line] = {};
+          overrides[line].video_url = inp.value.trim();
+        }
+      });
+
+      /* Include uploaded images in overrides so the server can link them */
+      for (const line in window.importImagesByLine) {
+        if (!overrides[line]) overrides[line] = {};
+        overrides[line].images = window.importImagesByLine[line];
+      }
+
+      let offset = 0;
+      let processedTotal = 0;
+      let updatedTotal = 0;
+      let createdTotal = 0;
+      let failedTotal = 0;
+      const totalValid = document.querySelectorAll('.admin-cat-input').length;
+      let retries = 0;
+
+      while (true) {
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+        formData.append('action', 'import_chunk');
+        formData.append('import_key', importKey);
+        formData.append('mode', mode);
+        formData.append('seller_id', sellerId);
+        formData.append('offset', offset);
+        formData.append('limit', CHUNK_SIZE);
+        formData.append('overrides', JSON.stringify(overrides));
+        formData.append('ajax', '1');
+
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 30000);
+          
+          const response = await fetch(window.location.href, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData,
+            signal: controller.signal
+          });
+          clearTimeout(timeout);
+
+          if (!response.ok) {
+            throw new Error('Server returned status ' + response.status);
+          }
+
+          const text = await response.text();
+          let data;
+          try {
+            data = JSON.parse(text);
+          } catch(parseErr) {
+            console.error('Non-JSON response:', text.substring(0, 500));
+            throw new Error('Server returned invalid response. Check error logs.');
+          }
+
+          retries = 0; // reset retries on success
+
+          if (!data.success) {
+            alert('Import error: ' + (data.error || 'Unknown error occurred.'));
+            if (startBtn) {
+              startBtn.disabled = false;
+              startBtn.textContent = 'Retry Batch Import';
+            }
+            return;
+          }
+
+          if (data.outcomes) {
+            for (const line in data.outcomes) {
+              const outcome = data.outcomes[line];
+              const rowElem = document.getElementById('admin-row-' + line);
+              if (rowElem) {
+                const resCell = rowElem.querySelector('.admin-result-cell');
+                if (resCell) {
+                  if (outcome.success) {
+                    if (outcome.action === 'updated') {
+                      updatedTotal++;
+                      resCell.innerHTML = '<span style="background:#E0F2FE;color:#0369A1;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:800;">Updated (#' + outcome.id + ')</span>';
+                    } else {
+                      createdTotal++;
+                      resCell.innerHTML = '<span style="background:#E6F7ED;color:#276749;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:800;">Imported (#' + outcome.id + ')</span>';
+                    }
+                  } else {
+                    failedTotal++;
+                    resCell.innerHTML = '<span style="background:#FFF1F0;color:#CF1322;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;">' + (outcome.error || 'Failed') + '</span>';
+                  }
+                }
+              }
+            }
+          }
+
+          processedTotal += (data.processed || 0);
+          offset += CHUNK_SIZE;
+
+          const percent = Math.min(100, Math.round((processedTotal / (totalValid || 1)) * 100));
+          if (progressBar) progressBar.style.width = percent + '%';
+          if (progressDetail) progressDetail.textContent = processedTotal + ' of ' + totalValid + ' items processed (' + percent + '%)';
+
+          if (data.done || processedTotal >= totalValid || (data.processed || 0) === 0) break;
+
+        } catch (err) {
+          console.error('Chunk error:', err);
+          retries++;
+          if (retries >= 3) {
+            alert('Import failed after 3 retries: ' + err.message);
+            if (startBtn) {
+              startBtn.disabled = false;
+              startBtn.textContent = 'Retry Batch Import';
+            }
+            return;
+          }
+          if (progressDetail) progressDetail.textContent = 'Retry ' + retries + '/3 — ' + err.message;
+          await new Promise(r => setTimeout(r, 2000));
+        }
+      }
+
+      form.style.display = 'none';
+      const progressTitle = document.getElementById('asyncProgressTitle');
+      if (progressTitle) progressTitle.textContent = '🎉 Batch Import Complete!';
+      if (progressBar) progressBar.style.background = '#00a854';
+      if (progressDetail) progressDetail.innerHTML = '<strong>Successfully processed ' + processedTotal + ' items:</strong> ' + createdTotal + ' created (pending review), ' + updatedTotal + ' updated' + (failedTotal ? ', ' + failedTotal + ' failed' : '') + '.<br><div style="margin-top:10px;padding:10px 14px;background:#E0F2FE;border:1px solid #BAE6FD;border-radius:8px;color:#0369A1;font-size:12px;">📋 <strong>Next Step:</strong> Uploaded products are placed in <strong>Pending Review</strong>. Go to <a href="approvals.php" style="color:#0284C7;font-weight:700;text-decoration:underline;">Admin Approvals</a> to inspect and publish them live.</div>';
+    });
+  }
+}
+
+if (document.readyState !== 'loading') {
+  initAdminImportPage();
+} else {
+  document.addEventListener('DOMContentLoaded', initAdminImportPage);
+}
+</script>
+
 <style>
 .admin-import-header {
   display: flex;
@@ -672,407 +1125,5 @@ include 'layout/header.php';
   </div>
 </div>
 <?php endif; ?>
-
-<style>
-.import-main-row:hover { background: #FAFAFC; }
-.import-main-row td { vertical-align: middle; }
-.import-img-dropzone:hover { border-color: #6D28D9 !important; background: #F5F3FF !important; }
-</style>
-
-<script>
-window.validAdminCatsLower = <?= json_encode(array_values(array_map('strtolower', $allCats ?? []))) ?>;
-window.validAdminBrandsLower = <?= json_encode(array_values(array_map('strtolower', $allBrands ?? []))) ?>;
-window.csrfTokenGlobal = '<?= htmlspecialchars(Csrf::getToken()) ?>';
-
-/* Track uploaded images per line */
-window.importImagesByLine = window.importImagesByLine || {};
-
-// toggleDetailRow has been moved to inline JS for bulletproof reliability
-
-window.uploadSingleImage = async function(file, lineNum) {
-  const fd = new FormData();
-  fd.append('image', file);
-  fd.append('line', lineNum);
-  fd.append('csrf_token', window.csrfTokenGlobal);
-  try {
-    const res = await fetch('api/upload-import-image.php', { method: 'POST', body: fd });
-    let data;
-    try {
-      const text = await res.text();
-      try {
-        data = JSON.parse(text);
-      } catch(e) {
-        console.error('Non-JSON response (Status ' + res.status + '):', text);
-        return { ok: false, error: 'HTTP ' + res.status + ' ' + res.statusText + (text ? ': ' + text.substring(0, 40) : ' (empty body)') };
-      }
-    } catch(e) {
-      return { ok: false, error: 'Server error (failed to read response)' };
-    }
-    
-    if (data.success) {
-      if (!window.importImagesByLine[lineNum]) window.importImagesByLine[lineNum] = [];
-      window.importImagesByLine[lineNum].push(data.path);
-      window.renderImportImagePreviews(lineNum);
-      return { ok: true };
-    } else {
-      console.error('Upload error:', data.error);
-      return { ok: false, error: data.error || 'Upload failed' };
-    }
-  } catch(e) {
-    console.error('Upload failed:', e);
-    return { ok: false, error: 'Network error' };
-  }
-}
-
-window.handleImportImageFiles = async function(files, lineNum) {
-  const statusEl = document.getElementById('img-status-' + lineNum);
-  let uploaded = 0;
-  let failed = 0;
-  let lastError = '';
-  
-  const imageFiles = files.filter(f => f.type.startsWith('image/'));
-  if (imageFiles.length === 0) {
-      statusEl.textContent = 'No valid images selected.';
-      statusEl.style.color = '#dc2626';
-      setTimeout(() => { statusEl.textContent = ''; }, 3000);
-      return;
-  }
-  
-  statusEl.style.color = '#6D28D9';
-  
-  for (let i = 0; i < imageFiles.length; i++) {
-    statusEl.textContent = 'Uploading image ' + (i + 1) + ' of ' + imageFiles.length + '...';
-    const result = await window.uploadSingleImage(imageFiles[i], lineNum);
-    if (result.ok) {
-        uploaded++;
-    } else {
-        failed++;
-        lastError = result.error;
-    }
-  }
-  
-  if (failed > 0) {
-      statusEl.textContent = uploaded + ' uploaded, ' + failed + ' failed (' + lastError + ')';
-      statusEl.style.color = '#dc2626';
-  } else {
-      statusEl.textContent = uploaded + ' image(s) uploaded successfully';
-      statusEl.style.color = '#16a34a';
-  }
-  
-  setTimeout(() => { statusEl.textContent = ''; }, 5000);
-}
-
-window.handleImportImageSelect = function(input, lineNum) {
-  if (input.files && input.files.length) window.handleImportImageFiles(Array.from(input.files), lineNum);
-  input.value = ''; // reset for re-upload
-}
-
-window.handleImportImageDrop = function(e, lineNum) {
-  const files = e.dataTransfer.files;
-  if (files.length) window.handleImportImageFiles(Array.from(files), lineNum);
-}
-
-// VIDEO UPLOAD
-window.handleImportVideoFiles = async function(files, lineNum) {
-  const statusEl = document.getElementById('vid-status-' + lineNum);
-  const inputEl = document.getElementById('video-url-' + lineNum);
-  
-  const videoFile = files.find(f => f.type.startsWith('video/'));
-  if (!videoFile) {
-      statusEl.textContent = 'No valid video selected.';
-      statusEl.style.color = '#dc2626';
-      setTimeout(() => { statusEl.textContent = ''; }, 3000);
-      return;
-  }
-  
-  statusEl.textContent = 'Uploading video...';
-  statusEl.style.color = '#6D28D9';
-  
-  const fd = new FormData();
-  fd.append('video', videoFile);
-  fd.append('line', lineNum);
-  fd.append('csrf_token', window.csrfTokenGlobal);
-  
-  try {
-    const res = await fetch('api/upload-import-video.php', { method: 'POST', body: fd });
-    let data;
-    try {
-      const text = await res.text();
-      try {
-        data = JSON.parse(text);
-      } catch(e) {
-        statusEl.textContent = 'HTTP ' + res.status + ' (Server error)';
-        statusEl.style.color = '#dc2626';
-        return;
-      }
-    } catch(e) {
-      statusEl.textContent = 'Network error reading response';
-      statusEl.style.color = '#dc2626';
-      return;
-    }
-    
-    if (data.success) {
-      inputEl.value = data.path; // Set input field to path
-      statusEl.textContent = 'Video uploaded successfully';
-      statusEl.style.color = '#16a34a';
-    } else {
-      statusEl.textContent = data.error || 'Upload failed';
-      statusEl.style.color = '#dc2626';
-    }
-  } catch(e) {
-    statusEl.textContent = 'Network error';
-    statusEl.style.color = '#dc2626';
-  }
-  
-  setTimeout(() => { statusEl.textContent = ''; }, 5000);
-}
-
-window.handleImportVideoSelect = function(input, lineNum) {
-  if (input.files && input.files.length) window.handleImportVideoFiles(Array.from(input.files), lineNum);
-  input.value = '';
-}
-
-window.handleImportVideoDrop = function(e, lineNum) {
-  const files = e.dataTransfer.files;
-  if (files.length) window.handleImportVideoFiles(Array.from(files), lineNum);
-}
-
-window.renderImportImagePreviews = function(lineNum) {
-  const container = document.getElementById('img-preview-' + lineNum);
-  const countBadge = document.getElementById('img-count-' + lineNum);
-  const imgs = window.importImagesByLine[lineNum] || [];
-  countBadge.textContent = imgs.length;
-  if (imgs.length > 0) {
-    countBadge.style.background = '#DCFCE7';
-    countBadge.style.color = '#16a34a';
-  }
-  container.innerHTML = imgs.map((path, i) => 
-    '<div style="position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid #E8E5DF;">' +
-    '<img src="' + (path.startsWith('/') ? path : path) + '" style="width:100%;height:100%;object-fit:cover;">' +
-    '<button onclick="removeImportImage(' + lineNum + ',' + i + ');event.stopPropagation()" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:18px;text-align:center;">✕</button>' +
-    (i === 0 ? '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:8px;text-align:center;padding:1px;font-weight:700;">PRIMARY</div>' : '') +
-    '</div>'
-  ).join('');
-}
-
-function removeImportImage(lineNum, index) {
-  if (importImagesByLine[lineNum]) {
-    importImagesByLine[lineNum].splice(index, 1);
-    renderImportImagePreviews(lineNum);
-  }
-}
-
-function onAdminGridInput(input, type) {
-  const val = input.value.trim().toLowerCase();
-  const validList = type === 'category' ? validAdminCatsLower : validAdminBrandsLower;
-  const isMatch = val === '' || validList.includes(val);
-
-  if (val !== '' && isMatch) {
-    input.style.borderColor = '#166534';
-    input.style.background = '#F0FDF4';
-    const row = input.closest('tr');
-    const badge = row.querySelector('.admin-result-cell .msg-span');
-    if (badge && !badge.textContent.includes('Imported') && !badge.textContent.includes('Updated')) {
-      badge.style.background = '#E6F7ED';
-      badge.style.color = '#276749';
-      badge.textContent = 'Ready';
-    }
-  } else if (val !== '' && !isMatch) {
-    input.style.borderColor = '#EAB308';
-    input.style.background = '#FEFCE8';
-  } else {
-    input.style.borderColor = '#D1D5DB';
-    input.style.background = '#FFFFFF';
-  }
-}
-
-function handleAdminFileSelected(input) {
-  if (input.files && input.files[0]) {
-    const file = input.files[0];
-    document.getElementById('adminDropzonePrompt').style.display = 'none';
-    document.getElementById('adminFileSelectedArea').style.display = 'block';
-    document.getElementById('adminFileNameDisp').textContent = file.name;
-    document.getElementById('adminFileSizeDisp').textContent = (file.size / 1024).toFixed(1) + ' KB';
-  }
-}
-
-function selectAdminModeCard(mode) {
-  document.getElementById('adminModeCardInsert').classList.toggle('active', mode === 'insert');
-  document.getElementById('adminModeCardUpsert').classList.toggle('active', mode === 'upsert');
-}
-
-const adminDropzone = document.getElementById('adminDropzone');
-if (adminDropzone) {
-  ['dragenter', 'dragover'].forEach(eventName => {
-    adminDropzone.addEventListener(eventName, (e) => { e.preventDefault(); adminDropzone.classList.add('dragover'); }, false);
-  });
-  ['dragleave', 'drop'].forEach(eventName => {
-    adminDropzone.addEventListener(eventName, (e) => { e.preventDefault(); adminDropzone.classList.remove('dragover'); }, false);
-  });
-  adminDropzone.addEventListener('drop', (e) => {
-    const files = e.dataTransfer.files;
-    if (files.length) {
-      const fileInput = document.getElementById('adminCsvFileInput');
-      fileInput.files = files;
-      handleAdminFileSelected(fileInput);
-    }
-  });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  const form = document.getElementById('adminImportForm');
-  if (!form) return;
-
-  const CHUNK_SIZE = 50;
-
-  form.addEventListener('submit', async function(e) {
-    const submitter = e.submitter;
-    if (submitter && submitter.value === 'cancel') return;
-    e.preventDefault();
-
-    const startBtn = document.getElementById('adminStartImportBtn');
-    startBtn.disabled = true;
-    startBtn.innerHTML = 'Processing Batch…';
-
-    const mode = form.querySelector('input[name="mode"]:checked').value;
-    const sellerId = form.querySelector('select[name="seller_id"]').value;
-    const csrfToken = form.querySelector('input[name="_csrf_token"]').value;
-    const importKey = form.querySelector('input[name="import_key"]').value;
-
-    const progressContainer = document.getElementById('asyncProgressContainer');
-    const progressBar = document.getElementById('asyncProgressBar');
-    const progressDetail = document.getElementById('asyncProgressDetail');
-    progressContainer.style.display = 'block';
-
-    const overrides = {};
-    document.querySelectorAll('.admin-cat-input, .admin-brand-input').forEach(inp => {
-      const line = inp.dataset.line;
-      if (!overrides[line]) overrides[line] = {};
-      if (inp.classList.contains('admin-cat-input')) overrides[line].category = inp.value;
-      if (inp.classList.contains('admin-brand-input')) overrides[line].brand = inp.value;
-    });
-
-    document.querySelectorAll('.override-video').forEach(inp => {
-      const line = inp.dataset.line;
-      if (inp.value.trim() !== '') {
-        if (!overrides[line]) overrides[line] = {};
-        overrides[line].video_url = inp.value.trim();
-      }
-    });
-
-    /* Include uploaded images in overrides so the server can link them */
-    for (const line in importImagesByLine) {
-      if (!overrides[line]) overrides[line] = {};
-      overrides[line].images = importImagesByLine[line];
-    }
-
-    let offset = 0;
-    let processedTotal = 0;
-    let updatedTotal = 0;
-    let createdTotal = 0;
-    let failedTotal = 0;
-    const totalValid = document.querySelectorAll('.admin-cat-input').length;
-    let retries = 0;
-
-    while (true) {
-      const formData = new FormData();
-      formData.append('csrf_token', csrfToken);
-      formData.append('action', 'import_chunk');
-      formData.append('import_key', importKey);
-      formData.append('mode', mode);
-      formData.append('seller_id', sellerId);
-      formData.append('offset', offset);
-      formData.append('limit', CHUNK_SIZE);
-      formData.append('overrides', JSON.stringify(overrides));
-      formData.append('ajax', '1');
-
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
-        
-        const response = await fetch(window.location.href, {
-          method: 'POST',
-          headers: { 'X-Requested-With': 'XMLHttpRequest' },
-          body: formData,
-          signal: controller.signal
-        });
-        clearTimeout(timeout);
-
-        if (!response.ok) {
-          throw new Error('Server returned status ' + response.status);
-        }
-
-        const text = await response.text();
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch(parseErr) {
-          console.error('Non-JSON response:', text.substring(0, 500));
-          throw new Error('Server returned invalid response. Check error logs.');
-        }
-
-        retries = 0; // reset retries on success
-
-        if (!data.success) {
-          alert('Import error: ' + (data.error || 'Unknown error occurred.'));
-          startBtn.disabled = false;
-          startBtn.textContent = 'Retry Batch Import';
-          return;
-        }
-
-        if (data.outcomes) {
-          for (const line in data.outcomes) {
-            const outcome = data.outcomes[line];
-            const rowElem = document.getElementById('admin-row-' + line);
-            if (rowElem) {
-              const resCell = rowElem.querySelector('.admin-result-cell');
-              if (resCell) {
-                if (outcome.success) {
-                  if (outcome.action === 'updated') {
-                    updatedTotal++;
-                    resCell.innerHTML = '<span style="background:#E0F2FE;color:#0369A1;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:800;">Updated (#' + outcome.id + ')</span>';
-                  } else {
-                    createdTotal++;
-                    resCell.innerHTML = '<span style="background:#E6F7ED;color:#276749;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:800;">Imported (#' + outcome.id + ')</span>';
-                  }
-                } else {
-                  failedTotal++;
-                  resCell.innerHTML = '<span style="background:#FFF1F0;color:#CF1322;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;">' + (outcome.error || 'Failed') + '</span>';
-                }
-              }
-            }
-          }
-        }
-
-        processedTotal += (data.processed || 0);
-        offset += CHUNK_SIZE;
-
-        const percent = Math.min(100, Math.round((processedTotal / (totalValid || 1)) * 100));
-        progressBar.style.width = percent + '%';
-        progressDetail.textContent = processedTotal + ' of ' + totalValid + ' items processed (' + percent + '%)';
-
-        if (data.done || processedTotal >= totalValid || (data.processed || 0) === 0) break;
-
-      } catch (err) {
-        console.error('Chunk error:', err);
-        retries++;
-        if (retries >= 3) {
-          alert('Import failed after 3 retries: ' + err.message);
-          startBtn.disabled = false;
-          startBtn.textContent = 'Retry Batch Import';
-          return;
-        }
-        progressDetail.textContent = 'Retry ' + retries + '/3 — ' + err.message;
-        await new Promise(r => setTimeout(r, 2000));
-      }
-    }
-
-    form.style.display = 'none';
-    document.getElementById('asyncProgressTitle').textContent = '🎉 Batch Import Complete!';
-    progressBar.style.background = '#00a854';
-    progressDetail.innerHTML = '<strong>Successfully processed ' + processedTotal + ' items:</strong> ' + createdTotal + ' created (pending review), ' + updatedTotal + ' updated' + (failedTotal ? ', ' + failedTotal + ' failed' : '') + '.<br><div style="margin-top:10px;padding:10px 14px;background:#E0F2FE;border:1px solid #BAE6FD;border-radius:8px;color:#0369A1;font-size:12px;">📋 <strong>Next Step:</strong> Uploaded products are placed in <strong>Pending Review</strong>. Go to <a href="approvals.php" style="color:#0284C7;font-weight:700;text-decoration:underline;">Admin Approvals</a> to inspect and publish them live.</div>';
-  });
-});
-</script>
 
 <?php include 'layout/footer.php'; ?>
