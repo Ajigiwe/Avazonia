@@ -131,6 +131,7 @@ $basePath = APP_URL . '/seller';
     <nav class="drawer-nav">
         <a href="<?= $basePath ?>/dashboard" class="<?= $page==='overview'?'active':'' ?>">&#9632; Overview</a>
         <a href="<?= $basePath ?>/products" class="<?= $page==='products'?'active':'' ?>">&#9733; Products</a>
+        <a href="<?= $basePath ?>/products/import" class="<?= $page==='import_products'?'active':'' ?>">&#8675; Import CSV</a>
         <a href="<?= $basePath ?>/orders" class="<?= $page==='orders'?'active':'' ?>">&#9776; Orders</a>
         <a href="<?= $basePath ?>/rfqs" class="<?= $page==='rfqs'?'active':'' ?>">&#9993; RFQs</a>
         <a href="<?= $basePath ?>/finances" class="<?= $page==='finances'?'active':'' ?>">&#9830; Finances</a>
@@ -160,6 +161,9 @@ $basePath = APP_URL . '/seller';
         <a href="<?= $basePath ?>/products" class="<?= $page==='products'?'active':'' ?>">
             <span class="nav-icon">&#9733;</span> Products
             <?php if(($stats['pending_products']??0)>0): ?><span class="badge"><?= (int)$stats['pending_products'] ?></span><?php endif; ?>
+        </a>
+        <a href="<?= $basePath ?>/products/import" class="<?= $page==='import_products'?'active':'' ?>">
+            <span class="nav-icon">&#8675;</span> Import CSV
         </a>
         <a href="<?= $basePath ?>/orders" class="<?= $page==='orders'?'active':'' ?>">
             <span class="nav-icon">&#9776;</span> Orders

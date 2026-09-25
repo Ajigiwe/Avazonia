@@ -15,16 +15,6 @@
 <?php if (!empty($error)): ?><div style="background:#fef3c7;border:1.5px solid #f59e0b;padding:12px 14px;font-family:var(--f-mono);font-size:11px;color:#92400e;margin-bottom:14px;">&#9888; <?= htmlspecialchars($error) ?></div><?php endif; ?>
 <?php if (!empty($_GET['success'])): ?><div style="background:#e6f7ec;border:1.5px solid #00a854;padding:12px 14px;font-family:var(--f-mono);font-size:11px;color:#00a854;margin-bottom:14px;">&#10003; Changes saved successfully.</div><?php endif; ?>
 
-<?php if (empty($seller['is_verified'])): ?>
-<div class="seller-notice-pending">
-    <div class="np-icon">&#9203;</div>
-    <div>
-        <div class="np-title">Verification in progress</div>
-        <div class="np-text">Your Ghana Card + Face ID is under review. You can list products right after admin verifies you.</div>
-    </div>
-</div>
-<?php endif; ?>
-
 <div class="seller-stats-bar">
     <div class="seller-stat-card">
         <div class="stat-label">Total Products</div>

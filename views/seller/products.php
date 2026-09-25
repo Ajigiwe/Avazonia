@@ -7,15 +7,12 @@
         <div style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px;">Manage your product listings &middot; <?= (int)($total_products ?? count($products)) ?> total</div>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-    <?php if (!empty($seller['is_verified'])): ?><a href="<?= APP_URL ?>/seller/products/import" class="seller-btn-secondary">Import CSV</a><?php endif; ?>
-    <a href="<?= APP_URL ?>/seller/new-product" style="background:var(--red);color:#fff;padding:12px 24px;font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;text-decoration:none;letter-spacing:0.05em;">+ List Product</a>
+        <a href="<?= APP_URL ?>/seller/products/import" class="seller-btn-secondary" style="display:inline-flex;align-items:center;gap:6px;padding:12px 18px;border:1px solid var(--light-gray);background:#fff;color:var(--ink);font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;text-decoration:none;letter-spacing:0.05em;">📥 Import CSV</a>
+        <a href="<?= APP_URL ?>/seller/new-product" style="background:var(--red);color:#fff;padding:12px 24px;font-family:var(--f-semi);font-size:11px;font-weight:800;text-transform:uppercase;text-decoration:none;letter-spacing:0.05em;">+ List Product</a>
     </div>
 </div>
 
 <?php if(!empty($success)): ?><div style="background:#e6f7ec;border:1.5px solid #00a854;padding:12px 14px;font-family:var(--f-mono);font-size:11px;color:#00a854;margin-bottom:14px;">&#10003; <?= $success==='deleted'?'Product removed from listings.':'Product saved successfully.' ?></div><?php endif; ?>
-<?php if (empty($seller['is_verified'])): ?>
-<div style="background:#fff7e6;border:1.5px solid #f59e0b;padding:12px 14px;font-family:var(--f-mono);font-size:11px;color:#92400e;margin-bottom:14px;">&#9888; Verification required to list products.</div>
-<?php endif; ?>
 
 <div class="seller-stats-bar">
     <div class="seller-stat-card"><div class="stat-label">Total</div><div class="stat-value"><?= (int)($stats['total_products']??0) ?></div></div>
@@ -57,15 +54,13 @@
                 </td>
                 <td style="padding:14px 20px;text-align:right;">
                     <a href="<?= APP_URL ?>/product/<?= htmlspecialchars($p['slug']) ?>" style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);text-decoration:none;margin-right:12px;">View</a>
-                    <?php if(!empty($seller['is_verified'])): ?>
                     <a href="<?= APP_URL ?>/seller/products/edit/<?= (int)$p['id'] ?>" style="font-family:var(--f-mono);font-size:10px;color:var(--ink);text-decoration:none;font-weight:700;margin-right:12px;">Edit</a>
                     <a href="<?= APP_URL ?>/seller/products/delete/<?= (int)$p['id'] ?>" style="font-family:var(--f-mono);font-size:10px;color:#f5222d;text-decoration:none;" onclick="return confirm('Remove this product from listings?')">Remove</a>
-                    <?php endif; ?>
                 </td>
             </tr>
             <?php endforeach; ?>
             <?php if(empty($products)): ?>
-            <tr><td colspan="6" style="padding:40px;text-align:center;color:var(--mid-gray);font-size:12px;">No products yet. <a href="<?= APP_URL ?>/seller/new-product" style="color:var(--red);">List your first product</a></td></tr>
+            <tr><td colspan="6" style="padding:40px;text-align:center;color:var(--mid-gray);font-size:12px;">No products yet. <a href="<?= APP_URL ?>/seller/new-product" style="color:var(--red);">List your first product</a> or <a href="<?= APP_URL ?>/seller/products/import" style="color:var(--ink);font-weight:700;">Import CSV</a></td></tr>
             <?php endif; ?>
         </tbody>
     </table>
@@ -86,9 +81,7 @@
             </div>
         </div>
         <div class="seller-product-actions">
-            <?php if(!empty($seller['is_verified'])): ?>
             <a href="<?= APP_URL ?>/seller/products/edit/<?= (int)$p['id'] ?>" class="btn-edit">Edit</a>
-            <?php endif; ?>
         </div>
     </div>
     <?php endforeach; ?>
