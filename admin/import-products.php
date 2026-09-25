@@ -481,9 +481,9 @@ include 'layout/header.php';
           $rowTags = htmlspecialchars($item['row']['tags'] ?? '');
         ?>
           <!-- Main summary row -->
-          <tr id="admin-row-<?= $lineNum ?>" class="import-main-row" style="border-bottom:1px solid #F0EDE8;cursor:pointer;" onclick="toggleDetailRow(<?= $lineNum ?>)">
+          <tr id="admin-row-<?= $lineNum ?>" class="import-main-row" style="border-bottom:1px solid #F0EDE8;cursor:pointer;" onclick="document.getElementById('expand-icon-<?= $lineNum ?>').click();">
             <td style="padding:10px 12px;text-align:center;">
-              <button type="button" id="expand-icon-<?= $lineNum ?>" onclick="toggleDetailRow(<?= $lineNum ?>); event.stopPropagation();" style="background:none;border:none;cursor:pointer;display:inline-block;transition:transform .2s;font-size:14px;color:#55514E;padding:4px;outline:none;">▶</button>
+              <button type="button" id="expand-icon-<?= $lineNum ?>" onclick="const d = document.getElementById('detail-row-<?= $lineNum ?>'); const open = d.style.display !== 'none'; d.style.display = open ? 'none' : 'table-row'; this.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)'; event.stopPropagation();" style="background:none;border:none;cursor:pointer;display:inline-block;transition:transform .2s;font-size:14px;color:#55514E;padding:4px;outline:none;">▶</button>
             </td>
             <td style="padding:10px 12px;font-weight:700;color:#55514E;font-size:13px;"><?= $lineNum ?></td>
             <td style="padding:10px 12px;font-weight:700;color:#0D0D0D;font-size:13px;"><?= htmlspecialchars($item['row']['name']) ?></td>
@@ -689,16 +689,7 @@ const csrfTokenGlobal = '<?= htmlspecialchars(Csrf::getToken()) ?>';
 /* Track uploaded images per line */
 const importImagesByLine = {};
 
-function toggleDetailRow(lineNum) {
-  const detail = document.getElementById('detail-row-' + lineNum);
-  const icon = document.getElementById('expand-icon-' + lineNum);
-  if (!detail) return;
-  const isOpen = detail.style.display !== 'none';
-  detail.style.display = isOpen ? 'none' : 'table-row';
-  if (icon) {
-    icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
-  }
-}
+// toggleDetailRow has been moved to inline JS for bulletproof reliability
 
 async function uploadSingleImage(file, lineNum) {
   const fd = new FormData();
