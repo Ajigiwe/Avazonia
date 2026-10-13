@@ -429,25 +429,31 @@
       <table class="admin-table" style="width:100%;border-collapse:collapse;text-align:left;">
         <thead>
           <tr style="background:var(--off);border-bottom:1px solid var(--light-gray);">
+            <th style="padding:14px 10px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;width:36px;"></th>
             <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;width:50px;">Row</th>
             <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;">Product Name</th>
             <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;width:120px;">SKU</th>
             <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;width:100px;">Price</th>
             <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;min-width:220px;">Category Search</th>
             <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;min-width:180px;">Brand Search</th>
+            <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;width:90px;">Images</th>
             <th style="padding:14px 16px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;">Status / Result</th>
           </tr>
         </thead>
         <tbody>
-        <?php foreach($preview as $item): 
+        <?php foreach($preview as $item):
           $lineNum = (int)$item['line'];
-          $result = $outcomes[$lineNum] ?? null; 
-          $messages = $item['errors']; 
-          if ($result && !$result['success']) $messages[] = $result['error']; 
+          $result = $outcomes[$lineNum] ?? null;
+          $messages = $item['errors'];
+          if ($result && !$result['success']) $messages[] = $result['error'];
           $matchedCat = $item['row']['sub_category'] !== '' ? $item['row']['sub_category'] : $item['row']['category'];
           $matchedBrand = $item['row']['brand'];
+          $sheetImages = array_values((array)($item['values']['image_urls'] ?? []));
         ?>
           <tr id="row-<?= $lineNum ?>" style="border-bottom:1px solid var(--light-gray);">
+            <td style="padding:12px 10px;text-align:center;">
+              <button type="button" id="seller-expand-<?= $lineNum ?>" onclick="const d=document.getElementById('seller-detail-<?= $lineNum ?>');const open=d.style.display!=='none';d.style.display=open?'none':'table-row';this.style.transform=open?'rotate(0deg)':'rotate(90deg)';event.stopPropagation();" style="background:none;border:none;cursor:pointer;transition:transform .2s;font-size:14px;color:var(--mid-gray);padding:4px;">▶</button>
+            </td>
             <td style="padding:12px 16px;font-weight:700;color:var(--mid-gray);"><?= $lineNum ?></td>
             <td style="padding:12px 16px;font-weight:700;color:var(--ink);"><?= htmlspecialchars($item['row']['name']) ?></td>
             <td style="padding:12px 16px;font-family:var(--f-mono);font-size:12px;color:var(--mid-gray);"><?= htmlspecialchars($item['row']['sku'] ?? '—') ?></td>
@@ -481,6 +487,10 @@
                      style="width:100%;padding:8px 12px;border-radius:6px;border:1.5px solid <?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#EAB308' : '#D1D5DB' ?>;font-size:13px;background:<?= empty($item['values']['brand_id']) && !empty($matchedBrand) ? '#FEFCE8' : '#FFFFFF' ?>;font-weight:600;color:var(--ink);">
             </td>
 
+            <td style="padding:12px 16px;" onclick="event.stopPropagation()">
+              <span id="seller-img-count-<?= $lineNum ?>" style="background:<?= count($sheetImages) ? '#DCFCE7' : '#F0EAFF' ?>;color:<?= count($sheetImages) ? '#16a34a' : '#6D28D9' ?>;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:800;"><?= count($sheetImages) ?></span>
+            </td>
+
             <td class="result-cell" style="padding:12px 16px;">
               <?php if($result && $result['success']): ?>
                 <span style="background:#E6F7ED;color:#276749;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:800;"><?= $result['action'] === 'updated' ? 'Updated (#' . (int)$result['id'] . ')' : 'Imported (#' . (int)$result['id'] . ')' ?></span>
@@ -489,6 +499,29 @@
               <?php else: ?>
                 <span style="background:var(--off);color:var(--mid-gray);padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;" class="msg-span">Ready to import</span>
               <?php endif; ?>
+            </td>
+          </tr>
+          <tr id="seller-detail-<?= $lineNum ?>" style="display:none;border-bottom:2px solid var(--light-gray);">
+            <td colspan="9" style="padding:0;">
+              <div style="background:#FAFAFC;padding:20px 24px;border-top:1px dashed #D0D5DD;">
+                <div style="font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6D28D9;font-weight:700;margin-bottom:10px;">Product Images — Row <?= $lineNum ?> (max 10)</div>
+                <div id="seller-sheet-imgs-<?= $lineNum ?>" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                  <?php foreach($sheetImages as $si => $surl): ?>
+                    <div data-sheet-img="<?= htmlspecialchars($surl) ?>" style="position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid var(--light-gray);">
+                      <img src="<?= htmlspecialchars($surl) ?>" loading="lazy" onerror="this.style.opacity='0.25'" style="width:100%;height:100%;object-fit:cover;">
+                      <button type="button" onclick="window.sellerRemoveSheetImage(<?= $lineNum ?>, this)" data-url="<?= htmlspecialchars($surl) ?>" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:18px;">✕</button>
+                      <?php if($si===0): ?><div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:8px;text-align:center;padding:1px;font-weight:700;">PRIMARY</div><?php endif; ?>
+                    </div>
+                  <?php endforeach; ?>
+                  <?php if(!count($sheetImages)): ?><span style="font-size:12px;color:var(--mid-gray);">No spreadsheet images — upload below or add image_url_1..10 columns.</span><?php endif; ?>
+                </div>
+                <div id="seller-img-preview-<?= $lineNum ?>" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
+                <div ondrop="event.preventDefault();window.sellerHandleImageDrop(event,<?= $lineNum ?>)" ondragover="event.preventDefault()" style="position:relative;border:2px dashed #D0D5DD;border-radius:10px;background:#fff;padding:14px;text-align:center;cursor:pointer;">
+                  <input type="file" accept="image/*" multiple style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;" onchange="window.sellerHandleImageSelect(this,<?= $lineNum ?>)">
+                  <div style="font-size:12px;font-weight:700;color:var(--ink);">Drop images or click to upload (JPEG/PNG/WebP, 8MB max)</div>
+                </div>
+                <div id="seller-img-status-<?= $lineNum ?>" style="font-size:11px;color:#888;margin-top:6px;min-height:16px;"></div>
+              </div>
             </td>
           </tr>
         <?php endforeach; ?>
@@ -542,6 +575,83 @@ function selectModeCard(mode) {
   document.getElementById('modeCardUpsert').classList.toggle('active', mode === 'upsert');
 }
 
+// Per-row image uploads (file picker) for seller bulk import.
+window.sellerImportImagesByLine = window.sellerImportImagesByLine || {};
+window.sellerRemovedUrlsByLine = window.sellerRemovedUrlsByLine || {};
+window.sellerCsrfToken = document.querySelector('#importForm input[name="_csrf_token"]')?.value || '';
+
+window.sellerUploadSingleImage = async function(file, lineNum) {
+  const fd = new FormData();
+  fd.append('image', file);
+  fd.append('line', lineNum);
+  fd.append('_csrf_token', window.sellerCsrfToken);
+  const res = await fetch('<?= APP_URL ?>/seller/products/import/image', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
+  const text = await res.text();
+  try { return JSON.parse(text); }
+  catch(e) { return { success: false, error: 'HTTP ' + res.status }; }
+};
+
+window.sellerRenderUploads = function(lineNum) {
+  const container = document.getElementById('seller-img-preview-' + lineNum);
+  const badge = document.getElementById('seller-img-count-' + lineNum);
+  const imgs = window.sellerImportImagesByLine[lineNum] || [];
+  const sheetLeft = document.querySelectorAll('#seller-sheet-imgs-' + lineNum + ' [data-sheet-img]').length;
+  if (badge) {
+    const total = sheetLeft + imgs.length;
+    badge.textContent = total;
+    badge.style.background = total ? '#DCFCE7' : '#F0EAFF';
+    badge.style.color = total ? '#16a34a' : '#6D28D9';
+  }
+  if (container) {
+    container.innerHTML = imgs.map((path, i) =>
+      '<div style="position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid #E8E5DF;">' +
+      '<img src="<?= APP_URL ?>/' + path.replace(/^\/+/, '') + '" style="width:100%;height:100%;object-fit:cover;">' +
+      '<button type="button" onclick="window.sellerRemoveUpload(' + lineNum + ',' + i + ')" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:18px;">✕</button>' +
+      '</div>').join('');
+  }
+};
+
+window.sellerRemoveUpload = function(lineNum, i) {
+  (window.sellerImportImagesByLine[lineNum] || []).splice(i, 1);
+  window.sellerRenderUploads(lineNum);
+};
+
+window.sellerRemoveSheetImage = function(lineNum, btn) {
+  const url = btn.getAttribute('data-url') || '';
+  const wrap = btn.closest('[data-sheet-img]');
+  if (wrap) wrap.remove();
+  if (!window.sellerRemovedUrlsByLine[lineNum]) window.sellerRemovedUrlsByLine[lineNum] = [];
+  if (url) window.sellerRemovedUrlsByLine[lineNum].push(url);
+  const badge = document.getElementById('seller-img-count-' + lineNum);
+  const left = document.querySelectorAll('#seller-sheet-imgs-' + lineNum + ' [data-sheet-img]').length;
+  const up = (window.sellerImportImagesByLine[lineNum] || []).length;
+  if (badge) { badge.textContent = left + up; }
+};
+
+window.sellerHandleImageSelect = async function(input, lineNum) {
+  if (input.files && input.files.length) await window.sellerHandleImageFiles(Array.from(input.files), lineNum);
+  input.value = '';
+};
+
+window.sellerHandleImageDrop = async function(e, lineNum) {
+  if (e.dataTransfer.files.length) await window.sellerHandleImageFiles(Array.from(e.dataTransfer.files), lineNum);
+};
+
+window.sellerHandleImageFiles = async function(files, lineNum) {
+  const statusEl = document.getElementById('seller-img-status-' + lineNum);
+  const imgs = files.filter(f => f.type.startsWith('image/')).slice(0, 10);
+  if (!imgs.length) { if (statusEl) statusEl.textContent = 'No valid images selected.'; return; }
+  let ok = 0, fail = 0, lastErr = '';
+  for (let i = 0; i < imgs.length; i++) {
+    if (statusEl) statusEl.textContent = 'Uploading image ' + (i + 1) + ' of ' + imgs.length + '...';
+    const r = await window.sellerUploadSingleImage(imgs[i], lineNum);
+    if (r && r.success) { (window.sellerImportImagesByLine[lineNum] = window.sellerImportImagesByLine[lineNum] || []).push(r.path); ok++; }
+    else { fail++; lastErr = (r && r.error) || 'Upload failed'; }
+  }
+  window.sellerRenderUploads(lineNum);
+  if (statusEl) { statusEl.textContent = fail ? ok + ' uploaded, ' + fail + ' failed (' + lastErr + ')' : ok + ' image(s) uploaded'; setTimeout(() => statusEl.textContent = '', 5000); }
+};
+
 // Drag and drop handlers
 const dropzone = document.getElementById('dropzoneBox');
 if (dropzone) {
@@ -577,7 +687,7 @@ document.addEventListener('DOMContentLoaded', function() {
     startBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Processing Batch...';
 
     const mode = form.querySelector('input[name="mode"]:checked').value;
-    const csrfToken = form.querySelector('input[name="csrf_token"]').value;
+    const csrfToken = form.querySelector('input[name="_csrf_token"]').value;
     const importKey = form.querySelector('input[name="import_key"]').value;
 
     const progressContainer = document.getElementById('asyncProgressContainer');
@@ -593,6 +703,14 @@ document.addEventListener('DOMContentLoaded', function() {
       if (inp.classList.contains('cat-input')) overrides[line].category = inp.value;
       if (inp.classList.contains('brand-input')) overrides[line].brand = inp.value;
     });
+    for (const line in window.sellerImportImagesByLine) {
+      if (!overrides[line]) overrides[line] = {};
+      overrides[line].images = window.sellerImportImagesByLine[line];
+    }
+    for (const line in window.sellerRemovedUrlsByLine) {
+      if (!overrides[line]) overrides[line] = {};
+      overrides[line].remove_image_urls = window.sellerRemovedUrlsByLine[line];
+    }
 
     let offset = 0;
     let processedTotal = 0;
@@ -603,7 +721,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     while (true) {
       const formData = new FormData();
-      formData.append('csrf_token', csrfToken);
+      formData.append('_csrf_token', csrfToken);
       formData.append('action', 'import_chunk');
       formData.append('import_key', importKey);
       formData.append('mode', mode);

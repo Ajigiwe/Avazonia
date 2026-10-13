@@ -5,6 +5,7 @@
 require_once __DIR__ . '/../../config/app.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../core/Session.php';
+require_once __DIR__ . '/../../core/Csrf.php';
 
 Session::start();
 header('Content-Type: application/json');
@@ -12,6 +13,12 @@ header('Content-Type: application/json');
 if (Session::get('user_role') !== 'admin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit;
+}
+
+if (!Csrf::validateRequest()) {
+    http_response_code(419);
+    echo json_encode(['success' => false, 'error' => 'Security token expired. Refresh and retry.']);
     exit;
 }
 

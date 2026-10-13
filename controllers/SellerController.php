@@ -76,6 +76,57 @@ class SellerController extends Controller {
         ProductCsvImporter::sendTemplate(db(), $format);
     }
 
+    /** AJAX: seller uploads a product image during import preview (mirrors admin/api/upload-import-image.php). */
+    public function uploadImportImage() {
+        header('Content-Type: application/json');
+        $seller=$this->requireVerified();
+        if (!$seller) { http_response_code(403); echo json_encode(['success'=>false,'error'=>'Unauthorized']); exit; }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['success'=>false,'error'=>'POST only']); exit; }
+        if (!Csrf::validateRequest()) { http_response_code(419); echo json_encode(['success'=>false,'error'=>'Security token expired. Refresh and retry.']); exit; }
+        $line = (int)($_POST['line'] ?? 0);
+        if (!$line) { echo json_encode(['success'=>false,'error'=>'Missing line number']); exit; }
+        $file = $_FILES['image'] ?? null;
+        if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) { echo json_encode(['success'=>false,'error'=>'No valid image file uploaded']); exit; }
+        $allowed = ['image/jpeg','image/png','image/webp','image/gif'];
+        $mime = class_exists('finfo') ? (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']) : (string)($file['type'] ?? '');
+        if (!in_array($mime, $allowed, true)) { echo json_encode(['success'=>false,'error'=>'Invalid image type. Use JPEG, PNG, WebP or GIF.']); exit; }
+        if (($file['size'] ?? 0) > 8 * 1024 * 1024) { echo json_encode(['success'=>false,'error'=>'Image too large (max 8MB).']); exit; }
+        $ext = ['image/jpeg'=>'jpeg','image/png'=>'png','image/webp'=>'webp','image/gif'=>'gif'][$mime] ?? 'jpeg';
+        $dir = __DIR__.'/../public/uploads/products/';
+        if (!is_dir($dir)) @mkdir($dir, 0755, true);
+        $filename = 'p_'.time().'_'.bin2hex(random_bytes(4)).'_'.$line.'.'.$ext;
+        if (!@move_uploaded_file($file['tmp_name'], $dir.$filename)) { echo json_encode(['success'=>false,'error'=>'Failed to save file on server']); exit; }
+        $path = 'public/uploads/products/'.$filename;
+        try { require_once __DIR__.'/../core/Watermark.php'; Watermark::applyToPaths([$path]); } catch (Throwable $e) {}
+        echo json_encode(['success'=>true,'url'=>APP_URL.'/'.$path,'path'=>$path,'line'=>$line]);
+        exit;
+    }
+
+    /** AJAX: seller uploads a product video during import preview (mirrors admin/api/upload-import-video.php). */
+    public function uploadImportVideo() {
+        header('Content-Type: application/json');
+        $seller=$this->requireVerified();
+        if (!$seller) { http_response_code(403); echo json_encode(['success'=>false,'error'=>'Unauthorized']); exit; }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['success'=>false,'error'=>'POST only']); exit; }
+        if (!Csrf::validateRequest()) { http_response_code(419); echo json_encode(['success'=>false,'error'=>'Security token expired. Refresh and retry.']); exit; }
+        $line = (int)($_POST['line'] ?? 0);
+        if (!$line) { echo json_encode(['success'=>false,'error'=>'Missing line number']); exit; }
+        $file = $_FILES['video'] ?? null;
+        if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) { echo json_encode(['success'=>false,'error'=>'No valid video file uploaded']); exit; }
+        $allowed = ['video/mp4','video/webm','video/quicktime'];
+        $mime = class_exists('finfo') ? (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']) : (string)($file['type'] ?? '');
+        if (!in_array($mime, $allowed, true)) { echo json_encode(['success'=>false,'error'=>'Invalid video type. Use MP4, WebM or MOV.']); exit; }
+        if (($file['size'] ?? 0) > 64 * 1024 * 1024) { echo json_encode(['success'=>false,'error'=>'Video too large (max 64MB).']); exit; }
+        $ext = ['video/mp4'=>'mp4','video/webm'=>'webm','video/quicktime'=>'mov'][$mime] ?? 'mp4';
+        $dir = __DIR__.'/../public/uploads/videos/';
+        if (!is_dir($dir)) @mkdir($dir, 0755, true);
+        $filename = 'v_'.time().'_'.bin2hex(random_bytes(4)).'_'.$line.'.'.$ext;
+        if (!@move_uploaded_file($file['tmp_name'], $dir.$filename)) { echo json_encode(['success'=>false,'error'=>'Failed to save file on server']); exit; }
+        $path = 'public/uploads/videos/'.$filename;
+        echo json_encode(['success'=>true,'url'=>APP_URL.'/'.$path,'path'=>$path,'line'=>$line]);
+        exit;
+    }
+
     public function importProducts() {
         $seller=$this->requireVerified(); if (!$seller) return;
         require_once __DIR__.'/../core/ProductCsvImporter.php';
