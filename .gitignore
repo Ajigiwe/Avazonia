@@ -27,3 +27,7 @@ backups/*.sql
 backups/*.zip
 !backups/.htaccess
 !backups/index.php
+
+# Bulk-import artifacts (regenerable via scripts/convert-hoco-import.py)
+public/uploads/products/hoco-*
+scratch/hoco-v3-import.csv

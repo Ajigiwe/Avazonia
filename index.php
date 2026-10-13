@@ -83,6 +83,8 @@ $router->add('GET', '/seller/products', 'SellerController@products');
 $router->add('GET', '/seller/products/import', 'SellerController@importProducts');
 $router->add('POST', '/seller/products/import', 'SellerController@importProducts');
 $router->add('GET', '/seller/products/import/template', 'SellerController@importTemplate');
+$router->add('POST', '/seller/products/import/image', 'SellerController@uploadImportImage');
+$router->add('POST', '/seller/products/import/video', 'SellerController@uploadImportVideo');
 $router->add('GET', '/seller/products/edit/([0-9]+)', 'SellerController@editProduct');
 $router->add('POST', '/seller/products/edit/([0-9]+)', 'SellerController@editProduct');
 $router->add('GET', '/seller/products/delete/([0-9]+)', 'SellerController@deleteProduct');

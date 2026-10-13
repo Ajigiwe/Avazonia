@@ -3,9 +3,16 @@
 
 class ProductCsvImporter {
     public const REQUIRED_HEADERS = ['name', 'price'];
+    public const MAX_IMAGES = 10;
+    public const IMAGE_HEADERS = [
+        'image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5',
+        'image_url_6', 'image_url_7', 'image_url_8', 'image_url_9', 'image_url_10',
+    ];
     public const HEADERS = [
         'name', 'sku', 'price', 'currency', 'stock', 'category', 'sub_category', 'brand', 'description', 'tags',
         'listing_type', 'condition', 'visibility', 'moq', 'wholesale_price', 'location_country', 'features', 'specs',
+        'image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5',
+        'image_url_6', 'image_url_7', 'image_url_8', 'image_url_9', 'image_url_10',
     ];
 
     public static function sendTemplate(PDO $db, string $format = 'excel'): void {
@@ -22,7 +29,7 @@ class ProductCsvImporter {
     public static function sendCsvTemplate(): void {
         header('Content-Description: File Transfer');
         header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="avazonia-products-template-v2.csv"');
+        header('Content-Disposition: attachment; filename="avazonia-products-template-v3.csv"');
         header('Content-Transfer-Encoding: binary');
         header('X-Content-Type-Options: nosniff');
         header('Pragma: no-cache');
@@ -35,6 +42,7 @@ class ProductCsvImporter {
             'Example Product Name', 'PROD-SKU-001', '99.99', 'GHS', '10', 'Electronics', 'Audio & Headphones', 'Apple',
             'Add a clear product description.', 'example, new', 'retail', 'new', 'public', '', '', 'GH',
             'Fast Charging | Waterproof | 2-Year Warranty', 'Battery: 5000mAh | RAM: 12GB | Screen: 6.7" AMOLED',
+            'https://example.com/images/product-main.jpg', '', '', '', '', '', '', '', '', '',
         ], ',', '"', '', "\r\n");
         fclose($out);
         exit;
@@ -163,7 +171,7 @@ class ProductCsvImporter {
         // Sheet 1: Products
         $sheet1Xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <dimension ref="A1:R2"/>
+  <dimension ref="A1:AB2"/>
   <sheetData>
     <row r="1">
       <c r="A1" t="inlineStr"><is><t>name</t></is></c>
@@ -184,6 +192,16 @@ class ProductCsvImporter {
       <c r="P1" t="inlineStr"><is><t>location_country</t></is></c>
       <c r="Q1" t="inlineStr"><is><t>features</t></is></c>
       <c r="R1" t="inlineStr"><is><t>specs</t></is></c>
+      <c r="S1" t="inlineStr"><is><t>image_url_1</t></is></c>
+      <c r="T1" t="inlineStr"><is><t>image_url_2</t></is></c>
+      <c r="U1" t="inlineStr"><is><t>image_url_3</t></is></c>
+      <c r="V1" t="inlineStr"><is><t>image_url_4</t></is></c>
+      <c r="W1" t="inlineStr"><is><t>image_url_5</t></is></c>
+      <c r="X1" t="inlineStr"><is><t>image_url_6</t></is></c>
+      <c r="Y1" t="inlineStr"><is><t>image_url_7</t></is></c>
+      <c r="Z1" t="inlineStr"><is><t>image_url_8</t></is></c>
+      <c r="AA1" t="inlineStr"><is><t>image_url_9</t></is></c>
+      <c r="AB1" t="inlineStr"><is><t>image_url_10</t></is></c>
     </row>
     <row r="2">
       <c r="A2" t="inlineStr"><is><t>Example Product Name</t></is></c>
@@ -204,6 +222,7 @@ class ProductCsvImporter {
       <c r="P2" t="inlineStr"><is><t>GH</t></is></c>
       <c r="Q2" t="inlineStr"><is><t>Fast Charging | Waterproof | 2-Year Warranty</t></is></c>
       <c r="R2" t="inlineStr"><is><t>Battery: 5000mAh | RAM: 12GB | Screen: 6.7 inch AMOLED</t></is></c>
+      <c r="S2" t="inlineStr"><is><t>https://example.com/images/product-main.jpg</t></is></c>
     </row>
   </sheetData>
   <dataValidations count="8">
@@ -238,7 +257,7 @@ class ProductCsvImporter {
 
         header('Content-Description: File Transfer');
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="avazonia-products-template-v2.xlsx"');
+        header('Content-Disposition: attachment; filename="avazonia-products-template-v3.xlsx"');
         header('Content-Transfer-Encoding: binary');
         header('Content-Length: ' . filesize($tmpFile));
         header('X-Content-Type-Options: nosniff');
@@ -395,6 +414,32 @@ class ProductCsvImporter {
         return $rows;
     }
 
+    /** Check an image reference is either an http(s) image URL or a local uploads path. */
+    public static function isValidImageUrl(string $u): bool {
+        $u = trim($u);
+        if ($u === '') return false;
+        // Local uploads paths (as produced by the file-picker endpoints and the HOCO converter).
+        if (preg_match('#^/?public/uploads/products/[A-Za-z0-9._/-]+$#', $u)) {
+            return (bool)preg_match('/\.(jpe?g|png|webp|gif)(\?.*)?$/i', $u);
+        }
+        if (preg_match('#^uploads/products/[A-Za-z0-9._/-]+$#', $u)) {
+            return (bool)preg_match('/\.(jpe?g|png|webp|gif)(\?.*)?$/i', $u);
+        }
+        if (!filter_var($u, FILTER_VALIDATE_URL)) return false;
+        $scheme = strtolower((string)parse_url($u, PHP_URL_SCHEME));
+        if (!in_array($scheme, ['http', 'https'], true)) return false;
+        $path = (string)parse_url($u, PHP_URL_PATH);
+        if ($path === '') return false;
+        return (bool)preg_match('/\.(jpe?g|png|webp|gif)(\?.*)?$/i', $path . (strpos($u, '?') !== false ? '?' . parse_url($u, PHP_URL_QUERY) : ''));
+    }
+
+    /** Normalize uploads paths to the no-leading-slash form used by single-product flows. */
+    public static function normalizeImageUrl(string $u): string {
+        $u = trim($u);
+        if (str_starts_with($u, '/public/uploads/')) return ltrim($u, '/');
+        return $u;
+    }
+
     /** Validate uploaded CSV/XLSX file and return preview array along with lookup options. */
     public static function preview(string $filePath, PDO $db, string $originalFilename = ''): array {
         $rawRows = self::parseFileRows($filePath, $originalFilename);
@@ -417,6 +462,13 @@ class ProductCsvImporter {
                 if ($key === 'origin_country' || $key === 'country' || $key === 'origin' || $key === 'location' || $key === 'location_country') $key = 'location_country';
                 if ($key === 'key_features' || $key === 'feature_list' || $key === 'feature') $key = 'features';
                 if ($key === 'specifications' || $key === 'spec_list' || $key === 'spec') $key = 'specs';
+                // Image column aliases: single-image names map to slot 1, multi names map to shared 'images' bucket
+                if (in_array($key, ['image', 'image_url', 'picture', 'photo', 'photo_url', 'image_link'], true)) $key = 'image_url_1';
+                if (in_array($key, ['images', 'image_urls', 'photos', 'gallery', 'pictures'], true)) $key = 'images';
+                if (preg_match('/^image[_-]?url[_-]?(\d{1,2})$/', $key, $m)) {
+                    $slot = (int)$m[1];
+                    if ($slot >= 1 && $slot <= self::MAX_IMAGES) $key = 'image_url_' . $slot;
+                }
                 $headerMap[$key] = $index;
             }
         }
@@ -522,6 +574,35 @@ class ProductCsvImporter {
                 if (!empty($specsArr)) $specsJson = json_encode($specsArr);
             }
 
+            // Collect up to MAX_IMAGES image URLs from image_url_1..N plus the shared 'images' bucket.
+            $rawImageUrls = [];
+            foreach (self::IMAGE_HEADERS as $imgKey) {
+                $u = trim((string)($row[$imgKey] ?? ''));
+                if ($u !== '') $rawImageUrls[] = $u;
+            }
+            if (isset($headerMap['images'])) {
+                $bucket = trim((string)($cells[$headerMap['images']] ?? ''));
+                if ($bucket !== '') {
+                    foreach (preg_split('/[\r\n|,;]+/', $bucket) as $part) {
+                        $part = trim($part);
+                        if ($part !== '') $rawImageUrls[] = $part;
+                    }
+                }
+            }
+            $imageUrls = [];
+            $seenLower = [];
+            foreach ($rawImageUrls as $idx => $u) {
+                if (count($imageUrls) >= self::MAX_IMAGES) break;
+                $label = 'Image ' . ($idx + 1);
+                if (strlen($u) > 500) { $errors[] = $label . ' URL is too long (max 500 characters).'; continue; }
+                if (!self::isValidImageUrl($u)) { $errors[] = $label . ' is not a valid http(s) image URL (JPG, PNG, WebP, GIF) or uploads path.'; continue; }
+                $norm = self::normalizeImageUrl($u);
+                $lower = strtolower($norm);
+                if (isset($seenLower[$lower])) continue;
+                $seenLower[$lower] = true;
+                $imageUrls[] = $norm;
+            }
+
             $values = [
                 'name' => $row['name'],
                 'sku' => $row['sku'] !== '' ? $row['sku'] : null,
@@ -542,6 +623,7 @@ class ProductCsvImporter {
                 'available_in_ghana' => ($locationCountry === 'GH' ? 1 : 0),
                 'features' => $featuresJson,
                 'specs' => $specsJson,
+                'image_urls' => $imageUrls,
             ];
             $preview[] = ['line' => $line, 'row' => $row, 'values' => $values, 'errors' => $errors];
         }
@@ -647,17 +729,19 @@ class ProductCsvImporter {
                 $db->beginTransaction();
 
                 if ($existingId && $mode === 'upsert') {
+                    $hasVideoCol = in_array('video_url', $columns, true);
                     $updateSql = 'UPDATE products SET
                         price_ghs = ?, price_usd = ?, currency = ?, stock_qty = ?,
                         category_id = ?, brand_id = ?, description = ?, tags = ?,
                         listing_type = ?, condition_type = ?, visibility = ?, moq = ?,
-                        wholesale_price_ghs = ?, video_url = ?, updated_at = NOW()';
+                        wholesale_price_ghs = ?' . ($hasVideoCol ? ', video_url = ?' : '') . ', updated_at = NOW()';
                     $params = [
                         $values['price_ghs'], $values['price_usd'], $values['currency'], $values['stock_qty'],
                         $values['category_id'], $values['brand_id'], $values['description'], $values['tags'],
                         $values['listing_type'], $values['condition_type'], $values['visibility'], $values['moq'],
-                        $values['wholesale_price_ghs'], $values['video_url'] ?? null
+                        $values['wholesale_price_ghs'],
                     ];
+                    if ($hasVideoCol) $params[] = $values['video_url'] ?? null;
                     if (!empty($values['sku']) && in_array('sku', $columns, true)) {
                         $updateSql .= ', sku = ?';
                         $params[] = $values['sku'];
@@ -669,14 +753,8 @@ class ProductCsvImporter {
                     $db->commit();
                     $outcomes[$item['line']] = ['success' => true, 'id' => (int)$existingId, 'action' => 'updated', 'error' => ''];
 
-                    // Link uploaded images to the updated product
-                    $line = (string)$item['line'];
-                    if (!empty($overrides[$line]['images']) && is_array($overrides[$line]['images'])) {
-                        foreach ($overrides[$line]['images'] as $idx => $imgPath) {
-                            $isPrimary = ($idx === 0) ? 1 : 0;
-                            $db->prepare('INSERT INTO product_images (product_id, url, is_primary) VALUES (?, ?, ?)')->execute([(int)$existingId, $imgPath, $isPrimary]);
-                        }
-                    }
+                    // Link spreadsheet image URLs + file-picker uploads to the updated product (append new only)
+                    self::linkImages($db, (int)$existingId, $item, $overrides, true);
                 } else {
                     $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $values['name']), '-'));
                     if ($slug === '') $slug = 'product';
@@ -703,14 +781,8 @@ class ProductCsvImporter {
                     $db->commit();
                     $outcomes[$item['line']] = ['success' => true, 'id' => $id, 'action' => 'created', 'error' => ''];
 
-                    // Link uploaded images to the new product
-                    $line = (string)$item['line'];
-                    if (!empty($overrides[$line]['images']) && is_array($overrides[$line]['images'])) {
-                        foreach ($overrides[$line]['images'] as $idx => $imgPath) {
-                            $isPrimary = ($idx === 0) ? 1 : 0;
-                            $db->prepare('INSERT INTO product_images (product_id, url, is_primary) VALUES (?, ?, ?)')->execute([$id, $imgPath, $isPrimary]);
-                        }
-                    }
+                    // Link spreadsheet image URLs + file-picker uploads to the new product
+                    self::linkImages($db, $id, $item, $overrides, false);
                 }
             } catch (Throwable $e) {
                 if ($db->inTransaction()) $db->rollBack();
@@ -719,6 +791,75 @@ class ProductCsvImporter {
         }
         Cache::flushTags(['products']);
         return $outcomes;
+    }
+
+    /** Merge spreadsheet image URLs with file-picker uploads and persist to product_images. */
+    private static function linkImages(PDO $db, int $productId, array $item, array $overrides, bool $isUpdate): void {
+        $line = (string)$item['line'];
+        $final = [];
+        foreach ((array)($item['values']['image_urls'] ?? []) as $u) {
+            $u = self::normalizeImageUrl(trim((string)$u));
+            if ($u !== '' && self::isValidImageUrl($u)) $final[] = $u;
+        }
+        // Grid removals (user removed a spreadsheet URL thumb in the preview UI).
+        $removed = [];
+        if (!empty($overrides[$line]['remove_image_urls']) && is_array($overrides[$line]['remove_image_urls'])) {
+            foreach ($overrides[$line]['remove_image_urls'] as $r) {
+                $removed[strtolower(self::normalizeImageUrl(trim((string)$r)))] = true;
+            }
+            if ($removed) $final = array_values(array_filter($final, static fn($u) => !isset($removed[strtolower($u)])));
+        }
+        // File-picker uploads appended after spreadsheet URLs.
+        if (!empty($overrides[$line]['images']) && is_array($overrides[$line]['images'])) {
+            foreach ($overrides[$line]['images'] as $imgPath) {
+                $imgPath = self::normalizeImageUrl(trim((string)$imgPath));
+                if ($imgPath !== '' && self::isValidImageUrl($imgPath)) $final[] = $imgPath;
+            }
+        }
+        // Dedupe (case-insensitive) and cap.
+        $seen = [];
+        $deduped = [];
+        foreach ($final as $u) {
+            $k = strtolower($u);
+            if (isset($seen[$k])) continue;
+            $seen[$k] = true;
+            $deduped[] = $u;
+            if (count($deduped) >= self::MAX_IMAGES) break;
+        }
+        if (!$deduped) return;
+
+        if ($isUpdate) {
+            $existing = $db->prepare('SELECT url FROM product_images WHERE product_id = ?');
+            $existing->execute([$productId]);
+            $have = [];
+            foreach ($existing->fetchAll(PDO::FETCH_COLUMN, 0) as $eu) {
+                $have[strtolower(self::normalizeImageUrl((string)$eu))] = true;
+            }
+            $deduped = array_values(array_filter($deduped, static fn($u) => !isset($have[strtolower($u)])));
+            if (!$deduped) return;
+            $hasPrimary = (bool)$db->query('SELECT id FROM product_images WHERE product_id=' . $productId . ' AND is_primary=1 LIMIT 1')->fetchColumn();
+        } else {
+            $hasPrimary = false;
+        }
+
+        $hasSort = true;
+        try {
+            if ($db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+                $cols = $db->query('PRAGMA table_info(product_images)')->fetchAll(PDO::FETCH_COLUMN, 1);
+            } else {
+                $cols = $db->query('SHOW COLUMNS FROM product_images')->fetchAll(PDO::FETCH_COLUMN, 0);
+            }
+            $hasSort = in_array('sort_order', (array)$cols, true);
+        } catch (Throwable $e) { $hasSort = false; }
+
+        foreach ($deduped as $idx => $url) {
+            $isPrimary = (!$hasPrimary && $idx === 0) ? 1 : 0;
+            if ($hasSort) {
+                $db->prepare('INSERT INTO product_images (product_id, url, is_primary, sort_order) VALUES (?, ?, ?, ?)')->execute([$productId, $url, $isPrimary, $idx]);
+            } else {
+                $db->prepare('INSERT INTO product_images (product_id, url, is_primary) VALUES (?, ?, ?)')->execute([$productId, $url, $isPrimary]);
+            }
+        }
     }
 
     private static function productColumns(PDO $db): array {

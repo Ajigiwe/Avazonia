@@ -144,7 +144,7 @@ window.uploadSingleImage = async function(file, lineNum) {
   const fd = new FormData();
   fd.append('image', file);
   fd.append('line', lineNum);
-  fd.append('csrf_token', window.csrfTokenGlobal);
+  fd.append('_csrf_token', window.csrfTokenGlobal);
   try {
     const res = await fetch('api/upload-import-image.php', { method: 'POST', body: fd });
     let data;
@@ -253,7 +253,7 @@ window.handleImportVideoFiles = async function(files, lineNum) {
   const fd = new FormData();
   fd.append('video', videoFile);
   fd.append('line', lineNum);
-  fd.append('csrf_token', window.csrfTokenGlobal);
+  fd.append('_csrf_token', window.csrfTokenGlobal);
   
   try {
     const res = await fetch('api/upload-import-video.php', { method: 'POST', body: fd });
@@ -316,9 +316,11 @@ window.renderImportImagePreviews = function(lineNum) {
   const container = document.getElementById('img-preview-' + lineNum);
   const countBadge = document.getElementById('img-count-' + lineNum);
   const imgs = window.importImagesByLine[lineNum] || [];
+  const sheetLeft = document.querySelectorAll('#sheet-imgs-' + lineNum + ' [data-sheet-img]').length;
   if (countBadge) {
-    countBadge.textContent = imgs.length;
-    if (imgs.length > 0) {
+    const total = sheetLeft + imgs.length;
+    countBadge.textContent = total;
+    if (total > 0) {
       countBadge.style.background = '#DCFCE7';
       countBadge.style.color = '#16a34a';
     }
@@ -340,6 +342,17 @@ window.removeImportImage = function(lineNum, index) {
     window.importImagesByLine[lineNum].splice(index, 1);
     window.renderImportImagePreviews(lineNum);
   }
+};
+
+/* Spreadsheet URL thumbs (v3 image_url_1..10): removal is tracked so the server skips them. */
+window.removedSheetUrlsByLine = window.removedSheetUrlsByLine || {};
+window.removeSheetImage = function(lineNum, btn) {
+  const url = btn.getAttribute('data-url') || '';
+  const wrap = btn.closest('[data-sheet-img]');
+  if (wrap) wrap.remove();
+  if (!window.removedSheetUrlsByLine[lineNum]) window.removedSheetUrlsByLine[lineNum] = [];
+  if (url) window.removedSheetUrlsByLine[lineNum].push(url);
+  window.renderImportImagePreviews(lineNum);
 };
 function removeImportImage(lineNum, index) { return window.removeImportImage(lineNum, index); }
 
@@ -460,6 +473,10 @@ function initAdminImportPage() {
         if (!overrides[line]) overrides[line] = {};
         overrides[line].images = window.importImagesByLine[line];
       }
+      for (const line in (window.removedSheetUrlsByLine || {})) {
+        if (!overrides[line]) overrides[line] = {};
+        overrides[line].remove_image_urls = window.removedSheetUrlsByLine[line];
+      }
 
       let offset = 0;
       let processedTotal = 0;
@@ -471,7 +488,7 @@ function initAdminImportPage() {
 
       while (true) {
         const formData = new FormData();
-        formData.append('csrf_token', csrfToken);
+        formData.append('_csrf_token', csrfToken);
         formData.append('action', 'import_chunk');
         formData.append('import_key', importKey);
         formData.append('mode', mode);
@@ -932,6 +949,7 @@ if (document.readyState !== 'loading') {
           $rowMoq = htmlspecialchars($item['values']['moq'] ?? '');
           $rowWholesale = htmlspecialchars($item['values']['wholesale_price_ghs'] ?? '');
           $rowTags = htmlspecialchars($item['row']['tags'] ?? '');
+          $sheetImages = array_values((array)($item['values']['image_urls'] ?? []));
         ?>
           <!-- Main summary row -->
           <tr id="admin-row-<?= $lineNum ?>" class="import-main-row" style="border-bottom:1px solid #F0EDE8;cursor:pointer;" onclick="document.getElementById('expand-icon-<?= $lineNum ?>').click();">
@@ -966,7 +984,7 @@ if (document.readyState !== 'loading') {
             </td>
 
             <td style="padding:10px 12px;" onclick="event.stopPropagation()">
-              <span id="img-count-<?= $lineNum ?>" style="background:#F0EAFF;color:#6D28D9;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:800;">0</span>
+              <span id="img-count-<?= $lineNum ?>" style="background:<?= count($sheetImages) ? '#DCFCE7' : '#F0EAFF' ?>;color:<?= count($sheetImages) ? '#16a34a' : '#6D28D9' ?>;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:800;"><?= count($sheetImages) ?></span>
             </td>
 
             <td class="admin-result-cell" style="padding:10px 12px;">
@@ -1079,8 +1097,18 @@ if (document.readyState !== 'loading') {
                   <!-- Right: Media upload -->
                   <div>
                     <!-- Images -->
-                    <div style="font-family:var(--f-mono,monospace);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6D28D9;font-weight:700;margin-bottom:10px;">Product Images</div>
-                    
+                    <div style="font-family:var(--f-mono,monospace);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6D28D9;font-weight:700;margin-bottom:10px;">Product Images (max 10 — spreadsheet URLs + uploads)</div>
+
+                    <div id="sheet-imgs-<?= $lineNum ?>" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                      <?php foreach($sheetImages as $si => $surl): ?>
+                        <div data-sheet-img="<?= htmlspecialchars($surl) ?>" style="position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid #E8E5DF;">
+                          <img src="<?= htmlspecialchars($surl) ?>" loading="lazy" onerror="this.style.opacity='0.25'" style="width:100%;height:100%;object-fit:cover;">
+                          <button onclick="window.removeSheetImage(<?= $lineNum ?>, this);event.stopPropagation()" data-url="<?= htmlspecialchars($surl) ?>" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:18px;text-align:center;">✕</button>
+                          <?php if($si===0): ?><div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:8px;text-align:center;padding:1px;font-weight:700;">PRIMARY</div><?php endif; ?>
+                        </div>
+                      <?php endforeach; ?>
+                    </div>
+
                     <div id="img-preview-<?= $lineNum ?>" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
                     
                     <div class="import-img-dropzone" 
