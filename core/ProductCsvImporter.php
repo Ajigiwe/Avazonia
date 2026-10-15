@@ -636,6 +636,126 @@ class ProductCsvImporter {
         ];
     }
 
+    /**
+     * Supplier-aware preview: auto-detects HOCO quotations (embedded images,
+     * tier pricing, color continuation rows) and groups them 1 product + variants.
+     * Falls back to the standard v3 preview for template files.
+     */
+    public static function previewSupplier(string $filePath, PDO $db, string $originalFilename = ''): array {
+        $rawRows = self::parseFileRows($filePath, $originalFilename);
+        if (!$rawRows) throw new RuntimeException('The file is empty or contains no data rows.');
+        $headers = $rawRows[0] ?? [];
+        require_once __DIR__ . '/Supplier/HocoParser.php';
+        if (HocoParser::isHocoSheet(is_array($headers) ? $headers : [])) {
+            require_once __DIR__ . '/Supplier/XlsxImageExtractor.php';
+            $destDir = __DIR__ . '/../public/uploads/products';
+            $imagesByRow = XlsxImageExtractor::extract($filePath, $destDir, 'hoco');
+            try { require_once __DIR__ . '/Watermark.php'; Watermark::applyToPaths($imagesByRow ? array_merge(...array_values($imagesByRow)) : []); } catch (Throwable $e) {}
+            $groups = HocoParser::parseGroups($rawRows);
+            if (!$groups) throw new RuntimeException('No HOCO product groups found. The sheet layout may have changed.');
+            $result = HocoParser::toPreviewItems($groups, $imagesByRow, $db);
+            if (empty($result['preview'])) throw new RuntimeException('The HOCO file contains no importable product rows.');
+            return $result;
+        }
+        return self::preview($filePath, $db, $originalFilename);
+    }
+
+    /** Ensure a brand exists (used for HOCO auto-create); returns brand id or null. */
+    public static function ensureBrand(PDO $db, string $name): ?int {
+        $name = trim($name);
+        if ($name === '') return null;
+        $stmt = $db->prepare('SELECT id FROM brands WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) LIMIT 1');
+        $stmt->execute([$name]);
+        $id = $stmt->fetchColumn();
+        if ($id) return (int)$id;
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name), '-'));
+        if ($slug === '') $slug = 'brand-' . bin2hex(random_bytes(3));
+        try {
+            $db->prepare('INSERT INTO brands (name, slug, is_active) VALUES (?, ?, 1)')->execute([$name, $slug]);
+            return (int)$db->lastInsertId();
+        } catch (Throwable $e) {
+            // Slug collision — retry with suffix.
+            try {
+                $db->prepare('INSERT INTO brands (name, slug, is_active) VALUES (?, ?, 1)')->execute([$name, $slug . '-' . bin2hex(random_bytes(3))]);
+                return (int)$db->lastInsertId();
+            } catch (Throwable $e2) { return null; }
+        }
+    }
+
+    /** Persist 1-product+N-variants color options into the variants table. */
+    private static function linkVariants(PDO $db, int $productId, array $item, bool $isUpdate): void {
+        $variants = array_values(array_filter(
+            (array)($item['values']['variants'] ?? []),
+            static fn($v) => is_array($v) && (trim((string)($v['color'] ?? '')) !== '' || trim((string)($v['sku'] ?? '')) !== '')
+        ));
+        if (!$variants) return;
+        try {
+            if ($db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+                $cols = $db->query('PRAGMA table_info(variants)')->fetchAll(PDO::FETCH_COLUMN, 1);
+            } else {
+                $cols = $db->query('SHOW COLUMNS FROM variants')->fetchAll(PDO::FETCH_COLUMN, 0);
+            }
+        } catch (Throwable $e) { return; }
+        if (!in_array('product_id', (array)$cols, true)) return;
+        $hasColor = in_array('color', (array)$cols, true);
+        $hasSku = in_array('sku', (array)$cols, true);
+        $hasStock = in_array('stock_qty', (array)$cols, true);
+
+        $haveSkus = [];
+        if ($isUpdate && $hasSku) {
+            try {
+                $st = $db->prepare('SELECT sku FROM variants WHERE product_id = ?');
+                $st->execute([$productId]);
+                foreach ($st->fetchAll(PDO::FETCH_COLUMN, 0) as $s) {
+                    if ($s !== null && $s !== '') $haveSkus[strtolower(trim((string)$s))] = true;
+                }
+            } catch (Throwable $e) {}
+        }
+        foreach ($variants as $v) {
+            $color = mb_substr(trim((string)($v['color'] ?? '')), 0, 80);
+            $sku = mb_substr(trim((string)($v['sku'] ?? '')), 0, 80);
+            $stock = isset($v['stock_qty']) && is_numeric($v['stock_qty']) ? max(0, (int)$v['stock_qty']) : (int)($item['values']['stock_qty'] ?? 0);
+            if ($sku !== '' && isset($haveSkus[strtolower($sku)])) continue;
+            // Guarantee global UNIQUE(sku): suffix on collision.
+            if ($sku !== '' && $hasSku) {
+                $base = $sku;
+                $n = 1;
+                while (true) {
+                    try {
+                        $chk = $db->prepare('SELECT id FROM variants WHERE sku = ? LIMIT 1');
+                        $chk->execute([$sku]);
+                        if (!$chk->fetchColumn()) break;
+                        // On upsert, allow reusing a SKU that already belongs to this product.
+                        if ($isUpdate && isset($haveSkus[strtolower($sku)])) break 2;
+                    } catch (Throwable $e) { break; }
+                    $n++;
+                    $sku = mb_substr($base . '-' . $n, 0, 80);
+                    if ($n > 50) break;
+                }
+            }
+            $insCols = ['product_id'];
+            $insVals = [$productId];
+            if ($hasColor) { $insCols[] = 'color'; $insVals[] = ($color !== '' ? $color : null); }
+            if ($hasSku) { $insCols[] = 'sku'; $insVals[] = ($sku !== '' ? $sku : null); }
+            if ($hasStock) { $insCols[] = 'stock_qty'; $insVals[] = $stock; }
+            try {
+                $db->prepare('INSERT INTO variants (' . implode(',', $insCols) . ') VALUES (' . implode(',', array_fill(0, count($insCols), '?')) . ')')->execute($insVals);
+                if ($sku !== '') $haveSkus[strtolower($sku)] = true;
+            } catch (Throwable $e) {
+                // One bad variant must not fail the product: retry without SKU on UNIQUE clash.
+                if ($hasSku && $sku !== '') {
+                    try {
+                        $insCols2 = ['product_id'];
+                        $insVals2 = [$productId];
+                        if ($hasColor) { $insCols2[] = 'color'; $insVals2[] = ($color !== '' ? $color : null); }
+                        if ($hasStock) { $insCols2[] = 'stock_qty'; $insVals2[] = $stock; }
+                        $db->prepare('INSERT INTO variants (' . implode(',', $insCols2) . ') VALUES (' . implode(',', array_fill(0, count($insCols2), '?')) . ')')->execute($insVals2);
+                    } catch (Throwable $e2) {}
+                }
+            }
+        }
+    }
+
     /** Process import in chunks or full batch, supporting insert vs upsert mode and dynamic cell updates. */
     public static function import(PDO $db, array $preview, ?int $sellerId, ?int $storeId, string $status = 'pending_review', string $mode = 'insert', int $offset = 0, int $limit = 0, array $overrides = []): array {
         $columns = self::productColumns($db);
@@ -701,6 +821,11 @@ class ProductCsvImporter {
             if (!empty($item['errors'])) continue;
             try {
                 $values = $item['values'];
+                // HOCO flow: auto-create the brand so preview stays importable.
+                if (empty($values['brand_id']) && trim((string)($item['row']['brand'] ?? '')) !== '') {
+                    $made = self::ensureBrand($db, trim((string)$item['row']['brand']));
+                    if ($made) $values['brand_id'] = $made;
+                }
                 $existingId = null;
 
                 if ($mode === 'upsert') {
@@ -730,11 +855,12 @@ class ProductCsvImporter {
 
                 if ($existingId && $mode === 'upsert') {
                     $hasVideoCol = in_array('video_url', $columns, true);
+                    $nowFn = ($db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') ? "datetime('now')" : 'NOW()';
                     $updateSql = 'UPDATE products SET
                         price_ghs = ?, price_usd = ?, currency = ?, stock_qty = ?,
                         category_id = ?, brand_id = ?, description = ?, tags = ?,
                         listing_type = ?, condition_type = ?, visibility = ?, moq = ?,
-                        wholesale_price_ghs = ?' . ($hasVideoCol ? ', video_url = ?' : '') . ', updated_at = NOW()';
+                        wholesale_price_ghs = ?' . ($hasVideoCol ? ', video_url = ?' : '') . ', updated_at = ' . $nowFn;
                     $params = [
                         $values['price_ghs'], $values['price_usd'], $values['currency'], $values['stock_qty'],
                         $values['category_id'], $values['brand_id'], $values['description'], $values['tags'],
@@ -755,6 +881,7 @@ class ProductCsvImporter {
 
                     // Link spreadsheet image URLs + file-picker uploads to the updated product (append new only)
                     self::linkImages($db, (int)$existingId, $item, $overrides, true);
+                    self::linkVariants($db, (int)$existingId, ['values' => $values] + $item, true);
                 } else {
                     $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $values['name']), '-'));
                     if ($slug === '') $slug = 'product';
@@ -783,6 +910,7 @@ class ProductCsvImporter {
 
                     // Link spreadsheet image URLs + file-picker uploads to the new product
                     self::linkImages($db, $id, $item, $overrides, false);
+                    self::linkVariants($db, $id, ['values' => $values] + $item, false);
                 }
             } catch (Throwable $e) {
                 if ($db->inTransaction()) $db->rollBack();

@@ -153,7 +153,7 @@ class SellerController extends Controller {
                     $error='Choose a readable .csv or .xlsx spreadsheet file to preview.';
                 } else {
                     try {
-                        $result=ProductCsvImporter::preview($file['tmp_name'], $db, $file['name'] ?? '');
+                        $result=ProductCsvImporter::previewSupplier($file['tmp_name'], $db, $file['name'] ?? '');
                         $preview=$result['preview'];
                         $lookups=$result['lookups'];
                         $key=bin2hex(random_bytes(24));
