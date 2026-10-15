@@ -30,6 +30,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'moder
     }
 }
 
+// Bulk: approve every pending product at once
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'moderate_all') {
+    $n = (int)$db->query("SELECT COUNT(*) FROM products WHERE status_market='pending_review'")->fetchColumn();
+    if ($n > 0) {
+        $db->prepare("UPDATE products SET status_market='active' WHERE status_market='pending_review'")->execute();
+        require_once __DIR__ . '/../core/Cache.php';
+        Cache::flushTags(['products']);
+        $success = $n . ' product' . ($n === 1 ? '' : 's') . ' approved and live.';
+    } else {
+        $success = 'Nothing awaiting review — queue is already empty.';
+    }
+}
+
 // The moderation queue — pending seller products, newest first
 $pending = $db->query("
     SELECT
@@ -59,7 +72,16 @@ include 'layout/header.php';
 
 <div class="admin-header">
     <h1>Approvals <span style="font-family:var(--f-mono);font-size:14px;font-weight:400;color:var(--mid-gray);">(<?= $pendingCount ?> pending)</span></h1>
-    <a href="products.php" class="btn-red" style="height: 44px; padding: 0 24px; font-size: 10px; display: flex; align-items: center; justify-content: center; text-decoration: none;">Full Catalogue →</a>
+    <div style="display:flex;gap:10px;align-items:center;">
+        <?php if ($pendingCount > 0): ?>
+        <form method="POST" onsubmit="return confirm('Approve all <?= $pendingCount ?> pending products and make them live?');" style="margin:0;">
+            <?= Csrf::field() ?>
+            <input type="hidden" name="action" value="moderate_all">
+            <button type="submit" style="height:44px;padding:0 24px;font-size:10px;font-weight:800;letter-spacing:0.06em;background:#16a34a;color:#fff;border:none;border-radius:3px;cursor:pointer;">Approve all (<?= $pendingCount ?>) ✓</button>
+        </form>
+        <?php endif; ?>
+        <a href="products.php" class="btn-red" style="height: 44px; padding: 0 24px; font-size: 10px; display: flex; align-items: center; justify-content: center; text-decoration: none;">Full Catalogue →</a>
+    </div>
 </div>
 
 <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
