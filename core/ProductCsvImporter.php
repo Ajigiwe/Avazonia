@@ -440,6 +440,14 @@ class ProductCsvImporter {
         return $u;
     }
 
+    /** Render helper: stored paths are relative (public/...), so prefix for <img src>. */
+    public static function imageSrc(string $u): string {
+        $u = trim($u);
+        if ($u === '' || preg_match('#^https?://#i', $u)) return $u;
+        $base = defined('APP_URL') ? rtrim(APP_URL, '/') : '';
+        return $base . '/' . ltrim($u, '/');
+    }
+
     /** Validate uploaded CSV/XLSX file and return preview array along with lookup options. */
     public static function preview(string $filePath, PDO $db, string $originalFilename = ''): array {
         $rawRows = self::parseFileRows($filePath, $originalFilename);

@@ -136,6 +136,7 @@ include 'layout/header.php';
 window.validAdminCatsLower = <?= json_encode(array_values(array_map('strtolower', $allCats ?? []))) ?>;
 window.validAdminBrandsLower = <?= json_encode(array_values(array_map('strtolower', $allBrands ?? []))) ?>;
 window.csrfTokenGlobal = '<?= htmlspecialchars(Csrf::token()) ?>';
+window.appBaseUrl = '<?= rtrim(APP_URL, '/') ?>';
 
 /* Global storage for uploaded images per row line */
 window.importImagesByLine = window.importImagesByLine || {};
@@ -328,7 +329,7 @@ window.renderImportImagePreviews = function(lineNum) {
   if (container) {
     container.innerHTML = imgs.map((path, i) => 
       '<div style="position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid #E8E5DF;">' +
-      '<img src="' + path + '" style="width:100%;height:100%;object-fit:cover;">' +
+      '<img src="' + window.appBaseUrl + '/' + path.replace(/^\/+/, '') + '" style="width:100%;height:100%;object-fit:cover;">' +
       '<button onclick="window.removeImportImage(' + lineNum + ',' + i + ');event.stopPropagation()" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:18px;text-align:center;">✕</button>' +
       (i === 0 ? '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:8px;text-align:center;padding:1px;font-weight:700;">PRIMARY</div>' : '') +
       '</div>'
@@ -1102,7 +1103,7 @@ if (document.readyState !== 'loading') {
                     <div id="sheet-imgs-<?= $lineNum ?>" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
                       <?php foreach($sheetImages as $si => $surl): ?>
                         <div data-sheet-img="<?= htmlspecialchars($surl) ?>" style="position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid #E8E5DF;">
-                          <img src="<?= htmlspecialchars($surl) ?>" loading="lazy" onerror="this.style.opacity='0.25'" style="width:100%;height:100%;object-fit:cover;">
+                          <img src="<?= htmlspecialchars(ProductCsvImporter::imageSrc($surl)) ?>" loading="lazy" onerror="this.style.opacity='0.25'" style="width:100%;height:100%;object-fit:cover;">
                           <button onclick="window.removeSheetImage(<?= $lineNum ?>, this);event.stopPropagation()" data-url="<?= htmlspecialchars($surl) ?>" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:18px;text-align:center;">✕</button>
                           <?php if($si===0): ?><div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:8px;text-align:center;padding:1px;font-weight:700;">PRIMARY</div><?php endif; ?>
                         </div>
