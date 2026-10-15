@@ -157,12 +157,12 @@ class SellerController extends Controller {
                         $preview=$result['preview'];
                         $lookups=$result['lookups'];
                         $key=bin2hex(random_bytes(24));
-                        Session::set('seller_product_csv_import', ['key'=>$key, 'seller_id'=>(int)$seller['id'], 'preview'=>$preview, 'lookups'=>$lookups]);
+                        Session::set('seller_product_csv_import', ProductCsvImporter::previewTag(['key'=>$key, 'seller_id'=>(int)$seller['id'], 'preview'=>$preview, 'lookups'=>$lookups]));
                     } catch (\Throwable $e) { $error=$e->getMessage(); }
                 }
             } elseif (($_POST['action']??'')==='import' || ($_POST['action']??'')==='import_chunk') {
                 $saved=Session::get('seller_product_csv_import');
-                if (!$saved || (int)$saved['seller_id']!==(int)$seller['id'] || !hash_equals((string)$saved['key'],(string)($_POST['import_key']??''))) {
+                if (!$saved || ProductCsvImporter::isStalePreview($saved) || (int)$saved['seller_id']!==(int)$seller['id'] || !hash_equals((string)$saved['key'],(string)($_POST['import_key']??''))) {
                     $error='This preview has expired. Upload the spreadsheet again.';
                     if ($isAjax) {
                         header('Content-Type: application/json');
@@ -224,6 +224,11 @@ class SellerController extends Controller {
             }
         }
         $saved = Session::get('seller_product_csv_import');
+        if ($saved && ProductCsvImporter::isStalePreview($saved)) {
+            Session::remove('seller_product_csv_import');
+            $saved = null;
+            if ($error === '') $error = 'This preview was generated before the latest update. Please upload the file again.';
+        }
         if (!$preview && $saved) $preview = $saved['preview'];
         if (!$lookups && $saved && !empty($saved['lookups'])) $lookups = $saved['lookups'];
         if (!$lookups) $lookups = ProductCsvImporter::getLookupOptions($db);

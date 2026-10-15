@@ -3,6 +3,19 @@
 
 class ProductCsvImporter {
     public const REQUIRED_HEADERS = ['name', 'price'];
+    /** Bump when preview generation changes so stale session previews are rejected. */
+    public const PREVIEW_ENGINE_V = 3;
+
+    /** Tag a session preview payload with the current engine version. */
+    public static function previewTag(array $saved): array {
+        $saved['engine_v'] = self::PREVIEW_ENGINE_V;
+        return $saved;
+    }
+
+    /** True when a stored preview predates the current engine (must re-upload). */
+    public static function isStalePreview($saved): bool {
+        return !is_array($saved) || ($saved['engine_v'] ?? 0) !== self::PREVIEW_ENGINE_V;
+    }
     public const MAX_IMAGES = 10;
     public const IMAGE_HEADERS = [
         'image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5',

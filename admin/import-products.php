@@ -44,14 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $preview = $result['preview'];
                 $savedLookups = $result['lookups'];
                 $key = bin2hex(random_bytes(24));
-                Session::set('product_csv_import', ['key' => $key, 'preview' => $preview, 'lookups' => $savedLookups]);
+                Session::set('product_csv_import', ProductCsvImporter::previewTag(['key' => $key, 'preview' => $preview, 'lookups' => $savedLookups]));
             } catch (Throwable $e) {
                 $error = $e->getMessage();
             }
         }
     } elseif ($action === 'import' || $action === 'import_chunk') {
         $saved = Session::get('product_csv_import');
-        if (!$saved || !hash_equals((string)$saved['key'], (string)($_POST['import_key'] ?? ''))) {
+        if (!$saved || ProductCsvImporter::isStalePreview($saved) || !hash_equals((string)$saved['key'], (string)($_POST['import_key'] ?? ''))) {
             $error = 'This preview has expired. Upload the spreadsheet again.';
             if ($isAjax) {
                 header('Content-Type: application/json');
@@ -127,7 +127,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-if (!$preview && Session::get('product_csv_import')) $preview = Session::get('product_csv_import')['preview'];
+if (!$preview && Session::get('product_csv_import')) {
+    $stored = Session::get('product_csv_import');
+    if (ProductCsvImporter::isStalePreview($stored)) {
+        Session::remove('product_csv_import');
+        $error = 'This preview was generated before the latest update. Please upload the file again.';
+    } else {
+        $preview = $stored['preview'];
+    }
+}
 
 $title = 'Import Products';
 include 'layout/header.php';

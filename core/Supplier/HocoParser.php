@@ -69,29 +69,29 @@ class HocoParser {
         return '';
     }
 
-    /** Sub-category -> parent fallback when live lacks the sub-category. */
+    /** Sub-category -> parent fallback chain when live lacks the sub-category. */
     public const PARENT_FALLBACK = [
-        'Earbuds' => 'Audio',
-        'Headphones' => 'Audio',
-        'Speakers' => 'Audio',
-        'Audio' => 'Audio',
-        'Cables' => 'Accessories',
-        'Chargers' => 'Accessories',
-        'Cases & Covers' => 'Accessories',
-        'Laptop Accessories' => 'Laptops',
-        'Phone Accessories' => 'Smartphones',
+        'Earbuds' => ['Audio', 'Accessories', 'Smartphones'],
+        'Headphones' => ['Audio', 'Accessories', 'Smartphones'],
+        'Speakers' => ['Audio', 'Accessories', 'Smartphones'],
+        'Audio' => ['Audio', 'Accessories'],
+        'Cables' => ['Accessories', 'Smartphones'],
+        'Chargers' => ['Accessories', 'Smartphones'],
+        'Cases & Covers' => ['Accessories', 'Smartphones'],
+        'Laptop Accessories' => ['Laptops', 'Accessories'],
+        'Phone Accessories' => ['Smartphones', 'Accessories'],
     ];
 
     /**
      * Resolve a desired category name against the live catalogue map.
-     * Returns [usedName, categoryId, fellBack]. Falls back to the parent
-     * vertical (Audio, Accessories, ...) so imports stay valid on servers
+     * Returns [usedName, categoryId, fellBack]. Falls back through the parent
+     * chain (Audio, Accessories, ...) so imports stay valid on servers
      * where the subcategory seed has not been run.
      */
     public static function resolveCategory(string $desired, array $catMap): array {
         $candidates = [];
         if ($desired !== '') $candidates[] = $desired;
-        if (isset(self::PARENT_FALLBACK[$desired])) $candidates[] = self::PARENT_FALLBACK[$desired];
+        foreach ((array)(self::PARENT_FALLBACK[$desired] ?? []) as $fb) $candidates[] = $fb;
         foreach ($candidates as $i => $name) {
             $id = $catMap[strtolower($name)] ?? null;
             if ($id !== null) return [$name, $id, $i > 0];
