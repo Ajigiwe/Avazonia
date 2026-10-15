@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Choose a readable .csv or .xlsx spreadsheet file to preview.';
         } else {
             try {
-                $result = ProductCsvImporter::preview($file['tmp_name'], $db, $file['name'] ?? '');
+                $result = ProductCsvImporter::previewSupplier($file['tmp_name'], $db, $file['name'] ?? '');
                 $preview = $result['preview'];
                 $savedLookups = $result['lookups'];
                 $key = bin2hex(random_bytes(24));
@@ -957,7 +957,7 @@ if (document.readyState !== 'loading') {
               <button type="button" id="expand-icon-<?= $lineNum ?>" onclick="const d = document.getElementById('detail-row-<?= $lineNum ?>'); const open = d.style.display !== 'none'; d.style.display = open ? 'none' : 'table-row'; this.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)'; event.stopPropagation();" style="background:none;border:none;cursor:pointer;display:inline-block;transition:transform .2s;font-size:14px;color:#55514E;padding:4px;outline:none;">▶</button>
             </td>
             <td style="padding:10px 12px;font-weight:700;color:#55514E;font-size:13px;"><?= $lineNum ?></td>
-            <td style="padding:10px 12px;font-weight:700;color:#0D0D0D;font-size:13px;"><?= htmlspecialchars($item['row']['name']) ?></td>
+            <td style="padding:10px 12px;font-weight:700;color:#0D0D0D;font-size:13px;"><?= htmlspecialchars($item['row']['name']) ?><?php $vList = (array)($item['values']['variants'] ?? []); $vCount = count($vList); if ($vCount > 1): $vNames = []; foreach ($vList as $vv) { $cc = trim((string)($vv['color'] ?? '')); $vNames[] = $cc !== '' ? $cc : trim((string)($vv['sku'] ?? '')); } ?><span title="<?= htmlspecialchars(implode(', ', $vNames)) ?>" style="display:inline-block;margin-left:8px;background:#F0EAFF;color:#6D28D9;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:800;vertical-align:middle;"><?= $vCount ?> variants</span><?php endif; ?></td>
             <td style="padding:10px 12px;font-family:var(--f-mono, monospace);font-size:11px;color:#55514E;"><?= htmlspecialchars($item['row']['sku'] ?? '—') ?></td>
             <td style="padding:10px 12px;font-weight:700;font-size:13px;"><?= htmlspecialchars($item['row']['currency'].' '.$item['row']['price']) ?></td>
             

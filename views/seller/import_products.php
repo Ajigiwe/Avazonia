@@ -455,7 +455,7 @@
               <button type="button" id="seller-expand-<?= $lineNum ?>" onclick="const d=document.getElementById('seller-detail-<?= $lineNum ?>');const open=d.style.display!=='none';d.style.display=open?'none':'table-row';this.style.transform=open?'rotate(0deg)':'rotate(90deg)';event.stopPropagation();" style="background:none;border:none;cursor:pointer;transition:transform .2s;font-size:14px;color:var(--mid-gray);padding:4px;">▶</button>
             </td>
             <td style="padding:12px 16px;font-weight:700;color:var(--mid-gray);"><?= $lineNum ?></td>
-            <td style="padding:12px 16px;font-weight:700;color:var(--ink);"><?= htmlspecialchars($item['row']['name']) ?></td>
+            <td style="padding:12px 16px;font-weight:700;color:var(--ink);"><?= htmlspecialchars($item['row']['name']) ?><?php $vList = (array)($item['values']['variants'] ?? []); $vCount = count($vList); if ($vCount > 1): $vNames = []; foreach ($vList as $vv) { $cc = trim((string)($vv['color'] ?? '')); $vNames[] = $cc !== '' ? $cc : trim((string)($vv['sku'] ?? '')); } ?><span title="<?= htmlspecialchars(implode(', ', $vNames)) ?>" style="display:inline-block;margin-left:8px;background:#F0EAFF;color:#6D28D9;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:800;vertical-align:middle;"><?= $vCount ?> variants</span><?php endif; ?></td>
             <td style="padding:12px 16px;font-family:var(--f-mono);font-size:12px;color:var(--mid-gray);"><?= htmlspecialchars($item['row']['sku'] ?? '—') ?></td>
             <td style="padding:12px 16px;font-weight:700;"><?= htmlspecialchars($item['row']['currency'].' '.$item['row']['price']) ?></td>
             
