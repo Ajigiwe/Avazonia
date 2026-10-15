@@ -69,7 +69,35 @@ class HocoParser {
         return '';
     }
 
-    /** Fallback when the section is empty/unknown: guess from product name. */
+    /** Sub-category -> parent fallback when live lacks the sub-category. */
+    public const PARENT_FALLBACK = [
+        'Earbuds' => 'Audio',
+        'Headphones' => 'Audio',
+        'Speakers' => 'Audio',
+        'Audio' => 'Audio',
+        'Cables' => 'Accessories',
+        'Chargers' => 'Accessories',
+        'Cases & Covers' => 'Accessories',
+        'Laptop Accessories' => 'Laptops',
+        'Phone Accessories' => 'Smartphones',
+    ];
+
+    /**
+     * Resolve a desired category name against the live catalogue map.
+     * Returns [usedName, categoryId, fellBack]. Falls back to the parent
+     * vertical (Audio, Accessories, ...) so imports stay valid on servers
+     * where the subcategory seed has not been run.
+     */
+    public static function resolveCategory(string $desired, array $catMap): array {
+        $candidates = [];
+        if ($desired !== '') $candidates[] = $desired;
+        if (isset(self::PARENT_FALLBACK[$desired])) $candidates[] = self::PARENT_FALLBACK[$desired];
+        foreach ($candidates as $i => $name) {
+            $id = $catMap[strtolower($name)] ?? null;
+            if ($id !== null) return [$name, $id, $i > 0];
+        }
+        return [$desired, null, false];
+    }
     public static function guessCategory(string $name): string {
         $n = strtolower($name);
         if (preg_match('/mouse|keyboard|mouse pad|mousepad|hub|docking|adapter.*usb|otg/', $n)) return 'Laptop Accessories';
@@ -258,9 +286,9 @@ class HocoParser {
                 if ($v['color'] !== '' && !in_array($v['color'], $colors, true)) $colors[] = $v['color'];
             }
 
-            $catName = self::mapSection($g['section']);
-            if ($catName === '') $catName = self::guessCategory($g['name']);
-            $categoryId = ($catName !== '') ? ($catMap[strtolower($catName)] ?? null) : null;
+            $wantedCat = self::mapSection($g['section']);
+            if ($wantedCat === '') $wantedCat = self::guessCategory($g['name']);
+            [$catName, $categoryId, $catFallback] = self::resolveCategory($wantedCat, $catMap);
 
             // Parent SKU: master barcode, suffixed on collision (supplier reuses
             // barcodes across packaged/unpackaged rows).
