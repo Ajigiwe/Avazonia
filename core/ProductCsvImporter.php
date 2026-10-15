@@ -4,7 +4,7 @@
 class ProductCsvImporter {
     public const REQUIRED_HEADERS = ['name', 'price'];
     /** Bump when preview generation changes so stale session previews are rejected. */
-    public const PREVIEW_ENGINE_V = 3;
+    public const PREVIEW_ENGINE_V = 4;
 
     /** Tag a session preview payload with the current engine version. */
     public static function previewTag(array $saved): array {

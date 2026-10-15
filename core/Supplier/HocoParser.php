@@ -82,11 +82,25 @@ class HocoParser {
         'Phone Accessories' => ['Smartphones', 'Accessories'],
     ];
 
+    /** Keyword fallback per category: matched as substrings against live names. */
+    public const CATEGORY_KEYWORDS = [
+        'Earbuds' => ['earbud', 'audio', 'headphone', 'headset', 'speaker', 'sound'],
+        'Headphones' => ['headphone', 'audio', 'earbud', 'speaker', 'sound'],
+        'Speakers' => ['speaker', 'audio', 'sound'],
+        'Audio' => ['audio', 'sound', 'speaker', 'earbud', 'headphone'],
+        'Cables' => ['cable', 'accessor', 'charger', 'phone', 'mobile'],
+        'Chargers' => ['charger', 'accessor', 'phone', 'mobile', 'power'],
+        'Cases & Covers' => ['case', 'cover', 'accessor', 'phone', 'mobile'],
+        'Laptop Accessories' => ['laptop', 'computer', 'accessor'],
+        'Phone Accessories' => ['phone', 'smartphone', 'mobile', 'accessor'],
+    ];
+    public const GENERIC_KEYWORDS = ['accessor', 'phone', 'mobile', 'electronic', 'gadget', 'general', 'other'];
+
     /**
      * Resolve a desired category name against the live catalogue map.
-     * Returns [usedName, categoryId, fellBack]. Falls back through the parent
-     * chain (Audio, Accessories, ...) so imports stay valid on servers
-     * where the subcategory seed has not been run.
+     * Returns [usedName, categoryId, fellBack]. Tries exact match, then the
+     * parent chain, then fuzzy substring match (covers renamed parents like
+     * "Audio Devices"), so imports stay valid whatever live is seeded with.
      */
     public static function resolveCategory(string $desired, array $catMap): array {
         $candidates = [];
@@ -96,7 +110,29 @@ class HocoParser {
             $id = $catMap[strtolower($name)] ?? null;
             if ($id !== null) return [$name, $id, $i > 0];
         }
+        // Fuzzy: first live category whose name contains a keyword.
+        $keywords = array_merge(
+            (array)(self::CATEGORY_KEYWORDS[$desired] ?? []),
+            self::GENERIC_KEYWORDS
+        );
+        foreach ($keywords as $kw) {
+            foreach ($catMap as $liveName => $id) {
+                if (str_contains($liveName, $kw)) {
+                    return [$liveName, $id, true];
+                }
+            }
+        }
         return [$desired, null, false];
+    }
+
+    /** Sorted live category names for error messages. */
+    public static function liveCategoryNames(array $lookups): array {
+        $names = array_unique(array_merge(
+            array_values((array)($lookups['main_categories'] ?? [])),
+            array_values((array)($lookups['sub_categories'] ?? []))
+        ));
+        natcasesort($names);
+        return array_values($names);
     }
     public static function guessCategory(string $name): string {
         $n = strtolower($name);
@@ -373,9 +409,18 @@ class HocoParser {
             if ($row['name'] === '') $errors[] = 'Product name is required.';
             if ($price === null) $errors[] = 'Price must be a number greater than zero.';
             if ($categoryId === null) {
+                $liveNames = self::liveCategoryNames($lookups);
+                $suffix = $liveNames ? ' Live options: ' . implode(', ', array_slice($liveNames, 0, 40)) . '.' : ' Live has no active categories.';
                 $errors[] = $catName !== ''
-                    ? 'Category/Subcategory "' . $catName . '" does not match an active catalogue category.'
-                    : 'Category could not be mapped from series "' . mb_substr($g['section'], 0, 60) . '" — pick one in the grid.';
+                    ? 'Category/Subcategory "' . $catName . '" does not match an active catalogue category.' . $suffix
+                    : 'Category could not be mapped from series "' . mb_substr($g['section'], 0, 60) . '" — pick one in the grid.' . $suffix;
+            } elseif ($catFallback) {
+                // Restore proper casing for fuzzy-matched live names (map keys are lowercase).
+                foreach (self::liveCategoryNames($lookups) as $proper) {
+                    if (strtolower($proper) === strtolower($catName)) { $catName = $proper; break; }
+                }
+                $row['category'] = $catName;
+                $row['sub_category'] = $catName;
             }
             // Brand HOCO is auto-created on import; do not block preview when missing.
             $brandId = $brandMap['hoco'] ?? null;
