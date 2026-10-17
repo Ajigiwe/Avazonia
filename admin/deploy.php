@@ -187,15 +187,24 @@ include 'layout/header.php';
             + (r.diff_stat ? `<pre class="sql" style="margin-top:14px">${esc(r.diff_stat)}</pre>` : '');
         }
 
-        // Local edits
+        // Local edits — only those that differ from the REMOTE can lose content.
         const lcard = document.getElementById('local-card');
-        if (r.local_changes && r.local_changes.length) {
+        const lossy = r.lossy_changes || [];
+        const harmless = r.harmless_changes || [];
+        if (lossy.length || harmless.length) {
             lcard.style.display = '';
-            document.getElementById('local-box').innerHTML =
-                `<div class="note note-danger"><strong>${r.local_changes.length} tracked file(s) have local edits.</strong>
-                 <code>git reset --hard</code> will <strong>permanently destroy</strong> them. They are not in the remote
-                 and cannot be recovered afterwards.</div>
-                 <pre class="sql">${esc(r.local_changes.join('\n'))}</pre>`;
+            let html = '';
+            if (lossy.length) {
+                html += `<div class="note note-danger"><strong>${lossy.length} local edit(s) differ from the remote.</strong>
+                 <code>git reset --hard</code> will <strong>overwrite these with the remote version</strong> and your edits
+                 cannot be recovered afterwards.</div><pre class="sql">${esc(lossy.join('\n'))}</pre>`;
+            }
+            if (harmless.length) {
+                html += `<div class="note note-ok" style="margin-top:${lossy.length ? '14px' : '0'}">
+                 <strong>${harmless.length} file(s) differ from your local HEAD but already match <code>origin/main</code>.</strong>
+                 You likely re-uploaded these by hand — the reset writes the same bytes, so nothing is lost and no confirmation is required.</div>`;
+            }
+            document.getElementById('local-box').innerHTML = html;
         } else {
             lcard.style.display = 'none';
         }
@@ -242,11 +251,11 @@ include 'layout/header.php';
     }
 
     function openModal() {
-        const needsForce = report && report.local_changes && report.local_changes.length > 0;
+        const needsForce = report && report.lossy_changes && report.lossy_changes.length > 0;
         document.getElementById('force-wrap').style.display = needsForce ? 'flex' : 'none';
         document.getElementById('force-check').checked = false;
         document.getElementById('modal-desc').innerHTML = needsForce
-            ? `This will <strong>destroy ${report.local_changes.length} local edit(s)</strong> and overwrite tracked files with <code>origin/main</code>.`
+            ? `This will <strong>overwrite ${report.lossy_changes.length} local edit(s)</strong> with the remote version of <code>origin/main</code>. Your changes cannot be recovered.`
             : `This overwrites tracked files on the live server with <code>origin/main</code>, then clears OPcache.`;
         modal.classList.add('active');
         document.getElementById('m-password').focus();
@@ -261,7 +270,7 @@ include 'layout/header.php';
     async function execute() {
         const password = document.getElementById('m-password').value;
         const phrase   = document.getElementById('m-phrase').value.trim();
-        const needsForce = report && report.local_changes && report.local_changes.length > 0;
+        const needsForce = report && report.lossy_changes && report.lossy_changes.length > 0;
 
         if (!password) { await AdminUI.alert('Password required to confirm this action.', { title: 'Password Required' }); return; }
         if (phrase !== 'RESET') { await AdminUI.alert('Type RESET exactly to confirm.', { title: 'Confirmation Required' }); return; }

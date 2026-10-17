@@ -194,15 +194,43 @@ if ($pf['git_ok'] && $pf['is_repo']) {
     }
 
     // Local edits to TRACKED files would be destroyed by reset --hard.
+    // Untracked entries are untouched by reset, so they are skipped.
     $pf['local_changes'] = [];
     foreach (array_filter(explode("\n", git('status --porcelain'))) as $line) {
         $status = substr($line, 0, 2);
-        if (strpos($status, '??') !== false) continue;  // untracked → untouched by reset --hard
+        if (strpos($status, '??') !== false) continue;
         $pf['local_changes'][] = $line;
+    }
+
+    // `status --porcelain` compares against the LOCAL head, but reset --hard
+    // writes the REMOTE's version. A file that differs from the local head yet
+    // already matches origin/main comes out byte-identical — nothing is lost.
+    // Only files that ALSO differ from origin/main are genuinely at risk, and
+    // only those should demand a force-acknowledge. This matters when an admin
+    // re-uploads a file by hand that is already committed to the remote.
+    $differsFromRemote = [];
+    if ($pf['is_sha']) {
+        foreach (array_filter(explode("\n", git('diff --name-only origin/' . DEPLOY_BRANCH))) as $f) {
+            $differsFromRemote[trim($f)] = true;
+        }
+    }
+    $pf['lossy_changes'] = [];
+    $pf['harmless_changes'] = [];
+    foreach ($pf['local_changes'] as $line) {
+        $file = preg_replace('/^[ MARCDTU]{1,2}/', '', $line);
+        if (strpos($file, '->') !== false) {                 // rename: keep the new path
+            $parts = explode('->', $file);
+            $file = end($parts);
+        }
+        $file = trim($file);
+        if (isset($differsFromRemote[$file])) $pf['lossy_changes'][]    = $line;
+        else                                  $pf['harmless_changes'][] = $line;
     }
 } else {
     $pf['fetch_output'] = '';
     $pf['local_changes'] = [];
+    $pf['lossy_changes'] = [];
+    $pf['harmless_changes'] = [];
     $pf['origin_ok'] = $pf['env_tracked'] = $pf['is_sha'] = false;
 }
 
@@ -250,9 +278,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'deplo
     if (!$pf['is_repo'])     deploy_block(__DIR__ . ' is not a git repository.');
     if (!$pf['origin_ok'])   deploy_block('Remote origin (' . ($pf['remote_url'] ?? 'none') . ') does not match ' . DEPLOY_ORIGIN);
     if ($pf['env_tracked'])  deploy_block('.env is tracked by git — reset --hard would destroy the live credentials.');
-    if (!empty($pf['local_changes']) && empty($_POST['force'])) {
-        deploy_block(count($pf['local_changes']) . ' tracked file(s) carry local edits. '
-                   . 'reset --hard would DESTROY them. Tick "I understand" to force.');
+    if (!empty($pf['lossy_changes']) && empty($_POST['force'])) {
+        deploy_block(count($pf['lossy_changes']) . ' local edit(s) differ from the remote and would be overwritten '
+                   . 'by reset --hard. These cannot be recovered. Tick "I understand" to force.');
     }
 
     // ── Execute ──
@@ -391,20 +419,31 @@ $canDeploy = $pf['git_ok'] && $pf['is_repo'] && $pf['origin_ok']
     <?php endif; ?>
 
     <!-- ── LOCAL EDITS ── -->
-    <?php if (!empty($pf['local_changes'])): ?>
+    <?php if (!empty($pf['lossy_changes'])): ?>
     <div class="danger">
-        <strong>⚠️ <?= count($pf['local_changes']) ?> tracked file(s) have local edits.</strong><br>
-        <code>git reset --hard</code> will <strong>permanently destroy these edits</strong>. They are not in
-        the remote, so they cannot be recovered afterwards.
-        <pre style="margin-top:10px"><?= e(implode("\n", $pf['local_changes'])) ?></pre>
+        <strong>⚠️ <?= count($pf['lossy_changes']) ?> local edit(s) differ from the remote.</strong><br>
+        <code>git reset --hard</code> will <strong>overwrite these with the remote version</strong>.
+        Your edits cannot be recovered afterwards.
+        <pre style="margin-top:10px"><?= e(implode("\n", $pf['lossy_changes'])) ?></pre>
     </div>
-    <?php elseif (!empty($pf['fetch_output'])): ?>
+    <?php endif; ?>
+
+    <?php if (!empty($pf['harmless_changes'])): ?>
+    <div class="ok">
+        <strong><?= count($pf['harmless_changes']) ?> file(s) differ from your local HEAD but already match
+        <code>origin/main</code>.</strong> You likely re-uploaded these by hand — the reset writes the same
+        bytes, so nothing is lost and no confirmation is required.
+        <pre style="margin-top:10px"><?= e(implode("\n", $pf['harmless_changes'])) ?></pre>
+    </div>
+    <?php endif; ?>
+
+    <?php if (empty($pf['lossy_changes']) && !empty($pf['fetch_output'])): ?>
     <div class="danger">
         <strong>git fetch reported an error:</strong>
         <pre><?= e($pf['fetch_output']) ?></pre>
     </div>
-    <?php else: ?>
-        <div class="ok">No local edits to tracked files — <code>.env</code> and uploaded images are untracked and will survive the deploy untouched.</div>
+    <?php elseif (empty($pf['lossy_changes']) && empty($pf['harmless_changes'])): ?>
+        <div class="ok">No local edits at risk — <code>.env</code> and uploaded images are untracked and will survive the deploy untouched.</div>
     <?php endif; ?>
 
     <!-- ── DEPLOY ── -->
@@ -424,10 +463,10 @@ $canDeploy = $pf['git_ok'] && $pf['is_repo'] && $pf['origin_ok']
                     so untracked files (including <code>.env</code>) are never deleted.
                 </p>
 
-                <?php if (!empty($pf['local_changes'])): ?>
+                <?php if (!empty($pf['lossy_changes'])): ?>
                 <label class="check">
                     <input type="checkbox" name="force" value="1">
-                    <span>I understand my <strong><?= count($pf['local_changes']) ?> local edit(s) will be permanently destroyed</strong> and cannot be recovered.</span>
+                    <span>I understand my <strong><?= count($pf['lossy_changes']) ?> local edit(s) will be overwritten</strong> with the remote version and cannot be recovered.</span>
                 </label>
                 <?php endif; ?>
 

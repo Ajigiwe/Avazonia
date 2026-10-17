@@ -67,6 +67,8 @@ class Deployer {
             'origin_ok'     => false,
             'env_tracked'   => false,
             'local_changes' => [],
+            'lossy_changes'    => [],
+            'harmless_changes' => [],
             'ahead'         => 0,
             'incoming'      => [],
             'incoming_count'=> 0,
@@ -113,9 +115,36 @@ class Deployer {
 
         // Tracked files with local edits would be DESTROYED by reset --hard.
         // Untracked ("??") entries are safe — reset does not touch them.
+        $statusLines = [];
         foreach ($this->lines($this->git('status --porcelain')) as $line) {
             if (strpos(substr($line, 0, 2), '??') !== false) continue;
-            $r['local_changes'][] = $line;
+            $statusLines[] = $line;
+        }
+        $r['local_changes'] = $statusLines;
+
+        // `status --porcelain` compares against the LOCAL head, but
+        // `reset --hard` writes the REMOTE's version. So a file that differs
+        // from the local head yet already matches origin/main comes out
+        // byte-identical — nothing is lost. Only files that also differ from
+        // origin/main are genuinely at risk. Splitting them means the
+        // confirmation flow only demands a force-acknowledge when content
+        // would really be destroyed.
+        $differsFromRemote = [];
+        foreach ($this->lines($this->git('diff --name-only origin/' . self::BRANCH)) as $f) {
+            $differsFromRemote[trim($f)] = true;
+        }
+
+        $r['lossy_changes']    = [];
+        $r['harmless_changes'] = [];
+        foreach ($statusLines as $line) {
+            $file = preg_replace('/^[ MARCDTU]{1,2}/', '', $line);
+            if (strpos($file, '->') !== false) {                 // rename: keep the new path
+                $parts = explode('->', $file);
+                $file = end($parts);
+            }
+            $file = trim($file);
+            if (isset($differsFromRemote[$file])) $r['lossy_changes'][]    = $line;
+            else                                  $r['harmless_changes'][] = $line;
         }
 
         // Migrations this deploy would introduce (never auto-run — preview only).
@@ -164,9 +193,15 @@ class Deployer {
         if (empty($preflight['ready'])) {
             throw new DeployException($preflight['reason'] ?: 'Preflight did not pass.');
         }
-        if (!empty($preflight['local_changes']) && !$force) {
-            throw new DeployException(count($preflight['local_changes'])
-                . ' tracked file(s) carry local edits. reset --hard would DESTROY them. Re-run with force to proceed.');
+        // Only edits that differ from the REMOTE can lose content. Local edits
+        // that already equal origin/main come out of reset --hard byte-identical,
+        // so they must neither block the deploy nor demand a force-acknowledge —
+        // otherwise files an admin merely re-uploaded by hand look dangerous.
+        $lossy = $preflight['lossy_changes'] ?? [];
+        if (!empty($lossy) && !$force) {
+            throw new DeployException(count($lossy)
+                . ' local edit(s) differ from the remote and WILL be overwritten by reset --hard. '
+                . "Re-run with force to proceed:\n" . implode("\n", $lossy));
         }
 
         $before = (string)$preflight['head'];
