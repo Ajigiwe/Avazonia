@@ -23,7 +23,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'moder
     $pid = (int)($_POST['product_id'] ?? 0);
     $act = $_POST['moderate'] ?? '';
     if ($pid && in_array($act, ['active', 'rejected', 'pending_review'], true)) {
-        $db->prepare("UPDATE products SET status_market=? WHERE id=?")->execute([$act, $pid]);
+        if ($act === 'active') {
+            // Approving a product an admin pulled must also put it back live, otherwise
+            // it stays hidden (is_active=0) even though its status is now 'active'.
+            // Only rows with pulled_at set get is_active restored, so a product the
+            // admin deliberately hid via the edit form stays hidden after approval.
+            $db->prepare("UPDATE products SET status_market=?, is_active = CASE WHEN pulled_at IS NOT NULL THEN 1 ELSE is_active END, pulled_at = NULL WHERE id=?")->execute([$act, $pid]);
+        } else {
+            $db->prepare("UPDATE products SET status_market=? WHERE id=?")->execute([$act, $pid]);
+        }
         require_once __DIR__ . '/../core/Cache.php';
         Cache::flushTags(['products']);
         $success = 'Product #' . $pid . ' → ' . strtoupper($act);
@@ -34,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'moder
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'moderate_all') {
     $n = (int)$db->query("SELECT COUNT(*) FROM products WHERE status_market='pending_review'")->fetchColumn();
     if ($n > 0) {
-        $db->prepare("UPDATE products SET status_market='active' WHERE status_market='pending_review'")->execute();
+        $db->exec("UPDATE products SET status_market='active', is_active = CASE WHEN pulled_at IS NOT NULL THEN 1 ELSE is_active END, pulled_at = NULL WHERE status_market='pending_review'");
         require_once __DIR__ . '/../core/Cache.php';
         Cache::flushTags(['products']);
         $success = $n . ' product' . ($n === 1 ? '' : 's') . ' approved and live.';
@@ -122,6 +130,12 @@ include 'layout/header.php';
                 <tr>
                     <td>
                         <div style="font-weight: 600; max-width: 260px;"><?= htmlspecialchars($p['name']) ?></div>
+                        <?php if (!empty($p['pulled_at'])): ?>
+                            <div style="font-size:9px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#fff;background:var(--red);display:inline-block;padding:3px 7px;border-radius:2px;margin-top:4px;" title="Pulled from the storefront by an admin on <?= date('M j, Y g:i A', strtotime($p['pulled_at'])) ?>">Pulled from site</div>
+                            <div style="font-size:9px;color:var(--mid-gray);margin-top:3px;">Approving puts this listing back live.</div>
+                        <?php else: ?>
+                            <div style="font-size:9px;color:var(--mid-gray);margin-top:3px;">Seller submission</div>
+                        <?php endif; ?>
                         <div style="font-size: 10px; color: var(--mid-gray); font-family: var(--f-mono); margin-top: 2px;">
                             <?= htmlspecialchars($p['brand_name'] ?? '—') ?> · <?= $p['img_count'] ?> img<?= $p['img_count'] == 1 ? '' : 's' ?>
                         </div>

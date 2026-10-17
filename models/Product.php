@@ -165,7 +165,7 @@ class Product extends Model {
                 LEFT JOIN brands b ON p.brand_id = b.id
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1 ".$this->sellerJoins()."
-                WHERE p.slug = :slug AND p.is_active = 1 " . $this->getStockSql();
+                WHERE p.slug = :slug AND p.is_active = 1 " . $this->getStockSql() . $this->marketplaceWhere();
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
         $stmt->bindValue(':min_stock', $this->getMinStock(), PDO::PARAM_INT);
@@ -326,7 +326,7 @@ class Product extends Model {
         [$regFilter, $regParams] = $this->regionFilter($filters['region'] ?? null);
         $mpFilter .= $regFilter; $mpParams = array_merge($mpParams, $regParams);
         $sql = "SELECT COUNT(*) FROM products p ".$this->sellerJoins()."
-                WHERE (p.name LIKE :q1 OR p.description LIKE :q2) AND p.is_active = 1 " . $this->getStockSql() . $catFilter . $mpFilter;
+                WHERE (p.name LIKE :q1 OR p.description LIKE :q2) AND p.is_active = 1 " . $this->getStockSql() . $catFilter . $mpFilter . $this->marketplaceWhere();
         $stmt = $this->db->prepare($sql);
         $term = "%$query%";
         $stmt->bindValue(':q1', $term, PDO::PARAM_STR);
@@ -343,7 +343,7 @@ class Product extends Model {
         $sql = "SELECT p.name, p.slug, pi.url as primary_image
                 FROM products p
                 LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
-                WHERE p.name LIKE :q AND p.is_active = 1 " . $this->getStockSql() . $catFilter . "
+                WHERE p.name LIKE :q AND p.is_active = 1 " . $this->getStockSql() . $catFilter . $this->marketplaceWhere() . "
                 ORDER BY p.name ASC LIMIT :limit";
         $stmt = $this->db->prepare($sql);
         $term = "%$query%";
@@ -374,7 +374,7 @@ class Product extends Model {
     public function countDiscounted() {
         $sql = "SELECT COUNT(*) FROM products p
                 WHERE p.compare_at_price_ghs IS NOT NULL AND p.compare_at_price_ghs > p.price_ghs
-                AND p.is_active = 1 " . $this->getStockSql();
+                AND p.is_active = 1 " . $this->getStockSql() . $this->marketplaceWhere();
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':min_stock', $this->getMinStock(), PDO::PARAM_INT);
         $stmt->execute();
@@ -430,7 +430,7 @@ class Product extends Model {
     }
 
     public function countTopSelling() {
-        $sql = "SELECT COUNT(*) FROM products p WHERE p.is_active = 1 " . $this->getStockSql();
+        $sql = "SELECT COUNT(*) FROM products p WHERE p.is_active = 1 " . $this->getStockSql() . $this->marketplaceWhere();
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':min_stock', $this->getMinStock(), PDO::PARAM_INT);
         $stmt->execute();

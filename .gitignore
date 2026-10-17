@@ -28,6 +28,16 @@ backups/*.zip
 !backups/.htaccess
 !backups/index.php
 
+# Production DB dumps — contain real customer PII (names, emails,
+# password hashes, phone numbers, addresses). Never commit these.
+production_db.sql
+production_db_fixed.sql
+schema.sql
+query
+
+# Local scratch/regression tests
+scratch/*.ps1
+
 # Bulk-import artifacts (regenerable via scripts/convert-hoco-import.py)
 public/uploads/products/hoco-*
 scratch/hoco-v3-import.csv

@@ -11,6 +11,85 @@ require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../core/Cache.php';
 
+/**
+ * Split a SQL script into individual executable statements.
+ *
+ * Comment-aware and quote-aware: a `;` inside a line comment, a block comment
+ * block or a string literal must NOT split the statement. Naive
+ * explode(';') breaks on comment lines such as
+ *   -- MariaDB 10.4 has no ADD COLUMN IF NOT EXISTS; bin/setup.php runs ...
+ * which leaves the comment tail glued to the next statement (syntax error 1064).
+ *
+ * @return string[] statements with comments removed
+ */
+function sql_statements(string $sql): array {
+    $statements = [];
+    $buf = '';
+    $len = strlen($sql);
+    $i = 0;
+    while ($i < $len) {
+        $ch = $sql[$i];
+        $next = $i + 1 < $len ? $sql[$i + 1] : '';
+
+        // Line comment: -- to end of line (MySQL requires whitespace after --)
+        if ($ch === '-' && $next === '-' && ($i + 2 >= $len || ctype_space($sql[$i + 2]))) {
+            while ($i < $len && $sql[$i] !== "\n") $i++;
+            continue;
+        }
+        // Block comment: /* ... */  (keep /*! ... */ optimiser hints intact)
+        if ($ch === '/' && $next === '*') {
+            if ($i + 2 < $len && $sql[$i + 2] === '!') {
+                $buf .= $ch . $next . $sql[$i + 2];
+                $i += 3;
+                continue;
+            }
+            $end = strpos($sql, '*/', $i + 2);
+            if ($end === false) break;
+            $i = $end + 2;
+            continue;
+        }
+        // String / identifier literals — a ; inside them is not a delimiter
+        if ($ch === "'" || $ch === '"' || $ch === '`') {
+            $quote = $ch;
+            $buf .= $ch;
+            $i++;
+            while ($i < $len) {
+                $c = $sql[$i];
+                $buf .= $c;
+                if ($c === '\\' && $quote !== '`' && $i + 1 < $len) {
+                    $buf .= $sql[$i + 1];
+                    $i += 2;
+                    continue;
+                }
+                if ($c === $quote) {
+                    // Doubled quote ('') is an escaped literal, not a terminator
+                    if ($i + 1 < $len && $sql[$i + 1] === $quote) {
+                        $buf .= $sql[$i + 1];
+                        $i += 2;
+                        continue;
+                    }
+                    $i++;
+                    break;
+                }
+                $i++;
+            }
+            continue;
+        }
+        if ($ch === ';') {
+            $stmt = trim($buf);
+            if ($stmt !== '') $statements[] = $stmt;
+            $buf = '';
+            $i++;
+            continue;
+        }
+        $buf .= $ch;
+        $i++;
+    }
+    $tail = trim($buf);
+    if ($tail !== '') $statements[] = $tail;
+    return $statements;
+}
+
 function run_sql_file(PDO $db, string $path): void {
     if (!file_exists($path)) {
         echo "  SKIP  $path (not found)\n";
@@ -30,10 +109,10 @@ function run_sql_file(PDO $db, string $path): void {
     } catch (PDOException $e) {
         echo "  WARN  $path failed bulk exec: " . $e->getMessage() . "\n";
         echo "        Trying statement-by-statement...\n";
-        $stmts = array_filter(array_map('trim', explode(';', $sql)));
+        $stmts = sql_statements($sql);
         $ok = 0; $fail = 0;
         foreach ($stmts as $stmt) {
-            if ($stmt === '' || str_starts_with($stmt, '--') || str_starts_with($stmt, '/*') || str_starts_with($stmt, '/*!')) continue;
+            if ($stmt === '' ) continue;
             // Skip MySQL-only directives for SQLite
             if ($driver === 'sqlite' && preg_match('/^(SET|LOCK|UNLOCK|ALTER\s+TABLE.*DISABLE|ENABLE)/i', $stmt)) continue;
             try { $db->exec($stmt); $ok++; } catch (PDOException $e2) { $fail++; if ($fail < 3) echo "          fail: " . substr($e2->getMessage(),0,120) . "\n"; }
@@ -110,6 +189,7 @@ if ($driver === 'sqlite') {
     run_sql_file($db, __DIR__ . '/../migrations/015_seller_phone_number.sql');
     run_sql_file($db, __DIR__ . '/../migrations/016_product_watermark.sql');
     run_sql_file($db, __DIR__ . '/../migrations/019_page_views.sql');
+    run_sql_file($db, __DIR__ . '/../migrations/020_product_pull.sql');
     // Seed Avazonia Owned seller for existing products
     try {
         $hasSeller = $db->query("SELECT id FROM sellers LIMIT 1")->fetch();
@@ -164,6 +244,7 @@ try {
         $ensureCol('products','location_country',"TEXT DEFAULT 'GH'");
         $ensureCol('products','vehicle_origin',"TEXT");
         $ensureCol('products','status_market',"TEXT DEFAULT 'active'");
+        $ensureCol('products','pulled_at',"TIMESTAMP");
         $ensureCol('products','available_in_ghana',"INTEGER DEFAULT 0");
         $ensureCol('order_items','seller_id',"INTEGER");
         $ensureCol('order_items','store_id',"INTEGER");

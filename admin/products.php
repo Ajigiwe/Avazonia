@@ -41,9 +41,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'moderate_product') {
     $pid=(int)($_POST['product_id']??0); $act=$_POST['moderate']??'';
     if ($pid && in_array($act,['active','rejected','draft'])) {
-        $db->prepare("UPDATE products SET status_market=? WHERE id=?")->execute([$act,$pid]);
+        if ($act === 'active') {
+            // Approving a product an admin pulled must also put it back live, otherwise
+            // it stays hidden (is_active=0) even though its status is now 'active'.
+            // Only rows with pulled_at set get is_active restored, so a product the
+            // admin deliberately hid via the edit form stays hidden after approval.
+            $db->prepare("UPDATE products SET status_market=?, is_active = CASE WHEN pulled_at IS NOT NULL THEN 1 ELSE is_active END, pulled_at = NULL WHERE id=?")->execute([$act,$pid]);
+        } else {
+            $db->prepare("UPDATE products SET status_market=? WHERE id=?")->execute([$act,$pid]);
+        }
         Cache::flushTags(['products']);
         $success="Product #$pid → ".strtoupper($act);
+    }
+}
+
+// ── Bulk catalogue actions: pull products off the storefront, or put them back ──
+// Pull sets is_active=0 (the one flag every storefront query checks) plus
+// status_market='pending_review' so the items land in the Approvals queue and
+// cannot go live again until approved.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['bulk_pull','bulk_restore'], true)) {
+    require_once __DIR__ . '/../models/Logger.php';
+    $bulkAction = $_POST['action'];
+    $ids = [];
+    foreach (explode(',', (string)($_POST['product_ids'] ?? '')) as $r) {
+        $r = trim($r);
+        if ($r !== '' && ctype_digit($r)) $ids[] = (int)$r;
+    }
+    $ids = array_values(array_unique($ids));
+    if (!$ids) {
+        $error = 'Select at least one product first.';
+    } else {
+        if (count($ids) > 1000) $ids = array_slice($ids, 0, 1000); // bound the request
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+        $now = ($db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') ? "datetime('now')" : 'NOW()';
+        try {
+            if ($bulkAction === 'bulk_pull') {
+                // COALESCE keeps the original pull time if the product is already pulled.
+                $stmt = $db->prepare("UPDATE products SET is_active=0, status_market='pending_review', pulled_at = COALESCE(pulled_at, $now) WHERE id IN ($ph)");
+            } else {
+                $stmt = $db->prepare("UPDATE products SET is_active=1, status_market='active', pulled_at = NULL WHERE id IN ($ph)");
+            }
+            $stmt->execute($ids);
+            $changed = (int)$stmt->rowCount();
+            Cache::flushTags(['products']);
+            Logger::log(
+                $bulkAction === 'bulk_pull' ? 'PRODUCT_PULL' : 'PRODUCT_RESTORE',
+                $changed . ' product(s) ' . ($bulkAction === 'bulk_pull' ? 'pulled from the storefront' : 'restored to live'),
+                ['product_ids' => $ids]
+            );
+            $success = $bulkAction === 'bulk_pull'
+                ? $changed . ' product' . ($changed === 1 ? '' : 's') . ' pulled from the site and queued for approval. They stay offline until approved again.'
+                : $changed . ' product' . ($changed === 1 ? '' : 's') . ' put back live.';
+        } catch (Throwable $e) {
+            $error = 'Bulk update failed: ' . $e->getMessage();
+        }
     }
 }
 
@@ -81,6 +132,14 @@ include 'layout/header.php';
 <div class="panel">
     <div class="panel-header">
         <div class="panel-title">Catalogue Inventory</div>
+        <form method="POST" id="bulk-form" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0;">
+            <?= Csrf::field() ?>
+            <input type="hidden" name="action" id="bulk-action" value="">
+            <input type="hidden" name="product_ids" id="bulk-ids" value="">
+            <span id="bulk-count" style="font-family:var(--f-mono);font-size:11px;color:var(--mid-gray);">0 selected</span>
+            <button type="submit" onclick="document.getElementById('bulk-action').value='bulk_pull';" data-confirm="Pull the selected products off the storefront? They will be hidden immediately and stay offline until you approve them again from the Approvals queue." data-confirm-title="Pull From Site" style="height:38px;padding:0 16px;font-size:10px;font-weight:800;letter-spacing:0.06em;background:var(--red);color:#fff;border:none;border-radius:3px;cursor:pointer;">Pull From Site</button>
+            <button type="submit" onclick="document.getElementById('bulk-action').value='bulk_restore';" data-confirm="Put the selected products back on the storefront as live and active?" data-confirm-title="Restore To Live" style="height:38px;padding:0 16px;font-size:10px;font-weight:800;letter-spacing:0.06em;background:#16a34a;color:#fff;border:none;border-radius:3px;cursor:pointer;">Restore To Live</button>
+        </form>
     </div>
     <?php if ($error): ?>
         <div style="margin: 0 32px 24px; background: #fff1f0; color: #f5222d; padding: 16px; font-size: 13px; border-left: 4px solid #f5222d;">
@@ -96,6 +155,7 @@ include 'layout/header.php';
         <table class="admin-table">
             <thead>
                 <tr>
+                    <th style="width:34px;"><input type="checkbox" id="bulk-select-all" title="Select all on this page" style="width:14px;height:14px;accent-color:var(--red);cursor:pointer;"></th>
                     <th>Product</th>
                     <th>Brand & Category · Seller</th>
                     <th>Price</th>
@@ -114,6 +174,7 @@ include 'layout/header.php';
                         : "Delete " . $p['name'] . "? This cannot be undone.";
                 ?>
                 <tr>
+                    <td><input type="checkbox" class="bulk-check" value="<?= $p['id'] ?>" style="width:14px;height:14px;accent-color:var(--red);cursor:pointer;"></td>
                     <td style="font-weight: 600;"><?= $p['name'] ?></td>
                     <td>
                         <div style="font-size: 11px; font-weight: 700; color: var(--red); text-transform: uppercase;"><?= $p['brand_name'] ?></div>
@@ -130,6 +191,9 @@ include 'layout/header.php';
                         <div style="display: flex; flex-direction: column; gap: 4px;">
                             <span class="status-badge <?= $p['is_active'] ? 'status-paid' : 'status-cancelled' ?>"><?= $p['is_active'] ? 'Active' : 'Hidden' ?></span>
                             <span class="status-badge <?= ($p['status_market']??'active')==='pending_review'?'status-processing':(($p['status_market']??'active')==='rejected'?'status-cancelled':'status-paid') ?>" style="font-size:9px;"><?= strtoupper($p['status_market']??'active') ?></span>
+                            <?php if (!empty($p['pulled_at'])): ?>
+                                <span class="status-badge status-cancelled" title="Pulled from the storefront on <?= date('M j, Y g:i A', strtotime($p['pulled_at'])) ?>">Pulled</span>
+                            <?php endif; ?>
                             <?php if ($p['is_preorder']): ?>
                                 <span style="font-size: 9px; background: #000; color: #fff; padding: 2px 6px; border-radius: 2px; text-transform: uppercase;">Pre-Order</span>
                             <?php endif; ?>
@@ -171,7 +235,7 @@ include 'layout/header.php';
                 </tr>
                 <?php endforeach; ?>
                 <?php if (empty($products)): ?>
-                <tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--mid-gray);">No products found. Start by adding one!</td></tr>
+                <tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--mid-gray);">No products found. Start by adding one!</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
@@ -199,5 +263,51 @@ include 'layout/header.php';
     <span style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);margin-left:12px;">Page <?= $page ?> of <?= $totalPages ?> (<?= $totalProducts ?> products)</span>
 </div>
 <?php endif; ?>
+
+<script>
+// ── Bulk select / pull-from-site controls ───────────────────────────
+(function () {
+    var form = document.getElementById('bulk-form');
+    if (!form) return;
+    var selectAll = document.getElementById('bulk-select-all');
+    var countEl = document.getElementById('bulk-count');
+    var idsInput = document.getElementById('bulk-ids');
+
+    function checks() { return Array.prototype.slice.call(document.querySelectorAll('.bulk-check')); }
+
+    function refresh() {
+        var n = checks().filter(function (c) { return c.checked; }).length;
+        countEl.textContent = n + ' selected';
+        countEl.style.color = n ? 'var(--ink)' : 'var(--mid-gray)';
+        // Reflect a partial selection on the header checkbox.
+        var all = checks();
+        selectAll.checked = all.length > 0 && n === all.length;
+        selectAll.indeterminate = n > 0 && n < all.length;
+    }
+
+    selectAll.addEventListener('change', function () {
+        checks().forEach(function (c) { c.checked = selectAll.checked; });
+        refresh();
+    });
+    document.addEventListener('change', function (e) {
+        if (e.target && e.target.classList && e.target.classList.contains('bulk-check')) refresh();
+    });
+
+    // Guard against submitting with nothing selected, and hand the server the ids.
+    form.addEventListener('submit', function (e) {
+        var ids = checks().filter(function (c) { return c.checked; }).map(function (c) { return c.value; });
+        if (!ids.length) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            window.AdminUI && window.AdminUI.alert('Select at least one product first.', { title: 'Nothing Selected', tone: 'info' });
+            return false;
+        }
+        idsInput.value = ids.join(',');
+        return true;
+    });
+
+    refresh();
+})();
+</script>
 
 <?php include 'layout/footer.php'; ?>
