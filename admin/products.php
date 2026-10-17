@@ -120,6 +120,20 @@ $filter->setLabels([
     'seller'   => array_column($sellerRows, 'business_name', 'id'),
 ]);
 
+// ── Collapsed-panel state ─────────────────────────────────────────────────
+// The bar shows five controls; the other eight live behind <details
+// class="pf-more">. This reports how many of the hidden ones are actually
+// narrowing the list, so the toggle can carry a badge and the panel can
+// auto-open when a bookmarked/filtered URL is loaded — otherwise a filter
+// you cannot see is silently shaping the table.
+//
+// values() only holds values that survived validation, and price_min=0 is a
+// legitimate value, so key existence is the right test. Testing truthiness
+// would quietly drop 0 and a genuine "free" filter would not count.
+$advancedKeys = ['brand', 'seller', 'vis', 'listing', 'stock', 'price_min', 'price_max', 'when', 'from', 'to'];
+$moreActive   = array_values(array_intersect($advancedKeys, array_keys($filter->values())));
+$moreCount    = count($moreActive);
+
 $productsQuery = "
     SELECT
         p.*,
@@ -181,6 +195,25 @@ include 'layout/header.php';
     .pf-chip:hover { border-color: var(--red); color: var(--red); }
     .pf-chip b { font-weight: 700; }
     .pf-chip i { font-style: normal; color: var(--red); font-weight: 800; }
+
+    /* Five controls stay in the open bar; the other eight sit behind
+       "More filters". <details> is used rather than a JS toggle so the panel
+       still opens with scripts off, and so the controls inside keep
+       submitting even while collapsed (closed <details> children are hidden,
+       not disabled). */
+    .pf-q { grid-column: span 2; }
+    .pf-more { grid-column: 1 / -1; margin-top: 2px; }
+    .pf-more > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-family: var(--f-semi); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--mid-gray); user-select: none; }
+    .pf-more > summary:hover { color: var(--ink); }
+    .pf-more > summary::-webkit-details-marker { display: none; }
+    .pf-more > summary::marker { content: ''; }
+    .pf-more > summary::before { content: '▸'; color: var(--red); font-size: 12px; display: inline-block; transition: transform .15s ease; }
+    .pf-more[open] > summary::before { transform: rotate(90deg); }
+    .pf-more[open] > summary { color: var(--ink); }
+    /* Badge: how many hidden filters are currently narrowing the list. */
+    .pf-more-n { background: var(--red); color: #fff; border-radius: 99px; padding: 1px 7px; font-family: var(--f-mono); font-size: 10px; font-weight: 700; letter-spacing: 0; }
+    .pf-more-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px 14px; padding-top: 18px; margin-top: 14px; border-top: 1px dashed var(--light-gray); }
+    @media (max-width: 900px) { .pf-q { grid-column: auto; } }
 </style>
 
 <div class="panel" style="margin-bottom: 24px;">
@@ -188,55 +221,6 @@ include 'layout/header.php';
         <div class="pf-field" style="grid-column: span 2;">
             <span>Name / Brand / SKU</span>
             <input type="text" name="q" value="<?= htmlspecialchars($filter->value('q'), ENT_QUOTES, 'UTF-8') ?>" placeholder="SEARCH THE CATALOGUE…" autocomplete="off">
-        </div>
-
-        <div class="pf-field">
-            <span>Uploaded</span>
-            <select name="when">
-                <option value="">Any time</option>
-                <?php foreach (ProductFilter::presets() as $preset): ?>
-                <option value="<?= $preset['key'] ?>" <?= $filter->activePreset() === $preset['key'] ? 'selected' : '' ?>><?= $preset['label'] ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-
-        <div class="pf-field">
-            <span>From → To</span>
-            <div class="pf-range">
-                <input type="date" name="from" value="<?= htmlspecialchars($filter->value('from'), ENT_QUOTES, 'UTF-8') ?>">
-                <span>→</span>
-                <input type="date" name="to" value="<?= htmlspecialchars($filter->value('to'), ENT_QUOTES, 'UTF-8') ?>">
-            </div>
-        </div>
-
-        <div class="pf-field">
-            <span>Category</span>
-            <select name="category">
-                <option value="">All categories</option>
-                <?php foreach ($categoryRows as $c): ?>
-                <option value="<?= (int)$c['id'] ?>" <?= $filter->value('category') === (int)$c['id'] ? 'selected' : '' ?>><?= htmlspecialchars($c['name'], ENT_QUOTES, 'UTF-8') ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-
-        <div class="pf-field">
-            <span>Brand</span>
-            <select name="brand">
-                <option value="">All brands</option>
-                <?php foreach ($brandRows as $b): ?>
-                <option value="<?= (int)$b['id'] ?>" <?= $filter->value('brand') === (int)$b['id'] ? 'selected' : '' ?>><?= htmlspecialchars($b['name'], ENT_QUOTES, 'UTF-8') ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-
-        <div class="pf-field">
-            <span>Seller</span>
-            <select name="seller">
-                <option value="">All sellers</option>
-                <?php foreach ($sellerRows as $s): ?>
-                <option value="<?= (int)$s['id'] ?>" <?= $filter->value('seller') === (int)$s['id'] ? 'selected' : '' ?>><?= htmlspecialchars($s['business_name'] ?? 'Seller #' . $s['id'], ENT_QUOTES, 'UTF-8') ?></option>
-                <?php endforeach; ?>
-            </select>
         </div>
 
         <div class="pf-field">
@@ -250,42 +234,13 @@ include 'layout/header.php';
         </div>
 
         <div class="pf-field">
-            <span>Visibility</span>
-            <select name="vis">
-                <option value="">Live &amp; hidden</option>
-                <?php foreach (ProductFilter::SPECS['vis']['options'] as $val => $label): ?>
-                <option value="<?= $val ?>" <?= $filter->value('vis') === $val ? 'selected' : '' ?>><?= $label ?></option>
+            <span>Category</span>
+            <select name="category">
+                <option value="">All categories</option>
+                <?php foreach ($categoryRows as $c): ?>
+                <option value="<?= (int)$c['id'] ?>" <?= $filter->value('category') === (int)$c['id'] ? 'selected' : '' ?>><?= htmlspecialchars($c['name'], ENT_QUOTES, 'UTF-8') ?></option>
                 <?php endforeach; ?>
             </select>
-        </div>
-
-        <div class="pf-field">
-            <span>Listing type</span>
-            <select name="listing">
-                <option value="">Any type</option>
-                <?php foreach (ProductFilter::SPECS['listing']['options'] as $val => $label): ?>
-                <option value="<?= $val ?>" <?= $filter->value('listing') === $val ? 'selected' : '' ?>><?= $label ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-
-        <div class="pf-field">
-            <span>Stock</span>
-            <select name="stock">
-                <option value="">Any stock level</option>
-                <?php foreach (ProductFilter::SPECS['stock']['options'] as $val => $label): ?>
-                <option value="<?= $val ?>" <?= $filter->value('stock') === $val ? 'selected' : '' ?>><?= $label ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-
-        <div class="pf-field">
-            <span>Price (<?= CURRENCY_SYMBOL ?>)</span>
-            <div class="pf-range">
-                <input type="number" name="price_min" min="0" step="0.01" value="<?= htmlspecialchars($filter->value('price_min'), ENT_QUOTES, 'UTF-8') ?>" placeholder="MIN">
-                <span>→</span>
-                <input type="number" name="price_max" min="0" step="0.01" value="<?= htmlspecialchars($filter->value('price_max'), ENT_QUOTES, 'UTF-8') ?>" placeholder="MAX">
-            </div>
         </div>
 
         <div class="pf-field">
@@ -303,6 +258,93 @@ include 'layout/header.php';
             <a href="<?= htmlspecialchars($filter->clearUrl(), ENT_QUOTES, 'UTF-8') ?>" class="pf-clear">Reset</a>
             <?php endif; ?>
         </div>
+
+        <!-- ── The rest of the engine, folded out of the way ────────────── -->
+        <details class="pf-more"<?= $moreCount ? ' open' : '' ?>>
+            <summary>
+                More filters
+                <?php if ($moreCount): ?><span class="pf-more-n"><?= $moreCount ?></span><?php endif; ?>
+            </summary>
+            <div class="pf-more-grid">
+                <div class="pf-field">
+                    <span>Brand</span>
+                    <select name="brand">
+                        <option value="">All brands</option>
+                        <?php foreach ($brandRows as $b): ?>
+                        <option value="<?= (int)$b['id'] ?>" <?= $filter->value('brand') === (int)$b['id'] ? 'selected' : '' ?>><?= htmlspecialchars($b['name'], ENT_QUOTES, 'UTF-8') ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="pf-field">
+                    <span>Seller</span>
+                    <select name="seller">
+                        <option value="">All sellers</option>
+                        <?php foreach ($sellerRows as $s): ?>
+                        <option value="<?= (int)$s['id'] ?>" <?= $filter->value('seller') === (int)$s['id'] ? 'selected' : '' ?>><?= htmlspecialchars($s['business_name'] ?? 'Seller #' . $s['id'], ENT_QUOTES, 'UTF-8') ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="pf-field">
+                    <span>Visibility</span>
+                    <select name="vis">
+                        <option value="">Live &amp; hidden</option>
+                        <?php foreach (ProductFilter::SPECS['vis']['options'] as $val => $label): ?>
+                        <option value="<?= $val ?>" <?= $filter->value('vis') === $val ? 'selected' : '' ?>><?= $label ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="pf-field">
+                    <span>Listing type</span>
+                    <select name="listing">
+                        <option value="">Any type</option>
+                        <?php foreach (ProductFilter::SPECS['listing']['options'] as $val => $label): ?>
+                        <option value="<?= $val ?>" <?= $filter->value('listing') === $val ? 'selected' : '' ?>><?= $label ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="pf-field">
+                    <span>Stock</span>
+                    <select name="stock">
+                        <option value="">Any stock level</option>
+                        <?php foreach (ProductFilter::SPECS['stock']['options'] as $val => $label): ?>
+                        <option value="<?= $val ?>" <?= $filter->value('stock') === $val ? 'selected' : '' ?>><?= $label ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="pf-field">
+                    <span>Price (<?= CURRENCY_SYMBOL ?>)</span>
+                    <div class="pf-range">
+                        <input type="number" name="price_min" min="0" step="0.01" value="<?= htmlspecialchars($filter->value('price_min'), ENT_QUOTES, 'UTF-8') ?>" placeholder="MIN">
+                        <span>→</span>
+                        <input type="number" name="price_max" min="0" step="0.01" value="<?= htmlspecialchars($filter->value('price_max'), ENT_QUOTES, 'UTF-8') ?>" placeholder="MAX">
+                    </div>
+                </div>
+
+                <div class="pf-field">
+                    <span>Uploaded</span>
+                    <select name="when">
+                        <option value="">Any time</option>
+                        <?php foreach (ProductFilter::presets() as $preset): ?>
+                        <option value="<?= $preset['key'] ?>" <?= $filter->activePreset() === $preset['key'] ? 'selected' : '' ?>><?= $preset['label'] ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="pf-field">
+                    <span>From → To</span>
+                    <div class="pf-range">
+                        <input type="date" name="from" value="<?= htmlspecialchars($filter->value('from'), ENT_QUOTES, 'UTF-8') ?>">
+                        <span>→</span>
+                        <input type="date" name="to" value="<?= htmlspecialchars($filter->value('to'), ENT_QUOTES, 'UTF-8') ?>">
+                    </div>
+                </div>
+            </div>
+        </details>
     </form>
 
     <?php if ($chips = $filter->chips()): ?>
