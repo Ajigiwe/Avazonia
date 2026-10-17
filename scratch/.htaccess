@@ -1,0 +1,3 @@
+# Deny all web access to scratch/ — local test + diagnostic scripts.
+Order allow,deny
+Deny from all

@@ -28,6 +28,18 @@ php_value memory_limit 256M
     Deny from all
 </Files>
 
+# ── Block development / deploy tooling from the web ─────────────────
+# These are CLI + SSH utilities, not web endpoints. Several of them are
+# unauthenticated and mutate the DB or run `git reset --hard` on the server.
+# They stay in the repo and remain usable via `php <file>` over SSH.
+# Root-only patterns (anchored ^...$) so nothing in admin/ or api/ is affected.
+RewriteRule ^(deploy|diagnose|run_migrations|read_logs|test_upload|router)\.php$ - [F,L]
+RewriteRule ^(check|debug)_.*\.php$ - [F,L]
+RewriteRule ^(seed|move)_.*\.php$ - [F,L]
+
+# Whole directories that must never be web-reachable.
+RewriteRule ^(bin|scratch)/ - [F,L]
+
 # Route everything to index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

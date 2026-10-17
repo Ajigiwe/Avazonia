@@ -1,0 +1,4 @@
+# Deny all web access to bin/ — these are CLI scripts (php bin/setup.php),
+# never web endpoints. setup.php runs the full schema + seed with no auth.
+Order allow,deny
+Deny from all
