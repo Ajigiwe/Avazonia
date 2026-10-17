@@ -33,7 +33,11 @@ php_value memory_limit 256M
 # unauthenticated and mutate the DB or run `git reset --hard` on the server.
 # They stay in the repo and remain usable via `php <file>` over SSH.
 # Root-only patterns (anchored ^...$) so nothing in admin/ or api/ is affected.
-RewriteRule ^(deploy|diagnose|run_migrations|read_logs|test_upload|router)\.php$ - [F,L]
+#
+# deploy.php is deliberately EXCEPTED while the temporary bridge is in use.
+# It is now auth-gated (admin session + CSRF + password re-entry), so it is
+# safe to expose briefly. RE-ADD `deploy|` here once the real deploy ships.
+RewriteRule ^(diagnose|run_migrations|read_logs|test_upload|router)\.php$ - [F,L]
 RewriteRule ^(check|debug)_.*\.php$ - [F,L]
 RewriteRule ^(seed|move)_.*\.php$ - [F,L]
 
