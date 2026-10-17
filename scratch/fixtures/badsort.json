@@ -1,0 +1,1 @@
+{ "sort": "created_at DESC; DROP TABLE products", "when": "7d", "seller": "1" }
