@@ -93,6 +93,12 @@ if (Session::get('user_role') !== 'admin') {
     $sid = (string)session_id();
     $cookieName = session_name();
     $cookieSent = isset($_COOKIE[$cookieName]) && $_COOKIE[$cookieName] !== '';
+    $cookieMatches = ($sid !== '' && $cookieSent && hash_equals($sid, (string)$_COOKIE[$cookieName]));
+
+    $appHost = defined('APP_URL') ? strtolower((string)parse_url(APP_URL, PHP_URL_HOST)) : '';
+    $reqHost = strtolower(preg_replace('/:\d+$/', '', (string)($_SERVER['HTTP_HOST'] ?? '')));
+    $hostMatch = ($appHost !== '' && $reqHost !== '' && strcasecmp($appHost, $reqHost) === 0);
+
     $statusMap = [
         PHP_SESSION_DISABLED => 'disabled',
         PHP_SESSION_NONE     => 'not started',
@@ -100,19 +106,38 @@ if (Session::get('user_role') !== 'admin') {
     ];
     $status = $statusMap[session_status()] ?? (string)session_status();
     $diag = [
-        'session status'    => $status . ($status === 'active' ? ' ✓' : '  ← session did NOT start'),
-        'session id'        => $sid !== '' ? substr($sid, 0, 8) . '…' : '(empty)',
+        'session status'     => $status . ($status === 'active' ? ' ✓' : '  ← session did NOT start'),
+        'session id'         => $sid !== '' ? substr($sid, 0, 8) . '…' : '(empty)',
         "cookie $cookieName" => $cookieSent ? 'received ✓' : 'NOT SENT by browser',
-        'session keys'      => $_SESSION ? implode(', ', array_keys($_SESSION)) : '(none)',
-        'user_role'         => var_export(Session::get('user_role'), true),
-        'headers_sent'      => headers_sent($hFile, $hLine) ? "yes ({$hFile}:{$hLine})" : 'no',
-        'APP_URL'           => defined('APP_URL') ? APP_URL : '(undefined)',
-        'requested host'    => (string)($_SERVER['HTTP_HOST'] ?? '(none)'),
+        'cookie matches id'  => $cookieMatches ? 'yes ✓'
+                              : 'NO — browser sent a different session id (its own empty session)',
+        'session keys'       => $_SESSION ? implode(', ', array_keys($_SESSION)) : '(none)',
+        'user_role'          => var_export(Session::get('user_role'), true),
+        'headers_sent'       => headers_sent($hFile, $hLine) ? "yes ({$hFile}:{$hLine})" : 'no',
+        'APP_URL'            => defined('APP_URL') ? APP_URL : '(undefined)',
+        'requested host'     => $reqHost !== '' ? $reqHost : '(none)',
+        'host match'         => $hostMatch ? $appHost . ' ✓'
+                              : 'MISMATCH: APP_URL is ' . ($appHost ?: '(unset)') . ' but you are on '
+                                . ($reqHost ?: '(unset)') . ' — session cookies do not cross hosts',
     ];
+
+    // The fix, offered as a link the moment the hosts disagree.
+    $suggested = '';
+    if (!$hostMatch && $appHost !== '') {
+        $scheme = defined('APP_URL') ? ((string)parse_url(APP_URL, PHP_URL_SCHEME) ?: 'https') : 'https';
+        $path   = (string)($_SERVER['REQUEST_URI'] ?? '/deploy.php');
+        $suggested = '<p style="font-family:system-ui,sans-serif;font-size:15px;background:#fff5f5;'
+                   . 'border-left:4px solid #e53935;padding:14px 18px"><strong>Open this instead:</strong> '
+                   . '<a href="' . e($scheme . '://' . $appHost . $path) . '">'
+                   . e($scheme . '://' . $appHost . $path) . '</a></p>';
+    }
 
     $rows = '';
     foreach ($diag as $k => $v) {
-        $bad = (strpos((string)$v, '←') !== false || $v === 'NOT SENT by browser'
+        $bad = (strpos((string)$v, '←') !== false
+                || strpos((string)$v, 'NO —') === 0
+                || strpos((string)$v, 'MISMATCH') === 0
+                || $v === 'NOT SENT by browser'
                 || $v === '(none)' || $v === '(empty)');
         $style = 'padding:5px 24px 5px 0;border-bottom:1px solid #eee;'
                . ($bad ? 'color:#e53935;font-weight:700' : 'color:#00a854');
@@ -123,6 +148,7 @@ if (Session::get('user_role') !== 'admin') {
     }
 
     exit('<h1 style="font-family:system-ui,sans-serif">403 — Forbidden</h1>'
+       . $suggested
        . '<p style="font-family:system-ui,sans-serif;font-size:14px">'
        . 'An authenticated administrator session is required. '
        . 'If you are already logged into the <a href="' . e(APP_URL) . '/login">admin panel</a> in this browser, '
