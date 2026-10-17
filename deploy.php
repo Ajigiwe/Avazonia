@@ -26,9 +26,19 @@
  * It NEVER runs `git clean` — that would delete untracked files including .env.
  */
 
+/**
+ * ⚠️  Order matters. Load Session.php and start the session BEFORE anything
+ * that could emit output. `config/app.php` ends with `?>` plus a trailing
+ * newline, which PHP sends as output; on a host with output_buffering off
+ * that makes headers_sent() true, and Session::start() then silently skips
+ * session_start(). Result: an empty session and a spurious 403 even though
+ * the administrator IS logged in.
+ */
+require_once __DIR__ . '/core/Session.php';
+Session::start();
+
 require_once __DIR__ . '/config/app.php';
 require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/core/Session.php';
 require_once __DIR__ . '/core/Csrf.php';
 require_once __DIR__ . '/core/Cache.php';
 require_once __DIR__ . '/models/Logger.php';
@@ -72,13 +82,57 @@ function deploy_block(string $reason): void {
 
 // ─── 1. AUTHENTICATED ADMIN SESSION REQUIRED ──────────────────────────────
 
-Session::start();
 header('Content-Type: text/html; charset=utf-8');
 
 if (Session::get('user_role') !== 'admin') {
     http_response_code(403);
-    exit('<h1>403 — Forbidden</h1><p>An authenticated administrator session is required. '
-       . 'Log in to the <a href="' . e(APP_URL) . '/login">admin panel</a> first, then reload this page.</p>');
+
+    // Diagnostic: an empty session can mean "never logged in", OR a session
+    // that failed to start (output sent first / cookie not round-tripping).
+    // Report which, so this screen is not a dead end.
+    $sid = (string)session_id();
+    $cookieName = session_name();
+    $cookieSent = isset($_COOKIE[$cookieName]) && $_COOKIE[$cookieName] !== '';
+    $statusMap = [
+        PHP_SESSION_DISABLED => 'disabled',
+        PHP_SESSION_NONE     => 'not started',
+        PHP_SESSION_ACTIVE   => 'active',
+    ];
+    $status = $statusMap[session_status()] ?? (string)session_status();
+    $diag = [
+        'session status'    => $status . ($status === 'active' ? ' ✓' : '  ← session did NOT start'),
+        'session id'        => $sid !== '' ? substr($sid, 0, 8) . '…' : '(empty)',
+        "cookie $cookieName" => $cookieSent ? 'received ✓' : 'NOT SENT by browser',
+        'session keys'      => $_SESSION ? implode(', ', array_keys($_SESSION)) : '(none)',
+        'user_role'         => var_export(Session::get('user_role'), true),
+        'headers_sent'      => headers_sent($hFile, $hLine) ? "yes ({$hFile}:{$hLine})" : 'no',
+        'APP_URL'           => defined('APP_URL') ? APP_URL : '(undefined)',
+        'requested host'    => (string)($_SERVER['HTTP_HOST'] ?? '(none)'),
+    ];
+
+    $rows = '';
+    foreach ($diag as $k => $v) {
+        $bad = (strpos((string)$v, '←') !== false || $v === 'NOT SENT by browser'
+                || $v === '(none)' || $v === '(empty)');
+        $style = 'padding:5px 24px 5px 0;border-bottom:1px solid #eee;'
+               . ($bad ? 'color:#e53935;font-weight:700' : 'color:#00a854');
+        $rows .= '<tr><td style="' . $style . '">' . e($k) . '</td>'
+               . '<td style="padding:5px 0;border-bottom:1px solid #eee;'
+               . ($bad ? 'color:#e53935;font-weight:700' : 'color:#00a854') . '">'
+               . e($v) . '</td></tr>';
+    }
+
+    exit('<h1 style="font-family:system-ui,sans-serif">403 — Forbidden</h1>'
+       . '<p style="font-family:system-ui,sans-serif;font-size:14px">'
+       . 'An authenticated administrator session is required. '
+       . 'If you are already logged into the <a href="' . e(APP_URL) . '/login">admin panel</a> in this browser, '
+       . 'reload this page. If you are not, log in there first, then come back.</p>'
+       . '<p style="font-family:system-ui,sans-serif;font-size:13px;font-weight:700">'
+       . 'If any row below is red, the session is not reaching this script — send me this output.</p>'
+       . '<table style="border-collapse:collapse;font:13px/1.6 ui-monospace,monospace">'
+       . '<tr><th align="left" style="padding:6px 24px 6px 0;border-bottom:1px solid #ccc">check</th>'
+       . '<th align="left" style="padding:6px 0;border-bottom:1px solid #ccc">result</th></tr>'
+       . $rows . '</table>');
 }
 
 // ─── 2. PREFLIGHT (read-only) ─────────────────────────────────────────────

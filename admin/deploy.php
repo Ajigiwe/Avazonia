@@ -2,11 +2,13 @@
 // admin/deploy.php
 // Deployment engine — pulls the live working tree to GitHub `main`.
 // Shared hosting has no SSH, so this is how releases reach production.
-require_once __DIR__ . '/../config/app.php';
+// Session first — see deploy.php for why ordering matters.
 require_once __DIR__ . '/../core/Session.php';
+Session::start();
+
+require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../core/Deployer.php';
 
-Session::start();
 if (Session::get('user_role') !== 'admin') {
     header('Location: ' . APP_URL . '/login');
     exit;

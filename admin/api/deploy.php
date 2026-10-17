@@ -4,14 +4,15 @@
 // `deploy` additionally requires the admin password (step-up auth) and the
 // typed confirmation phrase, because deploying is remote code execution by
 // definition — a hijacked admin session must not be enough on its own.
+// Session first — see deploy.php for why ordering matters.
+require_once __DIR__ . '/../../core/Session.php';
+Session::start();
+
 require_once __DIR__ . '/../../config/app.php';
 require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../core/Session.php';
 require_once __DIR__ . '/../../core/Deployer.php';
 require_once __DIR__ . '/../../models/User.php';
 require_once __DIR__ . '/../../models/Logger.php';
-
-Session::start();
 
 // 1. Admin access only.
 if (Session::get('user_role') !== 'admin') {
