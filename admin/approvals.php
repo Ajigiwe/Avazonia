@@ -254,7 +254,7 @@ include 'layout/header.php';
 </style>
 
 <div class="pev-backdrop" id="pev-backdrop"></div>
-<aside class="pev" id="pev" role="dialog" aria-modal="true" aria-labelledby="pev-title" aria-hidden="true">
+<aside class="pev" id="pev" role="dialog" aria-modal="true" aria-labelledby="pev-title" aria-hidden="true" data-base="<?= htmlspecialchars(rtrim(parse_url(APP_URL, PHP_URL_PATH) ?: '', '/'), ENT_QUOTES) ?>">
     <div class="pev-head">
         <div class="pev-head-main">
             <div class="pev-kicker">Edit product · <span id="pev-id">—</span></div>
@@ -279,6 +279,12 @@ include 'layout/header.php';
     'use strict';
 
     const ENDPOINT = 'api/product-edit.php';
+    // Install sub-directory ('' at a domain root, '/Avazonia-main' on XAMPP).
+    // Product image paths are stored root-relative with no leading slash
+    // (e.g. 'public/uploads/products/p_1.jpg'), so they must be resolved
+    // against the install root — not against /admin/, where a bare relative
+    // src would 404 at /admin/public/uploads/…
+    const BASE = document.getElementById('pev').getAttribute('data-base') || '';
     const backdrop = document.getElementById('pev-backdrop');
     const drawer = document.getElementById('pev');
     const bodyEl = document.getElementById('pev-body');
@@ -343,6 +349,17 @@ include 'layout/header.php';
         return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
             { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
         ));
+    }
+
+    // Mirror of the resolver in admin/edit-product.php: stored paths are
+    // root-relative ('public/uploads/…') and need the install base prefixing,
+    // while a seller-supplied absolute URL is already usable as-is.
+    function imgUrl(u) {
+        u = String(u == null ? '' : u);
+        if (!u) return '';
+        if (/^(https?:)?\/\//i.test(u) || /^data:/i.test(u)) return u;
+        if (u.charAt(0) === '/') return BASE + u;
+        return BASE + '/' + u;
     }
 
     function field(opts) {
@@ -453,7 +470,7 @@ include 'layout/header.php';
         if (!images || !images.length) return '<div class="pev-empty">No images on this listing yet.</div>';
         return images.map(img => `
             <div class="pev-img${parseInt(img.is_primary) ? ' primary' : ''}" data-img="${img.id}">
-                <img src="${esc(img.url)}" alt="" loading="lazy">
+                <img src="${esc(imgUrl(img.url))}" alt="" loading="lazy" onerror="this.style.opacity=.25;this.alt='missing file'">
                 ${parseInt(img.is_primary) ? '<span class="pev-img-badge">Primary</span>' : ''}
                 <div class="pev-img-acts">
                     <button type="button" data-img-primary="${img.id}" title="Make this the primary image"${parseInt(img.is_primary) ? ' disabled style="opacity:.4;"' : ''}>Primary</button>

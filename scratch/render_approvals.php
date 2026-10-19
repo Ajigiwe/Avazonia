@@ -61,5 +61,12 @@ check('csrf meta available for ajax', true); // emitted by layout/header.php, ch
 preg_match('/<meta name="csrf-token" content="([^"]*)"/', $html, $m);
 check('csrf meta tag emitted with a token', !empty($m[1]));
 
+// The drawer needs the install base to resolve root-relative image paths.
+preg_match('/<aside class="pev"[^>]*data-base="([^"]*)"/', $html, $b);
+check('drawer emits data-base for image paths', isset($b[1]), 'no data-base attribute found');
+check('data-base matches the APP_URL path', ($b[1] ?? null) === rtrim(parse_url(APP_URL, PHP_URL_PATH) ?: '', '/'),
+    'got=' . var_export($b[1] ?? null, true) . ' want=' . var_export(rtrim(parse_url(APP_URL, PHP_URL_PATH) ?: '', '/'), true));
+check('imgUrl resolver present in drawer script', strpos($html, 'function imgUrl(') !== false);
+
 echo "\n$pass passed, $fail failed\n";
 exit($fail > 0 ? 1 : 0);
