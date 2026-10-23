@@ -2,7 +2,7 @@
 // admin/layout/sidebar.php
 $current_page = basename($_SERVER['PHP_SELF']);
 // Live counts of items needing admin attention, shown as red badges on the sidebar.
-$pending_approvals = 0; $pending_orders = 0; $pending_rfqs = 0;
+$pending_approvals = 0; $pending_orders = 0; $pending_rfqs = 0; $pending_intake = 0;
 try {
     if (!isset($db)) { require_once __DIR__ . '/../../config/database.php'; $db = db(); }
     $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
@@ -12,7 +12,9 @@ try {
     $pending_orders = (int)$db->query("SELECT COUNT(*) FROM orders WHERE status IN ('pending','awaiting_payment') AND created_at >= {$recentCut}")->fetchColumn();
     // RFQs not yet answered.
     $pending_rfqs = (int)$db->query("SELECT COUNT(*) FROM rfqs WHERE status = 'pending'")->fetchColumn();
-} catch (\Throwable $e) { $pending_approvals = 0; $pending_orders = 0; $pending_rfqs = 0; }
+    // Pending Telegram Intake batches
+    $pending_intake = (int)$db->query("SELECT COUNT(*) FROM intake_batches WHERE status = 'pending'")->fetchColumn();
+} catch (\Throwable $e) { $pending_approvals = 0; $pending_orders = 0; $pending_rfqs = 0; $pending_intake = 0; }
 ?>
 <aside class="admin-sidebar">
     <div class="sidebar-brand">
@@ -40,6 +42,14 @@ try {
         </a>
         <a href="<?= APP_URL ?>/admin/import-products.php" class="nav-item <?= $current_page === 'import-products.php' ? 'active' : '' ?>">
             <span class="nav-icon">⇧</span> <span class="nav-label">Import Products</span>
+        </a>
+        <a href="<?= APP_URL ?>/admin/intake.php" class="nav-item <?= $current_page === 'intake.php' ? 'active' : '' ?>">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+            </span> <span class="nav-label">Telegram Intake</span>
+            <?php if ($pending_intake > 0): ?>
+                <span class="nav-badge <?= $current_page === 'intake.php' ? 'nav-badge-live' : '' ?>"><?= $pending_intake > 99 ? '99+' : $pending_intake ?></span>
+            <?php endif; ?>
         </a>
         <a href="<?= APP_URL ?>/admin/sliders.php" class="nav-item <?= $current_page === 'sliders.php' || $current_page === 'add-slide.php' || $current_page === 'edit-slide.php' ? 'active' : '' ?>">
             <span class="nav-icon">
