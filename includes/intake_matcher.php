@@ -66,8 +66,8 @@ function intake_group_shots(array $items): array
     $groups = [];
     $order  = [];
     foreach ($items as $item) {
-        if ((string) ($item['media_group'] ?? '') === 'sheet') {
-            continue;   // sheet marker, not a photo
+        if (in_array((string) ($item['media_group'] ?? ''), ['sheet', 'video'], true)) {
+            continue;   // sheet marker or video, not a gallery photo
         }
         $group = trim((string) ($item['media_group'] ?? ''));
         $key   = $group !== '' ? 'g:' . $group : 's:' . (string) ($item['id'] ?? count($groups));

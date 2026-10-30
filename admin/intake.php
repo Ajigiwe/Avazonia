@@ -64,6 +64,164 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $error = 'Failed to delete webhook: ' . ($res['description'] ?? 'Unknown Telegram error');
             }
+        } elseif ($action === 'publish_vehicle_live') {
+            if ($batch === null) {
+                $error = 'Batch not found.';
+            } else {
+                $csvData = (string) ($batch['sheet_data'] ?? '');
+                $parsed = bulk_parse_csv_string($csvData);
+                $rows = $parsed['rows'] ?? [];
+                if (empty($rows)) {
+                    $error = 'No vehicle details found in this batch.';
+                } else {
+                    $row = $rows[0];
+
+                    // 1. Resolve or create Brand
+                    $brandName = trim((string)($row['brand'] ?? ''));
+                    $brandId = null;
+                    if ($brandName !== '') {
+                        $stBrand = $db->prepare("SELECT id FROM brands WHERE LOWER(name) = LOWER(?) LIMIT 1");
+                        $stBrand->execute([$brandName]);
+                        $foundBrand = $stBrand->fetchColumn();
+                        if ($foundBrand) {
+                            $brandId = (int)$foundBrand;
+                        } else {
+                            $bSlug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $brandName), '-'));
+                            $db->prepare("INSERT INTO brands (name, slug, is_active, sort_order) VALUES (?, ?, 1, 99)")
+                               ->execute([$brandName, $bSlug]);
+                            $brandId = (int)$db->lastInsertId();
+                        }
+                    }
+
+                    // 2. Resolve Category (Automotive / Vehicles -> SUVs or Cars)
+                    $subCat = trim((string)($row['sub_category'] ?? ''));
+                    $categoryId = null;
+                    if ($subCat !== '') {
+                        $stCat = $db->prepare("SELECT id FROM categories WHERE LOWER(name) = LOWER(?) AND parent_id IS NOT NULL LIMIT 1");
+                        $stCat->execute([$subCat]);
+                        $foundCat = $stCat->fetchColumn();
+                        if ($foundCat) {
+                            $categoryId = (int)$foundCat;
+                        }
+                    }
+                    if (!$categoryId) {
+                        $stFallback = $db->query("SELECT id FROM categories WHERE slug IN ('vehicles-suvs', 'vehicles-cars', 'cars') LIMIT 1");
+                        $categoryId = (int)($stFallback->fetchColumn() ?: 40);
+                    }
+
+                    // 3. Prepare product destination directories
+                    $prodUploadsDir = realpath(__DIR__ . '/../public/uploads/products');
+                    if (!$prodUploadsDir) {
+                        @mkdir(__DIR__ . '/../public/uploads/products', 0775, true);
+                        $prodUploadsDir = realpath(__DIR__ . '/../public/uploads/products');
+                    }
+                    $root = dirname(__DIR__);
+
+                    // 4. Copy staged photos to product images
+                    $stagedPhotos = intake_items($batchId);
+                    $finalImages = [];
+                    foreach ($stagedPhotos as $item) {
+                        if (in_array((string)$item['media_group'], ['sheet', 'video'], true)) {
+                            continue;
+                        }
+                        $srcPath = $root . '/' . ltrim((string)$item['file_path'], '/');
+                        if (is_file($srcPath)) {
+                            $ext = pathinfo($srcPath, PATHINFO_EXTENSION);
+                            $newName = 'p_intake_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+                            $destPath = $prodUploadsDir . DIRECTORY_SEPARATOR . $newName;
+                            if (@copy($srcPath, $destPath)) {
+                                $finalImages[] = 'public/uploads/products/' . $newName;
+                            }
+                        }
+                    }
+
+                    // Apply anti-theft watermark
+                    require_once __DIR__ . '/../core/Watermark.php';
+                    Watermark::applyToPaths($finalImages);
+
+                    // 5. Handle video
+                    $videoUrl = trim((string)($row['video_url'] ?? ''));
+                    if ($videoUrl === '') {
+                        $stagedVideo = db_one("SELECT file_path FROM intake_items WHERE batch_id = ? AND media_group = 'video' ORDER BY id ASC LIMIT 1", [$batchId]);
+                        if (!empty($stagedVideo['file_path'])) {
+                            $videoUrl = (string)$stagedVideo['file_path'];
+                        }
+                    }
+
+                    // 6. Build product attributes
+                    $name = trim((string)($row['name'] ?? 'Vehicle'));
+                    $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name), '-'));
+                    if ($slug === '') $slug = 'vehicle-' . time();
+                    $slug .= '-' . bin2hex(random_bytes(3));
+
+                    $priceUsd = (float)($row['price'] ?? 0);
+                    $currency = (string)($row['currency'] ?? 'USD');
+                    $fobPriceUsd = $priceUsd;
+                    $incoterms = 'FOB';
+                    $conditionType = (string)($row['condition'] ?? 'used');
+                    $locationCountry = (string)($row['location_country'] ?? 'CN');
+                    $vehicleOrigin = 'international_export';
+                    $isPreorder = 1;
+                    $availableInGhana = 0;
+                    $description = (string)($row['description'] ?? '');
+                    $tags = (string)($row['tags'] ?? '');
+                    $stockQty = 1;
+
+                    // Convert features and specs
+                    $featRaw = trim((string)($row['features'] ?? ''));
+                    $featuresJson = null;
+                    if ($featRaw !== '') {
+                        $featArr = array_values(array_filter(array_map('trim', preg_split('/[\r\n|;]+/', $featRaw))));
+                        if (!empty($featArr)) $featuresJson = json_encode($featArr, JSON_UNESCAPED_UNICODE);
+                    }
+
+                    $specsRaw = trim((string)($row['specs'] ?? ''));
+                    $specsJson = null;
+                    if ($specsRaw !== '') {
+                        $specsArr = [];
+                        foreach (preg_split('/[\r\n|;]+/', $specsRaw) as $specLine) {
+                            if (strpos($specLine, ':') !== false) {
+                                list($k, $v) = explode(':', $specLine, 2);
+                                if (trim($k) !== '') $specsArr[trim($k)] = trim($v);
+                            }
+                        }
+                        if (!empty($specsArr)) $specsJson = json_encode($specsArr, JSON_UNESCAPED_UNICODE);
+                    }
+
+                    try {
+                        $productColumns = 'name, slug, category_id, brand_id, listing_type, visibility, condition_type, moq, wholesale_price_ghs, fob_price_usd, incoterms, location_country, vehicle_origin, status_market, price_ghs, price_usd, currency, stock_qty, description, features, specs, tags, is_preorder, is_bestseller, is_featured, is_dropshipping, available_in_ghana, video_url, brand_name';
+                        $productValues = [
+                            $name, $slug, $categoryId, $brandId, 'export', 'public', $conditionType, 1, null,
+                            $fobPriceUsd, $incoterms, $locationCountry, $vehicleOrigin, 'active', 0, $priceUsd,
+                            $currency, $stockQty, $description, $featuresJson, $specsJson, $tags,
+                            $isPreorder, 0, 1, 0, $availableInGhana, $videoUrl ?: null, $brandName ?: null
+                        ];
+                        $placeholders = implode(', ', array_fill(0, count($productValues), '?'));
+                        $stmt = $db->prepare("INSERT INTO products ($productColumns) VALUES ($placeholders)");
+                        $stmt->execute($productValues);
+                        $productId = (int)$db->lastInsertId();
+
+                        // Insert images
+                        foreach ($finalImages as $index => $img) {
+                            $isPrimary = ($index === 0) ? 1 : 0;
+                            $stmtImg = $db->prepare("INSERT INTO product_images (product_id, url, is_primary) VALUES (?, ?, ?)");
+                            $stmtImg->execute([$productId, $img, $isPrimary]);
+                        }
+
+                        // Flush cache
+                        require_once __DIR__ . '/../core/Cache.php';
+                        Cache::flushTags(['products']);
+
+                        // Claim batch
+                        intake_claim($batchId);
+
+                        header('Location: ' . APP_URL . '/admin/edit-product.php?id=' . $productId . '&published_from_intake=1');
+                        exit;
+                    } catch (Throwable $e) {
+                        $error = 'Failed to publish vehicle: ' . $e->getMessage();
+                    }
+                }
+            }
         } elseif ($action === 'send_to_importer') {
             if ($batch === null) {
                 $error = 'Batch not found.';
@@ -246,6 +404,9 @@ include 'layout/sidebar.php';
     $sheetRows = $parsed['rows'] ?? [];
     $photos = intake_items((int)$batch['id']);
     $photoCount = intake_photo_count((int)$batch['id']);
+    $videos = db_all("SELECT * FROM intake_items WHERE batch_id = ? AND media_group = 'video'", [(int)$batch['id']]);
+    $videoCount = count($videos);
+    $isVehicleBatch = (count($sheetRows) === 1 && (!empty($sheetRows[0]['specs']) || !empty($sheetRows[0]['features']) || str_starts_with((string)$batch['sheet_name'], 'Vehicle:')));
 
     $match = intake_match($sheetRows, $photos, ['order_fallback' => true]);
     $assignments = $match['assignments'] ?? [];
@@ -274,6 +435,10 @@ include 'layout/sidebar.php';
             <div style="font-family:var(--f-mono);font-size:9px;text-transform:uppercase;color:#6b7280;letter-spacing:0.08em;">Staged Photos</div>
             <div style="font-weight:800;font-size:24px;color:#2563eb;margin-top:4px;"><?= $photoCount ?></div>
         </div>
+        <div style="flex:1;min-width:140px;background:#fff;border:1px solid #e5e7eb;padding:16px 20px;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+            <div style="font-family:var(--f-mono);font-size:9px;text-transform:uppercase;color:#6b7280;letter-spacing:0.08em;">Staged Videos</div>
+            <div style="font-weight:800;font-size:24px;color:#7c3aed;margin-top:4px;"><?= $videoCount ?></div>
+        </div>
         <div style="flex:1;min-width:140px;background:#f0fdf4;border:1px solid #bbf7d0;padding:16px 20px;border-radius:6px;">
             <div style="font-family:var(--f-mono);font-size:9px;text-transform:uppercase;color:#166534;letter-spacing:0.08em;">SKU Matched</div>
             <div style="font-weight:800;font-size:24px;color:#16a34a;margin-top:4px;"><?= $stats['sku'] ?? 0 ?></div>
@@ -282,18 +447,199 @@ include 'layout/sidebar.php';
             <div style="font-family:var(--f-mono);font-size:9px;text-transform:uppercase;color:#1e40af;letter-spacing:0.08em;">Title / Caption Matched</div>
             <div style="font-weight:800;font-size:24px;color:#3b82f6;margin-top:4px;"><?= $stats['caption'] ?? 0 ?></div>
         </div>
-        <div style="flex:1;min-width:140px;background:#fefce8;border:1px solid #fef08a;padding:16px 20px;border-radius:6px;">
-            <div style="font-family:var(--f-mono);font-size:9px;text-transform:uppercase;color:#854d0e;letter-spacing:0.08em;">By Send Order</div>
-            <div style="font-weight:800;font-size:24px;color:#ca8a04;margin-top:4px;"><?= $stats['order'] ?? 0 ?></div>
-        </div>
         <div style="flex:1;min-width:140px;background:#fafafa;border:1px solid #e5e7eb;padding:16px 20px;border-radius:6px;">
             <div style="font-family:var(--f-mono);font-size:9px;text-transform:uppercase;color:#6b7280;letter-spacing:0.08em;">Unmatched Rows</div>
             <div style="font-weight:800;font-size:24px;color:#6b7280;margin-top:4px;"><?= $stats['unmatched'] ?? 0 ?></div>
         </div>
     </div>
 
-    <!-- Review Form -->
-    <form method="POST" id="intakeReviewForm">
+    <?php if ($isVehicleBatch && !empty($sheetRows[0])): ?>
+        <?php $vRow = $sheetRows[0]; ?>
+        <!-- Dedicated Vehicle Drop Staging Card -->
+        <div class="panel" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <div style="padding:20px 24px;background:linear-gradient(to right, #111827, #1f2937);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+                <div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                        <span style="font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;background:rgba(255,255,255,0.15);padding:3px 8px;border-radius:4px;">
+                            🚗 Vehicle Drop Staging
+                        </span>
+                        <span style="font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;background:#059669;color:#fff;padding:3px 8px;border-radius:4px;">
+                            China Export (Pre-Order)
+                        </span>
+                    </div>
+                    <h2 style="margin:0;font-size:18px;font-weight:700;line-height:1.3;color:#fff;">
+                        <?= htmlspecialchars($vRow['name'] ?? 'Vehicle Listing') ?>
+                    </h2>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.06em;">FOB Price</div>
+                    <div style="font-size:24px;font-weight:800;color:#10b981;font-family:var(--f-mono);">
+                        $<?= number_format((float)($vRow['price'] ?? 0)) ?> <span style="font-size:13px;font-weight:600;color:#d1fae5;"><?= htmlspecialchars($vRow['currency'] ?? 'USD') ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding:24px;">
+                <!-- Badges Row -->
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+                    <?php if (!empty($vRow['brand'])): ?>
+                        <span style="background:#f3f4f6;color:#1f2937;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;">
+                            🏷️ Brand: <?= htmlspecialchars($vRow['brand']) ?>
+                        </span>
+                    <?php endif; ?>
+                    <?php if (!empty($vRow['sub_category'])): ?>
+                        <span style="background:#eff6ff;color:#1e40af;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;">
+                            📂 Category: <?= htmlspecialchars($vRow['sub_category']) ?>
+                        </span>
+                    <?php endif; ?>
+                    <?php if (!empty($vRow['condition'])): ?>
+                        <span style="background:#fef3c7;color:#92400e;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;text-transform:capitalize;">
+                            ⚙️ Condition: <?= htmlspecialchars($vRow['condition']) ?>
+                        </span>
+                    <?php endif; ?>
+                    <span style="background:#ede9fe;color:#5b21b6;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;">
+                        📸 <?= $photoCount ?> Photos
+                    </span>
+                    <span style="background:#fae8ff;color:#86198f;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;">
+                        🎥 <?= $videoCount ?> Video Walkthrough(s)
+                    </span>
+                </div>
+
+                <!-- Media Section: Video & Photos -->
+                <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));gap:24px;margin-bottom:24px;">
+                    <!-- Video Walkthrough Player -->
+                    <?php if (!empty($videos)): ?>
+                        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;">
+                            <div style="font-weight:700;font-size:13px;color:#111827;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                                🎥 Video Walkthrough (<?= count($videos) ?>)
+                            </div>
+                            <?php foreach ($videos as $vIdx => $vItem): ?>
+                                <video src="<?= APP_URL ?>/<?= htmlspecialchars(ltrim($vItem['file_path'], '/')) ?>"
+                                       controls preload="metadata"
+                                       style="width:100%;max-height:280px;border-radius:6px;background:#000;margin-bottom:8px;"></video>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Staged Photo Gallery -->
+                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;flex:1;">
+                        <div style="font-weight:700;font-size:13px;color:#111827;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+                            <span>📸 Staged Gallery Photos (<?= $photoCount ?>)</span>
+                            <span style="font-size:11px;color:#6b7280;">First image is primary cover</span>
+                        </div>
+                        <?php if ($photoCount === 0): ?>
+                            <div style="padding:40px;text-align:center;color:#9ca3af;font-size:13px;">
+                                No photos staged yet. Send photos to the Telegram bot to attach them!
+                            </div>
+                        <?php else: ?>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(90px, 1fr));gap:8px;max-height:300px;overflow-y:auto;padding:4px;">
+                                <?php $pIdx = 0; ?>
+                                <?php foreach ($photos as $ph): ?>
+                                    <?php if (in_array((string)$ph['media_group'], ['sheet', 'video'], true)) continue; ?>
+                                    <div style="position:relative;height:80px;border-radius:4px;overflow:hidden;border:1px solid #e5e7eb;background:#fff;">
+                                        <img src="<?= APP_URL ?>/<?= htmlspecialchars(ltrim($ph['file_path'], '/')) ?>"
+                                             style="width:100%;height:100%;object-fit:cover;" alt="">
+                                        <?php if ($pIdx === 0): ?>
+                                            <span style="position:absolute;top:2px;left:2px;background:#10b981;color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:2px;">COVER</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <?php $pIdx++; ?>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Specifications & Features Grid -->
+                <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));gap:24px;margin-bottom:24px;">
+                    <!-- Vehicle Specifications -->
+                    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;background:#fff;">
+                        <div style="font-weight:700;font-size:13px;color:#111827;margin-bottom:12px;border-bottom:1px solid #f3f4f6;padding-bottom:6px;">
+                            ⚙️ Vehicle Specifications
+                        </div>
+                        <?php
+                        $specItems = [];
+                        if (!empty($vRow['specs'])) {
+                            foreach (explode('|', (string)$vRow['specs']) as $sp) {
+                                if (strpos($sp, ':') !== false) {
+                                    list($sk, $sv) = explode(':', $sp, 2);
+                                    $specItems[trim($sk)] = trim($sv);
+                                }
+                            }
+                        }
+                        ?>
+                        <?php if (empty($specItems)): ?>
+                            <div style="color:#9ca3af;font-size:12px;">No specifications extracted.</div>
+                        <?php else: ?>
+                            <table style="width:100%;font-size:12px;border-collapse:collapse;">
+                                <?php foreach ($specItems as $k => $v): ?>
+                                    <tr style="border-bottom:1px solid #f9fafb;">
+                                        <td style="padding:6px 0;color:#6b7280;font-weight:500;width:45%;"><?= htmlspecialchars($k) ?></td>
+                                        <td style="padding:6px 0;color:#111827;font-weight:600;"><?= htmlspecialchars($v) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </table>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Key Features -->
+                    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;background:#fff;">
+                        <div style="font-weight:700;font-size:13px;color:#111827;margin-bottom:12px;border-bottom:1px solid #f3f4f6;padding-bottom:6px;">
+                            ✨ Key Features
+                        </div>
+                        <?php
+                        $featItems = !empty($vRow['features']) ? array_filter(array_map('trim', explode('|', (string)$vRow['features']))) : [];
+                        ?>
+                        <?php if (empty($featItems)): ?>
+                            <div style="color:#9ca3af;font-size:12px;">No key features extracted.</div>
+                        <?php else: ?>
+                            <ul style="margin:0;padding-left:18px;font-size:12px;color:#374151;line-height:1.7;">
+                                <?php foreach ($featItems as $fi): ?>
+                                    <li><?= htmlspecialchars($fi) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- 1-Click Publishing Action Bar -->
+                <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+                    <div>
+                        <div style="font-weight:700;font-size:14px;color:#111827;">Ready to publish this vehicle?</div>
+                        <div style="font-size:12px;color:#6b7280;margin-top:2px;">
+                            This will create the vehicle product, attach all <?= $photoCount ?> gallery photos, link the video walkthrough, apply watermarks, and publish live.
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:12px;align-items:center;">
+                        <!-- 1-Click Live Publish Form -->
+                        <form method="POST" style="margin:0;">
+                            <?= Csrf::field() ?>
+                            <input type="hidden" name="action" value="publish_vehicle_live">
+                            <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
+                            <button type="submit" class="btn-primary"
+                                    style="height:44px;padding:0 24px;font-size:13px;font-weight:700;border-radius:6px;background:#059669;color:#fff;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
+                                🚀 Publish Vehicle Live Now
+                            </button>
+                        </form>
+
+                        <!-- Traditional Send to Importer -->
+                        <form method="POST" style="margin:0;">
+                            <?= Csrf::field() ?>
+                            <input type="hidden" name="action" value="send_to_importer">
+                            <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
+                            <button type="submit" class="btn-secondary"
+                                    style="height:44px;padding:0 18px;font-size:12px;font-weight:600;border-radius:6px;background:#fff;border:1px solid #d1d5db;color:#374151;cursor:pointer;">
+                                Send to Importer / Waiting Room &rarr;
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <!-- Standard Review Form (for multi-product spreadsheets or advanced image remapping) -->
+    <form method="POST" id="intakeReviewForm" style="<?= ($isVehicleBatch ? 'display:none;' : '') ?>">
         <?= Csrf::field() ?>
         <input type="hidden" name="action" value="send_to_importer">
         <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">

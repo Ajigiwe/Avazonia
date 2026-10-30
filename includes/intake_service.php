@@ -17,9 +17,11 @@ declare(strict_types=1);
 require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/intake_xlsx.php';
+require_once __DIR__ . '/intake_parser.php';
 
 const INTAKE_MAX_PHOTOS      = 400;
 const INTAKE_MAX_IMAGE_BYTES = 8 * 1024 * 1024;   // 8 MB per photo
+const INTAKE_MAX_VIDEO_BYTES = 25 * 1024 * 1024;  // 25 MB per video (Telegram API max ~20MB for bots)
 const INTAKE_MAX_SHEET_BYTES = 2 * 1024 * 1024;   // 2 MB per spreadsheet
 
 /* ------------------------------------------------------------- DB helpers ---- */
@@ -260,9 +262,11 @@ function intake_batches(?string $status = null, int $limit = 50): array
 {
     intake_tables();
     $limit = max(1, min(200, $limit));
-    $sql   = 'SELECT b.*, COUNT(i.id) AS photo_count
+    $sql   = 'SELECT b.*, 
+                COUNT(DISTINCT CASE WHEN i.media_group NOT IN ("sheet", "video") THEN i.id END) AS photo_count,
+                COUNT(DISTINCT CASE WHEN i.media_group = "video" THEN i.id END) AS video_count
                 FROM intake_batches b
-                LEFT JOIN intake_items i ON i.batch_id = b.id AND i.media_group <> "sheet"';
+                LEFT JOIN intake_items i ON i.batch_id = b.id';
     $params = [];
     if ($status !== null) {
         $sql .= ' WHERE b.status = ?';
@@ -291,7 +295,17 @@ function intake_photo_count(int $batchId): int
 {
     intake_tables();
     return (int) db_val(
-        "SELECT COUNT(*) FROM intake_items WHERE batch_id = ? AND media_group <> 'sheet'",
+        "SELECT COUNT(*) FROM intake_items WHERE batch_id = ? AND media_group NOT IN ('sheet', 'video')",
+        [$batchId],
+        0
+    );
+}
+
+function intake_video_count(int $batchId): int
+{
+    intake_tables();
+    return (int) db_val(
+        "SELECT COUNT(*) FROM intake_items WHERE batch_id = ? AND media_group = 'video'",
         [$batchId],
         0
     );
@@ -358,13 +372,30 @@ function intake_clear_photos(int $batchId): int
     $root    = dirname(__DIR__);
     foreach (intake_items($batchId) as $item) {
         $rel = (string) $item['file_path'];
-        if ($rel !== '' && (string)$item['media_group'] !== 'sheet' && is_file($root . '/' . ltrim($rel, '/'))) {
+        if ($rel !== '' && !in_array((string)$item['media_group'], ['sheet', 'video'], true) && is_file($root . '/' . ltrim($rel, '/'))) {
             if (@unlink($root . '/' . ltrim($rel, '/'))) {
                 $removed++;
             }
         }
     }
-    db_exec("DELETE FROM intake_items WHERE batch_id = ? AND media_group <> 'sheet'", [$batchId]);
+    db_exec("DELETE FROM intake_items WHERE batch_id = ? AND media_group NOT IN ('sheet', 'video')", [$batchId]);
+    return $removed;
+}
+
+function intake_clear_videos(int $batchId): int
+{
+    intake_tables();
+    $removed = 0;
+    $root    = dirname(__DIR__);
+    foreach (intake_items($batchId) as $item) {
+        $rel = (string) $item['file_path'];
+        if ($rel !== '' && (string)$item['media_group'] === 'video' && is_file($root . '/' . ltrim($rel, '/'))) {
+            if (@unlink($root . '/' . ltrim($rel, '/'))) {
+                $removed++;
+            }
+        }
+    }
+    db_exec("DELETE FROM intake_items WHERE batch_id = ? AND media_group = 'video'", [$batchId]);
     return $removed;
 }
 
@@ -520,6 +551,186 @@ function intake_ingest_photo(array $cfg, int $chatId, array $msg, ?string $bytes
     }
 
     return ['ok' => true, 'path' => $path, 'batch_id' => $batchId];
+}
+
+function intake_save_video(string $bytes, string $ext = 'mp4'): ?string
+{
+    if ($bytes === '' || strlen($bytes) > INTAKE_MAX_VIDEO_BYTES) {
+        return null;
+    }
+    static $allowed = [
+        'video/mp4' => 'mp4',
+        'video/webm' => 'webm',
+        'video/quicktime' => 'mov',
+        'video/x-msvideo' => 'avi',
+        'video/x-matroska' => 'mkv',
+        'application/octet-stream' => 'mp4',
+    ];
+    $mime = (string) (new finfo(FILEINFO_MIME_TYPE))->buffer($bytes);
+    if (!isset($allowed[$mime]) && !in_array($ext, ['mp4', 'webm', 'mov', 'avi', 'mkv'], true)) {
+        return null;
+    }
+    $chosenExt = $allowed[$mime] ?? (in_array($ext, ['mp4', 'webm', 'mov', 'avi', 'mkv'], true) ? $ext : 'mp4');
+
+    $dir = dirname(__DIR__) . '/public/uploads/videos';
+    if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
+        return null;
+    }
+    $name = 'v_intake_' . gmdate('Ymd') . '_' . bin2hex(random_bytes(8)) . '.' . $chosenExt;
+    if (@file_put_contents($dir . '/' . $name, $bytes) === false) {
+        return null;
+    }
+    @chmod($dir . '/' . $name, 0644);
+    return 'public/uploads/videos/' . $name;
+}
+
+function intake_video_bytes(array $cfg, array $msg): ?string
+{
+    $vid = $msg['video'] ?? $msg['document'] ?? null;
+    if (!is_array($vid) || empty($vid['file_id']) || $cfg['token'] === '') {
+        return null;
+    }
+    $fileSize = (int) ($vid['file_size'] ?? 0);
+    if ($fileSize > INTAKE_MAX_VIDEO_BYTES) {
+        return null;
+    }
+    $info = tg_api($cfg, 'getFile', ['file_id' => (string) $vid['file_id']]);
+    $filePath = (string) ($info['result']['file_path'] ?? '');
+    if ($filePath === '') {
+        return null;
+    }
+    return tg_download(
+        'https://api.telegram.org/file/bot' . $cfg['token'] . '/' . $filePath,
+        INTAKE_MAX_VIDEO_BYTES
+    );
+}
+
+function intake_ingest_video(array $cfg, int $chatId, array $msg, ?string $bytes = null): array
+{
+    intake_tables();
+
+    $messageId = (int) ($msg['message_id'] ?? 0);
+    if ($messageId > 0 && intake_message_seen($chatId, $messageId)) {
+        return ['ok' => true, 'dup' => true, 'path' => null];
+    }
+
+    $batchId = intake_active_batch_id($chatId);
+    if ($batchId === null) {
+        $batchId = intake_new_batch($chatId, 'Vehicle Video from Telegram');
+    }
+
+    if ($bytes === null) {
+        $bytes = intake_video_bytes($cfg, $msg);
+    }
+    if ($bytes === null) {
+        return [
+            'ok' => false,
+            'reply' => 'Could not download video. Note: Telegram Bot API limit is 20 MB per video. Send a compressed clip or link.'
+        ];
+    }
+
+    $ext = 'mp4';
+    if (!empty($msg['document']['file_name'])) {
+        $ext = strtolower(pathinfo($msg['document']['file_name'], PATHINFO_EXTENSION));
+    }
+    $path = intake_save_video($bytes, $ext);
+    if ($path === null) {
+        return ['ok' => false, 'reply' => 'File is not a valid supported video (MP4, WebM, MOV up to 25 MB).'];
+    }
+
+    try {
+        db_exec(
+            'INSERT INTO intake_items (batch_id, message_id, media_group, file_path, caption, created_at)
+             VALUES (?, ?, "video", ?, ?, NOW())',
+            [
+                $batchId,
+                $messageId > 0 ? $messageId : (int) round(microtime(true) * 1000),
+                $path,
+                mb_substr(trim((string) ($msg['caption'] ?? '')), 0, 512),
+            ]
+        );
+    } catch (Throwable $e) {
+        @unlink(dirname(__DIR__) . '/' . $path);
+        error_log('intake: error saving video item - ' . $e->getMessage());
+        return ['ok' => false, 'reply' => 'Could not record video on the server.'];
+    }
+
+    // If active batch has a staged vehicle listing CSV, link this video to it
+    $batch = intake_batch($batchId);
+    if ($batch && !empty($batch['sheet_data'])) {
+        $csv = (string) $batch['sheet_data'];
+        $parsed = bulk_parse_csv_string($csv);
+        if (!empty($parsed['rows'])) {
+            if (empty($parsed['rows'][0]['video_url'])) {
+                $parsed['rows'][0]['video_url'] = $path;
+                $stream = fopen('php://memory', 'r+');
+                fputcsv($stream, $parsed['headers']);
+                foreach ($parsed['rows'] as $r) {
+                    $rowVals = [];
+                    foreach ($parsed['headers'] as $h) {
+                        $rowVals[] = $r[$h] ?? '';
+                    }
+                    fputcsv($stream, $rowVals);
+                }
+                rewind($stream);
+                $newCsv = stream_get_contents($stream);
+                fclose($stream);
+                intake_set_sheet($batchId, $batch['sheet_name'], $newCsv, count($parsed['rows']));
+            }
+        }
+    }
+
+    return [
+        'ok' => true,
+        'path' => $path,
+        'batch_id' => $batchId,
+        'video_count' => intake_video_count($batchId),
+        'photo_count' => intake_photo_count($batchId),
+    ];
+}
+
+function intake_ingest_listing_text(array $cfg, int $chatId, string $text, int $messageId = 0): array
+{
+    require_once __DIR__ . '/intake_parser.php';
+    intake_tables();
+
+    $parsed = intake_parse_listing_text($text);
+    if (empty($parsed) || empty($parsed['name'])) {
+        return ['ok' => false, 'error' => 'Could not parse listing details.'];
+    }
+
+    $batchId = intake_active_batch_id($chatId);
+    if ($batchId === null) {
+        $batchId = intake_new_batch($chatId, $parsed['name']);
+    } else {
+        db_exec('UPDATE intake_batches SET label = ? WHERE id = ?', [mb_substr($parsed['name'], 0, 160), $batchId]);
+    }
+
+    // Check if there are already staged videos in this batch
+    $existingVideos = db_all(
+        "SELECT file_path FROM intake_items WHERE batch_id = ? AND media_group = 'video' ORDER BY id ASC",
+        [$batchId]
+    );
+    $videoUrl = !empty($existingVideos[0]['file_path']) ? (string)$existingVideos[0]['file_path'] : '';
+
+    $csv = intake_listing_to_csv($parsed, $videoUrl);
+    $sheetName = 'Vehicle: ' . ($parsed['brand'] ? $parsed['brand'] . ' ' . $parsed['model'] : $parsed['name']);
+    intake_set_sheet($batchId, $sheetName, $csv, 1);
+
+    // Marker item in intake_items for chronological undo
+    db_exec(
+        "INSERT INTO intake_items (batch_id, message_id, media_group, file_path, caption, created_at)
+         VALUES (?, ?, 'sheet', '', ?, NOW())",
+        [$batchId, $messageId > 0 ? $messageId : (int)round(microtime(true) * 1000), mb_substr($parsed['name'], 0, 512)]
+    );
+
+    return [
+        'ok' => true,
+        'batch_id' => $batchId,
+        'parsed' => $parsed,
+        'photo_count' => intake_photo_count($batchId),
+        'video_count' => intake_video_count($batchId)
+    ];
 }
 
 function intake_normalize_csv(string $bytes): string
@@ -713,13 +924,79 @@ function intake_dispatch(array $cfg, array $update, array $localFiles = []): str
     }
 
     $text = trim((string) ($msg['text'] ?? ''));
+
+    // 1. Chat commands
     if ($text !== '' && $text[0] === '/') {
         return intake_command_reply($cfg, $chatId, $text);
     }
 
+    // 2. Structured Vehicle or Product Listing Post (Plain text)
+    if ($text !== '' && intake_is_listing_text($text)) {
+        $res = intake_ingest_listing_text($cfg, $chatId, $text, (int) ($msg['message_id'] ?? 0));
+        if (!$res['ok']) {
+            return (string) ($res['error'] ?? 'Could not parse listing details.');
+        }
+        $p = $res['parsed'];
+        $priceFmt = $p['price'] > 0
+            ? sprintf('%s %s%s', $p['currency'], ($p['currency'] === 'USD' ? '$' : '₵'), number_format($p['price']))
+            : 'Price on request';
+        if ($p['incoterms']) {
+            $priceFmt .= " ({$p['incoterms']})";
+        }
+
+        $specsSummary = [];
+        if (!empty($p['specs']['Engine'])) $specsSummary[] = $p['specs']['Engine'];
+        if (!empty($p['specs']['Transmission'])) $specsSummary[] = $p['specs']['Transmission'];
+        if (!empty($p['specs']['Mileage'])) $specsSummary[] = $p['specs']['Mileage'];
+        $specsLine = !empty($specsSummary) ? implode(' | ', $specsSummary) : ($p['year'] ? 'Year: ' . $p['year'] : '');
+
+        $adminUrl = defined('APP_URL') ? APP_URL . '/admin/intake.php?review=' . $res['batch_id'] : 'Shop Admin';
+
+        return "🚗 Staged Vehicle Listing!\n"
+            . "━━━━━━━━━━━━━━━━━━━━\n"
+            . "📋 " . $p['name'] . "\n"
+            . "🏷️ Brand: " . ($p['brand'] ?: 'Generic') . " | Model: " . ($p['model'] ?: 'Standard') . ($p['year'] ? " ({$p['year']})" : '') . "\n"
+            . "💰 Price: " . $priceFmt . "\n"
+            . ($specsLine ? "⚙️ Specs: " . $specsLine . "\n" : "")
+            . "📦 Origin: China Export (Pre-Order)\n\n"
+            . sprintf("📸 %d photo(s) & 🎥 %d video(s) currently in Batch #%d.\n", $res['photo_count'], $res['video_count'], $res['batch_id'])
+            . "👉 Send vehicle photos & 1-2 videos now! They will auto-link to this vehicle.\n\n"
+            . "🔗 Review & Publish in Admin:\n" . $adminUrl;
+    }
+
+    // 3. Document attachments (Excel spreadsheet, or uncompressed photos/videos sent as files)
     if (isset($msg['document'])) {
-        $local = $localFiles[(string) ($msg['document']['file_id'] ?? '')] ?? null;
-        $res   = intake_ingest_sheet($cfg, $chatId, $msg['document'], $local);
+        $doc = $msg['document'];
+        $fileName = (string)($doc['file_name'] ?? '');
+        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $mime = strtolower((string)($doc['mime_type'] ?? ''));
+
+        // Check if image document
+        if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'avif'], true) || str_starts_with($mime, 'image/')) {
+            $local = $localFiles[(string) ($doc['file_id'] ?? '')] ?? null;
+            // Map document structure to photo structure
+            $pseudoMsg = $msg;
+            $pseudoMsg['photo'] = [$doc];
+            $res = intake_ingest_photo($cfg, $chatId, $pseudoMsg, $local);
+            if (!$res['ok']) {
+                return (string) ($res['reply'] ?? 'Photo could not be saved.');
+            }
+            return '';
+        }
+
+        // Check if video document
+        if (in_array($ext, ['mp4', 'mov', 'webm', 'avi', 'mkv'], true) || str_starts_with($mime, 'video/')) {
+            $local = $localFiles[(string) ($doc['file_id'] ?? '')] ?? null;
+            $res = intake_ingest_video($cfg, $chatId, $msg, $local);
+            if (!$res['ok']) {
+                return (string) ($res['reply'] ?? 'Video could not be saved.');
+            }
+            return sprintf("🎥 Video walkthrough attached! (%d video(s), %d photo(s) in batch)", $res['video_count'], $res['photo_count']);
+        }
+
+        // Standard spreadsheet (.csv or .xlsx)
+        $local = $localFiles[(string) ($doc['file_id'] ?? '')] ?? null;
+        $res   = intake_ingest_sheet($cfg, $chatId, $doc, $local);
         if (!$res['ok']) {
             return (string) ($res['error'] ?? 'Spreadsheet could not be processed.');
         }
@@ -729,7 +1006,47 @@ function intake_dispatch(array $cfg, array $update, array $localFiles = []): str
         return sprintf("Spreadsheet attached: %d rows from %s.%s", $res['rows'], $res['name'], $tail);
     }
 
+    // 4. Video attachments
+    if (isset($msg['video'])) {
+        $caption = trim((string)($msg['caption'] ?? ''));
+        $listingParsed = null;
+        if ($caption !== '' && intake_is_listing_text($caption)) {
+            $resListing = intake_ingest_listing_text($cfg, $chatId, $caption, (int)($msg['message_id'] ?? 0));
+            if ($resListing['ok']) {
+                $listingParsed = $resListing['parsed'];
+            }
+        }
+
+        $local = $localFiles[(string) ($msg['video']['file_id'] ?? '')] ?? null;
+        $res = intake_ingest_video($cfg, $chatId, $msg, $local);
+        if (!$res['ok']) {
+            return (string) ($res['reply'] ?? 'Video could not be saved.');
+        }
+
+        if ($listingParsed) {
+            $adminUrl = defined('APP_URL') ? APP_URL . '/admin/intake.php?review=' . $res['batch_id'] : 'Shop Admin';
+            return sprintf(
+                "🚗 Vehicle Listing & Video Staged!\n📋 %s\n🎥 1 video attached (%d photos staged).\n\nReview & Publish in Admin:\n%s",
+                $listingParsed['name'],
+                $res['photo_count'],
+                $adminUrl
+            );
+        }
+
+        return sprintf("🎥 Video walkthrough attached! (%d video(s), %d photo(s) in batch)", $res['video_count'], $res['photo_count']);
+    }
+
+    // 5. Photo attachments (Singles or Albums)
     if (isset($msg['photo'])) {
+        $caption = trim((string)($msg['caption'] ?? ''));
+        $listingParsed = null;
+        if ($caption !== '' && intake_is_listing_text($caption)) {
+            $resListing = intake_ingest_listing_text($cfg, $chatId, $caption, (int)($msg['message_id'] ?? 0));
+            if ($resListing['ok']) {
+                $listingParsed = $resListing['parsed'];
+            }
+        }
+
         $sizes = is_array($msg['photo']) ? $msg['photo'] : [];
         $last  = null;
         foreach ($sizes as $one) {
@@ -742,13 +1059,26 @@ function intake_dispatch(array $cfg, array $update, array $localFiles = []): str
         if (!$res['ok']) {
             return (string) ($res['reply'] ?? 'Photo could not be saved.');
         }
+
+        if ($listingParsed) {
+            $adminUrl = defined('APP_URL') ? APP_URL . '/admin/intake.php?review=' . $res['batch_id'] : 'Shop Admin';
+            return sprintf(
+                "🚗 Vehicle Listing & Photo Staged!\n📋 %s\n📸 Staged in Batch #%d.\nSend remaining photos and 1-2 videos!\n\nReview & Publish in Admin:\n%s",
+                $listingParsed['name'],
+                $res['batch_id'],
+                $adminUrl
+            );
+        }
+
         return ''; // Silent on photo uploads to avoid flood on bulk forwards
     }
 
-    return "Avazonia Product Intake Bot:\n\n"
-        . "1. Send a .csv or .xlsx product catalog\n"
-        . "2. Send product photos (captions with SKU or title will auto-match)\n\n"
-        . "Commands: /status  /undo  /clear  /help";
+    return "Avazonia Product & Vehicle Intake Bot:\n\n"
+        . "1. Forward a vehicle drop with title, specs, and description\n"
+        . "2. Send bulk product photos\n"
+        . "3. Send 1-2 video walkthroughs\n"
+        . "4. Or send a .csv / .xlsx catalog spreadsheet\n\n"
+        . "Commands: /status  /undo  /clearsheet  /clearphotos  /clearvideos  /clear  /help";
 }
 
 function intake_command_reply(array $cfg, int $chatId, string $text): string
@@ -760,33 +1090,36 @@ function intake_command_reply(array $cfg, int $chatId, string $text): string
         case '/start':
         case '/help':
             return "Avazonia Telegram Intake Bot\n\n"
-                . "Bulk catalog drops made easy:\n"
-                . "1. Send your product catalog spreadsheet (.csv or .xlsx)\n"
-                . "2. Upload your product photos as albums or singles.\n"
-                . "   Tip: Caption each photo with the SKU or Product Name for auto-matching!\n"
-                . "3. Log in to the Avazonia Admin -> Telegram Intake to review matches & import live.\n\n"
+                . "Vehicle & Product Drops Made Easy:\n"
+                . "1. Forward your vehicle listing text (with Brand, Specs, Features, Price)\n"
+                . "2. Send bulk product photos\n"
+                . "3. Send 1-2 video walkthroughs\n"
+                . "4. Log in to Avazonia Admin -> Telegram Intake to review and 1-click publish live!\n\n"
                 . "Available commands:\n"
                 . "/status      - View currently staged batch\n"
                 . "/undo        - Remove the last message you sent\n"
-                . "/clearsheet  - Remove spreadsheet, keep staged photos\n"
-                . "/clearphotos - Remove all staged photos, keep spreadsheet\n"
+                . "/clearsheet  - Remove spreadsheet / vehicle specs, keep photos\n"
+                . "/clearphotos - Remove staged photos\n"
+                . "/clearvideos - Remove staged videos\n"
                 . "/clear       - Discard entire active batch";
 
         case '/status':
             $batch = intake_active_batch($chatId);
             if ($batch === null) {
-                return 'No pending batch right now. Send a product sheet (.csv/.xlsx) or photos to start staging!';
+                return 'No pending batch right now. Send a vehicle post, product sheet, or photos to start staging!';
             }
             $sheet = $batch['sheet_name'] !== ''
-                ? sprintf('%s (%d rows)', $batch['sheet_name'], (int) $batch['row_count'])
+                ? sprintf('%s (%d item)', $batch['sheet_name'], (int) $batch['row_count'])
                 : 'None yet';
             $photos = intake_photo_count((int) $batch['id']);
+            $videos = intake_video_count((int) $batch['id']);
             $adminUrl = defined('APP_URL') ? APP_URL . '/admin/intake.php?review=' . $batch['id'] : 'Shop Admin';
             return sprintf(
-                "Staged Batch #%d\nSpreadsheet: %s\nPhotos: %d staged\n\nReview & Publish in Admin:\n%s",
+                "Staged Batch #%d\nListing: %s\nPhotos: %d staged\nVideos: %d staged\n\nReview & Publish in Admin:\n%s",
                 (int) $batch['id'],
                 $sheet,
                 $photos,
+                $videos,
                 $adminUrl
             );
 
@@ -796,7 +1129,7 @@ function intake_command_reply(array $cfg, int $chatId, string $text): string
                 return 'No active batch.';
             }
             $rows = intake_clear_sheet((int) $batch['id']);
-            return sprintf('Spreadsheet cleared (%d row(s)). %d photos kept in batch.', $rows, intake_photo_count((int) $batch['id']));
+            return sprintf('Listing details cleared (%d row(s)). %d photos and %d videos kept.', $rows, intake_photo_count((int) $batch['id']), intake_video_count((int) $batch['id']));
 
         case '/clearphotos':
             $batch = intake_active_batch($chatId);
@@ -804,8 +1137,16 @@ function intake_command_reply(array $cfg, int $chatId, string $text): string
                 return 'No active batch.';
             }
             $removed = intake_clear_photos((int) $batch['id']);
-            $sheet = $batch['sheet_name'] !== '' ? ' (spreadsheet intact)' : '';
+            $sheet = $batch['sheet_name'] !== '' ? ' (listing intact)' : '';
             return sprintf('Cleared %d photo(s)%s.', $removed, $sheet);
+
+        case '/clearvideos':
+            $batch = intake_active_batch($chatId);
+            if ($batch === null) {
+                return 'No active batch.';
+            }
+            $removed = intake_clear_videos((int) $batch['id']);
+            return sprintf('Cleared %d video(s).', $removed);
 
         case '/undo':
             $res = intake_undo_last($chatId);
@@ -813,9 +1154,10 @@ function intake_command_reply(array $cfg, int $chatId, string $text): string
                 return (string)$res['error'];
             }
             $batch = intake_active_batch($chatId);
-            $sheet = $batch && $batch['sheet_name'] !== '' ? ' (sheet intact)' : '';
+            $sheet = $batch && $batch['sheet_name'] !== '' ? ' (listing intact)' : '';
             $left  = $batch ? intake_photo_count((int) $batch['id']) : 0;
-            return sprintf('Undone 1 item. Staged photos remaining: %d%s.', $left, $sheet);
+            $vLeft = $batch ? intake_video_count((int) $batch['id']) : 0;
+            return sprintf('Undone 1 item. Remaining: %d photo(s), %d video(s)%s.', $left, $vLeft, $sheet);
 
         case '/clear':
             $batch = intake_active_batch($chatId);
@@ -823,8 +1165,9 @@ function intake_command_reply(array $cfg, int $chatId, string $text): string
                 return 'Nothing staged to clear.';
             }
             $photos = intake_photo_count((int) $batch['id']);
+            $videos = intake_video_count((int) $batch['id']);
             intake_discard((int) $batch['id']);
-            return sprintf('Batch #%d discarded (%d photos cleaned up).', (int) $batch['id'], $photos);
+            return sprintf('Batch #%d discarded (%d photos & %d videos cleaned up).', (int) $batch['id'], $photos, $videos);
 
         default:
             return "Unknown command. Try /status, /clear, or /help.";

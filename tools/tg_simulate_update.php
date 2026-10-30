@@ -117,8 +117,63 @@ if ($type === 'command') {
         'update_id' => rand(100000, 999999),
         'message'   => $msg,
     ];
+} elseif ($type === 'video') {
+    $filePath = (string) ($options['file'] ?? '');
+    if ($filePath === '' || !file_exists($filePath)) {
+        echo "[-] Error: Video file not found: $filePath\n";
+        echo "    Provide a valid video path via --file=\"walkthrough.mp4\"\n";
+        exit(1);
+    }
+    $bytes = file_get_contents($filePath);
+    $caption = (string) ($options['caption'] ?? '');
+    $fileId = 'sim_video_' . bin2hex(random_bytes(4));
+    $localFiles[$fileId] = $bytes;
+
+    $msg = [
+        'message_id' => $msgId,
+        'date'       => time(),
+        'chat'       => ['id' => $chatId, 'type' => 'private'],
+        'from'       => ['id' => $chatId, 'first_name' => 'StoreManager'],
+        'video'      => [
+            'file_id'   => $fileId,
+            'duration'  => 30,
+            'width'     => 1080,
+            'height'    => 1920,
+            'file_name' => basename($filePath),
+            'mime_type' => 'video/mp4',
+            'file_size' => strlen($bytes),
+        ],
+    ];
+    if ($caption !== '') {
+        $msg['caption'] = $caption;
+    }
+
+    $update = [
+        'update_id' => rand(100000, 999999),
+        'message'   => $msg,
+    ];
+} elseif ($type === 'text') {
+    $text = (string) ($options['text'] ?? '');
+    if ($text === '' && !empty($options['file']) && file_exists($options['file'])) {
+        $text = file_get_contents($options['file']);
+    }
+    if ($text === '') {
+        echo "[-] Error: Text is empty. Provide text via --text=\"...\" or --file=\"listing.txt\"\n";
+        exit(1);
+    }
+
+    $update = [
+        'update_id' => rand(100000, 999999),
+        'message' => [
+            'message_id' => $msgId,
+            'date'       => time(),
+            'chat'       => ['id' => $chatId, 'type' => 'private'],
+            'from'       => ['id' => $chatId, 'first_name' => 'StoreManager'],
+            'text'       => $text,
+        ],
+    ];
 } else {
-    echo "[-] Unknown update type: $type (expected command, sheet, or photo)\n";
+    echo "[-] Unknown update type: $type (expected command, text, sheet, photo, or video)\n";
     exit(1);
 }
 
