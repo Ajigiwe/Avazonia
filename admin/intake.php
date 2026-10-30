@@ -71,6 +71,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $n = intake_sync_disk_photos($batchId);
                 $success = sprintf('Scanned uploads directory: %d photo(s) newly synced into Batch #%d.', $n, $batchId);
             }
+        } elseif ($action === 'remove_photo') {
+            $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+            $itemId = (int) ($_POST['item_id'] ?? 0);
+            if ($batch === null || $itemId <= 0) {
+                $error = 'Invalid photo or batch.';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['ok' => false, 'error' => $error]);
+                    exit;
+                }
+            } else {
+                $ok = intake_remove_item($batchId, $itemId);
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['ok' => $ok]);
+                    exit;
+                }
+                $success = 'Photo removed successfully.';
+            }
+        } elseif ($action === 'set_cover_photo') {
+            $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+            $itemId = (int) ($_POST['item_id'] ?? 0);
+            if ($batch === null || $itemId <= 0) {
+                $error = 'Invalid photo or batch.';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['ok' => false, 'error' => $error]);
+                    exit;
+                }
+            } else {
+                $ok = intake_set_cover($batchId, $itemId);
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['ok' => $ok]);
+                    exit;
+                }
+                $success = 'Cover photo updated successfully.';
+            }
+        } elseif ($action === 'upload_photos') {
+            if ($batch === null) {
+                $error = 'Batch not found.';
+            } elseif (empty($_FILES['photos'])) {
+                $error = 'No photos selected for upload.';
+            } else {
+                $n = intake_add_photos($batchId, $_FILES['photos']);
+                $success = sprintf('Uploaded %d new photo(s) to Batch #%d.', $n, $batchId);
+            }
         } elseif ($action === 'publish_vehicle_live') {
             if ($batch === null) {
                 $error = 'Batch not found.';
@@ -537,38 +584,80 @@ include 'layout/sidebar.php';
 
                     <!-- Staged Photo Gallery -->
                     <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;flex:1;">
-                        <div style="font-weight:700;font-size:13px;color:#111827;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-                            <span>📸 Staged Gallery Photos (<?= $photoCount ?>)</span>
-                            <div style="display:flex;gap:8px;align-items:center;">
+                        <!-- Hidden upload form -->
+                        <form id="intake-photo-upload-form" method="post" enctype="multipart/form-data" style="display:none;">
+                            <?= Csrf::field() ?>
+                            <input type="hidden" name="action" value="upload_photos">
+                            <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
+                            <input type="file" id="intake-photo-upload-input" name="photos[]" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif" onchange="this.form.submit()">
+                        </form>
+
+                        <div style="font-weight:700;font-size:13px;color:#111827;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                            <span>📸 Staged Gallery Photos (<span id="gallery-count"><?= $photoCount ?></span>)</span>
+                            <div style="display:flex;gap:6px;align-items:center;">
+                                <button type="button" onclick="document.getElementById('intake-photo-upload-input').click()"
+                                        style="background:#10b981;color:#fff;border:none;padding:5px 12px;font-size:11px;font-weight:700;border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;box-shadow:0 1px 2px rgba(16,185,129,0.2);">
+                                    <span>➕ Add Photos</span>
+                                </button>
                                 <form method="post" style="margin:0;">
                                     <?= Csrf::field() ?>
                                     <input type="hidden" name="action" value="sync_disk_photos">
                                     <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
-                                    <button type="submit" style="background:#fff;border:1px solid #d1d5db;padding:3px 8px;font-size:10px;font-weight:700;color:#374151;border-radius:3px;cursor:pointer;">🔄 Sync Disk Photos</button>
+                                    <button type="submit" style="background:#fff;border:1px solid #d1d5db;padding:4px 10px;font-size:11px;font-weight:700;color:#374151;border-radius:4px;cursor:pointer;">🔄 Sync Disk</button>
                                 </form>
                                 <span style="font-size:11px;color:#6b7280;">First image is cover</span>
                             </div>
                         </div>
-                        <?php if ($photoCount === 0): ?>
-                            <div style="padding:40px;text-align:center;color:#9ca3af;font-size:13px;">
-                                No photos staged yet. Send photos to the Telegram bot to attach them!
-                            </div>
-                        <?php else: ?>
-                            <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(90px, 1fr));gap:8px;max-height:300px;overflow-y:auto;padding:4px;">
-                                <?php $pIdx = 0; ?>
-                                <?php foreach ($photos as $ph): ?>
-                                    <?php if (in_array((string)$ph['media_group'], ['sheet', 'video'], true)) continue; ?>
-                                    <div style="position:relative;height:80px;border-radius:4px;overflow:hidden;border:1px solid #e5e7eb;background:#fff;">
-                                        <img src="<?= htmlspecialchars(intake_media_url($ph['file_path'])) ?>"
-                                             style="width:100%;height:100%;object-fit:cover;" alt="">
-                                        <?php if ($pIdx === 0): ?>
-                                            <span style="position:absolute;top:2px;left:2px;background:#10b981;color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:2px;">COVER</span>
+
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(90px, 1fr));gap:8px;max-height:340px;overflow-y:auto;padding:4px;">
+                            <?php $pIdx = 0; ?>
+                            <?php foreach ($photos as $ph): ?>
+                                <?php if (in_array((string)$ph['media_group'], ['sheet', 'video'], true)) continue; ?>
+                                <div class="staged-photo-card" id="photo-card-<?= (int)$ph['id'] ?>"
+                                     style="position:relative;height:86px;border-radius:6px;overflow:hidden;border:1px solid #e5e7eb;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.04);transition:all 0.15s;"
+                                     onmouseover="this.querySelector('.photo-overlay').style.opacity='1';this.style.borderColor='#9ca3af';"
+                                     onmouseout="this.querySelector('.photo-overlay').style.opacity='0';this.style.borderColor='#e5e7eb';">
+                                    <img src="<?= htmlspecialchars(intake_media_url($ph['file_path'])) ?>"
+                                         style="width:100%;height:100%;object-fit:cover;" alt="" loading="lazy">
+                                    <?php if ($pIdx === 0): ?>
+                                        <span style="position:absolute;top:3px;left:3px;background:#10b981;color:#fff;font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;z-index:2;letter-spacing:0.04em;box-shadow:0 1px 2px rgba(0,0,0,0.3);">COVER</span>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Hover actions overlay -->
+                                    <div class="photo-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;flex-direction:column;justify-content:space-between;padding:4px;opacity:0;transition:opacity 0.15s;z-index:3;">
+                                        <div style="display:flex;justify-content:flex-end;">
+                                            <button type="button"
+                                                    onclick="removeGalleryPhoto(<?= (int)$batch['id'] ?>, <?= (int)$ph['id'] ?>)"
+                                                    title="Remove Photo"
+                                                    style="background:#ef4444;color:#fff;border:none;width:20px;height:20px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,0.3);">
+                                                ✕
+                                            </button>
+                                        </div>
+                                        <?php if ($pIdx !== 0): ?>
+                                            <div>
+                                                <button type="button"
+                                                        onclick="setCoverPhoto(<?= (int)$batch['id'] ?>, <?= (int)$ph['id'] ?>)"
+                                                        title="Set as Primary Cover"
+                                                        style="width:100%;background:rgba(255,255,255,0.92);color:#111827;border:none;padding:3px 2px;font-size:9px;font-weight:700;border-radius:3px;cursor:pointer;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,0.2);">
+                                                    ★ Make Cover
+                                                </button>
+                                            </div>
                                         <?php endif; ?>
                                     </div>
-                                    <?php $pIdx++; ?>
-                                <?php endforeach; ?>
+                                </div>
+                                <?php $pIdx++; ?>
+                            <?php endforeach; ?>
+
+                            <!-- Add Photo Tile at the end -->
+                            <div onclick="document.getElementById('intake-photo-upload-input').click()"
+                                 title="Add Photos from Computer"
+                                 style="height:86px;border-radius:6px;border:2px dashed #d1d5db;background:#f3f4f6;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#6b7280;font-size:11px;font-weight:600;gap:2px;transition:all 0.15s;"
+                                 onmouseover="this.style.borderColor='#10b981';this.style.color='#059669';this.style.background='#ecfdf5';"
+                                 onmouseout="this.style.borderColor='#d1d5db';this.style.color='#6b7280';this.style.background='#f3f4f6';">
+                                <span style="font-size:18px;">➕</span>
+                                <span>Add Photo</span>
                             </div>
-                        <?php endif; ?>
+                        </div>
                     </div>
                 </div>
 
@@ -900,6 +989,67 @@ include 'layout/sidebar.php';
         }
 
         closePicker();
+    }
+
+    function removeGalleryPhoto(batchId, itemId) {
+        if (!confirm('Remove this photo from the staged batch?')) return;
+        const card = document.getElementById('photo-card-' + itemId);
+        if (card) {
+            card.style.opacity = '0.3';
+            card.style.pointerEvents = 'none';
+        }
+        const form = new FormData();
+        form.append('action', 'remove_photo');
+        form.append('batch_id', batchId);
+        form.append('item_id', itemId);
+        form.append('_csrf_token', '<?= Csrf::token() ?>');
+
+        fetch('intake.php', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: form
+        }).then(r => r.json()).then(res => {
+            if (res.ok) {
+                if (card) {
+                    card.remove();
+                    const cnt = document.getElementById('gallery-count');
+                    if (cnt) {
+                        const cur = parseInt(cnt.innerText, 10);
+                        if (!isNaN(cur) && cur > 0) cnt.innerText = (cur - 1);
+                    }
+                }
+            } else {
+                alert(res.error || 'Failed to remove photo.');
+                if (card) {
+                    card.style.opacity = '1';
+                    card.style.pointerEvents = 'auto';
+                }
+            }
+        }).catch(err => {
+            window.location.reload();
+        });
+    }
+
+    function setCoverPhoto(batchId, itemId) {
+        const form = new FormData();
+        form.append('action', 'set_cover_photo');
+        form.append('batch_id', batchId);
+        form.append('item_id', itemId);
+        form.append('_csrf_token', '<?= Csrf::token() ?>');
+
+        fetch('intake.php', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: form
+        }).then(r => r.json()).then(res => {
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                alert(res.error || 'Failed to set cover photo.');
+            }
+        }).catch(err => {
+            window.location.reload();
+        });
     }
     </script>
 

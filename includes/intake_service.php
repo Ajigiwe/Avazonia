@@ -519,6 +519,96 @@ function intake_media_url(?string $path): string
     return ($basePath !== '' ? $basePath : '') . '/' . ltrim($p, '/');
 }
 
+function intake_remove_item(int $batchId, int $itemId): bool
+{
+    intake_tables();
+    $item = db_one("SELECT * FROM intake_items WHERE id = ? AND batch_id = ?", [$itemId, $batchId]);
+    if (!$item) {
+        return false;
+    }
+    $root = dirname(__DIR__);
+    $rel = (string) $item['file_path'];
+    if ($rel !== '' && is_file($root . '/' . ltrim($rel, '/'))) {
+        @unlink($root . '/' . ltrim($rel, '/'));
+    }
+    db_exec("DELETE FROM intake_items WHERE id = ? AND batch_id = ?", [$itemId, $batchId]);
+    return true;
+}
+
+function intake_set_cover(int $batchId, int $itemId): bool
+{
+    intake_tables();
+    $item = db_one("SELECT * FROM intake_items WHERE id = ? AND batch_id = ?", [$itemId, $batchId]);
+    if (!$item) {
+        return false;
+    }
+    $minMsg = (int) db_val(
+        "SELECT MIN(message_id) FROM intake_items WHERE batch_id = ? AND media_group NOT IN ('sheet', 'video')",
+        [$batchId],
+        100
+    );
+    $newMsgId = $minMsg > 1 ? $minMsg - 1 : 1;
+    if ($newMsgId === (int)$item['message_id']) {
+        db_exec(
+            "UPDATE intake_items SET message_id = message_id + 10 WHERE batch_id = ? AND id != ?",
+            [$batchId, $itemId]
+        );
+        $newMsgId = 1;
+    }
+    db_exec("UPDATE intake_items SET message_id = ? WHERE id = ? AND batch_id = ?", [$newMsgId, $itemId, $batchId]);
+    return true;
+}
+
+function intake_add_photos(int $batchId, array $files): int
+{
+    intake_tables();
+    if (empty($files['name'])) {
+        return 0;
+    }
+    $names = (array) $files['name'];
+    $tmpNames = (array) $files['tmp_name'];
+    $errors = (array) $files['error'];
+    $sizes = (array) $files['size'];
+
+    $added = 0;
+    $count = count($names);
+    for ($i = 0; $i < $count; $i++) {
+        if (($errors[$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            continue;
+        }
+        $tmp = (string) ($tmpNames[$i] ?? '');
+        if ($tmp === '' || !is_uploaded_file($tmp)) {
+            continue;
+        }
+        $sz = (int) ($sizes[$i] ?? 0);
+        if ($sz <= 0 || $sz > INTAKE_MAX_IMAGE_BYTES) {
+            continue;
+        }
+        $bytes = @file_get_contents($tmp);
+        if ($bytes === false || $bytes === '') {
+            continue;
+        }
+        $path = intake_save_image($bytes);
+        if ($path === null) {
+            continue;
+        }
+        $caption = mb_substr(pathinfo((string)$names[$i], PATHINFO_FILENAME), 0, 512);
+        $maxMsg = (int) db_val("SELECT MAX(message_id) FROM intake_items WHERE batch_id = ?", [$batchId], 1000);
+        $newMsgId = max($maxMsg + 1, (int) round(microtime(true) * 1000) + $i);
+        try {
+            db_exec(
+                "INSERT INTO intake_items (batch_id, message_id, media_group, file_path, caption, created_at)
+                 VALUES (?, ?, 'manual', ?, ?, NOW())",
+                [$batchId, $newMsgId, $path, $caption]
+            );
+            $added++;
+        } catch (Throwable $e) {
+            // ignore duplicates
+        }
+    }
+    return $added;
+}
+
 function intake_undo_last(int $chatId): array
 {
     intake_tables();
