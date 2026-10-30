@@ -456,6 +456,69 @@ function intake_clear_videos(int $batchId): int
     return $removed;
 }
 
+function intake_sync_disk_photos(int $batchId): int
+{
+    intake_tables();
+    $dir = dirname(__DIR__) . '/public/uploads/intake';
+    if (!is_dir($dir)) {
+        return 0;
+    }
+    $existing = db_all("SELECT file_path FROM intake_items WHERE batch_id = ?", [$batchId]);
+    $known = [];
+    foreach ($existing as $r) {
+        $known[ltrim((string)$r['file_path'], '/')] = true;
+    }
+
+    $files = scandir($dir);
+    if ($files === false) {
+        return 0;
+    }
+
+    $added = 0;
+    foreach ($files as $file) {
+        if ($file === '.' || $file === '..' || $file === '.gitignore') {
+            continue;
+        }
+        $relPath = 'public/uploads/intake/' . $file;
+        if (isset($known[$relPath])) {
+            continue;
+        }
+
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'], true)) {
+            continue;
+        }
+
+        $msgId = (int) round(microtime(true) * 1000) + $added;
+        try {
+            db_exec(
+                "INSERT INTO intake_items (batch_id, message_id, media_group, file_path, caption, created_at)
+                 VALUES (?, ?, '', ?, '', NOW())",
+                [$batchId, $msgId, $relPath]
+            );
+            $known[$relPath] = true;
+            $added++;
+        } catch (Throwable $e) {
+            // ignore duplicates
+        }
+    }
+    return $added;
+}
+
+function intake_media_url(?string $path): string
+{
+    $p = trim((string)$path);
+    if ($p === '') {
+        return '';
+    }
+    if (preg_match('#^(https?:)?//#i', $p) || str_starts_with($p, 'data:')) {
+        return $p;
+    }
+    $basePath = parse_url(defined('APP_URL') ? APP_URL : '', PHP_URL_PATH) ?: '';
+    $basePath = rtrim($basePath, '/');
+    return ($basePath !== '' ? $basePath : '') . '/' . ltrim($p, '/');
+}
+
 function intake_undo_last(int $chatId): array
 {
     intake_tables();

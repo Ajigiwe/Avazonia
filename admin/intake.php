@@ -64,6 +64,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $error = 'Failed to delete webhook: ' . ($res['description'] ?? 'Unknown Telegram error');
             }
+        } elseif ($action === 'sync_disk_photos') {
+            if ($batch === null) {
+                $error = 'Batch not found.';
+            } else {
+                $n = intake_sync_disk_photos($batchId);
+                $success = sprintf('Scanned uploads directory: %d photo(s) newly synced into Batch #%d.', $n, $batchId);
+            }
         } elseif ($action === 'publish_vehicle_live') {
             if ($batch === null) {
                 $error = 'Batch not found.';
@@ -404,6 +411,13 @@ include 'layout/sidebar.php';
     $sheetRows = $parsed['rows'] ?? [];
     $photos = intake_items((int)$batch['id']);
     $photoCount = intake_photo_count((int)$batch['id']);
+    if ($photoCount === 0) {
+        $autoAdded = intake_sync_disk_photos((int)$batch['id']);
+        if ($autoAdded > 0) {
+            $photos = intake_items((int)$batch['id']);
+            $photoCount = intake_photo_count((int)$batch['id']);
+        }
+    }
     $videos = db_all("SELECT * FROM intake_items WHERE batch_id = ? AND media_group = 'video'", [(int)$batch['id']]);
     $videoCount = count($videos);
     $isVehicleBatch = (count($sheetRows) === 1 && (!empty($sheetRows[0]['specs']) || !empty($sheetRows[0]['features']) || str_starts_with((string)$batch['sheet_name'], 'Vehicle:')));
@@ -514,7 +528,7 @@ include 'layout/sidebar.php';
                                 🎥 Video Walkthrough (<?= count($videos) ?>)
                             </div>
                             <?php foreach ($videos as $vIdx => $vItem): ?>
-                                <video src="<?= APP_URL ?>/<?= htmlspecialchars(ltrim($vItem['file_path'], '/')) ?>"
+                                <video src="<?= htmlspecialchars(intake_media_url($vItem['file_path'])) ?>"
                                        controls preload="metadata"
                                        style="width:100%;max-height:280px;border-radius:6px;background:#000;margin-bottom:8px;"></video>
                             <?php endforeach; ?>
@@ -523,9 +537,17 @@ include 'layout/sidebar.php';
 
                     <!-- Staged Photo Gallery -->
                     <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;flex:1;">
-                        <div style="font-weight:700;font-size:13px;color:#111827;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+                        <div style="font-weight:700;font-size:13px;color:#111827;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
                             <span>📸 Staged Gallery Photos (<?= $photoCount ?>)</span>
-                            <span style="font-size:11px;color:#6b7280;">First image is primary cover</span>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <form method="post" style="margin:0;">
+                                    <?= Csrf::field() ?>
+                                    <input type="hidden" name="action" value="sync_disk_photos">
+                                    <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
+                                    <button type="submit" style="background:#fff;border:1px solid #d1d5db;padding:3px 8px;font-size:10px;font-weight:700;color:#374151;border-radius:3px;cursor:pointer;">🔄 Sync Disk Photos</button>
+                                </form>
+                                <span style="font-size:11px;color:#6b7280;">First image is cover</span>
+                            </div>
                         </div>
                         <?php if ($photoCount === 0): ?>
                             <div style="padding:40px;text-align:center;color:#9ca3af;font-size:13px;">
@@ -537,7 +559,7 @@ include 'layout/sidebar.php';
                                 <?php foreach ($photos as $ph): ?>
                                     <?php if (in_array((string)$ph['media_group'], ['sheet', 'video'], true)) continue; ?>
                                     <div style="position:relative;height:80px;border-radius:4px;overflow:hidden;border:1px solid #e5e7eb;background:#fff;">
-                                        <img src="<?= APP_URL ?>/<?= htmlspecialchars(ltrim($ph['file_path'], '/')) ?>"
+                                        <img src="<?= htmlspecialchars(intake_media_url($ph['file_path'])) ?>"
                                              style="width:100%;height:100%;object-fit:cover;" alt="">
                                         <?php if ($pIdx === 0): ?>
                                             <span style="position:absolute;top:2px;left:2px;background:#10b981;color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:2px;">COVER</span>
@@ -702,7 +724,7 @@ include 'layout/sidebar.php';
                                                  onclick="openPicker(<?= $i ?>)"
                                                  style="width:52px;height:52px;border-radius:4px;border:1px solid #e5e7eb;background:#f9fafb;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;position:relative;">
                                                 <?php if ($heroPath): ?>
-                                                    <img src="<?= APP_URL ?>/<?= htmlspecialchars(ltrim($heroPath, '/')) ?>"
+                                                    <img src="<?= htmlspecialchars(intake_media_url($heroPath)) ?>"
                                                          alt="" style="width:100%;height:100%;object-fit:cover;">
                                                     <?php if (count($matchedPaths) > 1): ?>
                                                         <span style="position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,0.7);color:#fff;font-size:9px;padding:1px 4px;border-radius:3px;font-family:var(--f-mono);">+<?= count($matchedPaths) - 1 ?></span>
@@ -822,7 +844,7 @@ include 'layout/sidebar.php';
                              onmouseover="this.style.borderColor='var(--red,#E60000)';this.style.transform='scale(1.02)';"
                              onmouseout="this.style.borderColor='#e5e7eb';this.style.transform='scale(1)';">
                             <div style="width:100%;height:110px;overflow:hidden;">
-                                <img src="<?= APP_URL ?>/<?= htmlspecialchars(ltrim($ph['file_path'], '/')) ?>"
+                                <img src="<?= htmlspecialchars(intake_media_url($ph['file_path'])) ?>"
                                      alt="" style="width:100%;height:100%;object-fit:cover;">
                             </div>
                             <?php if (!empty($ph['caption'])): ?>
@@ -846,6 +868,7 @@ include 'layout/sidebar.php';
 
     <script>
     let currentActiveRow = null;
+    const INTAKE_BASE_URL = '<?= htmlspecialchars(intake_media_url('')) ?>';
 
     function openPicker(rowIndex) {
         currentActiveRow = rowIndex;
@@ -870,7 +893,9 @@ include 'layout/sidebar.php';
             thumbBox.innerHTML = '<span style="color:#9ca3af;font-size:18px;">📷</span>';
             badgeCol.innerHTML = '<span style="font-family:var(--f-mono);font-size:9px;letter-spacing:0.04em;padding:4px 8px;border-radius:999px;background:#f3f4f6;color:#6b7280;">NO PHOTO</span>';
         } else {
-            thumbBox.innerHTML = '<img src="<?= APP_URL ?>/' + path + '" style="width:100%;height:100%;object-fit:cover;">';
+            const clean = path.replace(/^\/+/, '');
+            const fullUrl = (clean.startsWith('http://') || clean.startsWith('https://')) ? clean : (INTAKE_BASE_URL + '/' + clean);
+            thumbBox.innerHTML = '<img src="' + fullUrl + '" style="width:100%;height:100%;object-fit:cover;">';
             badgeCol.innerHTML = '<span style="font-family:var(--f-mono);font-size:9px;letter-spacing:0.04em;padding:4px 8px;border-radius:999px;background:#ede9fe;color:#6d28d9;font-weight:700;">★ MANUAL PICK</span>';
         }
 
