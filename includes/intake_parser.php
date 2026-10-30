@@ -12,68 +12,43 @@ declare(strict_types=1);
 /**
  * Checks whether an incoming text message or photo caption is a structured product/vehicle listing.
  */
-function intake_is_listing_text(string $text): bool
-{
-    $t = mb_strtolower(trim($text));
-    if (mb_strlen($t) < 40) {
-        return false;
-    }
-
-    $indicators = [
-        'vehicle specification',
-        'vehicle specifications',
-        'specifications',
-        'key features',
-        'brand:',
-        'model:',
-        'fob price',
-        'engine:',
-        'transmission:',
-        'mileage:',
-        'seating capacity',
-    ];
-
-    $hits = 0;
-    foreach ($indicators as $ind) {
-        if (str_contains($t, $ind)) {
-            $hits++;
+if (!function_exists('intake_is_listing_text')) {
+    function intake_is_listing_text(string $text): bool
+    {
+        $t = mb_strtolower(trim($text));
+        if (mb_strlen($t) < 40) {
+            return false;
         }
-    }
 
-    // If 2 or more strong indicators match, treat as listing text
-    return $hits >= 2;
+        $indicators = [
+            'vehicle specification',
+            'vehicle specifications',
+            'specifications',
+            'key features',
+            'brand:',
+            'model:',
+            'fob price',
+            'engine:',
+            'transmission:',
+            'mileage:',
+            'seating capacity',
+        ];
+
+        $hits = 0;
+        foreach ($indicators as $ind) {
+            if (str_contains($t, $ind)) {
+                $hits++;
+            }
+        }
+
+        // If 2 or more strong indicators match, treat as listing text
+        return $hits >= 2;
+    }
 }
 
-/**
- * Parse structured vehicle/product post into standard schema attributes.
- *
- * @param string $raw
- * @return array{
- *   name: string,
- *   brand: string,
- *   model: string,
- *   year: string,
- *   sku: string,
- *   price: float,
- *   currency: string,
- *   fob_price: float,
- *   incoterms: string,
- *   category: string,
- *   sub_category: string,
- *   condition_type: string,
- *   is_preorder: int,
- *   available_in_ghana: int,
- *   vehicle_origin: string,
- *   location_country: string,
- *   specs: array<string, string>,
- *   specs_json: string,
- *   features: list<string>,
- *   features_json: string,
- *   description: string
- * }
- */
-function intake_parse_listing_text(string $raw): array
-{
+if (!function_exists('intake_parse_listing_text')) {
+    function intake_parse_listing_text(string $raw): array
+    {
     $lines = array_map('trim', explode("\n", str_replace(["\r\n", "\r"], "\n", $raw)));
     while (!empty($lines) && $lines[0] === '') {
         array_shift($lines);
@@ -281,13 +256,15 @@ function intake_parse_listing_text(string $raw): array
         'description'        => $description,
     ];
 }
+}
 
-/**
- * Format parsed listing into a standard CSV string matching ProductCsvImporter::HEADERS
- * plus extra attributes (video_url, etc.)
- */
-function intake_listing_to_csv(array $parsed, string $videoUrl = ''): string
-{
+if (!function_exists('intake_listing_to_csv')) {
+    /**
+     * Format parsed listing into a standard CSV string matching ProductCsvImporter::HEADERS
+     * plus extra attributes (video_url, etc.)
+     */
+    function intake_listing_to_csv(array $parsed, string $videoUrl = ''): string
+    {
     $headers = [
         'name', 'sku', 'price', 'currency', 'stock', 'category', 'sub_category', 'brand',
         'description', 'tags', 'listing_type', 'condition', 'visibility', 'moq',
@@ -345,4 +322,5 @@ function intake_listing_to_csv(array $parsed, string $videoUrl = ''): string
     fclose($stream);
 
     return (string)$csv;
+}
 }

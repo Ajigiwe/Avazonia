@@ -38,7 +38,14 @@ if ($isDelete) {
     exit(0);
 }
 
-$url = $cfg['webhook_url'];
+$customUrl = '';
+foreach ($argv as $arg) {
+    if (str_starts_with($arg, '--url=')) {
+        $customUrl = trim(substr($arg, 6));
+    }
+}
+
+$url = $customUrl !== '' ? $customUrl : $cfg['webhook_url'];
 if ($url === '') {
     // Attempt automatic fallback
     $appUrl = defined('APP_URL') ? rtrim(APP_URL, '/') : '';

@@ -46,12 +46,28 @@ if (!is_array($update)) {
     exit;
 }
 
-// Ingest update (sheet, photo, command)
-$reply = intake_dispatch($cfg, $update);
-if ($reply !== '') {
+// Ingest update (sheet, photo, video, vehicle drop, command)
+// Webhook retry policy: Telegram retries with exponential backoff and halts sequential
+// updates if a webhook returns HTTP 5xx. We wrap intake in a top-level try/catch to ensure
+// exceptions never block the incoming delivery queue.
+try {
+    $reply = intake_dispatch($cfg, $update);
+    if ($reply !== '') {
+        $chatId = (int) ($update['message']['chat']['id'] ?? 0);
+        if ($chatId !== 0) {
+            tg_send_text($cfg, $chatId, $reply);
+        }
+    }
+} catch (Throwable $e) {
+    error_log(sprintf(
+        'tg_webhook error: %s in %s:%d',
+        $e->getMessage(),
+        basename($e->getFile()),
+        $e->getLine()
+    ));
     $chatId = (int) ($update['message']['chat']['id'] ?? 0);
-    if ($chatId !== 0) {
-        tg_send_text($cfg, $chatId, $reply);
+    if ($chatId !== 0 && intake_is_allowed_chat($chatId)) {
+        tg_send_text($cfg, $chatId, "⚠️ Intake notice: " . $e->getMessage());
     }
 }
 

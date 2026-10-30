@@ -132,6 +132,15 @@ function intake_tables(): void
             CONSTRAINT `fk_intake_batch` FOREIGN KEY (`batch_id`)
                 REFERENCES `intake_batches` (`id`) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        try {
+            $col = db_one("SHOW COLUMNS FROM `intake_items` LIKE 'media_group'");
+            if (!$col) {
+                db_exec("ALTER TABLE `intake_items` ADD COLUMN `media_group` VARCHAR(64) NOT NULL DEFAULT '' AFTER `message_id`");
+            }
+        } catch (Throwable $e) {
+            // Table may not exist yet or user lacks alter rights
+        }
     }
 }
 
@@ -173,18 +182,44 @@ function tg_api(array $cfg, string $method, array $params = []): ?array
     if ($payload === false) {
         return null;
     }
-    $ctx = stream_context_create(['http' => [
-        'method'        => 'POST',
-        'header'        => "Content-Type: application/json\r\nContent-Length: " . strlen($payload) . "\r\n",
-        'content'       => $payload,
-        'timeout'       => 15,
-        'ignore_errors' => true,
-    ]]);
-    $raw = @file_get_contents($url, false, $ctx);
-    if ($raw === false) {
-        error_log('tg_api: ' . $method . ' request failed');
-        return null;
+
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $payload,
+            CURLOPT_HTTPHEADER     => [
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($payload),
+            ],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 20,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+        ]);
+        $raw = curl_exec($ch);
+        $err = curl_error($ch);
+        curl_close($ch);
+        if ($raw === false || $raw === '') {
+            error_log('tg_api (curl): ' . $method . ' failed: ' . $err);
+            return null;
+        }
+    } else {
+        $ctx = stream_context_create(['http' => [
+            'method'        => 'POST',
+            'header'        => "Content-Type: application/json\r\nContent-Length: " . strlen($payload) . "\r\n",
+            'content'       => $payload,
+            'timeout'       => 20,
+            'ignore_errors' => true,
+        ]]);
+        $raw = @file_get_contents($url, false, $ctx);
+        if ($raw === false) {
+            error_log('tg_api: ' . $method . ' request failed');
+            return null;
+        }
     }
+
     $decoded = json_decode($raw, true);
     return is_array($decoded) ? $decoded : null;
 }
@@ -201,6 +236,28 @@ function tg_send_text(array $cfg, int $chatId, string $text): bool
 
 function tg_download(string $url, int $maxBytes): ?string
 {
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS      => 3,
+            CURLOPT_TIMEOUT        => 45,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+        ]);
+        $buf = curl_exec($ch);
+        $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err = curl_error($ch);
+        curl_close($ch);
+        if ($buf === false || $code !== 200 || strlen($buf) > $maxBytes) {
+            error_log('tg_download (curl) failed: ' . ($err ?: "HTTP $code or size exceeded"));
+            return null;
+        }
+        return $buf === '' ? null : $buf;
+    }
+
     $in = @fopen($url, 'rb', false, stream_context_create(['http' => ['timeout' => 45]]));
     if ($in === false) {
         return null;
@@ -453,19 +510,53 @@ function intake_save_image(string $bytes): ?string
         'image/avif' => 'avif',
         'image/bmp'  => 'bmp',
     ];
-    $mime = (string) (new finfo(FILEINFO_MIME_TYPE))->buffer($bytes);
-    if (!isset($allowed[$mime])) {
+
+    $mime = null;
+    if (class_exists('finfo')) {
+        try {
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $detected = (string) $finfo->buffer($bytes);
+            if (isset($allowed[$detected])) {
+                $mime = $detected;
+            }
+        } catch (Throwable $e) {
+            $mime = null;
+        }
+    }
+
+    if ($mime === null) {
+        $sizeInfo = @getimagesizefromstring($bytes);
+        if (is_array($sizeInfo) && isset($sizeInfo['mime']) && isset($allowed[$sizeInfo['mime']])) {
+            $mime = (string) $sizeInfo['mime'];
+        }
+    }
+
+    // Binary magic bytes fallback
+    if ($mime === null) {
+        $header = substr($bytes, 0, 16);
+        if (str_starts_with($header, "\xFF\xD8\xFF")) {
+            $mime = 'image/jpeg';
+        } elseif (str_starts_with($header, "\x89PNG\r\n\x1a\n")) {
+            $mime = 'image/png';
+        } elseif (str_starts_with($header, "RIFF") && strpos($header, "WEBP") !== false) {
+            $mime = 'image/webp';
+        } elseif (str_starts_with($header, "GIF87a") || str_starts_with($header, "GIF89a")) {
+            $mime = 'image/gif';
+        }
+    }
+
+    if ($mime === null || !isset($allowed[$mime])) {
         return null;
     }
-    if (@getimagesizefromstring($bytes) === false) {
-        return null;
-    }
+
     $dir = dirname(__DIR__) . '/public/uploads/intake';
     if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
+        error_log("intake_save_image: Failed to create or access directory $dir");
         return null;
     }
     $name = gmdate('Ymd') . '_' . bin2hex(random_bytes(8)) . '.' . $allowed[$mime];
     if (@file_put_contents($dir . '/' . $name, $bytes) === false) {
+        error_log("intake_save_image: Failed to write image file $dir/$name");
         return null;
     }
     @chmod($dir . '/' . $name, 0644);
@@ -559,25 +650,43 @@ function intake_save_video(string $bytes, string $ext = 'mp4'): ?string
         return null;
     }
     static $allowed = [
-        'video/mp4' => 'mp4',
-        'video/webm' => 'webm',
-        'video/quicktime' => 'mov',
-        'video/x-msvideo' => 'avi',
-        'video/x-matroska' => 'mkv',
+        'video/mp4'                => 'mp4',
+        'video/webm'               => 'webm',
+        'video/quicktime'          => 'mov',
+        'video/x-msvideo'          => 'avi',
+        'video/x-matroska'         => 'mkv',
         'application/octet-stream' => 'mp4',
     ];
-    $mime = (string) (new finfo(FILEINFO_MIME_TYPE))->buffer($bytes);
-    if (!isset($allowed[$mime]) && !in_array($ext, ['mp4', 'webm', 'mov', 'avi', 'mkv'], true)) {
-        return null;
+
+    $mime = null;
+    if (class_exists('finfo')) {
+        try {
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $detected = (string) $finfo->buffer($bytes);
+            if (isset($allowed[$detected])) {
+                $mime = $detected;
+            }
+        } catch (Throwable $e) {
+            $mime = null;
+        }
     }
-    $chosenExt = $allowed[$mime] ?? (in_array($ext, ['mp4', 'webm', 'mov', 'avi', 'mkv'], true) ? $ext : 'mp4');
+
+    $validExts = ['mp4', 'webm', 'mov', 'avi', 'mkv'];
+    $cleanExt = strtolower(trim($ext, '. '));
+    if (!in_array($cleanExt, $validExts, true)) {
+        $cleanExt = 'mp4';
+    }
+
+    $chosenExt = $allowed[$mime] ?? $cleanExt;
 
     $dir = dirname(__DIR__) . '/public/uploads/videos';
     if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
+        error_log("intake_save_video: Failed to create or access directory $dir");
         return null;
     }
     $name = 'v_intake_' . gmdate('Ymd') . '_' . bin2hex(random_bytes(8)) . '.' . $chosenExt;
     if (@file_put_contents($dir . '/' . $name, $bytes) === false) {
+        error_log("intake_save_video: Failed to write video file $dir/$name");
         return null;
     }
     @chmod($dir . '/' . $name, 0644);
