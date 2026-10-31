@@ -118,6 +118,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $n = intake_add_photos($batchId, $_FILES['photos']);
                 $success = sprintf('Uploaded %d new photo(s) to Batch #%d.', $n, $batchId);
             }
+        } elseif ($action === 'split_items') {
+            $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+            $itemIds = (array)($_POST['item_ids'] ?? []);
+            $label = trim((string)($_POST['new_label'] ?? ''));
+            if ($batch === null || empty($itemIds)) {
+                $error = 'No photos selected to split or batch not found.';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['ok' => false, 'error' => $error]);
+                    exit;
+                }
+            } else {
+                $newBatchId = intake_split_items($batchId, $itemIds, $label);
+                if ($newBatchId > 0) {
+                    if ($isAjax) {
+                        header('Content-Type: application/json');
+                        echo json_encode(['ok' => true, 'new_batch_id' => $newBatchId, 'count' => count($itemIds)]);
+                        exit;
+                    }
+                    $success = sprintf('Split %d photo(s) into new Batch #%d.', count($itemIds), $newBatchId);
+                } else {
+                    $error = 'Could not split photos into a new batch.';
+                    if ($isAjax) {
+                        header('Content-Type: application/json');
+                        echo json_encode(['ok' => false, 'error' => $error]);
+                        exit;
+                    }
+                }
+            }
         } elseif ($action === 'publish_vehicle_live') {
             if ($batch === null) {
                 $error = 'Batch not found.';
@@ -128,7 +157,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (empty($rows)) {
                     $error = 'No vehicle details found in this batch.';
                 } else {
-                    $row = $rows[0];
+                    $rowIndex = (int)($_POST['row_index'] ?? 0);
+                    if (!isset($rows[$rowIndex])) {
+                        $rowIndex = 0;
+                    }
+                    $row = $rows[$rowIndex];
 
                     // 1. Resolve or create Brand
                     $brandName = trim((string)($row['brand'] ?? ''));
@@ -173,8 +206,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     // 4. Copy staged photos to product images
                     $stagedPhotos = intake_items($batchId);
+                    $targetPhotos = [];
+                    if (count($rows) > 1) {
+                        $match = intake_match($rows, $stagedPhotos, ['order_fallback' => true]);
+                        $assignedPaths = $match['assignments'][$rowIndex]['paths'] ?? [];
+                        if (!empty($assignedPaths)) {
+                            foreach ($stagedPhotos as $item) {
+                                if (in_array((string)$item['file_path'], $assignedPaths, true)) {
+                                    $targetPhotos[] = $item;
+                                }
+                            }
+                        }
+                    }
+                    if (empty($targetPhotos)) {
+                        $targetPhotos = $stagedPhotos;
+                    }
+
                     $finalImages = [];
-                    foreach ($stagedPhotos as $item) {
+                    foreach ($targetPhotos as $item) {
                         if (in_array((string)$item['media_group'], ['sheet', 'video'], true)) {
                             continue;
                         }
@@ -266,11 +315,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         require_once __DIR__ . '/../core/Cache.php';
                         Cache::flushTags(['products']);
 
-                        // Claim batch
-                        intake_claim($batchId);
+                        // Multi-vehicle vs single vehicle batch claim logic
+                        if (count($rows) > 1) {
+                            array_splice($rows, $rowIndex, 1);
+                            $headers = $parsed['headers'] ?? array_keys($rows[0]);
+                            $stream = fopen('php://memory', 'r+');
+                            fwrite($stream, "\xEF\xBB\xBF");
+                            fputcsv($stream, $headers);
+                            foreach ($rows as $r) {
+                                $rVals = [];
+                                foreach ($headers as $h) {
+                                    $rVals[] = $r[$h] ?? '';
+                                }
+                                fputcsv($stream, $rVals);
+                            }
+                            rewind($stream);
+                            $newCsv = stream_get_contents($stream);
+                            fclose($stream);
+                            intake_set_sheet($batchId, $batch['sheet_name'], $newCsv, count($rows));
 
-                        header('Location: ' . APP_URL . '/admin/edit-product.php?id=' . $productId . '&published_from_intake=1');
-                        exit;
+                            header('Location: ' . APP_URL . '/admin/edit-product.php?id=' . $productId . '&published_from_intake=1&remaining_batch=' . $batchId);
+                            exit;
+                        } else {
+                            intake_claim($batchId);
+                            header('Location: ' . APP_URL . '/admin/edit-product.php?id=' . $productId . '&published_from_intake=1');
+                            exit;
+                        }
                     } catch (Throwable $e) {
                         $error = 'Failed to publish vehicle: ' . $e->getMessage();
                     }
@@ -467,7 +537,13 @@ include 'layout/sidebar.php';
     }
     $videos = db_all("SELECT * FROM intake_items WHERE batch_id = ? AND media_group = 'video'", [(int)$batch['id']]);
     $videoCount = count($videos);
-    $isVehicleBatch = (count($sheetRows) === 1 && (!empty($sheetRows[0]['specs']) || !empty($sheetRows[0]['features']) || str_starts_with((string)$batch['sheet_name'], 'Vehicle:')));
+    $vehicleRows = [];
+    foreach ($sheetRows as $idx => $r) {
+        if (!empty($r['specs']) || !empty($r['features']) || str_starts_with((string)($batch['sheet_name'] ?? ''), 'Vehicle') || str_starts_with((string)($batch['sheet_name'] ?? ''), 'Vehicles') || !empty($r['brand'])) {
+            $vehicleRows[$idx] = $r;
+        }
+    }
+    $isVehicleBatch = !empty($vehicleRows);
 
     $match = intake_match($sheetRows, $photos, ['order_fallback' => true]);
     $assignments = $match['assignments'] ?? [];
@@ -514,239 +590,305 @@ include 'layout/sidebar.php';
         </div>
     </div>
 
-    <?php if ($isVehicleBatch && !empty($sheetRows[0])): ?>
-        <?php $vRow = $sheetRows[0]; ?>
-        <!-- Dedicated Vehicle Drop Staging Card -->
-        <div class="panel" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-            <div style="padding:20px 24px;background:linear-gradient(to right, #111827, #1f2937);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
-                <div>
-                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                        <span style="font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;background:rgba(255,255,255,0.15);padding:3px 8px;border-radius:4px;">
-                            🚗 Vehicle Drop Staging
-                        </span>
-                        <span style="font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;background:#059669;color:#fff;padding:3px 8px;border-radius:4px;">
-                            China Export (Pre-Order)
-                        </span>
-                    </div>
-                    <h2 style="margin:0;font-size:18px;font-weight:700;line-height:1.3;color:#fff;">
-                        <?= htmlspecialchars($vRow['name'] ?? 'Vehicle Listing') ?>
-                    </h2>
-                </div>
-                <div style="text-align:right;">
-                    <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.06em;">FOB Price</div>
-                    <div style="font-size:24px;font-weight:800;color:#10b981;font-family:var(--f-mono);">
-                        $<?= number_format((float)($vRow['price'] ?? 0)) ?> <span style="font-size:13px;font-weight:600;color:#d1fae5;"><?= htmlspecialchars($vRow['currency'] ?? 'USD') ?></span>
-                    </div>
-                </div>
+    <!-- Staged Media & Photo Gallery Panel -->
+    <div class="panel" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div style="padding:16px 20px;background:#f9fafb;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-weight:700;font-size:14px;color:#111827;">📸 Staged Gallery Photos (<span id="gallery-count"><?= $photoCount ?></span>)</span>
+                <?php if ($videoCount > 0): ?>
+                    <span style="background:#fae8ff;color:#86198f;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">🎥 <?= $videoCount ?> Video(s)</span>
+                <?php endif; ?>
             </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <!-- Split selected photos button -->
+                <button type="button" id="split-selected-btn" onclick="splitSelectedPhotos(<?= (int)$batch['id'] ?>)"
+                        disabled
+                        style="background:#6366f1;color:#fff;border:none;padding:5px 12px;font-size:11px;font-weight:700;border-radius:4px;cursor:pointer;opacity:0.5;transition:all 0.15s;display:inline-flex;align-items:center;gap:4px;">
+                    ✂️ Split to New Batch
+                </button>
+                <button type="button" onclick="toggleSelectAllPhotos()"
+                        style="background:#fff;border:1px solid #d1d5db;padding:4px 10px;font-size:11px;font-weight:600;color:#374151;border-radius:4px;cursor:pointer;">
+                    Select All
+                </button>
+                <button type="button" onclick="document.getElementById('intake-photo-upload-input').click()"
+                        style="background:#10b981;color:#fff;border:none;padding:5px 12px;font-size:11px;font-weight:700;border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;box-shadow:0 1px 2px rgba(16,185,129,0.2);">
+                    <span>➕ Add Photos</span>
+                </button>
+                <form method="post" style="margin:0;">
+                    <?= Csrf::field() ?>
+                    <input type="hidden" name="action" value="sync_disk_photos">
+                    <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
+                    <button type="submit" style="background:#fff;border:1px solid #d1d5db;padding:4px 10px;font-size:11px;font-weight:700;color:#374151;border-radius:4px;cursor:pointer;">🔄 Sync Disk</button>
+                </form>
+            </div>
+        </div>
 
-            <div style="padding:24px;">
-                <!-- Badges Row -->
-                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
-                    <?php if (!empty($vRow['brand'])): ?>
-                        <span style="background:#f3f4f6;color:#1f2937;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;">
-                            🏷️ Brand: <?= htmlspecialchars($vRow['brand']) ?>
-                        </span>
-                    <?php endif; ?>
-                    <?php if (!empty($vRow['sub_category'])): ?>
-                        <span style="background:#eff6ff;color:#1e40af;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;">
-                            📂 Category: <?= htmlspecialchars($vRow['sub_category']) ?>
-                        </span>
-                    <?php endif; ?>
-                    <?php if (!empty($vRow['condition'])): ?>
-                        <span style="background:#fef3c7;color:#92400e;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;text-transform:capitalize;">
-                            ⚙️ Condition: <?= htmlspecialchars($vRow['condition']) ?>
-                        </span>
-                    <?php endif; ?>
-                    <span style="background:#ede9fe;color:#5b21b6;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;">
-                        📸 <?= $photoCount ?> Photos
-                    </span>
-                    <span style="background:#fae8ff;color:#86198f;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;">
-                        🎥 <?= $videoCount ?> Video Walkthrough(s)
-                    </span>
-                </div>
+        <div style="padding:16px;">
+            <!-- Hidden photo upload form -->
+            <form id="intake-photo-upload-form" method="post" enctype="multipart/form-data" style="display:none;">
+                <?= Csrf::field() ?>
+                <input type="hidden" name="action" value="upload_photos">
+                <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
+                <input type="file" id="intake-photo-upload-input" name="photos[]" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif" onchange="this.form.submit()">
+            </form>
 
-                <!-- Media Section: Video & Photos -->
-                <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));gap:24px;margin-bottom:24px;">
-                    <!-- Video Walkthrough Player -->
-                    <?php if (!empty($videos)): ?>
-                        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;">
-                            <div style="font-weight:700;font-size:13px;color:#111827;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
-                                🎥 Video Walkthrough (<?= count($videos) ?>)
-                            </div>
-                            <?php foreach ($videos as $vIdx => $vItem): ?>
-                                <video src="<?= htmlspecialchars(intake_media_url($vItem['file_path'])) ?>"
-                                       controls preload="metadata"
-                                       style="width:100%;max-height:280px;border-radius:6px;background:#000;margin-bottom:8px;"></video>
-                            <?php endforeach; ?>
+            <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));gap:20px;">
+                <!-- Video Walkthrough Player -->
+                <?php if (!empty($videos)): ?>
+                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;">
+                        <div style="font-weight:700;font-size:12px;color:#111827;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                            🎥 Video Walkthrough (<?= count($videos) ?>)
                         </div>
-                    <?php endif; ?>
+                        <?php foreach ($videos as $vItem): ?>
+                            <video src="<?= htmlspecialchars(intake_media_url($vItem['file_path'])) ?>"
+                                   controls preload="metadata"
+                                   style="width:100%;max-height:240px;border-radius:6px;background:#000;margin-bottom:8px;"></video>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
 
-                    <!-- Staged Photo Gallery -->
-                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;flex:1;">
-                        <!-- Hidden upload form -->
-                        <form id="intake-photo-upload-form" method="post" enctype="multipart/form-data" style="display:none;">
-                            <?= Csrf::field() ?>
-                            <input type="hidden" name="action" value="upload_photos">
-                            <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
-                            <input type="file" id="intake-photo-upload-input" name="photos[]" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif" onchange="this.form.submit()">
-                        </form>
+                <!-- Staged Photo Gallery Grid -->
+                <div style="flex:1;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(95px, 1fr));gap:8px;max-height:360px;overflow-y:auto;padding:4px;">
+                        <?php $pIdx = 0; ?>
+                        <?php foreach ($photos as $ph): ?>
+                            <?php if (in_array((string)$ph['media_group'], ['sheet', 'video'], true)) continue; ?>
+                            <div class="staged-photo-card" id="photo-card-<?= (int)$ph['id'] ?>"
+                                 style="position:relative;height:90px;border-radius:6px;overflow:hidden;border:1px solid #e5e7eb;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.04);transition:all 0.15s;"
+                                 onmouseover="this.querySelector('.photo-overlay').style.opacity='1';this.style.borderColor='#9ca3af';"
+                                 onmouseout="this.querySelector('.photo-overlay').style.opacity='0';this.style.borderColor='#e5e7eb';">
+                                
+                                <!-- Multi-select checkbox -->
+                                <input type="checkbox" class="photo-select-cb" value="<?= (int)$ph['id'] ?>"
+                                       onchange="updateSplitButton()"
+                                       style="position:absolute;top:4px;right:4px;width:16px;height:16px;cursor:pointer;z-index:4;accent-color:#2563eb;"
+                                       onclick="event.stopPropagation()">
 
-                        <div style="font-weight:700;font-size:13px;color:#111827;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-                            <span>📸 Staged Gallery Photos (<span id="gallery-count"><?= $photoCount ?></span>)</span>
-                            <div style="display:flex;gap:6px;align-items:center;">
-                                <button type="button" onclick="document.getElementById('intake-photo-upload-input').click()"
-                                        style="background:#10b981;color:#fff;border:none;padding:5px 12px;font-size:11px;font-weight:700;border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;box-shadow:0 1px 2px rgba(16,185,129,0.2);">
-                                    <span>➕ Add Photos</span>
-                                </button>
-                                <form method="post" style="margin:0;">
-                                    <?= Csrf::field() ?>
-                                    <input type="hidden" name="action" value="sync_disk_photos">
-                                    <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
-                                    <button type="submit" style="background:#fff;border:1px solid #d1d5db;padding:4px 10px;font-size:11px;font-weight:700;color:#374151;border-radius:4px;cursor:pointer;">🔄 Sync Disk</button>
-                                </form>
-                                <span style="font-size:11px;color:#6b7280;">First image is cover</span>
-                            </div>
-                        </div>
+                                <img src="<?= htmlspecialchars(intake_media_url($ph['file_path'])) ?>"
+                                     style="width:100%;height:100%;object-fit:cover;" alt="" loading="lazy">
+                                
+                                <?php if ($pIdx === 0): ?>
+                                    <span style="position:absolute;top:4px;left:4px;background:#10b981;color:#fff;font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;z-index:2;letter-spacing:0.04em;box-shadow:0 1px 2px rgba(0,0,0,0.3);">COVER</span>
+                                <?php endif; ?>
 
-                        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(90px, 1fr));gap:8px;max-height:340px;overflow-y:auto;padding:4px;">
-                            <?php $pIdx = 0; ?>
-                            <?php foreach ($photos as $ph): ?>
-                                <?php if (in_array((string)$ph['media_group'], ['sheet', 'video'], true)) continue; ?>
-                                <div class="staged-photo-card" id="photo-card-<?= (int)$ph['id'] ?>"
-                                     style="position:relative;height:86px;border-radius:6px;overflow:hidden;border:1px solid #e5e7eb;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.04);transition:all 0.15s;"
-                                     onmouseover="this.querySelector('.photo-overlay').style.opacity='1';this.style.borderColor='#9ca3af';"
-                                     onmouseout="this.querySelector('.photo-overlay').style.opacity='0';this.style.borderColor='#e5e7eb';">
-                                    <img src="<?= htmlspecialchars(intake_media_url($ph['file_path'])) ?>"
-                                         style="width:100%;height:100%;object-fit:cover;" alt="" loading="lazy">
-                                    <?php if ($pIdx === 0): ?>
-                                        <span style="position:absolute;top:3px;left:3px;background:#10b981;color:#fff;font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;z-index:2;letter-spacing:0.04em;box-shadow:0 1px 2px rgba(0,0,0,0.3);">COVER</span>
-                                    <?php endif; ?>
-                                    
-                                    <!-- Hover actions overlay -->
-                                    <div class="photo-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;flex-direction:column;justify-content:space-between;padding:4px;opacity:0;transition:opacity 0.15s;z-index:3;">
-                                        <div style="display:flex;justify-content:flex-end;">
+                                <!-- Hover actions overlay -->
+                                <div class="photo-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;flex-direction:column;justify-content:space-between;padding:4px;opacity:0;transition:opacity 0.15s;z-index:3;">
+                                    <div style="display:flex;justify-content:flex-start;">
+                                        <button type="button"
+                                                onclick="removeGalleryPhoto(<?= (int)$batch['id'] ?>, <?= (int)$ph['id'] ?>)"
+                                                title="Remove Photo"
+                                                style="background:#ef4444;color:#fff;border:none;width:20px;height:20px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,0.3);">
+                                            ✕
+                                        </button>
+                                    </div>
+                                    <?php if ($pIdx !== 0): ?>
+                                        <div>
                                             <button type="button"
-                                                    onclick="removeGalleryPhoto(<?= (int)$batch['id'] ?>, <?= (int)$ph['id'] ?>)"
-                                                    title="Remove Photo"
-                                                    style="background:#ef4444;color:#fff;border:none;width:20px;height:20px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,0.3);">
-                                                ✕
+                                                    onclick="setCoverPhoto(<?= (int)$batch['id'] ?>, <?= (int)$ph['id'] ?>)"
+                                                    title="Set as Primary Cover"
+                                                    style="width:100%;background:rgba(255,255,255,0.92);color:#111827;border:none;padding:3px 2px;font-size:9px;font-weight:700;border-radius:3px;cursor:pointer;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,0.2);">
+                                                ★ Make Cover
                                             </button>
                                         </div>
-                                        <?php if ($pIdx !== 0): ?>
-                                            <div>
-                                                <button type="button"
-                                                        onclick="setCoverPhoto(<?= (int)$batch['id'] ?>, <?= (int)$ph['id'] ?>)"
-                                                        title="Set as Primary Cover"
-                                                        style="width:100%;background:rgba(255,255,255,0.92);color:#111827;border:none;padding:3px 2px;font-size:9px;font-weight:700;border-radius:3px;cursor:pointer;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,0.2);">
-                                                    ★ Make Cover
-                                                </button>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
+                                    <?php endif; ?>
                                 </div>
-                                <?php $pIdx++; ?>
-                            <?php endforeach; ?>
-
-                            <!-- Add Photo Tile at the end -->
-                            <div onclick="document.getElementById('intake-photo-upload-input').click()"
-                                 title="Add Photos from Computer"
-                                 style="height:86px;border-radius:6px;border:2px dashed #d1d5db;background:#f3f4f6;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#6b7280;font-size:11px;font-weight:600;gap:2px;transition:all 0.15s;"
-                                 onmouseover="this.style.borderColor='#10b981';this.style.color='#059669';this.style.background='#ecfdf5';"
-                                 onmouseout="this.style.borderColor='#d1d5db';this.style.color='#6b7280';this.style.background='#f3f4f6';">
-                                <span style="font-size:18px;">➕</span>
-                                <span>Add Photo</span>
                             </div>
-                        </div>
-                    </div>
-                </div>
+                            <?php $pIdx++; ?>
+                        <?php endforeach; ?>
 
-                <!-- Specifications & Features Grid -->
-                <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));gap:24px;margin-bottom:24px;">
-                    <!-- Vehicle Specifications -->
-                    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;background:#fff;">
-                        <div style="font-weight:700;font-size:13px;color:#111827;margin-bottom:12px;border-bottom:1px solid #f3f4f6;padding-bottom:6px;">
-                            ⚙️ Vehicle Specifications
+                        <!-- Add Photo Tile at the end -->
+                        <div onclick="document.getElementById('intake-photo-upload-input').click()"
+                             title="Add Photos from Computer"
+                             style="height:90px;border-radius:6px;border:2px dashed #d1d5db;background:#f3f4f6;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#6b7280;font-size:11px;font-weight:600;gap:2px;transition:all 0.15s;"
+                             onmouseover="this.style.borderColor='#10b981';this.style.color='#059669';this.style.background='#ecfdf5';"
+                             onmouseout="this.style.borderColor='#d1d5db';this.style.color='#6b7280';this.style.background='#f3f4f6';">
+                            <span style="font-size:18px;">➕</span>
+                            <span>Add Photo</span>
                         </div>
-                        <?php
-                        $specItems = [];
-                        if (!empty($vRow['specs'])) {
-                            foreach (explode('|', (string)$vRow['specs']) as $sp) {
-                                if (strpos($sp, ':') !== false) {
-                                    list($sk, $sv) = explode(':', $sp, 2);
-                                    $specItems[trim($sk)] = trim($sv);
-                                }
-                            }
-                        }
-                        ?>
-                        <?php if (empty($specItems)): ?>
-                            <div style="color:#9ca3af;font-size:12px;">No specifications extracted.</div>
-                        <?php else: ?>
-                            <table style="width:100%;font-size:12px;border-collapse:collapse;">
-                                <?php foreach ($specItems as $k => $v): ?>
-                                    <tr style="border-bottom:1px solid #f9fafb;">
-                                        <td style="padding:6px 0;color:#6b7280;font-weight:500;width:45%;"><?= htmlspecialchars($k) ?></td>
-                                        <td style="padding:6px 0;color:#111827;font-weight:600;"><?= htmlspecialchars($v) ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </table>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Key Features -->
-                    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;background:#fff;">
-                        <div style="font-weight:700;font-size:13px;color:#111827;margin-bottom:12px;border-bottom:1px solid #f3f4f6;padding-bottom:6px;">
-                            ✨ Key Features
-                        </div>
-                        <?php
-                        $featItems = !empty($vRow['features']) ? array_filter(array_map('trim', explode('|', (string)$vRow['features']))) : [];
-                        ?>
-                        <?php if (empty($featItems)): ?>
-                            <div style="color:#9ca3af;font-size:12px;">No key features extracted.</div>
-                        <?php else: ?>
-                            <ul style="margin:0;padding-left:18px;font-size:12px;color:#374151;line-height:1.7;">
-                                <?php foreach ($featItems as $fi): ?>
-                                    <li><?= htmlspecialchars($fi) ?></li>
-                                <?php endforeach; ?>
-                            </ul>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-                <!-- 1-Click Publishing Action Bar -->
-                <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
-                    <div>
-                        <div style="font-weight:700;font-size:14px;color:#111827;">Ready to publish this vehicle?</div>
-                        <div style="font-size:12px;color:#6b7280;margin-top:2px;">
-                            This will create the vehicle product, attach all <?= $photoCount ?> gallery photos, link the video walkthrough, apply watermarks, and publish live.
-                        </div>
-                    </div>
-                    <div style="display:flex;gap:12px;align-items:center;">
-                        <!-- 1-Click Live Publish Form -->
-                        <form method="POST" style="margin:0;">
-                            <?= Csrf::field() ?>
-                            <input type="hidden" name="action" value="publish_vehicle_live">
-                            <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
-                            <button type="submit" class="btn-primary"
-                                    style="height:44px;padding:0 24px;font-size:13px;font-weight:700;border-radius:6px;background:#059669;color:#fff;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
-                                🚀 Publish Vehicle Live Now
-                            </button>
-                        </form>
-
-                        <!-- Traditional Send to Importer -->
-                        <form method="POST" style="margin:0;">
-                            <?= Csrf::field() ?>
-                            <input type="hidden" name="action" value="send_to_importer">
-                            <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
-                            <button type="submit" class="btn-secondary"
-                                    style="height:44px;padding:0 18px;font-size:12px;font-weight:600;border-radius:6px;background:#fff;border:1px solid #d1d5db;color:#374151;cursor:pointer;">
-                                Send to Importer / Waiting Room &rarr;
-                            </button>
-                        </form>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <?php if ($isVehicleBatch): ?>
+        <?php if (count($vehicleRows) > 1): ?>
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid #3b82f6;padding:14px 18px;border-radius:6px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+                <div style="font-size:13px;color:#1e40af;font-weight:600;">
+                    🚗 Multi-Vehicle Batch: This batch contains <strong><?= count($vehicleRows) ?> vehicles</strong>. Each vehicle can be reviewed and published live independently below.
+                </div>
+                <button type="button" onclick="const f = document.getElementById('intakeReviewForm'); f.style.display = f.style.display === 'none' ? 'block' : 'none';"
+                        style="background:#fff;border:1px solid #bfdbfe;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;color:#1e40af;cursor:pointer;">
+                    Toggle Catalog Table
+                </button>
+            </div>
+        <?php endif; ?>
+
+        <?php foreach ($vehicleRows as $vIdx => $vRow): ?>
+            <?php
+            $vAssignedPaths = $assignments[$vIdx]['paths'] ?? [];
+            if (empty($vAssignedPaths) && count($vehicleRows) === 1) {
+                foreach ($photos as $ph) {
+                    if (!in_array((string)$ph['media_group'], ['sheet', 'video'], true) && !empty($ph['file_path'])) {
+                        $vAssignedPaths[] = (string)$ph['file_path'];
+                    }
+                }
+            }
+            ?>
+            <!-- Vehicle Drop Staging Card -->
+            <div class="panel" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                <div style="padding:18px 24px;background:linear-gradient(to right, #111827, #1f2937);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+                    <div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                            <span style="font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;background:rgba(255,255,255,0.15);padding:3px 8px;border-radius:4px;">
+                                🚗 Vehicle <?= count($vehicleRows) > 1 ? '#' . ($vIdx + 1) : 'Drop Staging' ?>
+                            </span>
+                            <span style="font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;background:#059669;color:#fff;padding:3px 8px;border-radius:4px;">
+                                China Export (Pre-Order)
+                            </span>
+                        </div>
+                        <h2 style="margin:0;font-size:18px;font-weight:700;line-height:1.3;color:#fff;">
+                            <?= htmlspecialchars($vRow['name'] ?? 'Vehicle Listing') ?>
+                        </h2>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.06em;">FOB Price</div>
+                        <div style="font-size:24px;font-weight:800;color:#10b981;font-family:var(--f-mono);">
+                            $<?= number_format((float)($vRow['price'] ?? 0)) ?> <span style="font-size:13px;font-weight:600;color:#d1fae5;"><?= htmlspecialchars($vRow['currency'] ?? 'USD') ?></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding:24px;">
+                    <!-- Badges Row -->
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+                        <?php if (!empty($vRow['brand'])): ?>
+                            <span style="background:#f3f4f6;color:#1f2937;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;">
+                                🏷️ Brand: <?= htmlspecialchars($vRow['brand']) ?>
+                            </span>
+                        <?php endif; ?>
+                        <?php if (!empty($vRow['sub_category'])): ?>
+                            <span style="background:#eff6ff;color:#1e40af;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;">
+                                📂 Category: <?= htmlspecialchars($vRow['sub_category']) ?>
+                            </span>
+                        <?php endif; ?>
+                        <?php if (!empty($vRow['condition'])): ?>
+                            <span style="background:#fef3c7;color:#92400e;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;text-transform:capitalize;">
+                                ⚙️ Condition: <?= htmlspecialchars($vRow['condition']) ?>
+                            </span>
+                        <?php endif; ?>
+                        <span style="background:#ede9fe;color:#5b21b6;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;">
+                            📸 <?= count($vAssignedPaths) ?> Matched Photos
+                        </span>
+                    </div>
+
+                    <!-- Matched Photos Thumbnails (if multi-vehicle or available) -->
+                    <?php if (!empty($vAssignedPaths)): ?>
+                        <div style="margin-bottom:20px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 16px;">
+                            <div style="font-weight:700;font-size:12px;color:#374151;margin-bottom:8px;">
+                                📸 Photos Attached to this Vehicle (<?= count($vAssignedPaths) ?>)
+                            </div>
+                            <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">
+                                <?php foreach ($vAssignedPaths as $vap): ?>
+                                    <div style="width:68px;height:68px;flex-shrink:0;border-radius:4px;overflow:hidden;border:1px solid #e5e7eb;background:#fff;">
+                                        <img src="<?= htmlspecialchars(intake_media_url($vap)) ?>" style="width:100%;height:100%;object-fit:cover;" alt="" loading="lazy">
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Specifications & Features Grid -->
+                    <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));gap:24px;margin-bottom:24px;">
+                        <!-- Vehicle Specifications -->
+                        <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;background:#fff;">
+                            <div style="font-weight:700;font-size:13px;color:#111827;margin-bottom:12px;border-bottom:1px solid #f3f4f6;padding-bottom:6px;">
+                                ⚙️ Vehicle Specifications
+                            </div>
+                            <?php
+                            $specItems = [];
+                            if (!empty($vRow['specs'])) {
+                                foreach (explode('|', (string)$vRow['specs']) as $sp) {
+                                    if (strpos($sp, ':') !== false) {
+                                        list($sk, $sv) = explode(':', $sp, 2);
+                                        $specItems[trim($sk)] = trim($sv);
+                                    }
+                                }
+                            }
+                            ?>
+                            <?php if (empty($specItems)): ?>
+                                <div style="color:#9ca3af;font-size:12px;">No specifications extracted.</div>
+                            <?php else: ?>
+                                <table style="width:100%;font-size:12px;border-collapse:collapse;">
+                                    <?php foreach ($specItems as $k => $v): ?>
+                                        <tr style="border-bottom:1px solid #f9fafb;">
+                                            <td style="padding:6px 0;color:#6b7280;font-weight:500;width:45%;"><?= htmlspecialchars($k) ?></td>
+                                            <td style="padding:6px 0;color:#111827;font-weight:600;"><?= htmlspecialchars($v) ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </table>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Key Features -->
+                        <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;background:#fff;">
+                            <div style="font-weight:700;font-size:13px;color:#111827;margin-bottom:12px;border-bottom:1px solid #f3f4f6;padding-bottom:6px;">
+                                ✨ Key Features
+                            </div>
+                            <?php
+                            $featItems = !empty($vRow['features']) ? array_filter(array_map('trim', explode('|', (string)$vRow['features']))) : [];
+                            ?>
+                            <?php if (empty($featItems)): ?>
+                                <div style="color:#9ca3af;font-size:12px;">No key features extracted.</div>
+                            <?php else: ?>
+                                <ul style="margin:0;padding-left:18px;font-size:12px;color:#374151;line-height:1.7;">
+                                    <?php foreach ($featItems as $fi): ?>
+                                        <li><?= htmlspecialchars($fi) ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- 1-Click Publishing Action Bar -->
+                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+                        <div>
+                            <div style="font-weight:700;font-size:14px;color:#111827;">Ready to publish this vehicle?</div>
+                            <div style="font-size:12px;color:#6b7280;margin-top:2px;">
+                                This will create the vehicle product live, attach its <?= count($vAssignedPaths) ?> photos, apply watermarks, and link video walkthroughs.
+                                <?php if (count($vehicleRows) > 1): ?>
+                                    <br><strong style="color:#2563eb;">Remaining <?= count($vehicleRows) - 1 ?> vehicle(s) in this batch will be preserved.</strong>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:12px;align-items:center;">
+                            <!-- 1-Click Live Publish Form -->
+                            <form method="POST" style="margin:0;">
+                                <?= Csrf::field() ?>
+                                <input type="hidden" name="action" value="publish_vehicle_live">
+                                <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
+                                <input type="hidden" name="row_index" value="<?= $vIdx ?>">
+                                <button type="submit" class="btn-primary"
+                                        style="height:44px;padding:0 24px;font-size:13px;font-weight:700;border-radius:6px;background:#059669;color:#fff;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
+                                    🚀 Publish <?= htmlspecialchars($vRow['name'] ?? 'Vehicle') ?> Live
+                                </button>
+                            </form>
+
+                            <!-- Traditional Send to Importer -->
+                            <form method="POST" style="margin:0;">
+                                <?= Csrf::field() ?>
+                                <input type="hidden" name="action" value="send_to_importer">
+                                <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
+                                <button type="submit" class="btn-secondary"
+                                        style="height:44px;padding:0 18px;font-size:12px;font-weight:600;border-radius:6px;background:#fff;border:1px solid #d1d5db;color:#374151;cursor:pointer;">
+                                    Send to Importer / Waiting Room &rarr;
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
     <?php endif; ?>
 
     <!-- Standard Review Form (for multi-product spreadsheets or advanced image remapping) -->
@@ -1051,6 +1193,62 @@ include 'layout/sidebar.php';
             window.location.reload();
         });
     }
+
+    function toggleSelectAllPhotos() {
+        const cbs = document.querySelectorAll('.photo-select-cb');
+        const anyUnchecked = Array.from(cbs).some(cb => !cb.checked);
+        cbs.forEach(cb => cb.checked = anyUnchecked);
+        updateSplitButton();
+    }
+
+    function updateSplitButton() {
+        const count = document.querySelectorAll('.photo-select-cb:checked').length;
+        const btn = document.getElementById('split-selected-btn');
+        if (btn) {
+            btn.disabled = count === 0;
+            btn.style.opacity = count === 0 ? '0.5' : '1';
+            btn.innerText = count > 0 ? '✂️ Split ' + count + ' to New Batch' : '✂️ Split to New Batch';
+        }
+    }
+
+    function splitSelectedPhotos(batchId) {
+        const checked = Array.from(document.querySelectorAll('.photo-select-cb:checked')).map(cb => cb.value);
+        if (checked.length === 0) {
+            alert('Please select at least one photo using the checkboxes.');
+            return;
+        }
+        const label = prompt('Enter a label/title for the new batch:', 'Split Vehicle Photos (' + checked.length + ' photos)');
+        if (label === null) return;
+
+        const btn = document.getElementById('split-selected-btn');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = 'Splitting...';
+        }
+
+        const form = new FormData();
+        form.append('action', 'split_items');
+        form.append('batch_id', batchId);
+        form.append('new_label', label);
+        form.append('_csrf_token', '<?= Csrf::token() ?>');
+        checked.forEach(id => form.append('item_ids[]', id));
+
+        fetch('intake.php', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: form
+        }).then(r => r.json()).then(res => {
+            if (res.ok) {
+                alert('Successfully moved ' + res.count + ' photo(s) to new Batch #' + res.new_batch_id + '!');
+                window.location.href = 'intake.php?review=' + res.new_batch_id;
+            } else {
+                alert(res.error || 'Failed to split photos.');
+                if (btn) btn.disabled = false;
+            }
+        }).catch(err => {
+            window.location.reload();
+        });
+    }
     </script>
 
 <?php else: ?>
@@ -1068,8 +1266,8 @@ include 'layout/sidebar.php';
                         <tr style="background:#f9fafb;text-align:left;border-bottom:1px solid #e5e7eb;">
                             <th style="padding:12px 16px;font-family:var(--f-mono);font-size:10px;text-transform:uppercase;color:#6b7280;">Batch</th>
                             <th style="padding:12px 16px;font-family:var(--f-mono);font-size:10px;text-transform:uppercase;color:#6b7280;">Status</th>
-                            <th style="padding:12px 16px;font-family:var(--f-mono);font-size:10px;text-transform:uppercase;color:#6b7280;">Spreadsheet</th>
-                            <th style="padding:12px 16px;font-family:var(--f-mono);font-size:10px;text-transform:uppercase;color:#6b7280;">Photos</th>
+                            <th style="padding:12px 16px;font-family:var(--f-mono);font-size:10px;text-transform:uppercase;color:#6b7280;">Product / Listing</th>
+                            <th style="padding:12px 16px;font-family:var(--f-mono);font-size:10px;text-transform:uppercase;color:#6b7280;">Media</th>
                             <th style="padding:12px 16px;font-family:var(--f-mono);font-size:10px;text-transform:uppercase;color:#6b7280;">Chat ID</th>
                             <th style="padding:12px 16px;font-family:var(--f-mono);font-size:10px;text-transform:uppercase;color:#6b7280;">Received</th>
                             <th style="padding:12px 16px;font-family:var(--f-mono);font-size:10px;text-transform:uppercase;color:#6b7280;text-align:right;">Actions</th>
@@ -1102,13 +1300,19 @@ include 'layout/sidebar.php';
                                     <td style="padding:12px 16px;">
                                         <?php if ($b['sheet_name'] !== ''): ?>
                                             <div style="font-weight:600;color:#111827;"><?= htmlspecialchars($b['sheet_name']) ?></div>
-                                            <div style="font-size:11px;color:#6b7280;"><?= (int)$b['row_count'] ?> products</div>
+                                            <div style="font-size:11px;color:#6b7280;"><?= (int)$b['row_count'] ?> vehicle/product(s)</div>
+                                        <?php elseif (!empty($b['label'])): ?>
+                                            <div style="font-weight:600;color:#111827;"><?= htmlspecialchars($b['label']) ?></div>
+                                            <div style="font-size:11px;color:#6b7280;">Staged drop</div>
                                         <?php else: ?>
-                                            <span style="color:#9ca3af;font-style:italic;">No sheet uploaded</span>
+                                            <span style="color:#9ca3af;font-style:italic;">No listing details yet</span>
                                         <?php endif; ?>
                                     </td>
                                     <td style="padding:12px 16px;font-family:var(--f-mono);font-size:12px;color:#2563eb;font-weight:600;">
-                                        <?= (int)$b['photo_count'] ?>
+                                        📸 <?= (int)$b['photo_count'] ?>
+                                        <?php if ((int)$b['video_count'] > 0): ?>
+                                            <span style="color:#7c3aed;margin-left:6px;">🎥 <?= (int)$b['video_count'] ?></span>
+                                        <?php endif; ?>
                                     </td>
                                     <td style="padding:12px 16px;font-family:var(--f-mono);font-size:11px;color:#6b7280;">
                                         <?= (int)$b['chat_id'] ?>
@@ -1118,8 +1322,8 @@ include 'layout/sidebar.php';
                                     </td>
                                     <td style="padding:12px 16px;text-align:right;">
                                         <?php if ($b['status'] === 'pending'): ?>
-                                            <a href="intake.php?review=<?= (int)$b['id'] ?>" class="btn-red" style="padding:5px 12px;font-size:11px;font-weight:700;border-radius:3px;text-decoration:none;display:inline-block;">
-                                                Review &amp; Match
+                                            <a href="intake.php?review=<?= (int)$b['id'] ?>" class="btn-primary" style="padding:6px 14px;font-size:11px;font-weight:700;border-radius:4px;text-decoration:none;display:inline-block;background:#059669;color:#fff;">
+                                                Review &amp; Publish &rarr;
                                             </a>
                                         <?php else: ?>
                                             <a href="intake.php?review=<?= (int)$b['id'] ?>" style="color:#6b7280;font-size:12px;text-decoration:underline;">

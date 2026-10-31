@@ -258,69 +258,140 @@ if (!function_exists('intake_parse_listing_text')) {
 }
 }
 
+if (!function_exists('intake_split_multiple_listings')) {
+    /**
+     * Splits a text message containing multiple vehicle/product listings into individual chunks.
+     * Returns an array with 1 or more text listings.
+     */
+    function intake_split_multiple_listings(string $text): array
+    {
+        $t = str_replace(["\r\n", "\r"], "\n", trim($text));
+        if ($t === '') {
+            return [];
+        }
+
+        // Check frequency of strong listing indicators
+        $specHits = preg_match_all('/(?:\bvehicle specifications|\bspecifications|\bkey features|\bfob price)\b/i', $t);
+        if ($specHits < 4) {
+            return [$t];
+        }
+
+        // Try splitting on prominent boundaries (horizontal rules or 2+ empty lines followed by a title)
+        $parts = preg_split('/(?:\n\s*[-=_*]{3,}\s*\n|\n{2,}(?=(?:20[12]\d|[A-Z][a-zA-Z0-9]+)\s+))/u', $t);
+        $validChunks = [];
+        if (is_array($parts)) {
+            foreach ($parts as $p) {
+                $p = trim($p);
+                if ($p !== '' && intake_is_listing_text($p)) {
+                    $validChunks[] = $p;
+                }
+            }
+        }
+        if (count($validChunks) >= 2) {
+            return $validChunks;
+        }
+
+        // Fallback: line-by-line scanning for vehicle title boundaries
+        $lines = explode("\n", $t);
+        $chunks = [];
+        $currentChunk = [];
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if (!empty($currentChunk) && preg_match('/^(?:20[12]\d)\s+[A-Za-z0-9]/', $trimmed)) {
+                $joined = implode("\n", $currentChunk);
+                if (intake_is_listing_text($joined)) {
+                    $chunks[] = $joined;
+                    $currentChunk = [];
+                }
+            }
+            $currentChunk[] = $line;
+        }
+        if (!empty($currentChunk)) {
+            $joined = implode("\n", $currentChunk);
+            if (intake_is_listing_text($joined)) {
+                $chunks[] = $joined;
+            }
+        }
+
+        return count($chunks) >= 2 ? $chunks : [$t];
+    }
+}
+
+if (!function_exists('intake_listings_to_csv')) {
+    /**
+     * Format multiple parsed listings into a standard CSV string matching ProductCsvImporter::HEADERS
+     */
+    function intake_listings_to_csv(array $parsedList, string $videoUrl = ''): string
+    {
+        $headers = [
+            'name', 'sku', 'price', 'currency', 'stock', 'category', 'sub_category', 'brand',
+            'description', 'tags', 'listing_type', 'condition', 'visibility', 'moq',
+            'wholesale_price', 'location_country', 'features', 'specs', 'video_url',
+            'image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5',
+            'image_url_6', 'image_url_7', 'image_url_8', 'image_url_9', 'image_url_10'
+        ];
+
+        $stream = fopen('php://memory', 'r+');
+        fwrite($stream, "\xEF\xBB\xBF");
+        fputcsv($stream, $headers);
+
+        foreach ($parsedList as $parsed) {
+            $pipeFeatures = implode(' | ', $parsed['features'] ?? []);
+
+            $specPairs = [];
+            foreach (($parsed['specs'] ?? []) as $k => $v) {
+                $specPairs[] = $v !== '' ? "{$k}: {$v}" : $k;
+            }
+            $pipeSpecs = implode(' | ', $specPairs);
+
+            $tags = implode(', ', array_filter([
+                $parsed['brand'] ?? '',
+                $parsed['model'] ?? '',
+                $parsed['year'] ?? '',
+                $parsed['sub_category'] ?? '',
+                'china export',
+                'preorder'
+            ]));
+
+            $row = [
+                $parsed['name'] ?? '',
+                $parsed['sku'] ?? '',
+                (string)($parsed['price'] ?? '0.00'),
+                $parsed['currency'] ?? 'USD',
+                '1', // stock
+                $parsed['category'] ?? 'Vehicles',
+                $parsed['sub_category'] ?? 'Cars',
+                $parsed['brand'] ?? '',
+                $parsed['description'] ?? '',
+                $tags,
+                'export', // listing_type
+                $parsed['condition_type'] ?? 'used',
+                'public', // visibility
+                '1', // moq
+                '', // wholesale_price
+                $parsed['location_country'] ?? 'CN',
+                $pipeFeatures,
+                $pipeSpecs,
+                $videoUrl,
+                '', '', '', '', '', '', '', '', '', ''
+            ];
+            fputcsv($stream, $row);
+        }
+
+        rewind($stream);
+        $csv = stream_get_contents($stream);
+        fclose($stream);
+
+        return (string)$csv;
+    }
+}
+
 if (!function_exists('intake_listing_to_csv')) {
     /**
-     * Format parsed listing into a standard CSV string matching ProductCsvImporter::HEADERS
-     * plus extra attributes (video_url, etc.)
+     * Format single parsed listing into CSV string
      */
     function intake_listing_to_csv(array $parsed, string $videoUrl = ''): string
     {
-    $headers = [
-        'name', 'sku', 'price', 'currency', 'stock', 'category', 'sub_category', 'brand',
-        'description', 'tags', 'listing_type', 'condition', 'visibility', 'moq',
-        'wholesale_price', 'location_country', 'features', 'specs', 'video_url',
-        'image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5',
-        'image_url_6', 'image_url_7', 'image_url_8', 'image_url_9', 'image_url_10'
-    ];
-
-    $pipeFeatures = implode(' | ', $parsed['features'] ?? []);
-
-    $specPairs = [];
-    foreach (($parsed['specs'] ?? []) as $k => $v) {
-        $specPairs[] = $v !== '' ? "{$k}: {$v}" : $k;
+        return intake_listings_to_csv([$parsed], $videoUrl);
     }
-    $pipeSpecs = implode(' | ', $specPairs);
-
-    $tags = implode(', ', array_filter([
-        $parsed['brand'] ?? '',
-        $parsed['model'] ?? '',
-        $parsed['year'] ?? '',
-        $parsed['sub_category'] ?? '',
-        'china export',
-        'preorder'
-    ]));
-
-    $row = [
-        $parsed['name'] ?? '',
-        $parsed['sku'] ?? '',
-        (string)($parsed['price'] ?? '0.00'),
-        $parsed['currency'] ?? 'USD',
-        '1', // stock
-        $parsed['category'] ?? 'Vehicles',
-        $parsed['sub_category'] ?? 'Cars',
-        $parsed['brand'] ?? '',
-        $parsed['description'] ?? '',
-        $tags,
-        'export', // listing_type
-        $parsed['condition_type'] ?? 'used',
-        'public', // visibility
-        '1', // moq
-        '', // wholesale_price
-        $parsed['location_country'] ?? 'CN',
-        $pipeFeatures,
-        $pipeSpecs,
-        $videoUrl,
-        '', '', '', '', '', '', '', '', '', '' // image placeholders
-    ];
-
-    $stream = fopen('php://memory', 'r+');
-    fwrite($stream, "\xEF\xBB\xBF");
-    fputcsv($stream, $headers);
-    fputcsv($stream, $row);
-    rewind($stream);
-    $csv = stream_get_contents($stream);
-    fclose($stream);
-
-    return (string)$csv;
-}
 }

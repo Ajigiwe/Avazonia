@@ -294,7 +294,7 @@ function intake_active_batch(int $chatId): ?array
 {
     intake_tables();
     return db_one(
-        "SELECT * FROM intake_batches WHERE chat_id = ? AND status = 'pending' ORDER BY id DESC LIMIT 1",
+        "SELECT * FROM intake_batches WHERE chat_id = ? AND status = 'pending' ORDER BY updated_at DESC, id DESC LIMIT 1",
         [$chatId]
     );
 }
@@ -557,6 +557,36 @@ function intake_set_cover(int $batchId, int $itemId): bool
     }
     db_exec("UPDATE intake_items SET message_id = ? WHERE id = ? AND batch_id = ?", [$newMsgId, $itemId, $batchId]);
     return true;
+}
+
+function intake_split_items(int $srcBatchId, array $itemIds, string $newLabel = ''): int
+{
+    intake_tables();
+    $src = intake_batch($srcBatchId);
+    if (!$src || empty($itemIds)) {
+        return 0;
+    }
+    $label = trim($newLabel);
+    if ($label === '') {
+        $label = 'Split from Batch #' . $srcBatchId;
+    }
+    $newBatchId = intake_new_batch((int)$src['chat_id'], $label);
+
+    $valid = [];
+    foreach ($itemIds as $id) {
+        $id = (int)$id;
+        if ($id > 0) {
+            $valid[] = $id;
+        }
+    }
+    if (empty($valid)) {
+        return 0;
+    }
+
+    $inClause = implode(',', $valid);
+    db_exec("UPDATE intake_items SET batch_id = ? WHERE id IN ($inClause) AND batch_id = ?", [$newBatchId, $srcBatchId]);
+    db_exec("UPDATE intake_batches SET updated_at = NOW() WHERE id IN (?, ?)", [$srcBatchId, $newBatchId]);
+    return $newBatchId;
 }
 
 function intake_add_photos(int $batchId, array $files): int
@@ -956,16 +986,47 @@ function intake_ingest_listing_text(array $cfg, int $chatId, string $text, int $
     require_once __DIR__ . '/intake_parser.php';
     intake_tables();
 
-    $parsed = intake_parse_listing_text($text);
-    if (empty($parsed) || empty($parsed['name'])) {
+    $chunks = intake_split_multiple_listings($text);
+    $parsedList = [];
+    foreach ($chunks as $chunk) {
+        $p = intake_parse_listing_text($chunk);
+        if (!empty($p) && !empty($p['name'])) {
+            $parsedList[] = $p;
+        }
+    }
+
+    if (empty($parsedList)) {
         return ['ok' => false, 'error' => 'Could not parse listing details.'];
     }
 
-    $batchId = intake_active_batch_id($chatId);
-    if ($batchId === null) {
-        $batchId = intake_new_batch($chatId, $parsed['name']);
+    $activeBatch = intake_active_batch($chatId);
+    $batchId = null;
+
+    if ($activeBatch !== null) {
+        $hasListing = (!empty($activeBatch['sheet_data']) && (int)$activeBatch['row_count'] > 0);
+        $hasMedia   = (intake_photo_count((int)$activeBatch['id']) > 0 || intake_video_count((int)$activeBatch['id']) > 0);
+        $firstName  = $parsedList[0]['name'] ?? '';
+        $isDifferent = (mb_strtolower(trim((string)$activeBatch['label'])) !== mb_strtolower(trim($firstName)));
+
+        // If active batch already has a vehicle listing AND already has media or is a distinct vehicle:
+        // Do NOT overwrite it! Automatically start a fresh batch for this new vehicle!
+        if ($hasListing && ($hasMedia || $isDifferent)) {
+            $batchLabel = count($parsedList) > 1
+                ? sprintf('%s (+%d more)', $parsedList[0]['name'], count($parsedList) - 1)
+                : $parsedList[0]['name'];
+            $batchId = intake_new_batch($chatId, $batchLabel);
+        } else {
+            $batchId = (int)$activeBatch['id'];
+            $batchLabel = count($parsedList) > 1
+                ? sprintf('%s (+%d more)', $parsedList[0]['name'], count($parsedList) - 1)
+                : $parsedList[0]['name'];
+            db_exec('UPDATE intake_batches SET label = ?, updated_at = NOW() WHERE id = ?', [mb_substr($batchLabel, 0, 160), $batchId]);
+        }
     } else {
-        db_exec('UPDATE intake_batches SET label = ? WHERE id = ?', [mb_substr($parsed['name'], 0, 160), $batchId]);
+        $batchLabel = count($parsedList) > 1
+            ? sprintf('%s (+%d more)', $parsedList[0]['name'], count($parsedList) - 1)
+            : $parsedList[0]['name'];
+        $batchId = intake_new_batch($chatId, $batchLabel);
     }
 
     // Check if there are already staged videos in this batch
@@ -975,21 +1036,24 @@ function intake_ingest_listing_text(array $cfg, int $chatId, string $text, int $
     );
     $videoUrl = !empty($existingVideos[0]['file_path']) ? (string)$existingVideos[0]['file_path'] : '';
 
-    $csv = intake_listing_to_csv($parsed, $videoUrl);
-    $sheetName = 'Vehicle: ' . ($parsed['brand'] ? $parsed['brand'] . ' ' . $parsed['model'] : $parsed['name']);
-    intake_set_sheet($batchId, $sheetName, $csv, 1);
+    $csv = intake_listings_to_csv($parsedList, $videoUrl);
+    $sheetName = count($parsedList) === 1
+        ? 'Vehicle: ' . ($parsedList[0]['brand'] ? $parsedList[0]['brand'] . ' ' . $parsedList[0]['model'] : $parsedList[0]['name'])
+        : sprintf('Vehicles Drop (%d vehicles)', count($parsedList));
+    intake_set_sheet($batchId, $sheetName, $csv, count($parsedList));
 
     // Marker item in intake_items for chronological undo
     db_exec(
         "INSERT INTO intake_items (batch_id, message_id, media_group, file_path, caption, created_at)
          VALUES (?, ?, 'sheet', '', ?, NOW())",
-        [$batchId, $messageId > 0 ? $messageId : (int)round(microtime(true) * 1000), mb_substr($parsed['name'], 0, 512)]
+        [$batchId, $messageId > 0 ? $messageId : (int)round(microtime(true) * 1000), mb_substr($parsedList[0]['name'], 0, 512)]
     );
 
     return [
-        'ok' => true,
-        'batch_id' => $batchId,
-        'parsed' => $parsed,
+        'ok'          => true,
+        'batch_id'    => $batchId,
+        'parsed'      => $parsedList[0],
+        'parsed_list' => $parsedList,
         'photo_count' => intake_photo_count($batchId),
         'video_count' => intake_video_count($batchId)
     ];
@@ -1214,6 +1278,21 @@ function intake_dispatch(array $cfg, array $update, array $localFiles = []): str
 
         $adminUrl = defined('APP_URL') ? APP_URL . '/admin/intake.php?review=' . $res['batch_id'] : 'Shop Admin';
 
+        if (count($res['parsed_list'] ?? []) > 1) {
+            $lines = [
+                "🚗 Staged " . count($res['parsed_list']) . " Vehicle Listings in Batch #{$res['batch_id']}!",
+                "━━━━━━━━━━━━━━━━━━━━"
+            ];
+            foreach ($res['parsed_list'] as $idx => $pItem) {
+                $pFmt = $pItem['price'] > 0 ? '$' . number_format($pItem['price']) . ' FOB' : 'Price on request';
+                $lines[] = sprintf("%d. %s (%s)", $idx + 1, $pItem['name'], $pFmt);
+            }
+            $lines[] = sprintf("\n📸 %d photo(s) & 🎥 %d video(s) currently staged in Batch #%d.", $res['photo_count'], $res['video_count'], $res['batch_id']);
+            $lines[] = "👉 Send vehicle photos & videos now! Captions will auto-match to each vehicle.";
+            $lines[] = "\n🔗 Review & Publish in Admin:\n" . $adminUrl;
+            return implode("\n", $lines);
+        }
+
         return "🚗 Staged Vehicle Listing!\n"
             . "━━━━━━━━━━━━━━━━━━━━\n"
             . "📋 " . $p['name'] . "\n"
@@ -1352,18 +1431,67 @@ function intake_command_reply(array $cfg, int $chatId, string $text): string
         case '/start':
         case '/help':
             return "Avazonia Telegram Intake Bot\n\n"
-                . "Vehicle & Product Drops Made Easy:\n"
-                . "1. Forward your vehicle listing text (with Brand, Specs, Features, Price)\n"
-                . "2. Send bulk product photos\n"
-                . "3. Send 1-2 video walkthroughs\n"
-                . "4. Log in to Avazonia Admin -> Telegram Intake to review and 1-click publish live!\n\n"
+                . "Multi-Product & Vehicle Drops:\n"
+                . "1. Forward vehicle listing text (with Brand, Specs, Features, Price)\n"
+                . "2. Send bulk photos & 1-2 video walkthroughs\n"
+                . "3. Forward next vehicle or type /new to start next product!\n"
+                . "4. Log in to Avazonia Admin -> Telegram Intake to review & 1-click publish live!\n\n"
                 . "Available commands:\n"
-                . "/status      - View currently staged batch\n"
+                . "/status      - View currently active batch\n"
+                . "/new         - Finish current vehicle & start fresh batch\n"
+                . "/batches     - List all pending batches\n"
+                . "/batch <id>  - Switch active batch (e.g. /batch 3)\n"
                 . "/undo        - Remove the last message you sent\n"
                 . "/clearsheet  - Remove spreadsheet / vehicle specs, keep photos\n"
                 . "/clearphotos - Remove staged photos\n"
                 . "/clearvideos - Remove staged videos\n"
                 . "/clear       - Discard entire active batch";
+
+        case '/new':
+        case '/next':
+        case '/done':
+            $current = intake_active_batch($chatId);
+            $summary = "";
+            if ($current) {
+                $pCount = intake_photo_count((int)$current['id']);
+                $vCount = intake_video_count((int)$current['id']);
+                $summary = sprintf("✅ Batch #%d (%s) saved with %d photos & %d videos!\n\n", (int)$current['id'], $current['label'], $pCount, $vCount);
+            }
+            $newId = intake_new_batch($chatId, 'New Vehicle Staging');
+            $adminUrl = defined('APP_URL') ? APP_URL . '/admin/intake.php?review=' . $newId : 'Admin';
+            return $summary . "🆕 Fresh Batch #{$newId} is now active!\n"
+                . "👉 Forward the listing details, photos, and video for your next vehicle.\n\n"
+                . "Review in Admin:\n" . $adminUrl;
+
+        case '/batches':
+        case '/list':
+            $pendingBatches = db_all("SELECT * FROM intake_batches WHERE chat_id = ? AND status = 'pending' ORDER BY updated_at DESC, id DESC LIMIT 10", [$chatId]);
+            if (empty($pendingBatches)) {
+                return "No pending batches right now. Forward a vehicle drop or type /new to start staging!";
+            }
+            $lines = ["📋 Pending Staged Batches:"];
+            foreach ($pendingBatches as $b) {
+                $p = intake_photo_count((int)$b['id']);
+                $v = intake_video_count((int)$b['id']);
+                $lines[] = sprintf("• Batch #%d: %s (%d photos, %d videos)", (int)$b['id'], $b['label'] ?: 'Untitled', $p, $v);
+            }
+            $lines[] = "\nTo switch active batch, type: /batch <id> (e.g. /batch 3)";
+            return implode("\n", $lines);
+
+        case '/batch':
+        case '/switch':
+            $targetId = (int)($parts[1] ?? 0);
+            if ($targetId <= 0) {
+                return "Please specify a batch ID. Example: /batch 3";
+            }
+            $target = db_one("SELECT * FROM intake_batches WHERE id = ? AND chat_id = ?", [$targetId, $chatId]);
+            if (!$target) {
+                return "Batch #{$targetId} not found.";
+            }
+            db_exec("UPDATE intake_batches SET updated_at = NOW() WHERE id = ?", [$targetId]);
+            $p = intake_photo_count($targetId);
+            $v = intake_video_count($targetId);
+            return sprintf("🔄 Switched active batch to #%d (%s)!\nPhotos: %d | Videos: %d\nSubsequent uploads will attach here.", $targetId, $target['label'], $p, $v);
 
         case '/status':
             $batch = intake_active_batch($chatId);
