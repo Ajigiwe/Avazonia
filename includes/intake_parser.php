@@ -15,8 +15,9 @@ declare(strict_types=1);
 if (!function_exists('intake_is_listing_text')) {
     function intake_is_listing_text(string $text): bool
     {
-        $t = mb_strtolower(trim($text));
-        if (mb_strlen($t) < 40) {
+        $normalized = str_replace(['：', "\r\n", "\r"], [':', "\n", "\n"], trim($text));
+        $t = mb_strtolower($normalized);
+        if (mb_strlen($t) < 25) {
             return false;
         }
 
@@ -24,14 +25,30 @@ if (!function_exists('intake_is_listing_text')) {
             'vehicle specification',
             'vehicle specifications',
             'specifications',
+            'specs',
             'key features',
+            'features',
             'brand:',
+            'make:',
             'model:',
+            'year:',
+            'model year:',
             'fob price',
+            'fob:',
+            'price:',
+            'export price',
             'engine:',
             'transmission:',
             'mileage:',
             'seating capacity',
+            'fuel type:',
+            'frame number:',
+            'vin:',
+            'condition:',
+            'why choose avazonia',
+            'pre-order',
+            'preorder',
+            'fob',
         ];
 
         $hits = 0;
@@ -41,8 +58,13 @@ if (!function_exists('intake_is_listing_text')) {
             }
         }
 
-        // If 2 or more strong indicators match, treat as listing text
-        return $hits >= 2;
+        if ($hits >= 2) {
+            return true;
+        }
+
+        // Check key-value lines (e.g. Make: EXEED, Model: Yaoguang, Price: 15393)
+        $kvLines = preg_match_all('/^[a-z\s]{2,25}\s*:\s*.+/im', $t);
+        return $kvLines >= 2;
     }
 }
 

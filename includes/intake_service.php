@@ -981,7 +981,7 @@ function intake_ingest_video(array $cfg, int $chatId, array $msg, ?string $bytes
     ];
 }
 
-function intake_ingest_listing_text(array $cfg, int $chatId, string $text, int $messageId = 0): array
+function intake_ingest_listing_text(array $cfg, int $chatId, string $text, int $messageId = 0, ?int $explicitBatchId = null): array
 {
     require_once __DIR__ . '/intake_parser.php';
     intake_tables();
@@ -999,34 +999,42 @@ function intake_ingest_listing_text(array $cfg, int $chatId, string $text, int $
         return ['ok' => false, 'error' => 'Could not parse listing details.'];
     }
 
-    $activeBatch = intake_active_batch($chatId);
     $batchId = null;
 
-    if ($activeBatch !== null) {
-        $hasListing = (!empty($activeBatch['sheet_data']) && (int)$activeBatch['row_count'] > 0);
-        $hasMedia   = (intake_photo_count((int)$activeBatch['id']) > 0 || intake_video_count((int)$activeBatch['id']) > 0);
-        $firstName  = $parsedList[0]['name'] ?? '';
-        $isDifferent = (mb_strtolower(trim((string)$activeBatch['label'])) !== mb_strtolower(trim($firstName)));
+    if ($explicitBatchId !== null && $explicitBatchId > 0) {
+        $batchId = $explicitBatchId;
+        $batchLabel = count($parsedList) > 1
+            ? sprintf('%s (+%d more)', $parsedList[0]['name'], count($parsedList) - 1)
+            : $parsedList[0]['name'];
+        db_exec('UPDATE intake_batches SET label = ?, updated_at = NOW() WHERE id = ?', [mb_substr($batchLabel, 0, 160), $batchId]);
+    } else {
+        $activeBatch = intake_active_batch($chatId);
+        if ($activeBatch !== null) {
+            $hasListing = (!empty($activeBatch['sheet_data']) && (int)$activeBatch['row_count'] > 0);
+            $hasMedia   = (intake_photo_count((int)$activeBatch['id']) > 0 || intake_video_count((int)$activeBatch['id']) > 0);
+            $firstName  = $parsedList[0]['name'] ?? '';
+            $isDifferent = (mb_strtolower(trim((string)$activeBatch['label'])) !== mb_strtolower(trim($firstName)));
 
-        // If active batch already has a vehicle listing AND already has media or is a distinct vehicle:
-        // Do NOT overwrite it! Automatically start a fresh batch for this new vehicle!
-        if ($hasListing && ($hasMedia || $isDifferent)) {
+            // If active batch already has a vehicle listing AND already has media or is a distinct vehicle:
+            // Do NOT overwrite it! Automatically start a fresh batch for this new vehicle!
+            if ($hasListing && ($hasMedia || $isDifferent)) {
+                $batchLabel = count($parsedList) > 1
+                    ? sprintf('%s (+%d more)', $parsedList[0]['name'], count($parsedList) - 1)
+                    : $parsedList[0]['name'];
+                $batchId = intake_new_batch($chatId, $batchLabel);
+            } else {
+                $batchId = (int)$activeBatch['id'];
+                $batchLabel = count($parsedList) > 1
+                    ? sprintf('%s (+%d more)', $parsedList[0]['name'], count($parsedList) - 1)
+                    : $parsedList[0]['name'];
+                db_exec('UPDATE intake_batches SET label = ?, updated_at = NOW() WHERE id = ?', [mb_substr($batchLabel, 0, 160), $batchId]);
+            }
+        } else {
             $batchLabel = count($parsedList) > 1
                 ? sprintf('%s (+%d more)', $parsedList[0]['name'], count($parsedList) - 1)
                 : $parsedList[0]['name'];
             $batchId = intake_new_batch($chatId, $batchLabel);
-        } else {
-            $batchId = (int)$activeBatch['id'];
-            $batchLabel = count($parsedList) > 1
-                ? sprintf('%s (+%d more)', $parsedList[0]['name'], count($parsedList) - 1)
-                : $parsedList[0]['name'];
-            db_exec('UPDATE intake_batches SET label = ?, updated_at = NOW() WHERE id = ?', [mb_substr($batchLabel, 0, 160), $batchId]);
         }
-    } else {
-        $batchLabel = count($parsedList) > 1
-            ? sprintf('%s (+%d more)', $parsedList[0]['name'], count($parsedList) - 1)
-            : $parsedList[0]['name'];
-        $batchId = intake_new_batch($chatId, $batchLabel);
     }
 
     // Check if there are already staged videos in this batch

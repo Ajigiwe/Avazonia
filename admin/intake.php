@@ -147,6 +147,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
             }
+        } elseif ($action === 'stage_listing_text') {
+            $listingText = trim((string)($_POST['listing_text'] ?? ''));
+            if ($batch === null) {
+                $error = 'Batch not found.';
+            } elseif ($listingText === '') {
+                $error = 'Please enter or paste vehicle listing text.';
+            } else {
+                require_once __DIR__ . '/../includes/intake_service.php';
+                $cfg = intake_config();
+                $res = intake_ingest_listing_text($cfg, (int)($batch['chat_id'] ?? 0), $listingText, 0, $batchId);
+                if (!empty($res['ok'])) {
+                    $success = 'Vehicle details successfully parsed and linked to this batch!';
+                    header('Location: ' . APP_URL . '/admin/intake.php?review=' . $batchId . '&staged=1');
+                    exit;
+                } else {
+                    $error = $res['error'] ?? 'Could not parse listing details.';
+                }
+            }
+        } elseif ($action === 'upload_spreadsheet') {
+            if ($batch === null) {
+                $error = 'Batch not found.';
+            } elseif (empty($_FILES['sheet']['tmp_name'])) {
+                $error = 'Please select a .csv or .xlsx spreadsheet file.';
+            } else {
+                require_once __DIR__ . '/../includes/intake_service.php';
+                $cfg = intake_config();
+                $doc = [
+                    'file_name' => $_FILES['sheet']['name'] ?? 'catalog.csv',
+                    'file_size' => $_FILES['sheet']['size'] ?? 0,
+                ];
+                $bytes = @file_get_contents($_FILES['sheet']['tmp_name']);
+                $res = intake_ingest_sheet($cfg, (int)($batch['chat_id'] ?? 0), $doc, $bytes);
+                if (!empty($res['ok'])) {
+                    $success = sprintf('Attached spreadsheet with %d rows to this batch.', $res['rows'] ?? 0);
+                    header('Location: ' . APP_URL . '/admin/intake.php?review=' . $batchId . '&staged=1');
+                    exit;
+                } else {
+                    $error = $res['error'] ?? 'Could not process spreadsheet.';
+                }
+            }
         } elseif ($action === 'publish_vehicle_live') {
             if ($batch === null) {
                 $error = 'Batch not found.';
@@ -364,7 +404,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $csvData = (string) ($batch['sheet_data'] ?? '');
                 if (trim($csvData) === '') {
-                    $error = 'This batch does not have a spreadsheet. Send a .csv or .xlsx to the bot first.';
+                    $error = 'This batch does not have vehicle details or a spreadsheet yet. Paste vehicle listing details below or forward them to the Telegram bot.';
                 } else {
                     $parsed = bulk_parse_csv_string($csvData);
                     $rows = $parsed['rows'] ?? [];
@@ -904,8 +944,78 @@ include 'layout/sidebar.php';
         <?php endforeach; ?>
     <?php endif; ?>
 
+    <?php if (empty($sheetRows)): ?>
+        <!-- No listing / spreadsheet yet: Prompt to paste text or send via Telegram -->
+        <div class="panel" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <div style="padding:16px 24px;background:#f9fafb;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <h3 style="margin:0;font-size:15px;font-weight:700;color:#111827;">📋 Attach Vehicle Listing Details</h3>
+                    <p style="margin:4px 0 0;font-size:12px;color:#6b7280;">
+                        This batch currently has <?= $photoCount ?> staged photo(s) & <?= $videoCount ?> video(s), but no vehicle details or catalog spreadsheet yet.
+                    </p>
+                </div>
+            </div>
+            <div style="padding:24px;">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:24px;">
+                    <!-- Option 1: Paste Text -->
+                    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:20px;background:#fafafa;">
+                        <h4 style="margin:0 0 8px;font-size:14px;font-weight:700;color:#111827;display:flex;align-items:center;gap:6px;">
+                            ✍️ Option 1: Paste Vehicle Listing Text
+                        </h4>
+                        <p style="margin:0 0 12px;font-size:12px;color:#6b7280;">
+                            Paste specs, pricing, and features below. The parser will automatically extract the Brand, Model, Year, FOB Price, and link all staged photos & video.
+                        </p>
+                        <form method="POST">
+                            <?= Csrf::field() ?>
+                            <input type="hidden" name="action" value="stage_listing_text">
+                            <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
+                            <textarea name="listing_text" rows="9" required
+                                      placeholder="Paste vehicle listing here, e.g.:&#10;&#10;2020 Haval H6 1.5T – 5-Seater SUV&#10;Vehicle Specifications&#10;Brand: Haval&#10;Model: H6&#10;Year: 2020&#10;Engine: 1.5T Turbo&#10;Transmission: 7-Speed DCT&#10;Mileage: 35,000 km&#10;FOB Price: US$7,800&#10;Condition: Good Condition"
+                                      style="width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:6px;padding:10px 12px;font-size:12px;font-family:inherit;resize:vertical;"></textarea>
+                            <div style="margin-top:12px;display:flex;justify-content:flex-end;">
+                                <button type="submit" class="btn-primary" style="height:38px;padding:0 20px;font-size:12px;font-weight:700;border-radius:6px;background:#2563eb;color:#fff;border:none;cursor:pointer;">
+                                    ⚡ Parse & Link to this Batch
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Option 2: Telegram Bot or Spreadsheet File -->
+                    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:20px;background:#fafafa;display:flex;flex-direction:column;justify-content:space-between;">
+                        <div>
+                            <h4 style="margin:0 0 8px;font-size:14px;font-weight:700;color:#111827;display:flex;align-items:center;gap:6px;">
+                                📱 Option 2: Send via Telegram Bot
+                            </h4>
+                            <p style="margin:0 0 16px;font-size:12px;color:#4b5563;line-height:1.5;">
+                                Open your Telegram bot and forward the vehicle text description! Since this batch is active, it will automatically link your text to these <strong><?= $photoCount ?> photos</strong> and <strong><?= $videoCount ?> video(s)</strong>.
+                            </p>
+                            <div style="border-top:1px dashed #d1d5db;margin:16px 0;"></div>
+                            <h4 style="margin:0 0 8px;font-size:14px;font-weight:700;color:#111827;display:flex;align-items:center;gap:6px;">
+                                📊 Option 3: Upload Spreadsheet (.csv / .xlsx)
+                            </h4>
+                            <p style="margin:0 0 12px;font-size:12px;color:#6b7280;">
+                                If you have a bulk catalog spreadsheet, upload it here:
+                            </p>
+                            <form method="POST" enctype="multipart/form-data">
+                                <?= Csrf::field() ?>
+                                <input type="hidden" name="action" value="upload_spreadsheet">
+                                <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <input type="file" name="sheet" accept=".csv,.xlsx" required style="font-size:12px;flex:1;">
+                                    <button type="submit" class="btn-secondary" style="height:34px;padding:0 14px;font-size:11px;font-weight:700;border-radius:4px;background:#fff;border:1px solid #d1d5db;cursor:pointer;">
+                                        Upload
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <!-- Standard Review Form (for multi-product spreadsheets or advanced image remapping) -->
-    <form method="POST" id="intakeReviewForm" style="<?= ($isVehicleBatch ? 'display:none;' : '') ?>">
+    <form method="POST" id="intakeReviewForm" style="<?= ($isVehicleBatch || empty($sheetRows) ? 'display:none;' : '') ?>">
         <?= Csrf::field() ?>
         <input type="hidden" name="action" value="send_to_importer">
         <input type="hidden" name="batch_id" value="<?= (int)$batch['id'] ?>">
