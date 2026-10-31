@@ -88,14 +88,7 @@ function intake_group_shots(array $items): array
     }
     $shots = [];
     foreach ($order as $key) {
-        $group = $groups[$key];
-        if ($key[0] === 'g' && $group['caption'] === '') {
-            foreach ($group['paths'] as $one) {
-                $shots[] = ['paths' => [$one], 'caption' => ''];
-            }
-            continue;
-        }
-        $shots[] = $group;
+        $shots[] = $groups[$key];
     }
     return $shots;
 }
@@ -221,12 +214,49 @@ function intake_match(array $rows, array $items, array $opts = []): array
                 $freeShots[] = $si;
             }
         }
-        $n = min(count($freeRows), count($freeShots));
-        for ($k = 0; $k < $n; $k++) {
-            $i              = $freeRows[$k];
-            $si             = $freeShots[$k];
-            $assign[$i]     = ['paths' => $shots[$si]['paths'], 'method' => 'order'];
-            $shotTaken[$si] = true;
+
+        $nRows = count($freeRows);
+        $nShots = count($freeShots);
+
+        if ($nRows === 1) {
+            // Only 1 row: assign ALL remaining photos to this row
+            $row = $freeRows[0];
+            $allPaths = $assign[$row]['paths'] ?? [];
+            foreach ($freeShots as $si) {
+                foreach ($shots[$si]['paths'] as $p) {
+                    if (!in_array($p, $allPaths, true)) {
+                        $allPaths[] = $p;
+                    }
+                }
+                $shotTaken[$si] = true;
+            }
+            if (!empty($allPaths)) {
+                $assign[$row] = ['paths' => $allPaths, 'method' => isset($assign[$row]) ? $assign[$row]['method'] : 'order'];
+            }
+        } elseif ($nRows > 1 && $nShots > 0) {
+            if ($nShots >= $nRows) {
+                // Distribute shots evenly across rows
+                $chunkSize = (int)floor($nShots / $nRows);
+                $offset = 0;
+                foreach ($freeRows as $rIdx => $row) {
+                    $take = ($rIdx === $nRows - 1) ? ($nShots - $offset) : $chunkSize;
+                    $rowShots = array_slice($freeShots, $offset, $take);
+                    $offset += $take;
+                    $paths = [];
+                    foreach ($rowShots as $si) {
+                        $paths = array_merge($paths, $shots[$si]['paths']);
+                        $shotTaken[$si] = true;
+                    }
+                    $assign[$row] = ['paths' => array_values(array_unique($paths)), 'method' => 'order'];
+                }
+            } else {
+                for ($k = 0; $k < $nShots; $k++) {
+                    $row = $freeRows[$k];
+                    $si  = $freeShots[$k];
+                    $assign[$row] = ['paths' => $shots[$si]['paths'], 'method' => 'order'];
+                    $shotTaken[$si] = true;
+                }
+            }
         }
     }
 

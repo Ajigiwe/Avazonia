@@ -207,7 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // 4. Copy staged photos to product images
                     $stagedPhotos = intake_items($batchId);
                     $targetPhotos = [];
-                    if (count($rows) > 1) {
+                    if (count($rows) > 1 && $rowIndex !== null) {
                         $match = intake_match($rows, $stagedPhotos, ['order_fallback' => true]);
                         $assignedPaths = $match['assignments'][$rowIndex]['paths'] ?? [];
                         if (!empty($assignedPaths)) {
@@ -218,8 +218,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             }
                         }
                     }
-                    if (empty($targetPhotos)) {
-                        $targetPhotos = $stagedPhotos;
+                    if (empty($targetPhotos) || count($rows) === 1) {
+                        $targetPhotos = [];
+                        foreach ($stagedPhotos as $item) {
+                            if (!in_array((string)$item['media_group'], ['sheet', 'video'], true)) {
+                                $targetPhotos[] = $item;
+                            }
+                        }
                     }
 
                     $finalImages = [];
@@ -317,6 +322,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         // Multi-vehicle vs single vehicle batch claim logic
                         if (count($rows) > 1) {
+                            // Remove published photo items from the intake batch so they aren't reused by remaining vehicles
+                            foreach ($targetPhotos as $tp) {
+                                if (!empty($tp['id'])) {
+                                    db_exec("DELETE FROM intake_items WHERE id = ? AND batch_id = ?", [(int)$tp['id'], $batchId]);
+                                }
+                            }
+
                             array_splice($rows, $rowIndex, 1);
                             $headers = $parsed['headers'] ?? array_keys($rows[0]);
                             $stream = fopen('php://memory', 'r+');
@@ -727,7 +739,8 @@ include 'layout/sidebar.php';
         <?php foreach ($vehicleRows as $vIdx => $vRow): ?>
             <?php
             $vAssignedPaths = $assignments[$vIdx]['paths'] ?? [];
-            if (empty($vAssignedPaths) && count($vehicleRows) === 1) {
+            if (count($vehicleRows) === 1 || empty($vAssignedPaths)) {
+                $vAssignedPaths = [];
                 foreach ($photos as $ph) {
                     if (!in_array((string)$ph['media_group'], ['sheet', 'video'], true) && !empty($ph['file_path'])) {
                         $vAssignedPaths[] = (string)$ph['file_path'];

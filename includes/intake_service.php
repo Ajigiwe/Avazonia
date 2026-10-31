@@ -1274,6 +1274,8 @@ function intake_dispatch(array $cfg, array $update, array $localFiles = []): str
         if (!empty($p['specs']['Engine'])) $specsSummary[] = $p['specs']['Engine'];
         if (!empty($p['specs']['Transmission'])) $specsSummary[] = $p['specs']['Transmission'];
         if (!empty($p['specs']['Mileage'])) $specsSummary[] = $p['specs']['Mileage'];
+        if (!empty($p['specs']['Fuel Type'])) $specsSummary[] = $p['specs']['Fuel Type'];
+        if (!empty($p['specs']['Frame Number'])) $specsSummary[] = 'Frame: ' . $p['specs']['Frame Number'];
         $specsLine = !empty($specsSummary) ? implode(' | ', $specsSummary) : ($p['year'] ? 'Year: ' . $p['year'] : '');
 
         $adminUrl = defined('APP_URL') ? APP_URL . '/admin/intake.php?review=' . $res['batch_id'] : 'Shop Admin';

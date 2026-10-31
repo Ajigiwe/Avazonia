@@ -49,219 +49,276 @@ if (!function_exists('intake_is_listing_text')) {
 if (!function_exists('intake_parse_listing_text')) {
     function intake_parse_listing_text(string $raw): array
     {
-    $lines = array_map('trim', explode("\n", str_replace(["\r\n", "\r"], "\n", $raw)));
-    while (!empty($lines) && $lines[0] === '') {
-        array_shift($lines);
-    }
+        // Normalize newlines and full-width colons
+        $normalized = str_replace(["\r\n", "\r"], "\n", trim($raw));
+        $normalized = str_replace('：', ':', $normalized);
+        $lines = array_map('trim', explode("\n", $normalized));
 
-    if (empty($lines)) {
-        return [];
-    }
-
-    $title = $lines[0];
-    $section = 'header';
-    $specs = [];
-    $features = [];
-    $overviewLines = [];
-    $conditionLines = [];
-    $shippingLines = [];
-    $footerLines = [];
-
-    for ($i = 1; $i < count($lines); $i++) {
-        $line = $lines[$i];
-        if ($line === '') {
-            continue;
+        while (!empty($lines) && $lines[0] === '') {
+            array_shift($lines);
         }
 
-        $lower = mb_strtolower($line);
-        $cleanLine = trim($line, "#* \t-");
-        $lowerClean = mb_strtolower($cleanLine);
-
-        // Section header detection
-        if (str_starts_with($lowerClean, 'vehicle specification') || str_starts_with($lowerClean, 'specifications') || str_starts_with($lowerClean, 'specs')) {
-            $section = 'specs';
-            continue;
-        }
-        if (str_starts_with($lowerClean, 'key feature') || str_starts_with($lowerClean, 'features')) {
-            $section = 'features';
-            continue;
-        }
-        if ($lowerClean === 'condition' || str_starts_with($lowerClean, 'vehicle condition')) {
-            $section = 'condition';
-            continue;
-        }
-        if (str_starts_with($lowerClean, 'price & shipping') || str_starts_with($lowerClean, 'pricing & shipping') || str_starts_with($lowerClean, 'price and shipping')) {
-            $section = 'shipping';
-            continue;
-        }
-        if (str_starts_with($lowerClean, 'why choose') || str_starts_with($lowerClean, 'interested in') || str_starts_with($lowerClean, 'contact') || str_starts_with($lowerClean, '📞') || str_starts_with($lowerClean, '🌐')) {
-            $section = 'footer';
-            $footerLines[] = $line;
-            continue;
+        if (empty($lines)) {
+            return [];
         }
 
-        switch ($section) {
-            case 'header':
-                $overviewLines[] = $line;
-                break;
-            case 'specs':
-                if (str_contains($line, ':')) {
-                    [$k, $v] = explode(':', $line, 2);
-                    $k = trim(trim($k), "* \t-");
-                    $v = trim(trim($v), "* \t");
-                    if ($k !== '') {
-                        $specs[$k] = $v;
-                    }
-                } elseif (!empty($cleanLine)) {
-                    $specs[$cleanLine] = '';
-                }
-                break;
-            case 'features':
-                $f = trim((string)preg_replace('/^(\s*[-•*]\s*|\s*\d+[\.\)]\s+)/u', '', $line));
-                if ($f !== '') {
-                    $features[] = $f;
-                }
-                break;
-            case 'condition':
-                $conditionLines[] = $line;
-                break;
-            case 'shipping':
-                $shippingLines[] = $line;
-                break;
-            case 'footer':
+        $section = 'header';
+        $specs = [];
+        $features = [];
+        $overviewLines = [];
+        $conditionLines = [];
+        $shippingLines = [];
+        $footerLines = [];
+        $titleCandidates = [];
+
+        foreach ($lines as $line) {
+            if ($line === '') {
+                continue;
+            }
+
+            $cleanLine = trim($line, "#* \t-");
+            $lowerClean = mb_strtolower($cleanLine);
+
+            // Section header detection
+            if (str_starts_with($lowerClean, 'vehicle specification') || str_starts_with($lowerClean, 'specifications') || str_starts_with($lowerClean, 'specs')) {
+                $section = 'specs';
+                continue;
+            }
+            if (str_starts_with($lowerClean, 'key feature') || str_starts_with($lowerClean, 'features')) {
+                $section = 'features';
+                continue;
+            }
+            if ($lowerClean === 'condition' || str_starts_with($lowerClean, 'vehicle condition')) {
+                $section = 'condition';
+                continue;
+            }
+            if (str_starts_with($lowerClean, 'price & shipping') || str_starts_with($lowerClean, 'pricing & shipping') || str_starts_with($lowerClean, 'price and shipping')) {
+                $section = 'shipping';
+                continue;
+            }
+            if (str_starts_with($lowerClean, 'why choose') || str_starts_with($lowerClean, 'interested in') || str_starts_with($lowerClean, 'contact') || str_starts_with($lowerClean, '📞') || str_starts_with($lowerClean, '🌐')) {
+                $section = 'footer';
                 $footerLines[] = $line;
-                break;
+                continue;
+            }
+
+            // Potential title candidate (before specs/footer, substantive text, no key-value colon)
+            if ($section === 'header' && !str_contains($cleanLine, ':') && !str_starts_with($lowerClean, 'http') && mb_strlen($cleanLine) > 5) {
+                $titleCandidates[] = $cleanLine;
+            }
+
+            // If in header section but encountered a spec key like "Brand: Jetour", auto-switch to specs!
+            if ($section === 'header' && preg_match('/^(?:brand|make|model|year|model year|transmission|engine|mileage|seating capacity|fuel type|frame number)\s*:/i', $cleanLine)) {
+                $section = 'specs';
+            }
+
+            switch ($section) {
+                case 'header':
+                    $overviewLines[] = $line;
+                    break;
+                case 'specs':
+                    if (str_contains($line, ':')) {
+                        [$k, $v] = explode(':', $line, 2);
+                        $k = trim(trim($k), "* \t-•·");
+                        $v = trim(trim($v), "* \t");
+                        if ($k !== '') {
+                            $specs[$k] = $v;
+                        }
+                    } elseif (!empty($cleanLine)) {
+                        $specs[$cleanLine] = '';
+                    }
+                    break;
+                case 'features':
+                    $f = trim((string)preg_replace('/^(\s*[-•*·]\s*|\s*\d+[\.\)]\s+)/u', '', $line));
+                    if ($f !== '') {
+                        $features[] = $f;
+                    }
+                    break;
+                case 'condition':
+                    $conditionLines[] = $line;
+                    break;
+                case 'shipping':
+                    $shippingLines[] = $line;
+                    break;
+                case 'footer':
+                    $footerLines[] = $line;
+                    break;
+            }
         }
-    }
 
-    // Brand, Model, Year
-    $brand = $specs['Brand'] ?? $specs['brand'] ?? $specs['Make'] ?? $specs['make'] ?? '';
-    $model = $specs['Model'] ?? $specs['model'] ?? '';
-    $year  = $specs['Year'] ?? $specs['year'] ?? '';
+        // Brand, Model, Year extraction with rich aliases
+        $brand = $specs['Brand'] ?? $specs['brand'] ?? $specs['Make'] ?? $specs['make'] ?? $specs['Manufacturer'] ?? '';
+        $model = $specs['Model'] ?? $specs['model'] ?? $specs['Model Name'] ?? '';
+        $year  = $specs['Year'] ?? $specs['year'] ?? $specs['Model Year'] ?? $specs['model year'] ?? $specs['Manufacture Year'] ?? $specs['Year of Manufacture'] ?? '';
 
-    // If Brand or Year missing from specs, attempt regex on title
-    if ($year === '' && preg_match('/\b(20[12]\d)\b/', $title, $ym)) {
-        $year = $ym[1];
-    }
-    if ($brand === '') {
-        $knownBrands = ['Jetour', 'Toyota', 'Honda', 'Mercedes-Benz', 'Mercedes', 'BMW', 'Audi', 'Hyundai', 'Kia', 'Nissan', 'Geely', 'BYD', 'Changan', 'Haval', 'Chery', 'GAC', 'Great Wall', 'Volkswagen', 'VW', 'Ford', 'Lexus', 'Mazda', 'Tesla', 'Peugeot', 'Land Rover'];
-        foreach ($knownBrands as $kb) {
-            if (stripos($title, $kb) !== false) {
-                $brand = $kb;
+        // Pick best title
+        $title = $titleCandidates[0] ?? trim($lines[0], "#* \t-");
+        foreach ($titleCandidates as $c) {
+            if (preg_match('/\b(20[12]\d)\b/', $c)) {
+                $title = $c;
                 break;
             }
         }
-    }
 
-    // Price extraction
-    $priceRaw = $specs['Price'] ?? $specs['price'] ?? $specs['FOB Price'] ?? '';
-    if ($priceRaw === '') {
-        foreach ($shippingLines as $sl) {
-            if (stripos($sl, 'price') !== false) {
-                $priceRaw = $sl;
-                break;
+        // If Brand or Year missing from specs, attempt regex on title
+        if ($year === '' && preg_match('/\b(20[12]\d)\b/', $title, $ym)) {
+            $year = $ym[1];
+        }
+        if ($brand === '') {
+            $knownBrands = ['Jetour', 'Toyota', 'Honda', 'Mercedes-Benz', 'Mercedes', 'BMW', 'Audi', 'Hyundai', 'Kia', 'Nissan', 'Geely', 'BYD', 'Changan', 'Haval', 'Chery', 'GAC', 'Great Wall', 'Volkswagen', 'VW', 'Ford', 'Lexus', 'Mazda', 'Tesla', 'Peugeot', 'Land Rover', 'EXEED', 'Zeekr', 'Li Auto', 'NIO', 'Voyah', 'Hongqi', 'Tank', 'Dongfeng', 'FAW', 'MG'];
+            foreach ($knownBrands as $kb) {
+                if (stripos($title, $kb) !== false) {
+                    $brand = $kb;
+                    break;
+                }
             }
         }
-    }
 
-    $price = 0.0;
-    $currency = 'USD';
-    if (preg_match('/(?:US\$|USD|\$)\s*([\d,]+(?:\.\d+)?)/i', $priceRaw, $m)) {
-        $price = (float)str_replace(',', '', $m[1]);
+        // If title is empty or looks like a spec key (e.g. "Fuel Type: Petrol" or "Frame Number: 015775") or section header:
+        if (empty($title) || str_contains($title, ':') || preg_match('/^(?:vehicle specifications|specifications|key features|price|condition)$/i', $title)) {
+            $synthesized = trim(implode(' ', array_filter([$year, $brand, $model])));
+            if (!empty($synthesized)) {
+                $title = $synthesized;
+            } else {
+                $title = 'Vehicle Listing';
+            }
+        }
+
+        // Price extraction
+        $price = 0.0;
         $currency = 'USD';
-    } elseif (preg_match('/(?:GH[₵S]|GHS|₵)\s*([\d,]+(?:\.\d+)?)/i', $priceRaw, $m)) {
-        $price = (float)str_replace(',', '', $m[1]);
-        $currency = 'GHS';
-    } elseif (preg_match('/([\d,]+(?:\.\d+)?)/', $priceRaw, $m)) {
-        $price = (float)str_replace(',', '', $m[1]);
-    }
 
-    // Incoterms
-    $incoterms = 'FOB';
-    $searchScope = $priceRaw . ' ' . implode(' ', $shippingLines);
-    if (preg_match('/\b(CIF|EXW|FOB)\b/i', $searchScope, $im)) {
-        $incoterms = strtoupper($im[1]);
-    }
+        $priceRaw = $specs['Price'] ?? $specs['price'] ?? $specs['FOB Price'] ?? $specs['fob price'] ?? $specs['Price (FOB)'] ?? $specs['FOB'] ?? '';
+        if ($priceRaw === '') {
+            foreach ($shippingLines as $sl) {
+                if (stripos($sl, 'price') !== false || stripos($sl, 'fob') !== false) {
+                    $priceRaw = $sl;
+                    break;
+                }
+            }
+        }
 
-    // Condition
-    $condStr = mb_strtolower(($specs['Condition'] ?? '') . ' ' . implode(' ', $conditionLines));
-    $conditionType = (str_contains($condStr, 'used') || str_contains($condStr, 'mileage')) ? 'used' : 'new';
+        if ($priceRaw !== '') {
+            if (preg_match('/(?:us\$|usd|\$)\s*([\d,]+(?:\.\d+)?)/iu', $priceRaw, $m)) {
+                $price = (float)str_replace(',', '', $m[1]);
+                $currency = 'USD';
+            } elseif (preg_match('/(?:gh[¢s\x{20B5}]|ghs|[¢\x{20B5}])\s*([\d,]+(?:\.\d+)?)/iu', $priceRaw, $m)) {
+                $price = (float)str_replace(',', '', $m[1]);
+                $currency = 'GHS';
+            } elseif (preg_match('/([\d,]+(?:\.\d+)?)\s*(?:usd|us\$|\$|\(fob\)|fob)/iu', $priceRaw, $m)) {
+                $price = (float)str_replace(',', '', $m[1]);
+                $currency = 'USD';
+            } elseif (preg_match('/([\d,]+(?:\.\d+)?)/u', $priceRaw, $m)) {
+                $price = (float)str_replace(',', '', $m[1]);
+            }
+        }
 
-    // Preorder & Location
-    $shippingStr = mb_strtolower(implode(' ', $shippingLines) . ' ' . implode(' ', $footerLines));
-    $isPreorder = (str_contains($shippingStr, 'pre-order') || str_contains($shippingStr, 'preorder') || str_contains($shippingStr, 'not available for immediate delivery')) ? 1 : 0;
-    $availableInGhana = ($isPreorder || str_contains($shippingStr, 'not available for immediate delivery in ghana')) ? 0 : 1;
-    $locationCountry = (str_contains($shippingStr, 'china') || str_contains($shippingStr, 'fob')) ? 'CN' : 'GH';
-    $vehicleOrigin = ($locationCountry === 'CN' || $isPreorder) ? 'international_export' : 'local';
+        // Fallback: scan entire raw text for price / fob
+        if ($price <= 0.0) {
+            if (preg_match('/(?:fob\s*price|export\s*price|fob|price)\s*[:：]?\s*(?:us\$|usd|\$)\s*([\d,]+(?:\.\d+)?)/iu', $raw, $m)) {
+                $price = (float)str_replace(',', '', $m[1]);
+                $currency = 'USD';
+            } elseif (preg_match('/(?:fob\s*price|export\s*price|fob|price)\s*[:：]?\s*(?:gh[¢s\x{20B5}]|ghs|[¢\x{20B5}])\s*([\d,]+(?:\.\d+)?)/iu', $raw, $m)) {
+                $price = (float)str_replace(',', '', $m[1]);
+                $currency = 'GHS';
+            } elseif (preg_match('/(?:fob\s*price|export\s*price|fob|price)\s*[:：]?\s*([\d,]+(?:\.\d+)?)\s*(?:usd|us\$|\$|\(fob\)|fob)/iu', $raw, $m)) {
+                $price = (float)str_replace(',', '', $m[1]);
+                $currency = 'USD';
+            } elseif (preg_match('/(?:fob\s*price|export\s*price|price)\s*[:：]?\s*([\d,]+(?:\.\d+)?)/iu', $raw, $m)) {
+                $price = (float)str_replace(',', '', $m[1]);
+                $currency = 'USD';
+            } elseif (preg_match('/(?:us\$|usd|\$)\s*([\d,]+(?:\.\d+)?)/iu', $raw, $m)) {
+                $price = (float)str_replace(',', '', $m[1]);
+                $currency = 'USD';
+            }
+        }
 
-    // Subcategory mapping
-    $titleLower = mb_strtolower($title);
-    $subCategory = 'Cars';
-    if (str_contains($titleLower, 'suv')) {
-        $subCategory = 'SUVs';
-    } elseif (str_contains($titleLower, 'ev') || str_contains($titleLower, 'electric')) {
-        $subCategory = 'EVs';
-    } elseif (str_contains($titleLower, 'hybrid')) {
-        $subCategory = 'Hybrid Vehicles';
-    } elseif (str_contains($titleLower, 'truck')) {
-        $subCategory = 'Trucks';
-    } elseif (str_contains($titleLower, 'bus')) {
-        $subCategory = 'Buses';
-    }
+        // Incoterms
+        $incoterms = 'FOB';
+        $searchScope = $priceRaw . ' ' . implode(' ', $shippingLines);
+        if (preg_match('/\b(CIF|EXW|FOB)\b/i', $searchScope, $im)) {
+            $incoterms = strtoupper($im[1]);
+        }
 
-    // Auto-generate SKU
-    $skuBrand = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $brand ?: 'VEH'), 0, 4));
-    $skuModel = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $model ?: 'MOD'), 0, 4));
-    $skuYear = $year ?: date('Y');
-    $skuRand = strtoupper(bin2hex(random_bytes(2)));
-    $sku = "{$skuBrand}-{$skuModel}-{$skuYear}-{$skuRand}";
+        // Condition
+        $condStr = mb_strtolower(($specs['Condition'] ?? '') . ' ' . implode(' ', $conditionLines));
+        $conditionType = (str_contains($condStr, 'used') || str_contains($condStr, 'mileage')) ? 'used' : 'new';
 
-    // Clean description body
-    $descParts = [];
-    if (!empty($overviewLines)) {
-        $descParts[] = implode("\n", $overviewLines);
-    }
-    if (!empty($conditionLines)) {
-        $descParts[] = "Condition:\n" . implode("\n", $conditionLines);
-    }
-    if (!empty($shippingLines)) {
-        $descParts[] = "Price & Shipping:\n" . implode("\n", $shippingLines);
-    }
-    if (!empty($footerLines)) {
-        $descParts[] = implode("\n", $footerLines);
-    }
-    $description = implode("\n\n", $descParts);
+        // Preorder & Location
+        $shippingStr = mb_strtolower(implode(' ', $shippingLines) . ' ' . implode(' ', $footerLines));
+        $isPreorder = (str_contains($shippingStr, 'pre-order') || str_contains($shippingStr, 'preorder') || str_contains($shippingStr, 'not available for immediate delivery')) ? 1 : 0;
+        $availableInGhana = ($isPreorder || str_contains($shippingStr, 'not available for immediate delivery in ghana')) ? 0 : 1;
+        $locationCountry = (str_contains($shippingStr, 'china') || str_contains($shippingStr, 'fob')) ? 'CN' : 'GH';
+        $vehicleOrigin = ($locationCountry === 'CN' || $isPreorder) ? 'international_export' : 'local';
 
-    return [
-        'name'               => $title,
-        'brand'              => $brand,
-        'model'              => $model,
-        'year'               => $year,
-        'sku'                => $sku,
-        'price'              => $price,
-        'currency'           => $currency,
-        'fob_price'          => $price,
-        'incoterms'          => $incoterms,
-        'category'           => 'Vehicles',
-        'sub_category'       => $subCategory,
-        'condition_type'     => $conditionType,
-        'is_preorder'        => $isPreorder,
-        'available_in_ghana' => $availableInGhana,
-        'vehicle_origin'     => $vehicleOrigin,
-        'location_country'   => $locationCountry,
-        'specs'              => $specs,
-        'specs_json'         => json_encode($specs, JSON_UNESCAPED_UNICODE),
-        'features'           => $features,
-        'features_json'      => json_encode($features, JSON_UNESCAPED_UNICODE),
-        'description'        => $description,
-    ];
-}
+        // Subcategory mapping
+        $titleLower = mb_strtolower($title);
+        $subCategory = 'Cars';
+        if (str_contains($titleLower, 'suv')) {
+            $subCategory = 'SUVs';
+        } elseif (str_contains($titleLower, 'ev') || str_contains($titleLower, 'electric')) {
+            $subCategory = 'EVs';
+        } elseif (str_contains($titleLower, 'hybrid')) {
+            $subCategory = 'Hybrid Vehicles';
+        } elseif (str_contains($titleLower, 'truck')) {
+            $subCategory = 'Trucks';
+        } elseif (str_contains($titleLower, 'bus')) {
+            $subCategory = 'Buses';
+        }
+
+        // Auto-generate SKU
+        $skuBrand = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $brand ?: 'VEH'), 0, 4));
+        $skuModel = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $model ?: 'MOD'), 0, 4));
+        $skuYear = $year ?: date('Y');
+        $skuRand = strtoupper(bin2hex(random_bytes(2)));
+        $sku = "{$skuBrand}-{$skuModel}-{$skuYear}-{$skuRand}";
+
+        // Clean description body
+        $descParts = [];
+        if (!empty($overviewLines)) {
+            $descParts[] = implode("\n", $overviewLines);
+        }
+        if (!empty($conditionLines)) {
+            $descParts[] = "Condition:\n" . implode("\n", $conditionLines);
+        }
+        if (!empty($shippingLines)) {
+            $descParts[] = "Price & Shipping:\n" . implode("\n", $shippingLines);
+        }
+        if (!empty($footerLines)) {
+            $descParts[] = implode("\n", $footerLines);
+        }
+        $description = implode("\n\n", $descParts);
+
+        return [
+            'name'               => $title,
+            'brand'              => $brand,
+            'model'              => $model,
+            'year'               => $year,
+            'sku'                => $sku,
+            'price'              => $price,
+            'currency'           => $currency,
+            'fob_price'          => $price,
+            'incoterms'          => $incoterms,
+            'category'           => 'Vehicles',
+            'sub_category'       => $subCategory,
+            'condition_type'     => $conditionType,
+            'is_preorder'        => $isPreorder,
+            'available_in_ghana' => $availableInGhana,
+            'vehicle_origin'     => $vehicleOrigin,
+            'location_country'   => $locationCountry,
+            'specs'              => $specs,
+            'specs_json'         => json_encode($specs, JSON_UNESCAPED_UNICODE),
+            'features'           => $features,
+            'features_json'      => json_encode($features, JSON_UNESCAPED_UNICODE),
+            'description'        => $description,
+        ];
+    }
 }
 
 if (!function_exists('intake_split_multiple_listings')) {
     /**
      * Splits a text message containing multiple vehicle/product listings into individual chunks.
-     * Returns an array with 1 or more text listings.
+     * Returns an array with 1 or more text listings. Never splits a single vehicle listing.
      */
     function intake_split_multiple_listings(string $text): array
     {
@@ -270,50 +327,94 @@ if (!function_exists('intake_split_multiple_listings')) {
             return [];
         }
 
-        // Check frequency of strong listing indicators
-        $specHits = preg_match_all('/(?:\bvehicle specifications|\bspecifications|\bkey features|\bfob price)\b/i', $t);
-        if ($specHits < 4) {
+        $t = str_replace('：', ':', $t);
+
+        // Check frequency of distinct Brand/Make lines and Vehicle Specifications headers
+        $brandCount = preg_match_all('/^\s*(?:Brand|Make|品牌)\s*:/mi', $t);
+        $specHeaderCount = preg_match_all('/^\s*(?:#*\s*Vehicle\s+Specifications?|#*\s*Specifications?)\b/mi', $t);
+
+        // If there is at most 1 Brand line and at most 1 Specifications header, it is ALWAYS a single vehicle listing!
+        if ($brandCount <= 1 && $specHeaderCount <= 1) {
             return [$t];
         }
 
-        // Try splitting on prominent boundaries (horizontal rules or 2+ empty lines followed by a title)
-        $parts = preg_split('/(?:\n\s*[-=_*]{3,}\s*\n|\n{2,}(?=(?:20[12]\d|[A-Z][a-zA-Z0-9]+)\s+))/u', $t);
-        $validChunks = [];
-        if (is_array($parts)) {
-            foreach ($parts as $p) {
-                $p = trim($p);
-                if ($p !== '' && intake_is_listing_text($p)) {
-                    $validChunks[] = $p;
+        // 1. Try splitting on explicit divider lines (e.g. ---, ===, ***, ___)
+        $dividerParts = preg_split('/(?:\n\s*[-=_*]{3,}\s*\n)/u', $t);
+        if (is_array($dividerParts) && count($dividerParts) >= 2) {
+            $validDividerChunks = [];
+            foreach ($dividerParts as $dp) {
+                $dp = trim($dp);
+                if ($dp !== '' && (preg_match('/^\s*(?:Brand|Make|品牌)\s*:/mi', $dp) || preg_match('/^\s*(?:#*\s*Vehicle\s+Specifications?)\b/mi', $dp)) && preg_match('/(?:price|fob)\s*[:：]?\s*(?:us\$|usd|\$)?\s*[\d,]+/i', $dp)) {
+                    $validDividerChunks[] = $dp;
                 }
             }
-        }
-        if (count($validChunks) >= 2) {
-            return $validChunks;
+            if (count($validDividerChunks) >= 2 && count($validDividerChunks) === count($dividerParts)) {
+                return $validDividerChunks;
+            }
         }
 
-        // Fallback: line-by-line scanning for vehicle title boundaries
+        // 2. Line-by-line boundary scanner
         $lines = explode("\n", $t);
         $chunks = [];
         $currentChunk = [];
+
         foreach ($lines as $line) {
             $trimmed = trim($line);
-            if (!empty($currentChunk) && preg_match('/^(?:20[12]\d)\s+[A-Za-z0-9]/', $trimmed)) {
+            $cleanTrimmed = trim($trimmed, "#* \t-");
+            $lowerClean = mb_strtolower($cleanTrimmed);
+
+            $isNewListingStart = false;
+
+            if (!empty($currentChunk)) {
                 $joined = implode("\n", $currentChunk);
-                if (intake_is_listing_text($joined)) {
-                    $chunks[] = $joined;
-                    $currentChunk = [];
+                $hasBrand = preg_match('/^\s*(?:Brand|Make|品牌)\s*:/mi', $joined);
+                $hasPrice = preg_match('/(?:price|fob)\s*[:：]?\s*(?:us\$|usd|\$)?\s*[\d,]+/i', $joined);
+
+                // Only consider boundary if the current chunk ALREADY has both a Brand and a Price
+                if ($hasBrand && $hasPrice) {
+                    // Trigger 1: A line starting with 4-digit year + vehicle name
+                    if (preg_match('/^(?:20[12]\d)\s+[A-Za-z0-9]/', $trimmed)) {
+                        $isNewListingStart = true;
+                    }
+                    // Trigger 2: A new "Vehicle Specifications" header
+                    elseif (str_starts_with($lowerClean, 'vehicle specification') || $lowerClean === 'specifications') {
+                        $isNewListingStart = true;
+                    }
+                    // Trigger 3: A new Brand/Make line if currentChunk already had one
+                    elseif (preg_match('/^(?:brand|make|品牌)\s*:/i', $cleanTrimmed)) {
+                        $isNewListingStart = true;
+                    }
                 }
+            }
+
+            if ($isNewListingStart) {
+                $chunks[] = implode("\n", $currentChunk);
+                $currentChunk = [];
             }
             $currentChunk[] = $line;
         }
+
         if (!empty($currentChunk)) {
-            $joined = implode("\n", $currentChunk);
-            if (intake_is_listing_text($joined)) {
-                $chunks[] = $joined;
+            $chunks[] = implode("\n", $currentChunk);
+        }
+
+        // Verify all chunks are genuine standalone listings with their own Brand/Make AND Price
+        if (count($chunks) >= 2) {
+            $allValid = true;
+            foreach ($chunks as $c) {
+                $hasBrand = preg_match('/^\s*(?:Brand|Make|品牌)\s*:/mi', $c);
+                $hasPrice = preg_match('/(?:price|fob)\s*[:：]?\s*(?:us\$|usd|\$)?\s*[\d,]+/i', $c);
+                if (!$hasBrand || !$hasPrice) {
+                    $allValid = false;
+                    break;
+                }
+            }
+            if ($allValid) {
+                return $chunks;
             }
         }
 
-        return count($chunks) >= 2 ? $chunks : [$t];
+        return [$t];
     }
 }
 
