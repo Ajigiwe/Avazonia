@@ -14,6 +14,53 @@
 
 declare(strict_types=1);
 
+// Polyfills for environments missing the mbstring extension (e.g. shared hosting)
+if (!function_exists('mb_strtolower')) {
+    function mb_strtolower(string $string, ?string $encoding = null): string {
+        return strtolower($string);
+    }
+}
+if (!function_exists('mb_strtoupper')) {
+    function mb_strtoupper(string $string, ?string $encoding = null): string {
+        return strtoupper($string);
+    }
+}
+if (!function_exists('mb_substr')) {
+    function mb_substr(string $string, int $start, ?int $length = null, ?string $encoding = null): string {
+        return $length === null ? substr($string, $start) : substr($string, $start, $length);
+    }
+}
+if (!function_exists('mb_strlen')) {
+    function mb_strlen(string $string, ?string $encoding = null): int {
+        return strlen($string);
+    }
+}
+if (!function_exists('mb_strimwidth')) {
+    function mb_strimwidth(string $string, int $start, int $width, string $trim_marker = '', ?string $encoding = null): string {
+        $sub = substr($string, $start, $width);
+        if (strlen($string) > $width && $trim_marker !== '') {
+            $sub = substr($sub, 0, max(0, $width - strlen($trim_marker))) . $trim_marker;
+        }
+        return $sub;
+    }
+}
+if (!function_exists('mb_check_encoding')) {
+    function mb_check_encoding(mixed $value = null, ?string $encoding = null): bool {
+        return true;
+    }
+}
+if (!function_exists('mb_convert_encoding')) {
+    function mb_convert_encoding(mixed $string, string $to_encoding, mixed $from_encoding = null): mixed {
+        if (!is_string($string)) return $string;
+        if (function_exists('iconv')) {
+            $from = is_string($from_encoding) ? $from_encoding : 'Windows-1252';
+            $converted = @iconv($from, $to_encoding . '//IGNORE', $string);
+            if ($converted !== false) return $converted;
+        }
+        return $string;
+    }
+}
+
 require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/intake_xlsx.php';
