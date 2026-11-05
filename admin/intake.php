@@ -525,7 +525,194 @@ include 'layout/header.php';
 include 'layout/sidebar.php';
 ?>
 
-<div class="admin-header">
+<style>
+/* ==========================================================================
+   Intake Page Responsive & Collapsible Component Styles
+   ========================================================================== */
+
+/* Main Batches Layout Grid */
+.intake-main-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .intake-main-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+/* Collapsible Card Component */
+.intake-card-collapse {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: all 0.2s ease;
+}
+.intake-card-collapse:hover {
+    box-shadow: 0 3px 8px rgba(0,0,0,0.06);
+    border-color: #d1d5db;
+}
+.intake-collapse-header {
+    list-style: none;
+    cursor: pointer;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    background: #fafafa;
+    border-bottom: 1px solid transparent;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.intake-collapse-header::-webkit-details-marker,
+.intake-collapse-header::marker {
+    display: none;
+}
+.intake-collapse-header:hover {
+    background: #f3f4f6;
+}
+.intake-card-collapse[open] .intake-collapse-header {
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+}
+.intake-collapse-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.intake-collapse-chevron {
+    font-size: 10px;
+    color: #9ca3af;
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+.intake-card-collapse[open] .intake-collapse-chevron {
+    transform: rotate(180deg);
+}
+.intake-collapse-body {
+    padding: 18px;
+}
+
+/* Stat Overview Cards Grid */
+.intake-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+}
+@media (max-width: 640px) {
+    .intake-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    .intake-stats-grid > div {
+        padding: 12px 14px !important;
+    }
+    .intake-stats-grid > div > div:last-child {
+        font-size: 20px !important;
+    }
+}
+
+/* Header & Action Bar Responsiveness */
+.intake-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 24px;
+}
+@media (max-width: 640px) {
+    .intake-header-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .intake-header-row .btn-secondary,
+    .intake-header-row .btn-primary {
+        width: 100%;
+        justify-content: center;
+        box-sizing: border-box;
+    }
+}
+
+/* Vehicle Staging Card Header on Mobile */
+@media (max-width: 640px) {
+    .vehicle-card-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+    .vehicle-card-price {
+        text-align: left !important;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        padding-top: 8px;
+    }
+    .vehicle-publish-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 14px !important;
+    }
+    .vehicle-publish-actions {
+        width: 100% !important;
+        flex-direction: column !important;
+    }
+    .vehicle-publish-actions form,
+    .vehicle-publish-actions button {
+        width: 100% !important;
+    }
+    .vehicle-publish-actions button {
+        justify-content: center !important;
+        height: 48px !important;
+        font-size: 14px !important;
+    }
+}
+
+/* Touch-friendly photo cards */
+@media (max-width: 768px) {
+    .staged-photo-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)) !important;
+        gap: 6px !important;
+    }
+    .staged-photo-card {
+        height: 75px !important;
+    }
+    .staged-photo-card .photo-overlay {
+        opacity: 1 !important;
+        background: transparent !important;
+        pointer-events: none;
+    }
+    .staged-photo-card .photo-overlay button {
+        pointer-events: auto;
+    }
+}
+
+/* Responsive Table Container */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.table-container table {
+    min-width: 620px;
+}
+</style>
+
+<div class="admin-header intake-header-row">
     <div>
         <h1>
             Telegram Intake
@@ -615,28 +802,28 @@ include 'layout/sidebar.php';
     ?>
 
     <!-- Stat overview cards -->
-    <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:140px;background:#fff;border:1px solid #e5e7eb;padding:16px 20px;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+    <div class="intake-stats-grid">
+        <div style="background:#fff;border:1px solid #e5e7eb;padding:16px 20px;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">
             <div style="font-family:var(--f-mono);font-size:9px;text-transform:uppercase;color:#6b7280;letter-spacing:0.08em;">Spreadsheet Rows</div>
             <div style="font-weight:800;font-size:24px;color:#111827;margin-top:4px;"><?= count($sheetRows) ?></div>
         </div>
-        <div style="flex:1;min-width:140px;background:#fff;border:1px solid #e5e7eb;padding:16px 20px;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+        <div style="background:#fff;border:1px solid #e5e7eb;padding:16px 20px;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">
             <div style="font-family:var(--f-mono);font-size:9px;text-transform:uppercase;color:#6b7280;letter-spacing:0.08em;">Staged Photos</div>
             <div style="font-weight:800;font-size:24px;color:#2563eb;margin-top:4px;"><?= $photoCount ?></div>
         </div>
-        <div style="flex:1;min-width:140px;background:#fff;border:1px solid #e5e7eb;padding:16px 20px;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+        <div style="background:#fff;border:1px solid #e5e7eb;padding:16px 20px;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">
             <div style="font-family:var(--f-mono);font-size:9px;text-transform:uppercase;color:#6b7280;letter-spacing:0.08em;">Staged Videos</div>
             <div style="font-weight:800;font-size:24px;color:#7c3aed;margin-top:4px;"><?= $videoCount ?></div>
         </div>
-        <div style="flex:1;min-width:140px;background:#f0fdf4;border:1px solid #bbf7d0;padding:16px 20px;border-radius:6px;">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:16px 20px;border-radius:6px;">
             <div style="font-family:var(--f-mono);font-size:9px;text-transform:uppercase;color:#166534;letter-spacing:0.08em;">SKU Matched</div>
             <div style="font-weight:800;font-size:24px;color:#16a34a;margin-top:4px;"><?= $stats['sku'] ?? 0 ?></div>
         </div>
-        <div style="flex:1;min-width:140px;background:#eff6ff;border:1px solid #bfdbfe;padding:16px 20px;border-radius:6px;">
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;padding:16px 20px;border-radius:6px;">
             <div style="font-family:var(--f-mono);font-size:9px;text-transform:uppercase;color:#1e40af;letter-spacing:0.08em;">Title / Caption Matched</div>
             <div style="font-weight:800;font-size:24px;color:#3b82f6;margin-top:4px;"><?= $stats['caption'] ?? 0 ?></div>
         </div>
-        <div style="flex:1;min-width:140px;background:#fafafa;border:1px solid #e5e7eb;padding:16px 20px;border-radius:6px;">
+        <div style="background:#fafafa;border:1px solid #e5e7eb;padding:16px 20px;border-radius:6px;">
             <div style="font-family:var(--f-mono);font-size:9px;text-transform:uppercase;color:#6b7280;letter-spacing:0.08em;">Unmatched Rows</div>
             <div style="font-weight:800;font-size:24px;color:#6b7280;margin-top:4px;"><?= $stats['unmatched'] ?? 0 ?></div>
         </div>
@@ -684,7 +871,7 @@ include 'layout/sidebar.php';
                 <input type="file" id="intake-photo-upload-input" name="photos[]" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif" onchange="this.form.submit()">
             </form>
 
-            <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));gap:20px;">
+            <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));gap:20px;">
                 <!-- Video Walkthrough Player -->
                 <?php if (!empty($videos)): ?>
                     <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;">
@@ -701,7 +888,7 @@ include 'layout/sidebar.php';
 
                 <!-- Staged Photo Gallery Grid -->
                 <div style="flex:1;">
-                    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(95px, 1fr));gap:8px;max-height:360px;overflow-y:auto;padding:4px;">
+                    <div class="staged-photo-gallery" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(95px, 1fr));gap:8px;max-height:360px;overflow-y:auto;padding:4px;">
                         <?php $pIdx = 0; ?>
                         <?php foreach ($photos as $ph): ?>
                             <?php if (in_array((string)$ph['media_group'], ['sheet', 'video'], true)) continue; ?>
@@ -790,7 +977,7 @@ include 'layout/sidebar.php';
             ?>
             <!-- Vehicle Drop Staging Card -->
             <div class="panel" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                <div style="padding:18px 24px;background:linear-gradient(to right, #111827, #1f2937);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+                <div class="vehicle-card-header" style="padding:18px 24px;background:linear-gradient(to right, #111827, #1f2937);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
                     <div>
                         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
                             <span style="font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;background:rgba(255,255,255,0.15);padding:3px 8px;border-radius:4px;">
@@ -804,7 +991,7 @@ include 'layout/sidebar.php';
                             <?= htmlspecialchars($vRow['name'] ?? 'Vehicle Listing') ?>
                         </h2>
                     </div>
-                    <div style="text-align:right;">
+                    <div class="vehicle-card-price" style="text-align:right;">
                         <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.06em;">FOB Price</div>
                         <div style="font-size:24px;font-weight:800;color:#10b981;font-family:var(--f-mono);">
                             $<?= number_format((float)($vRow['price'] ?? 0)) ?> <span style="font-size:13px;font-weight:600;color:#d1fae5;"><?= htmlspecialchars($vRow['currency'] ?? 'USD') ?></span>
@@ -852,7 +1039,7 @@ include 'layout/sidebar.php';
                     <?php endif; ?>
 
                     <!-- Specifications & Features Grid -->
-                    <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));gap:24px;margin-bottom:24px;">
+                    <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));gap:24px;margin-bottom:24px;">
                         <!-- Vehicle Specifications -->
                         <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;background:#fff;">
                             <div style="font-weight:700;font-size:13px;color:#111827;margin-bottom:12px;border-bottom:1px solid #f3f4f6;padding-bottom:6px;">
@@ -904,7 +1091,7 @@ include 'layout/sidebar.php';
                     </div>
 
                     <!-- 1-Click Publishing Action Bar -->
-                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+                    <div class="vehicle-publish-bar" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
                         <div>
                             <div style="font-weight:700;font-size:14px;color:#111827;">Ready to publish this vehicle?</div>
                             <div style="font-size:12px;color:#6b7280;margin-top:2px;">
@@ -914,7 +1101,7 @@ include 'layout/sidebar.php';
                                 <?php endif; ?>
                             </div>
                         </div>
-                        <div style="display:flex;gap:12px;align-items:center;">
+                        <div class="vehicle-publish-actions" style="display:flex;gap:12px;align-items:center;">
                             <!-- 1-Click Live Publish Form -->
                             <form method="POST" style="margin:0;">
                                 <?= Csrf::field() ?>
@@ -956,7 +1143,7 @@ include 'layout/sidebar.php';
                 </div>
             </div>
             <div style="padding:24px;">
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:24px;">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 280px), 1fr));gap:24px;">
                     <!-- Option 1: Paste Text -->
                     <div style="border:1px solid #e5e7eb;border-radius:8px;padding:20px;background:#fafafa;">
                         <h4 style="margin:0 0 8px;font-size:14px;font-weight:700;color:#111827;display:flex;align-items:center;gap:6px;">
@@ -1376,14 +1563,14 @@ include 'layout/sidebar.php';
 
 <?php else: ?>
     <!-- Batches List View -->
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
+    <div class="intake-main-grid">
         <div class="panel" style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;">
             <div class="panel-header" style="padding:16px 24px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
                 <div class="panel-title" style="font-weight:700;font-size:15px;color:#111827;">Staged Intake Batches</div>
                 <span style="font-family:var(--f-mono);font-size:11px;color:#6b7280;"><?= count($batches) ?> total</span>
             </div>
 
-            <div class="table-container" style="overflow-x:auto;">
+            <div class="table-container">
                 <table class="admin-table" style="width:100%;border-collapse:collapse;font-size:13px;">
                     <thead>
                         <tr style="background:#f9fafb;text-align:left;border-bottom:1px solid #e5e7eb;">
@@ -1462,85 +1649,125 @@ include 'layout/sidebar.php';
             </div>
         </div>
 
-        <!-- How It Works Sidebar Card -->
+        <!-- How It Works & Control Collapsible Sidebar -->
         <div style="display:flex;flex-direction:column;gap:16px;">
-            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:20px;">
-                <h3 style="margin:0 0 12px;font-size:14px;font-weight:700;color:#111827;">How Telegram Intake Works</h3>
-                <ol style="margin:0;padding-left:18px;font-size:13px;color:#4b5563;line-height:1.7;">
-                    <li><strong>Send Spreadsheet:</strong> Send a wholesale <code style="font-family:var(--f-mono);background:#f3f4f6;padding:1px 4px;">.csv</code> or <code style="font-family:var(--f-mono);background:#f3f4f6;padding:1px 4px;">.xlsx</code> catalog file to your Telegram bot.</li>
-                    <li><strong>Upload Photos:</strong> Forward product photography as albums or single shots. Captions with the SKU or Product Title will auto-match!</li>
-                    <li><strong>Review &amp; Match:</strong> Click <em>Review &amp; Match</em> here to inspect the 4-tier match confidence badges.</li>
-                    <li><strong>Publish:</strong> Click <em>Send to Product Importer</em> to review categories and commit live to your store!</li>
-                </ol>
-            </div>
-
-            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:20px;">
-                <h3 style="margin:0 0 12px;font-size:14px;font-weight:700;color:#111827;">Bot Chat Commands</h3>
-                <table style="width:100%;font-size:12px;color:#4b5563;border-collapse:collapse;">
-                    <tr style="border-bottom:1px solid #f3f4f6;">
-                        <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/status</td>
-                        <td style="padding:6px 0;">Summary of active staged batch</td>
-                    </tr>
-                    <tr style="border-bottom:1px solid #f3f4f6;">
-                        <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/undo</td>
-                        <td style="padding:6px 0;">Undo most recent photo or sheet</td>
-                    </tr>
-                    <tr style="border-bottom:1px solid #f3f4f6;">
-                        <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/clearsheet</td>
-                        <td style="padding:6px 0;">Remove sheet, keep staged photos</td>
-                    </tr>
-                    <tr style="border-bottom:1px solid #f3f4f6;">
-                        <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/clearphotos</td>
-                        <td style="padding:6px 0;">Remove photos, keep sheet</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#dc2626;">/clear</td>
-                        <td style="padding:6px 0;">Discard entire batch &amp; files</td>
-                    </tr>
-                </table>
-            </div>
-
-            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:20px;">
-                <h3 style="margin:0 0 10px;font-size:14px;font-weight:700;color:#111827;">CLI Diagnostics</h3>
-                <p style="font-size:12px;color:#6b7280;margin:0 0 10px;line-height:1.5;">
-                    Test and maintain your webhook from the command line:
-                </p>
-                <div style="font-family:var(--f-mono);font-size:11px;background:#18181b;color:#f4f4f5;padding:10px 12px;border-radius:4px;overflow-x:auto;">
-                    php tools/tg_webhook_info.php<br>
-                    php tools/tg_set_webhook.php<br>
-                    php tools/tg_simulate_update.php<br>
-                    php tools/tg_poll.php
+            <!-- 1. How It Works (Collapsible) -->
+            <details class="intake-card-collapse mobile-collapse-default" open>
+                <summary class="intake-collapse-header">
+                    <span class="intake-collapse-title">
+                        <span>💡</span> How Telegram Intake Works
+                    </span>
+                    <span class="intake-collapse-chevron">▼</span>
+                </summary>
+                <div class="intake-collapse-body">
+                    <ol style="margin:0;padding-left:18px;font-size:13px;color:#4b5563;line-height:1.7;">
+                        <li><strong>Send Spreadsheet:</strong> Send a wholesale <code style="font-family:var(--f-mono);background:#f3f4f6;padding:1px 4px;">.csv</code> or <code style="font-family:var(--f-mono);background:#f3f4f6;padding:1px 4px;">.xlsx</code> catalog file to your Telegram bot.</li>
+                        <li><strong>Upload Photos:</strong> Forward product photography as albums or single shots. Captions with the SKU or Product Title will auto-match!</li>
+                        <li><strong>Review &amp; Match:</strong> Click <em>Review &amp; Match</em> here to inspect the 4-tier match confidence badges.</li>
+                        <li><strong>Publish:</strong> Click <em>Send to Product Importer</em> to review categories and commit live to your store!</li>
+                    </ol>
                 </div>
-            </div>
+            </details>
 
-            <!-- Webhook Registration Card -->
-            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:20px;">
-                <h3 style="margin:0 0 10px;font-size:14px;font-weight:700;color:#111827;">Live Webhook Control</h3>
-                <p style="font-size:12px;color:#6b7280;margin:0 0 12px;line-height:1.5;">
-                    Register your public HTTPS endpoint with Telegram with 1-click:
-                </p>
-                <form method="POST" style="margin:0;">
-                    <?= Csrf::field() ?>
-                    <input type="hidden" name="action" value="register_webhook">
-                    <label style="display:block;font-size:11px;font-weight:600;color:#374151;margin-bottom:4px;">Webhook Endpoint URL:</label>
-                    <input type="url" name="webhook_url" value="<?= htmlspecialchars($cfg['webhook_url'] ?: rtrim(APP_URL, '/') . '/tg_webhook.php') ?>"
-                           style="width:100%;box-sizing:border-box;font-family:var(--f-mono);font-size:11px;padding:8px 10px;border:1px solid #d1d5db;border-radius:4px;margin-bottom:10px;" required>
-                    <div style="display:flex;gap:8px;flex-direction:column;">
-                        <button type="submit" class="btn-red" style="width:100%;height:36px;font-size:11px;font-weight:700;border-radius:4px;cursor:pointer;">
-                            Set Webhook with Telegram
-                        </button>
+            <!-- 2. Bot Commands (Collapsible) -->
+            <details class="intake-card-collapse mobile-collapse-default" open>
+                <summary class="intake-collapse-header">
+                    <span class="intake-collapse-title">
+                        <span>💬</span> Bot Chat Commands
+                    </span>
+                    <span class="intake-collapse-chevron">▼</span>
+                </summary>
+                <div class="intake-collapse-body">
+                    <table style="width:100%;font-size:12px;color:#4b5563;border-collapse:collapse;">
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/status</td>
+                            <td style="padding:6px 0;">Summary of active staged batch</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/undo</td>
+                            <td style="padding:6px 0;">Undo most recent photo or sheet</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/clearsheet</td>
+                            <td style="padding:6px 0;">Remove sheet, keep staged photos</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/clearphotos</td>
+                            <td style="padding:6px 0;">Remove photos, keep sheet</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#dc2626;">/clear</td>
+                            <td style="padding:6px 0;">Discard entire batch &amp; files</td>
+                        </tr>
+                    </table>
+                </div>
+            </details>
+
+            <!-- 3. CLI Diagnostics (Collapsible) -->
+            <details class="intake-card-collapse mobile-collapse-default">
+                <summary class="intake-collapse-header">
+                    <span class="intake-collapse-title">
+                        <span>💻</span> CLI Diagnostics
+                    </span>
+                    <span class="intake-collapse-chevron">▼</span>
+                </summary>
+                <div class="intake-collapse-body">
+                    <p style="font-size:12px;color:#6b7280;margin:0 0 10px;line-height:1.5;">
+                        Test and maintain your webhook from the command line:
+                    </p>
+                    <div style="font-family:var(--f-mono);font-size:11px;background:#18181b;color:#f4f4f5;padding:10px 12px;border-radius:4px;overflow-x:auto;">
+                        php tools/tg_webhook_info.php<br>
+                        php tools/tg_set_webhook.php<br>
+                        php tools/tg_simulate_update.php<br>
+                        php tools/tg_poll.php
                     </div>
-                </form>
-                <form method="POST" style="margin-top:8px;" onsubmit="return confirm('Remove webhook and switch bot back to polling mode?');">
-                    <?= Csrf::field() ?>
-                    <input type="hidden" name="action" value="delete_webhook">
-                    <button type="submit" style="width:100%;background:none;border:1px solid #e5e7eb;padding:6px 0;font-size:11px;color:#6b7280;border-radius:4px;cursor:pointer;">
-                        Delete Webhook (Polling Mode)
-                    </button>
-                </form>
-            </div>
+                </div>
+            </details>
+
+            <!-- 4. Webhook Registration (Collapsible) -->
+            <details class="intake-card-collapse mobile-collapse-default" open>
+                <summary class="intake-collapse-header">
+                    <span class="intake-collapse-title">
+                        <span>⚡</span> Live Webhook Control
+                    </span>
+                    <span class="intake-collapse-chevron">▼</span>
+                </summary>
+                <div class="intake-collapse-body">
+                    <p style="font-size:12px;color:#6b7280;margin:0 0 12px;line-height:1.5;">
+                        Register your public HTTPS endpoint with Telegram with 1-click:
+                    </p>
+                    <form method="POST" style="margin:0;">
+                        <?= Csrf::field() ?>
+                        <input type="hidden" name="action" value="register_webhook">
+                        <label style="display:block;font-size:11px;font-weight:600;color:#374151;margin-bottom:4px;">Webhook Endpoint URL:</label>
+                        <input type="url" name="webhook_url" value="<?= htmlspecialchars($cfg['webhook_url'] ?: rtrim(APP_URL, '/') . '/tg_webhook.php') ?>"
+                               style="width:100%;box-sizing:border-box;font-family:var(--f-mono);font-size:11px;padding:8px 10px;border:1px solid #d1d5db;border-radius:4px;margin-bottom:10px;" required>
+                        <div style="display:flex;gap:8px;flex-direction:column;">
+                            <button type="submit" class="btn-red" style="width:100%;height:36px;font-size:11px;font-weight:700;border-radius:4px;cursor:pointer;">
+                                Set Webhook with Telegram
+                            </button>
+                        </div>
+                    </form>
+                    <form method="POST" style="margin-top:8px;" onsubmit="return confirm('Remove webhook and switch bot back to polling mode?');">
+                        <?= Csrf::field() ?>
+                        <input type="hidden" name="action" value="delete_webhook">
+                        <button type="submit" style="width:100%;background:none;border:1px solid #e5e7eb;padding:6px 0;font-size:11px;color:#6b7280;border-radius:4px;cursor:pointer;">
+                            Delete Webhook (Polling Mode)
+                        </button>
+                    </form>
+                </div>
+            </details>
         </div>
     </div>
 <?php endif; ?>
+
+<script>
+// On mobile devices (<=768px), collapse helper cards by default to keep the batch list immediately visible
+if (window.innerWidth <= 768) {
+    document.querySelectorAll('.intake-card-collapse.mobile-collapse-default').forEach(function(el) {
+        el.removeAttribute('open');
+    });
+}
+</script>
 
 <?php include 'layout/footer.php'; ?>
