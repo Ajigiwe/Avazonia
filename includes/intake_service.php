@@ -170,6 +170,12 @@ function intake_is_configured(): bool
     return $cfg['token'] !== '' && $cfg['secret'] !== '' && $cfg['chats'] !== [];
 }
 
+function intake_is_allowed_chat(int $chatId, ?array $cfg = null): bool
+{
+    $cfg = $cfg ?? intake_config();
+    return empty($cfg['chats']) || in_array($chatId, $cfg['chats'], true);
+}
+
 /* --------------------------------------------------------- telegram api -- */
 
 function tg_api(array $cfg, string $method, array $params = []): ?array
@@ -303,10 +309,10 @@ function intake_new_batch(int $chatId, string $label): int
 {
     intake_tables();
     db_exec(
-        "INSERT INTO intake_batches (chat_id, label, created_at, updated_at) VALUES (?, ?, NOW(), NOW())",
+        "INSERT INTO intake_batches (chat_id, label, created_at, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
         [$chatId, mb_substr(trim($label), 0, 160)]
     );
-    return (int) db_val('SELECT LAST_INSERT_ID()', [], 0);
+    return (int) db()->lastInsertId();
 }
 
 function intake_batch(int $batchId): ?array
@@ -378,7 +384,7 @@ function intake_set_sheet(int $batchId, string $name, string $csv, int $rows): v
 {
     intake_tables();
     db_exec(
-        'UPDATE intake_batches SET sheet_name = ?, sheet_data = ?, row_count = ?, updated_at = NOW() WHERE id = ?',
+        'UPDATE intake_batches SET sheet_name = ?, sheet_data = ?, row_count = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [mb_substr($name, 0, 190), $csv, $rows, $batchId]
     );
 }
@@ -386,7 +392,7 @@ function intake_set_sheet(int $batchId, string $name, string $csv, int $rows): v
 function intake_claim(int $batchId): void
 {
     intake_tables();
-    db_exec("UPDATE intake_batches SET status = 'claimed', updated_at = NOW() WHERE id = ?", [$batchId]);
+    db_exec("UPDATE intake_batches SET status = 'claimed', updated_at = CURRENT_TIMESTAMP WHERE id = ?", [$batchId]);
 }
 
 function intake_discard(int $batchId): int
@@ -403,7 +409,7 @@ function intake_discard(int $batchId): int
         }
     }
     db_exec('DELETE FROM intake_items WHERE batch_id = ?', [$batchId]);
-    db_exec("UPDATE intake_batches SET status = 'discarded', updated_at = NOW() WHERE id = ?", [$batchId]);
+    db_exec("UPDATE intake_batches SET status = 'discarded', updated_at = CURRENT_TIMESTAMP WHERE id = ?", [$batchId]);
     return $removed;
 }
 
@@ -415,7 +421,7 @@ function intake_clear_sheet(int $batchId): int
         return 0;
     }
     db_exec(
-        "UPDATE intake_batches SET sheet_name = '', sheet_data = '', row_count = 0, updated_at = NOW() WHERE id = ?",
+        "UPDATE intake_batches SET sheet_name = '', sheet_data = '', row_count = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
         [$batchId]
     );
     db_exec("DELETE FROM intake_items WHERE batch_id = ? AND media_group = 'sheet'", [$batchId]);
@@ -493,7 +499,7 @@ function intake_sync_disk_photos(int $batchId): int
         try {
             db_exec(
                 "INSERT INTO intake_items (batch_id, message_id, media_group, file_path, caption, created_at)
-                 VALUES (?, ?, '', ?, '', NOW())",
+                 VALUES (?, ?, '', ?, '', CURRENT_TIMESTAMP)",
                 [$batchId, $msgId, $relPath]
             );
             $known[$relPath] = true;
@@ -585,7 +591,7 @@ function intake_split_items(int $srcBatchId, array $itemIds, string $newLabel = 
 
     $inClause = implode(',', $valid);
     db_exec("UPDATE intake_items SET batch_id = ? WHERE id IN ($inClause) AND batch_id = ?", [$newBatchId, $srcBatchId]);
-    db_exec("UPDATE intake_batches SET updated_at = NOW() WHERE id IN (?, ?)", [$srcBatchId, $newBatchId]);
+    db_exec("UPDATE intake_batches SET updated_at = CURRENT_TIMESTAMP WHERE id IN (?, ?)", [$srcBatchId, $newBatchId]);
     return $newBatchId;
 }
 
@@ -628,7 +634,7 @@ function intake_add_photos(int $batchId, array $files): int
         try {
             db_exec(
                 "INSERT INTO intake_items (batch_id, message_id, media_group, file_path, caption, created_at)
-                 VALUES (?, ?, 'manual', ?, ?, NOW())",
+                 VALUES (?, ?, 'manual', ?, ?, CURRENT_TIMESTAMP)",
                 [$batchId, $newMsgId, $path, $caption]
             );
             $added++;
@@ -659,7 +665,7 @@ function intake_undo_last(int $chatId): array
         @unlink($root . '/' . ltrim($rel, '/'));
     }
     if ((string) $lastItem['media_group'] === 'sheet') {
-        db_exec("UPDATE intake_batches SET sheet_name = '', sheet_data = '', row_count = 0, updated_at = NOW() WHERE id = ?", [$batch['id']]);
+        db_exec("UPDATE intake_batches SET sheet_name = '', sheet_data = '', row_count = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [$batch['id']]);
     }
     db_exec('DELETE FROM intake_items WHERE id = ?', [$lastItem['id']]);
     return ['ok' => true, 'removed' => 1];
@@ -806,7 +812,7 @@ function intake_ingest_photo(array $cfg, int $chatId, array $msg, ?string $bytes
     try {
         db_exec(
             'INSERT INTO intake_items (batch_id, message_id, media_group, file_path, caption, created_at)
-             VALUES (?, ?, ?, ?, ?, NOW())',
+             VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)',
             [
                 $batchId,
                 $messageId > 0 ? $messageId : (int) round(microtime(true) * 1000),
@@ -933,7 +939,7 @@ function intake_ingest_video(array $cfg, int $chatId, array $msg, ?string $bytes
     try {
         db_exec(
             'INSERT INTO intake_items (batch_id, message_id, media_group, file_path, caption, created_at)
-             VALUES (?, ?, "video", ?, ?, NOW())',
+             VALUES (?, ?, "video", ?, ?, CURRENT_TIMESTAMP)',
             [
                 $batchId,
                 $messageId > 0 ? $messageId : (int) round(microtime(true) * 1000),
@@ -1006,7 +1012,7 @@ function intake_ingest_listing_text(array $cfg, int $chatId, string $text, int $
         $batchLabel = count($parsedList) > 1
             ? sprintf('%s (+%d more)', $parsedList[0]['name'], count($parsedList) - 1)
             : $parsedList[0]['name'];
-        db_exec('UPDATE intake_batches SET label = ?, updated_at = NOW() WHERE id = ?', [mb_substr($batchLabel, 0, 160), $batchId]);
+        db_exec('UPDATE intake_batches SET label = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [mb_substr($batchLabel, 0, 160), $batchId]);
     } else {
         $activeBatch = intake_active_batch($chatId);
         if ($activeBatch !== null) {
@@ -1027,7 +1033,7 @@ function intake_ingest_listing_text(array $cfg, int $chatId, string $text, int $
                 $batchLabel = count($parsedList) > 1
                     ? sprintf('%s (+%d more)', $parsedList[0]['name'], count($parsedList) - 1)
                     : $parsedList[0]['name'];
-                db_exec('UPDATE intake_batches SET label = ?, updated_at = NOW() WHERE id = ?', [mb_substr($batchLabel, 0, 160), $batchId]);
+                db_exec('UPDATE intake_batches SET label = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [mb_substr($batchLabel, 0, 160), $batchId]);
             }
         } else {
             $batchLabel = count($parsedList) > 1
@@ -1053,7 +1059,7 @@ function intake_ingest_listing_text(array $cfg, int $chatId, string $text, int $
     // Marker item in intake_items for chronological undo
     db_exec(
         "INSERT INTO intake_items (batch_id, message_id, media_group, file_path, caption, created_at)
-         VALUES (?, ?, 'sheet', '', ?, NOW())",
+         VALUES (?, ?, 'sheet', '', ?, CURRENT_TIMESTAMP)",
         [$batchId, $messageId > 0 ? $messageId : (int)round(microtime(true) * 1000), mb_substr($parsedList[0]['name'], 0, 512)]
     );
 
@@ -1224,7 +1230,7 @@ function intake_ingest_sheet(array $cfg, int $chatId, array $doc, ?string $bytes
     // Sheet marker item for chronological undo
     db_exec(
         "INSERT INTO intake_items (batch_id, message_id, media_group, file_path, caption, created_at)
-         VALUES (?, ?, 'sheet', '', ?, NOW())",
+         VALUES (?, ?, 'sheet', '', ?, CURRENT_TIMESTAMP)",
         [$batchId, (int) ($doc['message_id'] ?? 0), $name]
     );
 
@@ -1498,7 +1504,7 @@ function intake_command_reply(array $cfg, int $chatId, string $text): string
             if (!$target) {
                 return "Batch #{$targetId} not found.";
             }
-            db_exec("UPDATE intake_batches SET updated_at = NOW() WHERE id = ?", [$targetId]);
+            db_exec("UPDATE intake_batches SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", [$targetId]);
             $p = intake_photo_count($targetId);
             $v = intake_video_count($targetId);
             return sprintf("🔄 Switched active batch to #%d (%s)!\nPhotos: %d | Videos: %d\nSubsequent uploads will attach here.", $targetId, $target['label'], $p, $v);

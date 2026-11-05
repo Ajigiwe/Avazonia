@@ -66,10 +66,15 @@ try {
         $e->getLine()
     ));
     $chatId = (int) ($update['message']['chat']['id'] ?? 0);
-    if ($chatId !== 0 && intake_is_allowed_chat($chatId)) {
-        tg_send_text($cfg, $chatId, "⚠️ Intake notice: " . $e->getMessage());
+    if ($chatId !== 0 && intake_is_allowed_chat($chatId, $cfg)) {
+        try {
+            tg_send_text($cfg, $chatId, "⚠️ Intake notice: " . $e->getMessage());
+        } catch (Throwable $inner) {
+            error_log('tg_webhook could not send error notice: ' . $inner->getMessage());
+        }
     }
 }
 
 // Always respond 200 OK once authenticated to satisfy Telegram's webhook retry policy
+http_response_code(200);
 echo json_encode(['ok' => true]);
