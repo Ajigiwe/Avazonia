@@ -8,6 +8,44 @@ require_once __DIR__ . '/../core/Model.php';
 
 class PageView extends Model
 {
+    /**
+     * High-confidence automation substrings used to filter rows that were
+     * logged before the tracker's stricter gates existed. Deliberately
+     * narrower than PageViewTracker::isBot() so no plausible browser is
+     * ever hidden from the dashboard (no bare "bot", which would match
+     * Android device brands such as CUBOT).
+     */
+    private const BOT_UA_PATTERNS = [
+        'powershell', 'winhttp', 'headless', 'phantom', 'playwright', 'puppeteer',
+        'selenium', 'scrapy', 'python', 'aiohttp', 'httpx', 'node-fetch', 'axios',
+        'undici', 'postman', 'insomnia', 'httpie', 'curl/', 'wget', 'libwww',
+        'java/', 'okhttp', 'go-http-client', 'guzzle', 'crawler', 'spider',
+        'scraper', 'fetcher', 'pagespeed', 'lighthouse', 'gtmetrix', 'pingdom',
+        'uptime', 'semrush', 'ahrefs', 'mj12', 'gptbot', 'chatgpt-user', 'ccbot',
+        'bytespider', 'amazonbot', 'facebookexternalhit', 'meta-externalagent',
+        'telegrambot', 'embedly', 'yandex', 'baidu', 'sogou', 'duckduck', 'monitor',
+    ];
+
+    /** SQL predicate that keeps only rows whose UA is not obvious automation. */
+    private function humanWhere(): string
+    {
+        $clauses = [];
+        foreach (self::BOT_UA_PATTERNS as $needle) {
+            $clauses[] = "LOWER(COALESCE(user_agent, '')) NOT LIKE " . $this->db->quote('%' . $needle . '%');
+        }
+        return $clauses ? ' AND ' . implode(' AND ', $clauses) : '';
+    }
+
+    /** Is this stored User-Agent obvious automation? (display + read filter) */
+    private static function uaIsAutomated(string $ua): bool
+    {
+        $uaLower = strtolower($ua);
+        foreach (self::BOT_UA_PATTERNS as $needle) {
+            if (strpos($uaLower, $needle) !== false) return true;
+        }
+        return false;
+    }
+
     /** Overall summary: today (site day) + last 7 days. */
     public function summary(): array
     {
@@ -17,13 +55,13 @@ class PageView extends Model
         $row = $this->db->query("
             SELECT COUNT(*) AS views, COUNT(DISTINCT visitor_id) AS visitors
             FROM page_views
-            WHERE viewed_at >= " . $this->db->quote($dayStart) . "
+            WHERE viewed_at >= " . $this->db->quote($dayStart) . $this->humanWhere() . "
         ")->fetch(PDO::FETCH_ASSOC) ?: [];
 
         $row7 = $this->db->query("
             SELECT COUNT(*) AS views, COUNT(DISTINCT visitor_id) AS visitors
             FROM page_views
-            WHERE viewed_at >= " . $this->db->quote($weekAgo) . "
+            WHERE viewed_at >= " . $this->db->quote($weekAgo) . $this->humanWhere() . "
         ")->fetch(PDO::FETCH_ASSOC) ?: [];
 
         return [
@@ -44,7 +82,7 @@ class PageView extends Model
                    COUNT(DISTINCT visitor_id) AS visitors,
                    COUNT(*) AS views
             FROM page_views
-            WHERE viewed_at >= " . $this->db->quote($since) . "
+            WHERE viewed_at >= " . $this->db->quote($since) . $this->humanWhere() . "
             GROUP BY substr(viewed_at, 1, 10)
             ORDER BY day ASC
         ")->fetchAll(PDO::FETCH_ASSOC) ?: [];
@@ -70,7 +108,7 @@ class PageView extends Model
                    COUNT(DISTINCT visitor_id) AS visitors,
                    COUNT(*) AS views
             FROM page_views
-            WHERE viewed_at >= " . $this->db->quote($since) . "
+            WHERE viewed_at >= " . $this->db->quote($since) . $this->humanWhere() . "
             GROUP BY substr(viewed_at, 1, 7)
             ORDER BY month ASC
         ")->fetchAll(PDO::FETCH_ASSOC) ?: [];
@@ -78,6 +116,31 @@ class PageView extends Model
             'month'    => (string)$r['month'],
             'visitors' => (int)$r['visitors'],
             'views'    => (int)$r['views'],
+        ], $rows);
+    }
+
+    /**
+     * Raw User-Agents seen over the window, bots included, so the admin can
+     * see what the tracker is rejecting. `likely_bot` uses the same list as
+     * the read filter above.
+     */
+    public function topUserAgents(int $days = 7, int $limit = 8): array
+    {
+        $limit = max(1, min(50, $limit));
+        $since = date('Y-m-d H:i:s', time() - $days * 86400);
+        $rows = $this->db->query("
+            SELECT user_agent, COUNT(*) AS views, COUNT(DISTINCT visitor_id) AS visitors
+            FROM page_views
+            WHERE viewed_at >= " . $this->db->quote($since) . "
+            GROUP BY user_agent
+            ORDER BY views DESC
+            LIMIT {$limit}
+        ")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        return array_map(fn($r) => [
+            'user_agent'  => (string)($r['user_agent'] ?? ''),
+            'views'       => (int)$r['views'],
+            'visitors'    => (int)$r['visitors'],
+            'likely_bot'  => self::uaIsAutomated((string)($r['user_agent'] ?? '')),
         ], $rows);
     }
 
@@ -89,7 +152,7 @@ class PageView extends Model
         $rows = $this->db->query("
             SELECT path, COUNT(*) AS views, COUNT(DISTINCT visitor_id) AS visitors
             FROM page_views
-            WHERE viewed_at >= " . $this->db->quote($since) . "
+            WHERE viewed_at >= " . $this->db->quote($since) . $this->humanWhere() . "
             GROUP BY path
             ORDER BY views DESC
             LIMIT {$limit}
@@ -109,7 +172,7 @@ class PageView extends Model
         $rows = $this->db->query("
             SELECT referrer_host AS source, COUNT(*) AS visits
             FROM page_views
-            WHERE viewed_at >= " . $this->db->quote($since) . "
+            WHERE viewed_at >= " . $this->db->quote($since) . $this->humanWhere() . "
               AND referrer_host IS NOT NULL AND referrer_host <> ''
             GROUP BY referrer_host
             ORDER BY visits DESC

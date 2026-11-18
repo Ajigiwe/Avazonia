@@ -85,9 +85,9 @@ class PageViewTracker
             // Admin staff browsing the storefront are not traffic.
             if (($_SESSION['user_role'] ?? '') === 'admin') return;
 
-            // Skip obvious bots and blank user agents (proxy prefetch etc.).
+            // Skip bots, automation clients and non-document requests.
+            if (!self::shouldTrack($_SERVER)) return;
             $ua = trim((string)($_SERVER['HTTP_USER_AGENT'] ?? ''));
-            if ($ua === '' || self::isBot($ua)) return;
 
             $parts = parse_url($uri);
             $path  = substr((string)($parts['path'] ?? '/'), 0, 255);
@@ -183,17 +183,57 @@ class PageViewTracker
         return false;
     }
 
-    private static function isBot(string $ua): bool
+    /**
+     * Decide whether this request is a real browser page view.
+     * Three independent gates: an automation-looking UA, a UA that is not a
+     * browser engine, and request headers that are not a document navigation.
+     * Kept separate from track() so it can be tested without touching the DB.
+     *
+     * @param array<string,mixed> $server Typically $_SERVER.
+     */
+    public static function shouldTrack(array $server): bool
+    {
+        $ua = trim((string)($server['HTTP_USER_AGENT'] ?? ''));
+        if ($ua === '' || self::isBot($ua)) return false;
+
+        // Real navigations carry a browser engine token; script clients
+        // (PowerShell, HttpWebRequest, HTTP libraries) do not.
+        if (!preg_match('/(Chrome|CriOS|Firefox|FxiOS|Safari|Edg|OPR|Version)\//i', $ua)) return false;
+
+        $purpose = strtolower((string)($server['HTTP_SEC_PURPOSE'] ?? ($server['HTTP_SEC_FETCH_PURPOSE'] ?? ($server['HTTP_X_PURPOSE'] ?? ''))));
+        if ($purpose !== '' && (strpos($purpose, 'prefetch') !== false || strpos($purpose, 'prerender') !== false)) return false;
+
+        $mode = strtolower((string)($server['HTTP_SEC_FETCH_MODE'] ?? ''));
+        if ($mode !== '' && $mode !== 'navigate') return false;
+
+        // Browsers ask for HTML on a navigation; background fetches ask for */*.
+        $accept = strtolower((string)($server['HTTP_ACCEPT'] ?? ''));
+        if ($accept === '' || strpos($accept, 'text/html') === false) return false;
+
+        return true;
+    }
+
+    /** Does the User-Agent look automated? Broad on purpose: UA is only one gate. */
+    public static function isBot(string $ua): bool
     {
         $uaLower = strtolower($ua);
         $needles = [
-            'bot', 'crawl', 'spider', 'slurp', 'curl', 'wget', 'python-', 'java/',
-            'okhttp', 'go-http', 'libwww', 'httpclient', 'scrap', 'headless',
+            'bot', 'crawl', 'spider', 'slurp', 'curl', 'wget', 'python-', 'python/',
+            'java/', 'okhttp', 'go-http', 'libwww', 'httpclient', 'scrap', 'headless',
             'phantomjs', 'monitor', 'uptime', 'pingdom', 'gtmetrix', 'lighthouse',
             'semrush', 'ahrefs', 'mj12', 'dotbot', 'megaindex', 'petalbot',
             'facebookexternalhit', 'whatsapp', 'telegrambot', 'twitterbot',
             'embedly', 'quora link preview', 'outbrain', 'vkshare', 'yandex',
             'baidu', 'sogou', 'duckduck', 'applebot', 'google', 'bing',
+            // Script clients and automation runtimes seen hitting the site.
+            'powershell', 'winhttp', 'postman', 'insomnia', 'httpie', 'axios',
+            'node-fetch', 'undici', 'aiohttp', 'httpx', 'guzzle', 'restsharp',
+            'playwright', 'puppeteer', 'selenium', 'scrapy', 'zgrab', 'nikto',
+            'nmap', 'sqlmap', 'pagespeed', 'statuscake', 'site24x7', 'freshping',
+            'uptimerobot', 'screaming frog', 'gptbot', 'chatgpt-user', 'claude-web',
+            'anthropic', 'perplexity', 'ccbot', 'bytespider', 'amazonbot',
+            'meta-externalagent', 'linkedinbot', 'slackbot', 'discordbot',
+            'prefetch', 'preview',
         ];
         foreach ($needles as $n) {
             if (strpos($uaLower, $n) !== false) return true;

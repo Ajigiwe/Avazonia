@@ -40,9 +40,12 @@ try {
 
 // 2. First-party tracker — same calendar months, distinct visitors per month.
 $pvRows = [];
+$uaRows = [];
 $pvError = '';
 try {
-    $pvRows = (new PageView())->monthlySeries($months);
+    $pvModel = new PageView();
+    $pvRows = $pvModel->monthlySeries($months);
+    $uaRows = $pvModel->topUserAgents(30, 8);
 } catch (Throwable $e) {
     $pvError = $e->getMessage();
 }
@@ -104,6 +107,9 @@ include 'layout/header.php';
     .ma-table td.ma-empty { color: #b0b0b0; }
     .ma-split { font-family: var(--f-mono); font-size: 9px; color: var(--mid-gray); display: block; letter-spacing: .04em; }
     .ma-note { border: 1px dashed var(--light-gray); border-radius: 12px; padding: 16px 20px; font-size: 12px; color: var(--mid-gray); line-height: 1.6; margin-top: 18px; }
+    .ma-chip { display: inline-block; font-family: var(--f-mono); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 3px 8px; border-radius: 999px; background: #eef0f2; color: var(--mid-gray); white-space: nowrap; }
+    .ma-chip-bot { background: #fff1f0; color: var(--red); }
+    .ma-ua { max-width: 520px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--f-mono); font-size: 11px; }
     .ma-note strong { color: var(--ink); }
     .ma-alert { border: 1px solid rgba(232,0,45,.25); background: #fff6f7; border-radius: 12px; padding: 16px 20px; font-size: 12.5px; margin-bottom: 24px; }
     .ma-alert strong { font-family: var(--f-mono); font-size: 10px; letter-spacing: .08em; color: var(--red); text-transform: uppercase; display: block; margin-bottom: 4px; }
@@ -207,13 +213,40 @@ include 'layout/header.php';
     </div>
 </div>
 
+<div class="panel" style="margin-top: 24px;">
+    <div class="panel-header">
+        <div class="panel-title">User-agent audit (30 days)</div>
+        <span style="font-family:var(--f-mono);font-size:10px;color:var(--mid-gray);">raw log &middot; automation included</span>
+    </div>
+    <div class="ma-table-wrap">
+        <table class="ma-table" style="min-width: 640px;">
+            <thead>
+                <tr><th>User agent</th><th class="num">Views</th><th class="num">Visitors</th><th>Class</th></tr>
+            </thead>
+            <tbody>
+                <?php if (empty($uaRows)): ?>
+                <tr><td colspan="4" class="ma-empty">No page views logged yet.</td></tr>
+                <?php else: foreach ($uaRows as $u): ?>
+                <tr>
+                    <td class="ma-ua" title="<?= htmlspecialchars($u['user_agent']) ?>"><?= htmlspecialchars($u['user_agent'] !== '' ? $u['user_agent'] : '(no user agent)') ?></td>
+                    <td class="num"><?= number_format($u['views']) ?></td>
+                    <td class="num"><?= number_format($u['visitors']) ?></td>
+                    <td><?= $u['likely_bot'] ? '<span class="ma-chip ma-chip-bot">automated</span>' : '<span class="ma-chip">browser</span>' ?></td>
+                </tr>
+                <?php endforeach; endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <div class="ma-note">
     <strong>How these numbers are counted.</strong>
     GA4 rows are calendar months in the property time zone; the current month is month-to-date.
     First-party rows come from the server-side <code>page_views</code> log (bots and signed-in staff excluded) and are
     distinct visitor cookies within each month. Visitor columns are deliberately not totalled: users can appear in several
     months, so a sum would not be a unique-user count. GA4 data is cached for 15 minutes; first-party rows are live
-    and retained for 180 days.
+    and retained for 180 days. Rows whose User-Agent is obvious automation are rejected on write and filtered out of
+    every first-party figure above; the audit table shows them anyway so the gap stays visible.
 </div>
 
 <?php include 'layout/footer.php'; ?>
