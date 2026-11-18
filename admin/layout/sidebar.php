@@ -27,6 +27,11 @@ try {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="11" width="7" height="10"></rect><rect x="3" y="15" width="7" height="6"></rect></svg>
             </span> <span class="nav-label">Dashboard</span>
         </a>
+        <a href="<?= APP_URL ?>/admin/analytics.php" class="nav-item <?= $current_page === 'analytics.php' ? 'active' : '' ?>">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"></line><line x1="6" y1="21" x2="6" y2="12"></line><line x1="12" y1="21" x2="12" y2="3"></line><line x1="18" y1="21" x2="18" y2="7"></line></svg>
+            </span> <span class="nav-label">Analytics</span>
+        </a>
         <a href="<?= APP_URL ?>/admin/approvals.php" class="nav-item <?= $current_page === 'approvals.php' ? 'active' : '' ?>">
             <span class="nav-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>

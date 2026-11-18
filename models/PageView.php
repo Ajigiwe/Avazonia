@@ -55,6 +55,32 @@ class PageView extends Model
         ], $rows);
     }
 
+    /**
+     * Visitors + views per calendar month for the last $months months.
+     * Visitors are distinct within the month (true monthly uniques, unlike
+     * summing the daily series). Months without traffic are simply absent.
+     */
+    public function monthlySeries(int $months = 12): array
+    {
+        $months = max(1, min(24, $months));
+        // Anchor to the 1st: subtracting months from the 31st skips a month.
+        $since = date('Y-m-01', strtotime(date('Y-m-01') . ' -' . ($months - 1) . ' months'));
+        $rows = $this->db->query("
+            SELECT substr(viewed_at, 1, 7) AS month,
+                   COUNT(DISTINCT visitor_id) AS visitors,
+                   COUNT(*) AS views
+            FROM page_views
+            WHERE viewed_at >= " . $this->db->quote($since) . "
+            GROUP BY substr(viewed_at, 1, 7)
+            ORDER BY month ASC
+        ")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        return array_map(fn($r) => [
+            'month'    => (string)$r['month'],
+            'visitors' => (int)$r['visitors'],
+            'views'    => (int)$r['views'],
+        ], $rows);
+    }
+
     /** Top viewed pages over the window. */
     public function topPages(int $days = 7, int $limit = 5): array
     {

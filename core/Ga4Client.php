@@ -110,6 +110,69 @@ class Ga4Client
         }
     }
 
+    /**
+     * Traffic grouped by calendar month for the last $months months.
+     * Never throws — failures come back as ['ok' => false, 'error' => ...].
+     * Successful payloads are cached for 15 minutes per credentials + window.
+     */
+    public function fetchMonthly(int $months = 12): array
+    {
+        $months = max(1, min(24, $months));
+        if (!$this->isConfigured()) {
+            return ['ok' => false, 'error' => $this->configError !== '' ? $this->configError : 'Google Analytics is not configured.'];
+        }
+        $key = 'ga4.monthly.' . $this->credHash . '.' . $months;
+        try {
+            return Cache::remember($key, 900, function () use ($months) {
+                // Anchor to the 1st: subtracting months from the 31st skips a month.
+                $start = date('Y-m-01', strtotime(date('Y-m-01') . ' -' . ($months - 1) . ' months'));
+                $res = $this->runReport([
+                    'dateRanges' => [['startDate' => $start, 'endDate' => date('Y-m-d')]],
+                    'dimensions' => [['name' => 'yearMonth']],
+                    'metrics'    => [
+                        ['name' => 'totalUsers'],
+                        ['name' => 'sessions'],
+                        ['name' => 'screenPageViews'],
+                    ],
+                    'orderBys'   => [['dimension' => ['dimensionName' => 'yearMonth']]],
+                    'limit'      => 100,
+                ]);
+                return [
+                    'ok'     => true,
+                    'start'  => $start,
+                    'end'    => date('Y-m-d'),
+                    'months' => $this->shapeMonthly($res),
+                ];
+            }, ['ga4']);
+        } catch (Throwable $e) {
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Turn a yearMonth report response into [['month' => 'Y-m', 'visitors' => ..., ...]].
+     * GA4 returns YYYYMM dimension values; unknown shapes are skipped, not fatal.
+     *
+     * @return array<int, array{month:string, visitors:int, sessions:int, pageviews:int}>
+     */
+    private function shapeMonthly(array $res): array
+    {
+        $out = [];
+        foreach ($res['rows'] ?? [] as $row) {
+            $raw = (string)($row['dimensionValues'][0]['value'] ?? '');
+            if (!preg_match('/^\d{6}$/', $raw)) continue;
+            $v = $this->metricFloats($row);
+            $out[substr($raw, 0, 4) . '-' . substr($raw, 4, 2)] = [
+                'month'     => substr($raw, 0, 4) . '-' . substr($raw, 4, 2),
+                'visitors'  => (int)($v[0] ?? 0),
+                'sessions'  => (int)($v[1] ?? 0),
+                'pageviews' => (int)($v[2] ?? 0),
+            ];
+        }
+        ksort($out);
+        return array_values($out);
+    }
+
     // ── report assembly ──────────────────────────────────────────
 
     private function buildOverview(int $days): array
