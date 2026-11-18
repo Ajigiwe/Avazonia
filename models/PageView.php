@@ -93,6 +93,23 @@ class PageView extends Model
         ], $rows);
     }
 
+    /** Distinct visitors + views over the last $days days. */
+    public function rangeSummary(int $days): array
+    {
+        $days  = max(1, min(365, $days));
+        $since = date('Y-m-d H:i:s', time() - $days * 86400);
+        $row = $this->db->query("
+            SELECT COUNT(*) AS views, COUNT(DISTINCT visitor_id) AS visitors
+            FROM page_views
+            WHERE viewed_at >= " . $this->db->quote($since) . $this->humanWhere() . "
+        ")->fetch(PDO::FETCH_ASSOC) ?: [];
+        return [
+            'days'     => $days,
+            'views'    => (int)($row['views'] ?? 0),
+            'visitors' => (int)($row['visitors'] ?? 0),
+        ];
+    }
+
     /**
      * Visitors + views per calendar month for the last $months months.
      * Visitors are distinct within the month (true monthly uniques, unlike

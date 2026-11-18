@@ -111,6 +111,93 @@ class Ga4Client
     }
 
     /**
+     * Totals, top pages and sources for an arbitrary date range (YYYY-MM-DD).
+     * Reports longer than the 90-day overview window use this instead.
+     * Never throws — failures come back as ['ok' => false, 'error' => ...].
+     */
+    public function fetchRange(string $start, string $end): array
+    {
+        $start = trim($start);
+        $end   = trim($end);
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start)
+            || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $end)
+            || strcmp($start, $end) > 0) {
+            return ['ok' => false, 'error' => 'Invalid date range.'];
+        }
+        if (!$this->isConfigured()) {
+            return ['ok' => false, 'error' => $this->configError !== '' ? $this->configError : 'Google Analytics is not configured.'];
+        }
+        $key = 'ga4.range.' . $this->credHash . '.' . $start . '.' . $end;
+        try {
+            return Cache::remember($key, 900, function () use ($start, $end) {
+                $totals = $this->runReport([
+                    'dateRanges' => [['startDate' => $start, 'endDate' => $end]],
+                    'metrics'    => [
+                        ['name' => 'totalUsers'],
+                        ['name' => 'newUsers'],
+                        ['name' => 'sessions'],
+                        ['name' => 'screenPageViews'],
+                        ['name' => 'engagedSessions'],
+                        ['name' => 'averageSessionDuration'],
+                    ],
+                    'limit' => 10,
+                ]);
+                $t = $this->metricFloats($totals['rows'][0] ?? []);
+
+                $pagesRes = $this->runReport([
+                    'dateRanges' => [['startDate' => $start, 'endDate' => $end]],
+                    'dimensions' => [['name' => 'pagePath']],
+                    'metrics'    => [['name' => 'screenPageViews'], ['name' => 'totalUsers']],
+                    'orderBys'   => [['metric' => ['metricName' => 'screenPageViews'], 'desc' => true]],
+                    'limit'      => 8,
+                ]);
+                $pages = [];
+                foreach ($pagesRes['rows'] ?? [] as $row) {
+                    $v = $this->metricFloats($row);
+                    $pages[] = [
+                        'path'     => $row['dimensionValues'][0]['value'] ?? '/',
+                        'views'    => (int)($v[0] ?? 0),
+                        'visitors' => (int)($v[1] ?? 0),
+                    ];
+                }
+
+                $srcRes = $this->runReport([
+                    'dateRanges' => [['startDate' => $start, 'endDate' => $end]],
+                    'dimensions' => [['name' => 'sessionSource']],
+                    'metrics'    => [['name' => 'sessions'], ['name' => 'totalUsers']],
+                    'orderBys'   => [['metric' => ['metricName' => 'sessions'], 'desc' => true]],
+                    'limit'      => 6,
+                ]);
+                $sources = [];
+                foreach ($srcRes['rows'] ?? [] as $row) {
+                    $v = $this->metricFloats($row);
+                    $src = trim((string)($row['dimensionValues'][0]['value'] ?? ''));
+                    if ($src === '' || $src === '(not set)') $src = '(direct / not set)';
+                    $sources[] = ['source' => $src, 'sessions' => (int)($v[0] ?? 0), 'visitors' => (int)($v[1] ?? 0)];
+                }
+
+                return [
+                    'ok'     => true,
+                    'start'  => $start,
+                    'end'    => $end,
+                    'totals' => [
+                        'visitors'     => (int)($t[0] ?? 0),
+                        'new_visitors' => (int)($t[1] ?? 0),
+                        'sessions'     => (int)($t[2] ?? 0),
+                        'pageviews'    => (int)($t[3] ?? 0),
+                        'engaged'      => (int)($t[4] ?? 0),
+                        'avg_duration' => (int)round($t[5] ?? 0),
+                    ],
+                    'pages'   => $pages,
+                    'sources' => $sources,
+                ];
+            }, ['ga4']);
+        } catch (Throwable $e) {
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Traffic grouped by calendar month for the last $months months.
      * Never throws — failures come back as ['ok' => false, 'error' => ...].
      * Successful payloads are cached for 15 minutes per credentials + window.
