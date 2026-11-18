@@ -178,6 +178,9 @@ include 'layout/header.php';
         <div class="hero-title">Performance Insights</div>
         <div class="hero-sub">Unified intelligence engine &middot; Active tracking</div>
     </div>
+    <a href="report.php" target="_blank" rel="noopener" class="admin-btn" style="background:#fff;color:var(--red);box-shadow:0 6px 18px rgba(0,0,0,.16);text-decoration:none;">
+        &#128196; Generate traffic report
+    </a>
 </div>
 
 <div class="analytics-grid">
