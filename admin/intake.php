@@ -507,6 +507,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
             }
+        } elseif ($action === 'add_uploader') {
+            $uploaderChatId = (int) trim((string)($_POST['chat_id'] ?? '0'));
+            $uploaderName = trim((string)($_POST['name'] ?? ''));
+            $uploaderUsername = trim((string)($_POST['username'] ?? ''));
+            $uploaderRole = (string)($_POST['role'] ?? 'uploader');
+            if ($uploaderChatId === 0) {
+                $error = 'Please provide a valid numeric Telegram Chat ID.';
+            } else {
+                $ok = intake_add_user($uploaderChatId, $uploaderName, $uploaderUsername, $uploaderRole);
+                if ($ok) {
+                    $success = "Authorized Telegram user {$uploaderChatId} (" . ($uploaderName ?: 'Uploader') . ") successfully!";
+                } else {
+                    $error = 'Failed to authorize Telegram user.';
+                }
+            }
+        } elseif ($action === 'remove_uploader') {
+            $uploaderChatId = (int) trim((string)($_POST['chat_id'] ?? '0'));
+            if ($uploaderChatId === 0) {
+                $error = 'Invalid Chat ID.';
+            } else {
+                $ok = intake_remove_user($uploaderChatId);
+                if ($ok) {
+                    $success = "Removed Telegram user {$uploaderChatId} authorization.";
+                } else {
+                    $error = 'Failed to remove Telegram user.';
+                }
+            }
         }
     }
 }
@@ -516,6 +543,7 @@ $reviewId = (int) ($_GET['review'] ?? 0);
 $batch = $reviewId > 0 ? intake_batch($reviewId) : null;
 $cfg = intake_config();
 $isConfigured = intake_is_configured();
+$intakeUsers = intake_get_users();
 
 $batches = intake_batches(null, 50);
 $pendingCount = intake_pending_count();
@@ -977,6 +1005,7 @@ include 'layout/sidebar.php';
             ?>
             <!-- Vehicle Drop Staging Card -->
             <div class="panel" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                <div style="padding:18px 24px;background:linear-gradient(to right, #111827, #1f2937);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
                 <div class="vehicle-card-header" style="padding:18px 24px;background:linear-gradient(to right, #111827, #1f2937);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
                     <div>
                         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
@@ -991,6 +1020,7 @@ include 'layout/sidebar.php';
                             <?= htmlspecialchars($vRow['name'] ?? 'Vehicle Listing') ?>
                         </h2>
                     </div>
+                    <div style="text-align:right;">
                     <div class="vehicle-card-price" style="text-align:right;">
                         <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.06em;">FOB Price</div>
                         <div style="font-size:24px;font-weight:800;color:#10b981;font-family:var(--f-mono);">
@@ -1039,6 +1069,7 @@ include 'layout/sidebar.php';
                     <?php endif; ?>
 
                     <!-- Specifications & Features Grid -->
+                    <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));gap:24px;margin-bottom:24px;">
                     <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));gap:24px;margin-bottom:24px;">
                         <!-- Vehicle Specifications -->
                         <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;background:#fff;">
@@ -1091,6 +1122,7 @@ include 'layout/sidebar.php';
                     </div>
 
                     <!-- 1-Click Publishing Action Bar -->
+                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
                     <div class="vehicle-publish-bar" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
                         <div>
                             <div style="font-weight:700;font-size:14px;color:#111827;">Ready to publish this vehicle?</div>
@@ -1101,6 +1133,7 @@ include 'layout/sidebar.php';
                                 <?php endif; ?>
                             </div>
                         </div>
+                        <div style="display:flex;gap:12px;align-items:center;">
                         <div class="vehicle-publish-actions" style="display:flex;gap:12px;align-items:center;">
                             <!-- 1-Click Live Publish Form -->
                             <form method="POST" style="margin:0;">
@@ -1143,6 +1176,7 @@ include 'layout/sidebar.php';
                 </div>
             </div>
             <div style="padding:24px;">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:24px;">
                 <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 280px), 1fr));gap:24px;">
                     <!-- Option 1: Paste Text -->
                     <div style="border:1px solid #e5e7eb;border-radius:8px;padding:20px;background:#fafafa;">
@@ -1563,6 +1597,7 @@ include 'layout/sidebar.php';
 
 <?php else: ?>
     <!-- Batches List View -->
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
     <div class="intake-main-grid">
         <div class="panel" style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;">
             <div class="panel-header" style="padding:16px 24px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
@@ -1570,6 +1605,7 @@ include 'layout/sidebar.php';
                 <span style="font-family:var(--f-mono);font-size:11px;color:#6b7280;"><?= count($batches) ?> total</span>
             </div>
 
+            <div class="table-container" style="overflow-x:auto;">
             <div class="table-container">
                 <table class="admin-table" style="width:100%;border-collapse:collapse;font-size:13px;">
                     <thead>
@@ -1651,7 +1687,92 @@ include 'layout/sidebar.php';
 
         <!-- How It Works & Control Collapsible Sidebar -->
         <div style="display:flex;flex-direction:column;gap:16px;">
-            <!-- 1. How It Works (Collapsible) -->
+
+            <!-- 1. Authorized Telegram Uploaders (Collapsible) -->
+            <details class="intake-card-collapse mobile-collapse-default" open>
+                <summary class="intake-collapse-header">
+                    <span class="intake-collapse-title">
+                        <span>👥</span> Authorized Uploaders (<?= count($intakeUsers) ?>)
+                    </span>
+                    <span class="intake-collapse-chevron">▼</span>
+                </summary>
+                <div class="intake-collapse-body">
+                    <p style="font-size:12px;color:#6b7280;margin:0 0 12px;line-height:1.5;">
+                        Authorized teammates, suppliers, and agents can send vehicle drops and catalogs to <strong>@AvazoniaBot</strong>.
+                    </p>
+
+                    <!-- Add User Form -->
+                    <form method="POST" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:12px;margin-bottom:14px;">
+                        <?= Csrf::field() ?>
+                        <input type="hidden" name="action" value="add_uploader">
+                        <div style="font-size:11px;font-weight:700;color:#111827;margin-bottom:8px;">➕ Authorize New Uploader</div>
+                        <div style="display:flex;flex-direction:column;gap:8px;">
+                            <div>
+                                <label style="display:block;font-size:11px;font-weight:600;color:#4b5563;margin-bottom:2px;">Telegram Chat ID <span style="color:#ef4444;">*</span></label>
+                                <input type="number" name="chat_id" placeholder="e.g. 784920184" required
+                                       style="width:100%;box-sizing:border-box;font-family:var(--f-mono);font-size:12px;padding:6px 8px;border:1px solid #d1d5db;border-radius:4px;background:#fff;">
+                                <span style="font-size:10px;color:#6b7280;margin-top:2px;display:block;">
+                                    When an unauthorized person messages the bot, it replies with their Chat ID.
+                                </span>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                                <div>
+                                    <label style="display:block;font-size:11px;font-weight:600;color:#4b5563;margin-bottom:2px;">Name / Label</label>
+                                    <input type="text" name="name" placeholder="e.g. Sourcing Agent"
+                                           style="width:100%;box-sizing:border-box;font-size:12px;padding:6px 8px;border:1px solid #d1d5db;border-radius:4px;background:#fff;">
+                                </div>
+                                <div>
+                                    <label style="display:block;font-size:11px;font-weight:600;color:#4b5563;margin-bottom:2px;">Role</label>
+                                    <select name="role" style="width:100%;box-sizing:border-box;font-size:12px;padding:6px 8px;border:1px solid #d1d5db;border-radius:4px;background:#fff;">
+                                        <option value="uploader">Uploader</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary" style="margin-top:4px;width:100%;height:32px;font-size:11px;font-weight:700;border-radius:4px;cursor:pointer;background:#2563eb;color:#fff;border:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;">
+                                <span>➕</span> Authorize Uploader
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Users List -->
+                    <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">
+                        Currently Authorized (<?= count($intakeUsers) ?>)
+                    </div>
+                    <?php if (empty($intakeUsers)): ?>
+                        <div style="font-size:12px;color:#9ca3af;padding:8px 0;">No uploaders registered yet.</div>
+                    <?php else: ?>
+                        <div style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;">
+                            <?php foreach ($intakeUsers as $u): ?>
+                                <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:8px 10px;font-size:12px;">
+                                    <div style="min-width:0;flex:1;margin-right:8px;">
+                                        <div style="font-weight:600;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                            <?= htmlspecialchars($u['name'] ?: 'Uploader') ?>
+                                            <?php if ($u['role'] === 'admin'): ?>
+                                                <span style="font-size:9px;background:#eff6ff;color:#2563eb;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">ADMIN</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div style="font-family:var(--f-mono);font-size:10px;color:#6b7280;margin-top:2px;">
+                                            ID: <?= htmlspecialchars((string)$u['chat_id']) ?>
+                                            <?= !empty($u['username']) ? ' • @' . htmlspecialchars((string)$u['username']) : '' ?>
+                                        </div>
+                                    </div>
+                                    <form method="POST" style="margin:0;" onsubmit="return confirm('Revoke Telegram upload access for this user?');">
+                                        <?= Csrf::field() ?>
+                                        <input type="hidden" name="action" value="remove_uploader">
+                                        <input type="hidden" name="chat_id" value="<?= htmlspecialchars((string)$u['chat_id']) ?>">
+                                        <button type="submit" style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;padding:3px 8px;font-size:10px;font-weight:600;border-radius:3px;cursor:pointer;" title="Remove Uploader">
+                                            Remove
+                                        </button>
+                                    </form>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </details>
+
+            <!-- 2. How It Works (Collapsible) -->
             <details class="intake-card-collapse mobile-collapse-default" open>
                 <summary class="intake-collapse-header">
                     <span class="intake-collapse-title">
@@ -1661,15 +1782,15 @@ include 'layout/sidebar.php';
                 </summary>
                 <div class="intake-collapse-body">
                     <ol style="margin:0;padding-left:18px;font-size:13px;color:#4b5563;line-height:1.7;">
-                        <li><strong>Send Spreadsheet:</strong> Send a wholesale <code style="font-family:var(--f-mono);background:#f3f4f6;padding:1px 4px;">.csv</code> or <code style="font-family:var(--f-mono);background:#f3f4f6;padding:1px 4px;">.xlsx</code> catalog file to your Telegram bot.</li>
-                        <li><strong>Upload Photos:</strong> Forward product photography as albums or single shots. Captions with the SKU or Product Title will auto-match!</li>
-                        <li><strong>Review &amp; Match:</strong> Click <em>Review &amp; Match</em> here to inspect the 4-tier match confidence badges.</li>
-                        <li><strong>Publish:</strong> Click <em>Send to Product Importer</em> to review categories and commit live to your store!</li>
+                        <li><strong>Forward Drops:</strong> Forward vehicle listings with Brand, Model, Year, Mileage, and FOB Price to your Telegram bot.</li>
+                        <li><strong>Upload Media:</strong> Forward photos and 1-2 video walkthroughs. They will auto-link to the staged vehicle!</li>
+                        <li><strong>Review &amp; Edit:</strong> Staged drops appear here in real time. Inspect photos, add specs, or split batches.</li>
+                        <li><strong>1-Click Publish:</strong> Click <em>Publish Live to Store</em> to immediately publish live with anti-theft watermarks!</li>
                     </ol>
                 </div>
             </details>
 
-            <!-- 2. Bot Commands (Collapsible) -->
+            <!-- 3. Bot Commands (Collapsible) -->
             <details class="intake-card-collapse mobile-collapse-default" open>
                 <summary class="intake-collapse-header">
                     <span class="intake-collapse-title">
@@ -1684,6 +1805,34 @@ include 'layout/sidebar.php';
                             <td style="padding:6px 0;">Summary of active staged batch</td>
                         </tr>
                         <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/new</td>
+                            <td style="padding:6px 0;">Finish vehicle &amp; start next</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/batches</td>
+                            <td style="padding:6px 0;">List all pending batches</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/batch &lt;id&gt;</td>
+                            <td style="padding:6px 0;">Switch active batch</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/myid</td>
+                            <td style="padding:6px 0;">Show your Telegram Chat ID</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/users</td>
+                            <td style="padding:6px 0;">List authorized uploaders</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/adduser &lt;id&gt;</td>
+                            <td style="padding:6px 0;">Authorize new uploader (admin)</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/deluser &lt;id&gt;</td>
+                            <td style="padding:6px 0;">Revoke uploader (admin)</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f3f4f6;">
                             <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/undo</td>
                             <td style="padding:6px 0;">Undo most recent photo or sheet</td>
                         </tr>
@@ -1695,6 +1844,10 @@ include 'layout/sidebar.php';
                             <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/clearphotos</td>
                             <td style="padding:6px 0;">Remove photos, keep sheet</td>
                         </tr>
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#111827;">/clearvideos</td>
+                            <td style="padding:6px 0;">Remove staged videos</td>
+                        </tr>
                         <tr>
                             <td style="padding:6px 0;font-family:var(--f-mono);font-weight:700;color:#dc2626;">/clear</td>
                             <td style="padding:6px 0;">Discard entire batch &amp; files</td>
@@ -1703,7 +1856,7 @@ include 'layout/sidebar.php';
                 </div>
             </details>
 
-            <!-- 3. CLI Diagnostics (Collapsible) -->
+            <!-- 4. CLI Diagnostics (Collapsible) -->
             <details class="intake-card-collapse mobile-collapse-default">
                 <summary class="intake-collapse-header">
                     <span class="intake-collapse-title">
@@ -1724,7 +1877,7 @@ include 'layout/sidebar.php';
                 </div>
             </details>
 
-            <!-- 4. Webhook Registration (Collapsible) -->
+            <!-- 5. Webhook Registration (Collapsible) -->
             <details class="intake-card-collapse mobile-collapse-default" open>
                 <summary class="intake-collapse-header">
                     <span class="intake-collapse-title">

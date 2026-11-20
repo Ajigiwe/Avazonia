@@ -150,6 +150,14 @@ function intake_tables(): void
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (batch_id) REFERENCES intake_batches(id) ON DELETE CASCADE
         )");
+        db_exec("CREATE TABLE IF NOT EXISTS intake_users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chat_id BIGINT NOT NULL UNIQUE,
+            name VARCHAR(100) NOT NULL DEFAULT '',
+            username VARCHAR(100) NOT NULL DEFAULT '',
+            role VARCHAR(32) NOT NULL DEFAULT 'uploader',
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )");
     } else {
         db_exec("CREATE TABLE IF NOT EXISTS `intake_batches` (
             `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -180,6 +188,17 @@ function intake_tables(): void
                 REFERENCES `intake_batches` (`id`) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
+        db_exec("CREATE TABLE IF NOT EXISTS `intake_users` (
+            `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `chat_id`    BIGINT NOT NULL,
+            `name`       VARCHAR(100) NOT NULL DEFAULT '',
+            `username`   VARCHAR(100) NOT NULL DEFAULT '',
+            `role`       VARCHAR(32) NOT NULL DEFAULT 'uploader',
+            `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `uq_intake_user_chat` (`chat_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
         try {
             $col = db_one("SHOW COLUMNS FROM `intake_items` LIKE 'media_group'");
             if (!$col) {
@@ -193,21 +212,132 @@ function intake_tables(): void
 
 /* ----------------------------------------------------------- configure --- */
 
-function intake_config(): array
+function intake_get_users(): array
 {
+    intake_tables();
+    // Auto-seed from .env if table is empty or .env IDs missing
     $rawChats = (string) (env('TG_ALLOWED_CHAT_IDS') ?? '');
-    $chats = [];
     foreach (explode(',', $rawChats) as $one) {
         $one = trim($one);
         if ($one !== '' && preg_match('/^-?\d+$/', $one) === 1) {
-            $chats[] = (int) $one;
+            $envId = (int)$one;
+            try {
+                $exists = db_one("SELECT id FROM intake_users WHERE chat_id = ?", [$envId]);
+                if (!$exists) {
+                    db_exec(
+                        "INSERT INTO intake_users (chat_id, name, username, role, created_at) VALUES (?, 'Primary Admin (.env)', '', 'admin', CURRENT_TIMESTAMP)",
+                        [$envId]
+                    );
+                }
+            } catch (Throwable $e) {}
         }
     }
+
+    try {
+        return db_all("SELECT * FROM intake_users ORDER BY id ASC");
+    } catch (Throwable $e) {
+        return [];
+    }
+}
+
+function intake_allowed_chats(): array
+{
+    $chats = [];
+    try {
+        $users = intake_get_users();
+        foreach ($users as $u) {
+            $cid = (int)($u['chat_id'] ?? 0);
+            if ($cid !== 0) {
+                $chats[$cid] = $cid;
+            }
+        }
+    } catch (Throwable $e) {}
+
+    // Guarantee .env chats are always included as fallback
+    $rawChats = (string) (env('TG_ALLOWED_CHAT_IDS') ?? '');
+    foreach (explode(',', $rawChats) as $one) {
+        $one = trim($one);
+        if ($one !== '' && preg_match('/^-?\d+$/', $one) === 1) {
+            $cid = (int)$one;
+            $chats[$cid] = $cid;
+        }
+    }
+
+    return array_values($chats);
+}
+
+function intake_add_user(int $chatId, string $name = '', string $username = '', string $role = 'uploader'): bool
+{
+    intake_tables();
+    if ($chatId === 0) {
+        return false;
+    }
+    $name = mb_substr(trim($name), 0, 100);
+    $username = mb_substr(ltrim(trim($username), '@'), 0, 100);
+    $role = in_array($role, ['admin', 'uploader'], true) ? $role : 'uploader';
+
+    try {
+        $driver = 'mysql';
+        try { $driver = db()->getAttribute(PDO::ATTR_DRIVER_NAME); } catch (Throwable $e) {}
+
+        if ($driver === 'sqlite') {
+            db_exec(
+                "INSERT INTO intake_users (chat_id, name, username, role, created_at)
+                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                 ON CONFLICT(chat_id) DO UPDATE SET name = excluded.name, username = excluded.username, role = excluded.role",
+                [$chatId, $name, $username, $role]
+            );
+        } else {
+            db_exec(
+                "INSERT INTO `intake_users` (`chat_id`, `name`, `username`, `role`, `created_at`)
+                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                 ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `username` = VALUES(`username`), `role` = VALUES(`role`)",
+                [$chatId, $name, $username, $role]
+            );
+        }
+
+        // Send a friendly Telegram notification to the authorized user
+        $rawCfg = [
+            'token'  => trim((string) (env('TG_BOT_TOKEN') ?? '')),
+            'secret' => trim((string) (env('TG_WEBHOOK_SECRET') ?? '')),
+        ];
+        if ($rawCfg['token'] !== '') {
+            $welcomeMsg = "🎉 You have been authorized to upload products for Avazonia!\n\n"
+                . "You can now send directly to this bot:\n"
+                . "🚗 1. Forward vehicle drop listings or paste vehicle specs\n"
+                . "📦 2. Send wholesale catalog spreadsheets (.xlsx / .csv)\n"
+                . "📸 3. Send product photography & video walkthroughs\n\n"
+                . "Your items will stage in the admin panel for review and live publishing.";
+            try {
+                tg_send_text($rawCfg, $chatId, $welcomeMsg);
+            } catch (Throwable $e) {}
+        }
+
+        return true;
+    } catch (Throwable $e) {
+        error_log('intake_add_user failed: ' . $e->getMessage());
+        return false;
+    }
+}
+
+function intake_remove_user(int $chatId): bool
+{
+    intake_tables();
+    try {
+        db_exec("DELETE FROM intake_users WHERE chat_id = ?", [$chatId]);
+        return true;
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+function intake_config(): array
+{
     return [
         'token'       => trim((string) (env('TG_BOT_TOKEN') ?? '')),
         'secret'      => trim((string) (env('TG_WEBHOOK_SECRET') ?? '')),
         'webhook_url' => trim((string) (env('TG_WEBHOOK_URL') ?? '')),
-        'chats'       => $chats,
+        'chats'       => intake_allowed_chats(),
     ];
 }
 
@@ -219,8 +349,29 @@ function intake_is_configured(): bool
 
 function intake_is_allowed_chat(int $chatId, ?array $cfg = null): bool
 {
-    $cfg = $cfg ?? intake_config();
-    return empty($cfg['chats']) || in_array($chatId, $cfg['chats'], true);
+    $allowed = $cfg['chats'] ?? intake_allowed_chats();
+    return empty($allowed) || in_array($chatId, $allowed, true);
+}
+
+function intake_is_admin_chat(int $chatId, ?array $cfg = null): bool
+{
+    // Check .env chats
+    $rawChats = (string) (env('TG_ALLOWED_CHAT_IDS') ?? '');
+    foreach (explode(',', $rawChats) as $one) {
+        $one = trim($one);
+        if ($one !== '' && (int)$one === $chatId) {
+            return true;
+        }
+    }
+    // Check database role
+    try {
+        $u = db_one("SELECT role FROM intake_users WHERE chat_id = ?", [$chatId]);
+        if ($u && ($u['role'] ?? '') === 'admin') {
+            return true;
+        }
+    } catch (Throwable $e) {}
+
+    return false;
 }
 
 /* --------------------------------------------------------- telegram api -- */
@@ -1305,9 +1456,14 @@ function intake_dispatch(array $cfg, array $update, array $localFiles = []): str
     }
 
     // Authorization check
-    if ($cfg['chats'] !== [] && !in_array($chatId, $cfg['chats'], true)) {
-        error_log(sprintf('intake: unauthorized chat_id %d dropped', $chatId));
-        return '';
+    if (!intake_is_allowed_chat($chatId, $cfg)) {
+        error_log(sprintf('intake: unauthorized chat_id %d rejected', $chatId));
+        $from = $msg['from'] ?? [];
+        $fullName = trim(($from['first_name'] ?? '') . ' ' . ($from['last_name'] ?? ''));
+        return "🔒 Access Restricted\n\n"
+            . ($fullName !== '' ? "Hello, {$fullName}!\n\n" : "")
+            . "Your Telegram Chat ID is: `{$chatId}`\n\n"
+            . "👉 Share this Chat ID with your Avazonia store administrator so they can authorize you to upload products and vehicle drops.";
     }
 
     $text = trim((string) ($msg['text'] ?? ''));
@@ -1500,15 +1656,71 @@ function intake_command_reply(array $cfg, int $chatId, string $text): string
                 . "3. Forward next vehicle or type /new to start next product!\n"
                 . "4. Log in to Avazonia Admin -> Telegram Intake to review & 1-click publish live!\n\n"
                 . "Available commands:\n"
-                . "/status      - View currently active batch\n"
-                . "/new         - Finish current vehicle & start fresh batch\n"
-                . "/batches     - List all pending batches\n"
-                . "/batch <id>  - Switch active batch (e.g. /batch 3)\n"
-                . "/undo        - Remove the last message you sent\n"
-                . "/clearsheet  - Remove spreadsheet / vehicle specs, keep photos\n"
-                . "/clearphotos - Remove staged photos\n"
-                . "/clearvideos - Remove staged videos\n"
-                . "/clear       - Discard entire active batch";
+                . "/status       - View currently active batch\n"
+                . "/new          - Finish current vehicle & start fresh batch\n"
+                . "/batches      - List all pending batches\n"
+                . "/batch <id>   - Switch active batch (e.g. /batch 3)\n"
+                . "/myid         - Show your numeric Telegram Chat ID\n"
+                . "/users        - List authorized uploaders\n"
+                . "/adduser <id> - Authorize new uploader (admin only)\n"
+                . "/deluser <id> - Revoke uploader (admin only)\n"
+                . "/undo         - Remove the last message you sent\n"
+                . "/clearsheet   - Remove spreadsheet / vehicle specs, keep photos\n"
+                . "/clearphotos  - Remove staged photos\n"
+                . "/clearvideos  - Remove staged videos\n"
+                . "/clear        - Discard entire active batch";
+
+        case '/myid':
+        case '/id':
+            return "🆔 Your Telegram Chat ID is: `{$chatId}`";
+
+        case '/users':
+        case '/uploaders':
+        case '/team':
+            $users = intake_get_users();
+            if (empty($users)) {
+                return "No authorized uploaders registered yet.";
+            }
+            $lines = ["👥 Authorized Telegram Uploaders (" . count($users) . "):"];
+            foreach ($users as $u) {
+                $roleBadge = ($u['role'] === 'admin') ? '👑 Admin' : '👤 Uploader';
+                $uName = !empty($u['username']) ? ' (@' . $u['username'] . ')' : '';
+                $name = !empty($u['name']) ? $u['name'] : 'Unknown';
+                $lines[] = "• `{$u['chat_id']}`: {$name}{$uName} [{$roleBadge}]";
+            }
+            $lines[] = "\nTo add an uploader: /adduser <chat_id> [name]";
+            $lines[] = "To remove: /deluser <chat_id>";
+            return implode("\n", $lines);
+
+        case '/adduser':
+            if (!intake_is_admin_chat($chatId, $cfg)) {
+                return "🔒 Only administrators can add or remove uploaders.";
+            }
+            $targetCid = (int)($parts[1] ?? 0);
+            if ($targetCid === 0) {
+                return "Usage: /adduser <chat_id> [name]\nExample: /adduser 123456789 John Sourcing";
+            }
+            $uName = trim(implode(' ', array_slice($parts, 2)));
+            $ok = intake_add_user($targetCid, $uName, '', 'uploader');
+            if ($ok) {
+                return "✅ Successfully authorized user `{$targetCid}` (" . ($uName ?: 'Uploader') . ")! A welcome message has been sent to them.";
+            }
+            return "❌ Failed to authorize user `{$targetCid}`.";
+
+        case '/deluser':
+        case '/removeuser':
+            if (!intake_is_admin_chat($chatId, $cfg)) {
+                return "🔒 Only administrators can add or remove uploaders.";
+            }
+            $targetCid = (int)($parts[1] ?? 0);
+            if ($targetCid === 0) {
+                return "Usage: /deluser <chat_id>\nExample: /deluser 123456789";
+            }
+            $ok = intake_remove_user($targetCid);
+            if ($ok) {
+                return "✅ Removed user `{$targetCid}` from authorized uploaders.";
+            }
+            return "❌ Failed to remove user `{$targetCid}`.";
 
         case '/new':
         case '/next':
